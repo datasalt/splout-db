@@ -43,6 +43,6 @@ Getting started
 
 For playing with Splout you will need:
 - Java 1.6+.
-- [Hadoop](http://hadoop.apache.org/releases.html#Download) stable (1.0.4) or previous versions of it (0.20.X, CDH3, etc) installed on your machine.
+- [Hadoop](http://hadoop.apache.org/releases.html#Download) stable (1.0.4) or previous versions of it (0.20.X, etc) installed on your machine.
 
 The best thing for getting started with Splout is launching a local server in your machine. You will find instructions on that in [splout-server](https://github.com/datasalt/splout-db/tree/master/splout-server). After that, you can execute one or two examples from [splout-hadoop](https://github.com/datasalt/splout-db/tree/master/splout-hadoop).
