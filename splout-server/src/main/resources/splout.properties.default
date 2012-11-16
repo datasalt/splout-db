@@ -112,6 +112,10 @@ fetcher.bytes.per.sec.throttle	-1
 
 hz.persistent.data.folder=hz-data
 
+# Enable this property if you want your service to bind to an specific port. Otherwise the default Hazelcast port is used (5701), and auto-incremented if needed.
+
+#hz.port=XXXX
+
 # Use this property to configure Hazelcast join in one or other way.
 # Possible values: MULTICAST, TCP, AWS
 
