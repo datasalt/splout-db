@@ -53,7 +53,9 @@ REST API overview
 You can interact with the server through the [Java client](https://github.com/datasalt/splout-db/tree/master/splout-javaclient) or directly through the REST interface. These are the basic methods of the REST interface:
 
 * GET, *api/overview*
+
 * GET, *api/dnodelist*
+
 * GET, *api/query/tablespace?key=theKey&sql=sqlQuery*
 
 * POST, *api/deploy* (body is a list of [DeployRequest](https://github.com/datasalt/splout-db/blob/master/splout-commons/src/main/java/com/splout/db/qnode/beans/DeployRequest.java))
