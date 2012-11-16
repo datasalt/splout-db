@@ -20,7 +20,7 @@ The overall architecture is quite simple:
 - [splout-server](https://github.com/datasalt/splout-db/tree/master/splout-server) is installed on a cluster of commodity hardware machines. Each of the machines runs a DNode service and optionally a QNode service.
 - QNodes implement a REST API for serving users' queries.
 - QNodes talk to the appropriate DNode for serving a query and the DNode responds back with the query’s result.
-- A Hadoop cluster is used for indexing and balancing the data. The resultant SQL files are fetched by the DNodes by handling a data deploy request.
+- A Hadoop cluster is used by [splout-hadoop](https://github.com/datasalt/splout-db/tree/master/splout-hadoop) for indexing and balancing the data. The resultant SQL files are fetched by the DNodes by handling a data deploy request.
 
 ![Splout arch](https://raw.github.com/datasalt/splout-db/master/Splout_SQL.jpg)
 
