@@ -84,12 +84,7 @@ world-pby-continent-region:
 country -> partitioned by continent and region
 country_language -> full table present in all partitions
 
-The structure of these tablespaces, and the the specification of the input data are in the files: 
-
-<pre>
-	examples/world/world-pby-country.json
-	examples/world/world-pby-continent-region.json
-</pre>
+The structure of these tablespaces, and the the specification of the input data are in the files: [world-pby-country.json](https://raw.github.com/datasalt/splout-db/master/splout-hadoop/examples/world/world-pby-country.json) and [world-pby-continent-region.json](https://raw.github.com/datasalt/splout-db/master/splout-hadoop/examples/world/world-pby-continent-region.json)
 
 Launch the following command to create both tablespaces:
 
