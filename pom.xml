@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright [2012] [Datasalt Systems S.L.] Licensed under the Apache License, 
+	Version 2.0 (the "License"); you may not use this file except in compliance 
+	with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 
+	Unless required by applicable law or agreed to in writing, software distributed 
+	under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES 
+	OR CONDITIONS OF ANY KIND, either express or implied. See the License for 
+	the specific language governing permissions and limitations under the License. -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<!-- POM Relationships -->
+
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.sonatype.oss</groupId>
+		<artifactId>oss-parent</artifactId>
+		<version>7</version>
+	</parent>
+	<groupId>com.splout.db</groupId>
+	<artifactId>splout-top-level</artifactId>
+	<version>0.1-SNAPSHOT</version>
+	<modules>
+		<module>splout-resources</module>
+		<module>splout-server</module>
+		<module>splout-hadoop</module>
+		<module>splout-commons</module>
+		<module>splout-javaclient</module>
+		<module>assembly</module>
+	</modules>
+
+	<dependencies />
+
+	<!-- Build Settings -->
+
+	<packaging>pom</packaging>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-eclipse-plugin</artifactId>
+				<version>2.9</version>
+				<configuration>
+					<projectNameTemplate>[artifactId]</projectNameTemplate>
+					<manifest />
+					<downloadSources>false</downloadSources>
+					<downloadJavadocs>false</downloadJavadocs>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.6</source>
+					<target>1.6</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.12</version>
+				<configuration>
+					<includes>
+						<!-- Naming convention for JUnit tests -->
+						<include>**/Test**</include>
+					</includes>
+					<excludes>
+						<!-- A few innner classes are not to be tested -->
+						<exclude>**/*$*</exclude>
+					</excludes>
+					<enableAssertions>false</enableAssertions>
+					<!-- some IPC tests hang if not run in a separate JVM -->
+					<forkMode>always</forkMode>
+					<!-- TestSpecificCompiler instantiates a Java compiler to test output 
+						results, this does not work with a manifest-only-jar to set the classpath 
+						for the javac. This may cause problems on some platforms. See http://maven.apache.org/plugins/maven-surefire-plugin/examples/class-loading.html 
+						for more information. -->
+					<useManifestOnlyJar>false</useManifestOnlyJar>
+					<!-- configures unit test standard error and standard out to go to a 
+						file per test rather than the console. -->
+					<redirectTestOutputToFile>true</redirectTestOutputToFile>
+					<failIfNoTests>false</failIfNoTests>
+				</configuration>
+			</plugin>
+		</plugins>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>com.soebes.maven.plugins.dmg</groupId>
+					<artifactId>doxygen-maven-plugin</artifactId>
+					<version>1.0.1</version>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+
+	<!-- ////////////// -->
+
+	<!-- Project Information -->
+
+	<name>Splout </name>
+	<!-- <url></url> -->
+	<description>Splout - A richer database spout for Hadoop</description>
+	<inceptionYear>2012</inceptionYear>
+	<organization>
+		<name>Datasalt Systems S.L.</name>
+		<url>http://www.datasalt.com</url>
+	</organization>
+	<developers>
+		<developer>
+			<id>ivan</id>
+			<name>Ivan De Prado</name>
+			<email>ivan@datasalt.com</email>
+			<organization>Datasalt Systems S.L.</organization>
+			<organizationUrl>http://www.datasalt.com</organizationUrl>
+			<roles>
+				<role>developer</role>
+			</roles>
+			<timezone>+1</timezone>
+		</developer>
+		<developer>
+			<id>pere</id>
+			<name>Pere Ferrera</name>
+			<email>pere@datasalt.com</email>
+			<organization>Datasalt Systems S.L.</organization>
+			<organizationUrl>http://www.datasalt.com</organizationUrl>
+			<roles>
+				<role>developer</role>
+			</roles>
+			<timezone>+1</timezone>
+		</developer>
+	</developers>
+
+	<!-- Build Environment -->
+
+	<!-- Environment Information -->
+
+	<mailingLists />
+
+	<!-- TODO -->
+	<scm>
+		<!-- <url>https://github.com/datasalt/pangool</url> <connection>scm:git:git@github.com:datasalt/pangool.git</connection> 
+			<developerConnection>scm:git:git@github.com:datasalt/pangool.git</developerConnection> -->
+	</scm>
+
+	<!-- TODO -->
+	<!-- <issueManagement> <system>github</system> <url></url> </issueManagement> 
+		<ciManagement> <system>Jenkins CI</system> <url></url> </ciManagement> -->
+
+	<!-- Maven Environment -->
+
+	<repositories />
+
+	<pluginRepositories />
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+	<!-- TODO Snapshots ? -->
+</project>

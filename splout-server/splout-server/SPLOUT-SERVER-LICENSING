@@ -1,0 +1,68 @@
+A) Affero General Public License
+This licensing file applies to the splout-server software ("Splout SQL"), except as described in B) below.
+
+Splout SQL is © Datasalt Systems S.L. 2012
+Original Developers: See AUTHORS file
+
+Splout is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+Splout is distributed in the hope that it will be useful, but WITHOUT  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License v3 for more details.
+
+You should have received a copy of the GNU Affero General Public License v3 long with Splout.  If not, see <http://www.gnu.org/licenses/>.
+
+
+B) This product uses certain third party software code, found in lib folder.
+See THIRTY-PARTY.txt file to see the list of third party sofware used.
+
+All licenses are in the legal license
+
+This software includes software of the Apache Software Foundation. Other notices are below
+
+WRITTEN OFFER
+If you would like a copy of the CDDL/GPL source code contained in this product, please contact info@datasalt.com. If you have questions about the licensing terms for Splout-SQL, please contact us at: info@datasalt.com
+
+Additional licenses and legal notices  
+==============================
+
+==============================================================
+ Jetty Web Container 
+ Copyright 1995-2009 Mort Bay Consulting Pty Ltd
+==============================================================
+
+The Jetty Web Container is Copyright Mort Bay Consulting Pty Ltd
+unless otherwise noted. It is dual licensed under the apache 2.0
+license and eclipse 1.0 license. Jetty may be distributed under
+either license.
+
+The javax.servlet package used was sourced from the Apache
+Software Foundation and is distributed under the apache 2.0
+license.
+
+The UnixCrypt.java code implements the one way cryptography used by
+Unix systems for simple password protection.  Copyright 1996 Aki Yoshida,
+modified April 2001  by Iris Van den Broeke, Daniel Deville.
+Permission to use, copy, modify and distribute UnixCrypt 
+for non-commercial or commercial purposes and without fee is
+granted provided that the copyright notice appears in all copies.
+
+
+Copyright notice for SLF4J
+==============================
+
+Copyright (c) 2004-2008 QOS.ch
+All rights reserved.
+
+Permission is hereby granted, free  of charge, to any person obtaining
+a  copy  of this  software  and  associated  documentation files  (the
+"Software"), to  deal in  the Software without  restriction, including
+without limitation  the rights to  use, copy, modify,  merge, publish,
+distribute,  sublicense, and/or sell  copies of  the Software,  and to
+permit persons to whom the Software  is furnished to do so, subject to
+the following conditions:
+
+The  above  copyright  notice  and  this permission  notice  shall  be
+included in all copies or substantial portions of the Software.
+
+THE  SOFTWARE IS  PROVIDED  "AS  IS", WITHOUT  WARRANTY  OF ANY  KIND, EXPRESS OR  IMPLIED, INCLUDING  BUT NOT LIMITED  TO THE  WARRANTIES OF MERCHANTABILITY,    FITNESS    FOR    A   PARTICULAR    PURPOSE    AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+

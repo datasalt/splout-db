@@ -1,0 +1,27 @@
+<assembly>
+  <id>distro</id>
+  <formats>
+    <format>tar.gz</format>
+  </formats>
+  <fileSets>
+  	<fileSet>
+  		<directory>target/maven-shared-archive-resources</directory>
+  		<outputDirectory>native</outputDirectory>  	
+  	</fileSet>
+  	<fileSet>
+  		<directory>src/main/scripts</directory>
+  		<outputDirectory>bin</outputDirectory>
+  	</fileSet>
+  	<fileSet>
+  		<directory>src/main/resources/pagecounts</directory>
+  		<outputDirectory>pagecounts</outputDirectory>
+  	</fileSet>
+  </fileSets>
+  <dependencySets>
+    <dependencySet>
+      <unpack>false</unpack>
+      <scope>runtime</scope>
+      <outputDirectory>lib</outputDirectory>
+    </dependencySet>
+  </dependencySets>
+</assembly>

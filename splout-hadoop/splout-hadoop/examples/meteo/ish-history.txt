@@ -1,0 +1,19 @@
+ish-history.csv file description
+
+USAF = Air Force Datsav3 station number
+WBAN = NCDC WBAN number
+CTRY = WMO historical country ID, followed by FIPS country ID
+ST = State for US stations
+CALL = ICAO call sign
+LAT = Latitude in thousandths of decimal degrees
+LON = Longitude in thousandths of decimal degrees
+ELEV = Elevation in tenths of meters
+
+Notes:
+- Missing station name, etc indicate the metadata are not currently
+- available.
+- The term "bogus" indicates that the station name, etc are not available.
+- For a small % of the station entries in this list, climatic data are not
+  available. These issues will be addressed. To determine data availability
+  for each location, see the 'ish-inventory.txt' or 'ish-inventory.csv'
+- file.

@@ -1,0 +1,7 @@
+{
+	"name": "meteo",
+	"nPartitions": 16,
+	"partitionedTables": [{
+		"name": "meteo"
+	}]
+}

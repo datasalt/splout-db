@@ -1,0 +1,48 @@
+{
+	"name": "world-pby-country",
+	"nPartitions": 4,
+	"partitionedTables": [{
+		"name": "country",
+		"schema": "code:string,name:string,continent:string,region:string,surface_area:double,indep_year:int,population:int,life_expectancy:double,gnp:double,gnp_old:double,local_name:string,government_form:string,head_of_state:string,capital:int,code2:string",
+		"partitionFields": "code",
+		"tableInputs": [{
+			"inputSpecs": {
+				"separatorChar": ",",
+				"quotesChar": "\"",
+				"escapeChar": "\\",
+				"skipHeader": false,
+				"nullString": "\\N"
+			},
+			"paths": [ "examples/world/country.csv" ]
+		}]
+	},{
+		"name": "city",
+		"schema": "id:int,name:string,country_code:string,district:string,population:int",
+		"partitionFields": "country_code",
+		"tableInputs": [{
+			"inputSpecs": {
+				"separatorChar": ",",
+				"quotesChar": "\"",
+				"escapeChar": "\\",
+				"skipHeader": false,
+				"nullString": "\\N"
+			},
+			"paths": [ "examples/world/city.csv" ]
+		}]
+	}],
+	"replicateAllTables": [{
+		"name": "country_language",
+		"schema": "country_code:string,language:string,is_official:string,percentage:float",
+		"tableInputs": [{
+			"inputSpecs": {
+				"separatorChar": ",",
+				"quotesChar": "\"",
+				"escapeChar": "\\",
+				"skipHeader": false,
+				"nullString": "\\N"
+			},
+			"paths": [ "examples/world/country_language.csv" ]	
+		}]
+	}]
+}
+

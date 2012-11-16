@@ -1,0 +1,157 @@
+#
+# QNode properties
+#
+
+# The port this QNode will run on
+
+qnode.port	4412
+
+# Whether this QNode should find the next available port 
+# in case "dnode.port" is busy or fail otherwise.
+
+qnode.port.autoincrement	true
+
+# The host this QNode will run on.
+# Localhost will be substituted by the first valid private IP address.
+
+qnode.host	localhost
+
+# The number of succeessfully deployed versions that 
+# will be kept in the system (per tablespace)
+
+qnode.versions.per.tablespace	10
+
+# The number of seconds to wait before checking each time
+# if a DNode has failed or if timeout has ocurred in the middle of a deploy
+
+qnode.deploy.seconds.to.check.error	60
+
+#
+# DNode properties
+#
+
+# This DNode's port
+
+dnode.port	4422
+
+# Whether this DNode should find the next available port in case "dnode.port" is busy or fail otherwise
+
+dnode.port.autoincrement	true
+
+# This DNode's host name.
+# Localhost will be substituted by the first valid private IP address.
+
+dnode.host	localhost
+
+# How many threads will be allocated for serving requests in Thrift's ThreadPool Server.
+
+dnode.serving.threads	64
+
+# The data folder that will be used for storing deployed SQL data stores
+
+dnode.data.folder	./dnode-staging
+
+# The amount of seconds that the DNode will cache SQL connection pools. After that time, it will close them.
+# Remember that the DNode may receive requests for different versions in the middle of a deployment,
+# so that's why we want to expire connection pools after some time (to not cache connection pools that will not be used anymore).
+	 
+dnode.pool.cache.seconds	3600
+
+# Number of SQL connection pools that will be cached. There will be one SQL connection pool for each tablespace,
+# version and partition that this DNode serves. So this number must not be smaller than the different numbers of
+# tablespace + version + partitions.
+
+dnode.pool.cache.n.elements	128
+
+# The amount of seconds that the DNode will wait before canceling a too-long deployment
+# Default is 10 hours
+
+dnode.deploy.timeout.seconds	36000
+
+#  A hard limit on the number of results per each SQL query that this DNode may send back to QNodes
+
+dnode.max.results.per.query	100
+
+# If set, this DNode will listen for test commands. This property is used to activate
+# responsiveness to some commands that are useful for integration testing: making a DNode 
+# shutdown, etc.
+ 
+dnode.handle.test.commands	false
+
+#
+# DNode Data Fetcher Properties
+#
+
+# If using S3 fetching, specify here your AWS credentials.
+# Uncomment when needed.
+
+#fetcher.s3.access.key	ACCESSKEY
+#fetcher.s3.secret.key	SECRETKEY
+
+# The local folder that will be used to download new deployments
+
+fetcher.temp.dir	fetcher-tmp
+
+# The size in bytes of the in-memory buffer used to download files from S3 
+
+fetcher.download.buffer	1048576
+fetcher.bytes.per.sec.throttle	-1
+
+# If using Hadoop fetching, the address of the NameNode for 
+# being able download data from HDFS. Uncomment when needed.
+
+#fetcher.hadoop.fs.name=...
+ 
+#
+# Hazelcast properties
+#
+
+# Folder to be used to persist Hazelcast state information
+# Needed to persist current version information.
+# If not present, no information is stored
+
+hz.persistent.data.folder=hz-data
+
+# Use this property to configure Hazelcast join in one or other way.
+# Possible values: MULTICAST, TCP, AWS
+
+hz.join.method=multicast
+
+# Uncomment and use this property if method=TCP:
+
+#hz.tcp.cluster=1.1.1.1:5703,2.2.2.2:5703
+
+# Uncomment and use this property if method=AWS and only a certain security group is to be examined:
+
+#hz.aws.security.group=MySecurityGroup
+
+# Also don't forget your AWS credentials if you use method=AWS:
+
+#hz.aws.key=MYKEY
+#hz.aws.secret=MYSECRET
+
+# Modifies the standard backup count. Affects the replication factor of distributed maps.
+
+hz.backup.count=3
+
+# Hazelcast waits 5 seconds before joining a member. That is good in production
+# because improves the posibilities of joining several members at the same time.
+# But very bad for testing... This property allows you to disable it for testing.
+
+hz.disable.wait.when.joining=false
+
+# Number of the oldest members leading operations in the cluster. 
+# Sometimes only these members answer to events, in order to reduce
+# coordination traffic.
+ 
+hz.oldest.members.leading.count=3
+
+# Max time, in minutes, to check if the member is registered. This check is used
+# to assure eventual consistency in rare cases of network partitions where replication
+# was not enough to ensure that no data is lost.
+   
+hz.registry.max.time.to.check.registration=5
+
+# Size of the connection pool to each partition that this DNode services.
+
+dnode.db.connections.per.pool=10

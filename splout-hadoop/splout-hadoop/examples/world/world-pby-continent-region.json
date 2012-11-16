@@ -1,0 +1,35 @@
+{
+	"name": "world-pby-continent-region",
+	"nPartitions": 4,
+	"partitionedTables": [{
+		"name": "country",
+		"schema": "code:string,name:string,continent:string,region:string,surface_area:double,indep_year:int,population:int,life_expectancy:double,gnp:double,gnp_old:double,local_name:string,government_form:string,head_of_state:string,capital:int,code2:string",
+		"partitionFields": "continent,region",
+		"indexes" : [ "region,population", "region,surface_area" ],
+		"tableInputs": [{
+			"inputSpecs": {
+				"separatorChar": ",",
+				"quotesChar": "\"",
+				"escapeChar": "\\",
+				"skipHeader": false,
+				"nullString": "\\N"
+			},
+			"paths": [ "examples/world/country.csv" ]
+		}]
+	}],
+	"replicateAllTables": [{
+		"name": "country_language",
+		"schema": "country_code:string,language:string,is_official:string,percentage:float",
+		"tableInputs": [{
+			"inputSpecs": {
+				"separatorChar": ",",
+				"quotesChar": "\"",
+				"escapeChar": "\\",
+				"skipHeader": false,
+				"nullString": "\\N"
+			},
+			"paths": [ "examples/world/country_language.csv" ]	
+		}]
+	}]
+}
+
