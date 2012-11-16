@@ -50,7 +50,7 @@ public class HadoopIntegrationTest implements Tool, Configurable {
 	private String qnode = "http://localhost:4412";
 
 	@Parameter(names = { "-i", "--input" }, description = "The page counts sample file to use as input, otherwise the one in src/main/resources is used. Override if needed.")
-	private String input = "src/main/resources/pagecounts-sample/pagecounts-20090430-230000-sample";
+	private String input = "pagecounts-sample/pagecounts-20090430-230000-sample";
 
 	@Parameter(required = true, names = { "-k", "--awskey" }, description = "AWS key. It will be used to assert that deploy from S3 works.")
 	private String awsKey = null;

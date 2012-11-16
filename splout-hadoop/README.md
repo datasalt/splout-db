@@ -22,7 +22,7 @@ Out of the tools included in the Hadoop driver, these are the most important one
 - **generate**: A tool for generating tablespaces from existing files (CSV).
 - **deploy**: A tool for deploying tablespaces generated with tools like <code>generate</code> or <code>simple-generate</code> into an existing Splout cluster
 
-Right now, *splout-hadoop* allows you to easily index and deploy CSV files in your HDFS, either by **simple-generate** or **generate** followed by **deploy**.
+Right now, *splout-hadoop* allows you to easily index and deploy CSV files in your HDFS / S3 / local-file-system either by **simple-generate** or **generate** followed by **deploy**.
 
 You can now follow the [world-data example](https://github.com/datasalt/splout-db/tree/master/splout-hadoop/examples/world) to get introduced with these tools.
 
@@ -37,3 +37,8 @@ Data partitioning & indexing
 The basis of Splout is partitioning datasets. Each of the partitions are then indexed using the needed structures for serving SQL queries. Partitions are determined depending on a *partitioning key* which usually is made up by one or several columns of the dataset being indexed, but this partition key can also be anything: a JavaScript method if you want - see the [TableBuilder API](https://github.com/datasalt/splout-db/blob/master/splout-hadoop/src/main/java/com/splout/db/hadoop/TableBuilder.java) for that. 
 
 The *partitioning key* is then used in the query API so that Splout knows which node it has to ask the data for.
+
+Troubleshooting
+---------------
+
+In some distributions (e.g. CDH) you may need to load the native libraries into the DistributedCache. Usually this is not needed since we bundle them in the JAR and load them from the task's parent work dir. However if you experience problems with that (for example because the distribution is not unjarring the JAR) you can always load the native libraries into the DistributedCache with the method <code>addSQLite4JavaNativeLibsToDC</code> of [SploutHadoopConfiguration](https://github.com/datasalt/splout-db/blob/master/splout-hadoop/src/main/java/com/splout/db/common/SploutHadoopConfiguration.java).
