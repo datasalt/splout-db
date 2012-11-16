@@ -4,9 +4,9 @@ Splout-Hadoop API
 This module allows you to seamlessly deploy data to Splout through either command-line tools or a comprehensive Hadoop Java API. To get started, make sure you have a Hadoop installation (stable 1.0.4, 0.20.X or similar) running in your computer and:
 
 <pre>
-	mvn package<br />
-	cd target<br />
-	hadoop jar splout-hadoop-0.1-SNAPSHOT-hadoop.jar<br />
+	mvn package
+	cd target
+	hadoop jar splout-hadoop-0.1-SNAPSHOT-hadoop.jar
 </pre>
 
 If Hadoop is properly installed and HADOOP_HOME set, you will see a list of tools printed in the screen.

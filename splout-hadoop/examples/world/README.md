@@ -46,17 +46,17 @@ Now, you can launch some queries at the query console:
 Perform the following query to show all the tables in the tablespace:
 
 <pre>
-  Tablespace = city_pby_country_code
-  Partition key = 
-  Query = SELECT * FROM sqlite_master WHERE type='table';
+	Tablespace = city_pby_country_code
+	Partition key = 
+	Query = SELECT * FROM sqlite_master WHERE type='table';
 </pre>
 
 Now, let's find the cities  with country_code 
 
 <pre>
-  Tablespace = city_pby_country_code
-  Partition key = JPN 
-  Query = SELECT * FROM city WHERE country_code = "JPN"
+	Tablespace = city_pby_country_code
+	Partition key = JPN 
+	Query = SELECT * FROM city WHERE country_code = "JPN"
 </pre>
 
 Note that the shard 2 (partition 2) was hit. That is because we provided "JPN" as partition key. Otherwise, an improper partition would have been hit, and no results would have been presented. Perform a test. Repeat the query, but keep the partition key empty. You'll see no results and partition 0 being hit.
@@ -117,41 +117,41 @@ You can check the following queries:
 All Japan Languages:
 
 <pre>
-  Tablespace = world-pby-country
-  Partition key = JPN 
-  Query = SELECT country_language.* FROM country, country_language WHERE country.code = country_language.country_code AND country.code = "JPN"
+	Tablespace = world-pby-country
+	Partition key = JPN 
+	Query = SELECT country_language.* FROM country, country_language WHERE country.code = country_language.country_code AND country.code = "JPN"
 </pre>
 
 Distinct districs in Japan:
 
 <pre>
-  Tablespace = world-pby-country
-  Partition key = JPN 
-  Query = SELECT country.name, count(distinct district) as num_districts FROM country, city WHERE country.code = "JPN" and country.code = city.country_code;
+	Tablespace = world-pby-country
+	Partition key = JPN 
+	Query = SELECT country.name, count(distinct district) as num_districts FROM country, city WHERE country.code = "JPN" and country.code = city.country_code;
 </pre>
 
 Population of Western Europe:
 
 <pre>
-  Tablespace = world-pby-continent-region
-  Partition key = EuropeWestern Europe 
-  Query = SELECT continent,region,sum(population) total_population FROM country WHERE continent = "Europe" AND region = "Western Europe";
+	Tablespace = world-pby-continent-region
+	Partition key = EuropeWestern Europe 
+	Query = SELECT continent,region,sum(population) total_population FROM country WHERE continent = "Europe" AND region = "Western Europe";
 </pre>
 
 Biggest countries on Central Africa:
 
 <pre>
-  Tablespace = world-pby-continent-region
-  Partition key = AfricaCentral Africa
-  Query = SELECT name, surface_area FROM country WHERE continent = "Africa" AND region = "Central Africa" ORDER BY surface_area DESC;
+	Tablespace = world-pby-continent-region
+	Partition key = AfricaCentral Africa
+	Query = SELECT name, surface_area FROM country WHERE continent = "Africa" AND region = "Central Africa" ORDER BY surface_area DESC;
 </pre>
 
 Most talked languages on Central Africa:
 
 <pre>
-  Tablespace = world-pby-continent-region
-  Partition key = AfricaCentral Africa
-  Query = SELECT  language, sum((percentage/100)*population) as people FROM country, country_language WHERE country.code = country_language.country_code AND continent = "Africa" AND region = "Central Africa" GROUP BY language ORDER BY people DESC;
+	Tablespace = world-pby-continent-region
+	Partition key = AfricaCentral Africa
+	Query = SELECT  language, sum((percentage/100)*population) as people FROM country, country_language WHERE country.code = country_language.country_code AND continent = "Africa" AND region = "Central Africa" GROUP BY language ORDER BY people DESC;
 </pre>
 
 Note that all the queries presented before are compatible with the partitioning decided for the tablespace. Otherwise they would have not worked properly. Also, be careful to properly define the needed indexes in order to answer queries fast.
