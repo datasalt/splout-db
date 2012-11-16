@@ -1,7 +1,4 @@
-Starting Splout SQL:
-====================
-
-This example assumes you have already started a local QNode and DNode as shown in [splout-server](). 
+This example assumes you have already started a local QNode and DNode as shown in [splout-server](https://github.com/datasalt/splout-db/tree/master/splout-server). 
 
 Upload to HDFS the examples folder, as it contains the input files. 
 

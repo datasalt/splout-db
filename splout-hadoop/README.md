@@ -1,0 +1,32 @@
+Splout-Hadoop API
+=================
+
+This module allows you to seamlessly deploy data to Splout through either command-line tools or a comprehensive Hadoop Java API. To get started, make sure you have a Hadoop installation (stable 1.0.4, 0.20.X or similar) running in your computer and:
+
+<pre>
+	mvn package<br />
+	cd target<br />
+	hadoop jar splout-hadoop-0.1-SNAPSHOT-hadoop.jar<br />
+</pre>
+
+If Hadoop is properly installed and HADOOP_HOME set, you will see a list of tools printed in the screen.
+
+Command-line tools
+------------------
+
+Out of the tools included in the Hadoop driver, these are the most important ones:
+
+- **simple-generate**: A tool for converting a CSV file into a tablespace with just one table. See <code>generate</code> tool for multiple table or multiple tablespace cases.
+- **generate**: A tool for generating tablespaces from existing files (CSV).
+- **deploy**: A tool for deploying tablespaces generated with tools like <code>generate</code> or <code>simple-generate</code> into an existing Splout cluster
+
+Right now, *splout-hadoop* allows you to easily index and deploy CSV files in your HDFS, either by **simple-generate** or **generate** followed by **deploy**.
+
+You can now follow the [world-data example](https://github.com/datasalt/splout-db/tree/master/splout-hadoop/examples/world) to get introduced with these tools.
+
+Java API
+--------
+
+For more advanced use cases you can use the Java API. You will see an example of such usage in the [Wikipedia Page Counts Example](https://github.com/datasalt/splout-db/blob/master/splout-hadoop/src/main/java/com/splout/db/examples/PageCountsExample.java).
+
+
