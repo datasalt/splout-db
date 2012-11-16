@@ -6,6 +6,8 @@ This module allows you to seamlessly deploy data to Splout through either comman
 <pre>
 	mvn package
 	cd target
+	tar xvfz splout-hadoop-0.1-SNAPSHOT-distro.tar.gz
+	cd splout-hadoop-0.1-SNAPSHOT/
 	hadoop jar splout-hadoop-0.1-SNAPSHOT-hadoop.jar
 </pre>
 

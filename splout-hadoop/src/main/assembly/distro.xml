@@ -3,10 +3,22 @@
   <formats>
     <format>tar.gz</format>
   </formats>
+  <files>
+    <file>
+      <source>
+        target/${project.artifactId}-${project.version}-hadoop.jar
+      </source>
+      <outputDirectory>/</outputDirectory>
+  </file>
+  </files>  
   <fileSets>
   	<fileSet>
   		<directory>target/maven-shared-archive-resources</directory>
   		<outputDirectory>native</outputDirectory>  	
+  	</fileSet>
+	<fileSet>
+  		<directory>examples</directory>
+  		<outputDirectory>examples</outputDirectory>  	
   	</fileSet>
   	<fileSet>
   		<directory>src/main/scripts</directory>
