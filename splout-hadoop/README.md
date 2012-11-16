@@ -41,4 +41,4 @@ The *partitioning key* is then used in the query API so that Splout knows which 
 Troubleshooting
 ---------------
 
-In some distributions (e.g. CDH) you may need to load the native libraries into the DistributedCache. Usually this is not needed since we bundle them in the JAR and load them from the task's parent work dir. However if you experience problems with that (for example because the distribution is not unjarring the JAR) you can always load the native libraries into the DistributedCache with the method <code>addSQLite4JavaNativeLibsToDC</code> of [SploutHadoopConfiguration](https://github.com/datasalt/splout-db/blob/master/splout-hadoop/src/main/java/com/splout/db/common/SploutHadoopConfiguration.java).
+Support for distributions other than Apache 1.0.4, 0.20.X is still a work in progress. Support for CDH3X is going to be soon available.
