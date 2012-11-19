@@ -40,8 +40,8 @@ public class PageCountsWebapp {
 	@Parameter(names = { "-p", "--port" }, description = "The port the webapp will run on.")
 	Integer port = 8080;
 
-	@Parameter(required = true, names = { "-q", "--qnodes" }, description = "The QNodes this demo will use, comma-separated.")
-	String qNodes;
+	@Parameter(names = { "-q", "--qnodes" }, description = "The QNodes this demo will use, comma-separated.")
+	String qNodes = "http://localhost:4412";
 	
 	public void run() throws Exception {
 		Server server = new Server(port);
