@@ -3,5 +3,4 @@ target/
 .project
 .settings
 src/license
-src/main/gen-java
 splout.properties

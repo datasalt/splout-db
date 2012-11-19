@@ -87,6 +87,29 @@
 			</plugin>
 
 			<plugin>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>default-cli</id>
+						<configuration>
+							<tasks>
+								<exec executable="/usr/local/bin/thrift">
+									<arg value="--gen" />
+									<arg value="java" />
+									<arg value="-o" />
+									<arg value="src/main" />
+									<arg value="src/main/thrift/dnode.thrift" />
+								</exec>
+							</tasks>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>2.12</version>
@@ -442,30 +465,6 @@
 								<phase>package</phase>
 								<goals>
 									<goal>single</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-
-					<plugin>
-						<artifactId>maven-antrun-plugin</artifactId>
-						<executions>
-							<execution>
-								<id>generate-thrift</id>
-								<phase>generate-sources</phase>
-								<configuration>
-									<tasks>
-										<exec executable="/usr/local/bin/thrift">
-											<arg value="--gen" />
-											<arg value="java" />
-											<arg value="-o" />
-											<arg value="src/main" />
-											<arg value="src/main/thrift/dnode.thrift" />
-										</exec>
-									</tasks>
-								</configuration>
-								<goals>
-									<goal>run</goal>
 								</goals>
 							</execution>
 						</executions>
