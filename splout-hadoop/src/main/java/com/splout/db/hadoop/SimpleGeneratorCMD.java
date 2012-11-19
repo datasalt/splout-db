@@ -20,6 +20,7 @@ package com.splout.db.hadoop;
  * #L%
  */
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,6 +38,7 @@ import com.datasalt.pangool.io.Fields;
 import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleTextInputFormat;
 import com.datasalt.pangool.utils.HadoopUtils;
+import com.splout.db.common.SploutHadoopConfiguration;
 import com.splout.db.hadoop.TupleSampler.SamplingType;
 
 /**
@@ -126,6 +128,13 @@ public class SimpleGeneratorCMD implements Tool {
 		Path out = new Path(output, tablespace);
 		FileSystem outFs = out.getFileSystem(getConf());
 		HadoopUtils.deleteIfExists(outFs, out);
+		
+		if(!FileSystem.getLocal(conf).equals(FileSystem.get(conf))) {
+			File nativeLibs = new File("native");
+			if(nativeLibs.exists()) {
+				SploutHadoopConfiguration.addSQLite4JavaNativeLibsToDC(conf);
+			}
+		}
 		
 		int fixedWidth[] = null;
 		if (fixedWidthFields != null) {

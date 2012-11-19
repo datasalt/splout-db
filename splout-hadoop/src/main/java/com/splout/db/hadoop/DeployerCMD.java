@@ -90,7 +90,7 @@ public class DeployerCMD implements Tool {
 			jComm.usage();
 			return -1;
 		}
-
+		
 		StoreDeployerTool deployer = new StoreDeployerTool(qnode, getConf());		
 		
 		ArrayList<TablespaceDepSpec> deployments = new ArrayList<TablespaceDepSpec>();

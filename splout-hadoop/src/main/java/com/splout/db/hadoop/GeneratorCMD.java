@@ -20,6 +20,7 @@ package com.splout.db.hadoop;
  * #L%
  */
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +37,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.datasalt.pangool.utils.HadoopUtils;
 import com.splout.db.common.JSONSerDe;
+import com.splout.db.common.SploutHadoopConfiguration;
 import com.splout.db.hadoop.TupleSampler.SamplingType;
 
 /**
@@ -86,6 +88,13 @@ public class GeneratorCMD implements Tool {
 			TablespaceSpec spec = def.build();
 
 			tablespacesToGenerate.put(def.getName(), spec);
+		}
+
+		if(!FileSystem.getLocal(conf).equals(FileSystem.get(conf))) {
+			File nativeLibs = new File("native");
+			if(nativeLibs.exists()) {
+				SploutHadoopConfiguration.addSQLite4JavaNativeLibsToDC(conf);
+			}
 		}
 
 		Path out = new Path(output);

@@ -45,7 +45,7 @@ else
         # Prepend HADOOP_HOME/conf for being able to fetch from HDFS
         # We also prepend ONLY the Hadoop core JAR and the minimun number of jars 
         # for avoiding RPC mismatch problems
-        HADOOP_JARS="$HADOOP_HOME/hadoop-*.jar"
+        HADOOP_JARS="$HADOOP_HOME/hadoop-*.jar $HADOOP_HOME/lib/guava-*.jar"
         for f in $HADOOP_JARS
         do
                 HADOOP_JAR_CS="$HADOOP_JAR_CS:$f"
