@@ -30,8 +30,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<hadoop.version>0.20.2</hadoop.version>
-		<jackson.version>1.7.9</jackson.version>
-    <splout.skip.distribution>true</splout.skip.distribution>		
+		<jackson.version>1.7.9</jackson.version>		
 	</properties>
 
 	<build>
@@ -177,6 +176,7 @@
 					<descriptors>
 						<descriptor>src/main/assembly/hadoop-job.xml</descriptor>
 						<descriptor>src/main/assembly/distro.xml</descriptor>
+						<descriptor>src/main/assembly/pre-full-distro.xml</descriptor>
 					</descriptors>
 					<archive>
 						<manifest>
@@ -195,37 +195,8 @@
 				</executions>
 			</plugin>
 
-			<plugin>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<version>2.2.1</version>
-				<configuration>
-					<descriptors>
-						<descriptor>src/main/assembly/pre-full-distro.xml</descriptor>
-					</descriptors>
-					<skipAssembly>${splout.skip.distribution}</skipAssembly>					
-				</configuration>
-				<executions>
-					<execution>
-						<id>make-pre-full-assembly</id>
-						<phase>package</phase>
-						<goals>
-							<goal>single</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-
 		</plugins>
 	</build>
-
-  <profiles>
-    <profile>
-      <id>release</id>
-      <properties>
-        <splout.skip.distribution>false</splout.skip.distribution>
-      </properties>
-    </profile>
-  </profiles>
   
 	<dependencies>
 

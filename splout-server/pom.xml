@@ -32,7 +32,6 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<hadoop.version>0.20.2</hadoop.version>
 		<jackson.version>1.7.9</jackson.version>
-		<splout.skip.distribution>true</splout.skip.distribution>
 	</properties>
 
 	<build>
@@ -91,7 +90,7 @@
 				<artifactId>maven-antrun-plugin</artifactId>
 				<executions>
 					<execution>
-						<id>default-cli</id>
+						<id>thrift</id>
 						<configuration>
 							<tasks>
 								<exec executable="/usr/local/bin/thrift">
@@ -213,6 +212,32 @@
           </execution>					
 				</executions>
 			</plugin>
+			
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>2.2.1</version>
+				<configuration>
+					<descriptors>
+						<descriptor>src/main/assembly/distro.xml</descriptor>
+						<descriptor>src/main/assembly/pre-full-distro.xml</descriptor>
+					</descriptors>
+					<archive>
+						<manifest>
+							<mainClass>com.splout.db.hadoop.Driver</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+				<executions>
+					<execution>
+						<id>make-assembly</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>						
+					</execution>
+				</executions>
+			</plugin>
+						
 		</plugins>
 	</build>
 	
@@ -435,46 +460,5 @@
 			<version>2.1.2</version>
 		</dependency>
 	</dependencies>
-
-	<profiles>
-		<profile>
-			<id>profile-buildthrift</id>
-			<activation>
-				<file>
-					<exists>/usr/local/bin/thrift</exists>
-				</file>
-			</activation>
-			<build>
-				<plugins>
-
-					<plugin>
-						<artifactId>maven-assembly-plugin</artifactId>
-						<version>2.2.1</version>
-						<configuration>
-							<descriptors>
-								<descriptor>src/main/assembly/distro.xml</descriptor>
-								<descriptor>src/main/assembly/pre-full-distro.xml</descriptor>
-							</descriptors>
-						</configuration>
-						<executions>
-							<execution>
-								<id>make-assembly</id>
-								<phase>package</phase>
-								<goals>
-									<goal>single</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
 		
-    <profile>
-      <id>release</id>
-      <properties>
-        <splout.skip.distribution>false</splout.skip.distribution>
-      </properties>
-    </profile>		
-	</profiles>
 </project>
