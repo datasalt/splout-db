@@ -77,7 +77,7 @@ public class TestMultiThreadedQueryAndDeploy extends BaseIntegrationTest {
 	public final static String TMP_FOLDER = "tmp-" + TestMultiThreadedQueryAndDeploy.class.getName();
 
 	@Test
-	@Ignore // Causes non-deterministic failures which have to be solved first.
+	@Ignore
 	public void test() throws Throwable {
 		FileUtils.deleteDirectory(new File(TMP_FOLDER));
 		new File(TMP_FOLDER).mkdirs();
@@ -133,7 +133,9 @@ public class TestMultiThreadedQueryAndDeploy extends BaseIntegrationTest {
 								assertEquals(1, status.getResult().size());
 								Map<String, Object> jsonResult = (Map<String, Object>) status.getResult().get(0);
 								Integer seenIteration = (Integer) jsonResult.get("iteration");
-								iterationsSeen.add(seenIteration);
+								synchronized(iterationsSeen) {
+									iterationsSeen.add(seenIteration);
+								}
 								assertTrue(seenIteration <= iteration.get());
 								assertEquals(randomDNode, jsonResult.get("dnode"));
 								Thread.sleep(100);
@@ -152,14 +154,16 @@ public class TestMultiThreadedQueryAndDeploy extends BaseIntegrationTest {
 			final SploutConfiguration config = SploutConfiguration.getTestConfig();
 			final int iterationsToPerform = config.getInt(QNodeProperties.VERSIONS_PER_TABLESPACE) + 5;
 			for(int i = 0; i < iterationsToPerform; i++) {
-				log.info("Deploy iteration: " + (iteration.get() + 1));
 				iteration.incrementAndGet();
+				log.info("Deploy iteration: " + iteration.get());
 				deployIteration(iteration.get(), random, client, testTablespace);
 
 				new TestUtils.NotWaitingForeverCondition() {
 					@Override
 					public boolean endCondition() {
-						return iterationsSeen.size() == (iteration.get() + 1);
+						synchronized(iterationsSeen) {
+							return iterationsSeen.size() == (iteration.get() + 1);
+						}
 					}
 				}.waitAtMost(5000);
 			}

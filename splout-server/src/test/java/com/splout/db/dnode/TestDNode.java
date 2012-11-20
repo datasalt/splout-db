@@ -22,8 +22,8 @@ package com.splout.db.dnode;
  */
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
@@ -74,34 +74,31 @@ public class TestDNode {
 	}
 
 	@Test
-	@Ignore // This test fails on fast hard drives like SSDs
 	public void testDeployTimeout() throws Throwable {
 		SploutConfiguration testConfig = SploutConfiguration.getTestConfig();
 		// Set deploy timeout to something very low
 		testConfig.setProperty(DNodeProperties.DEPLOY_TIMEOUT_SECONDS, 1);
 		//
-		DNodeHandler dHandler = new DNodeHandler();
+		DNodeHandler dHandler = new DNodeHandler(new Fetcher(testConfig) {
+			
+			@Override
+			public File fetch(String uriStr) throws IOException, URISyntaxException {
+				try {
+	        Thread.sleep(5000);
+	        return null;
+        } catch(InterruptedException e) {
+	        throw new IOException(e);
+        }
+			}
+		}); 
 		DNode dnode = TestUtils.getTestDNode(testConfig, dHandler, "dnode-" + this.getClass().getName() + "-1");
 		//
 		DNodeService.Client client = DNodeClient.get("localhost", testConfig.getInt(DNodeProperties.PORT));
 
-		byte[] bytes = new byte[2048];
-		for(int i = 0; i < 2048; i++) {
-			bytes[i] = 0x01;
-		}
-		File bigDbFolder = new File("big-db");
-		bigDbFolder.mkdir();
-		File bigDb = new File(bigDbFolder, "big.db");
-		FileOutputStream fos = new FileOutputStream(bigDb);
-		for(int i = 0; i < 51200; i++) { // Generating a big file for making deployment slow
-			fos.write(bytes);
-		}
-		fos.close();
-
 		try {
 			DeployAction deploy = new DeployAction();
 			deploy.setTablespace("tablespace3");
-			deploy.setDataURI(bigDb.toURI().toString());
+			deploy.setDataURI("file:///foo");
 			deploy.setPartition(0);
 			deploy.setVersion(1l);
 			deploy.setMetadata(new PartitionMetadata());
@@ -114,7 +111,6 @@ public class TestDNode {
 			DNodeClient.close(client);
 			//
 			dnode.stop();
-			FileUtils.deleteDirectory(bigDbFolder);
 		}
 	}
 
