@@ -102,12 +102,16 @@ public class PageCountsBenchmark {
 				String pref = new String(randomPrefix());
 				String query = "SELECT * FROM pagecounts WHERE pagename LIKE '" + pref + "%' LIMIT 10";
 				QueryStatus st = client.query(tablespace, pref.substring(0, Math.min(pref.length(), 2)), query);
-				if(st.getResult().size() > 0) {
+				if(st.getResult() != null && st.getResult().size() > 0) {
 					Map<String, Object> obj = (Map<String, Object>) st.getResult().get(
 					    (int) (Math.random() * st.getResult().size()));
 					pageToQuery = (String) obj.get("pagename");
 				}
-				return st.getResult().size();
+				if(st.getResult() != null) {
+					return st.getResult().size();
+				} else {
+					return 0;
+				}
 			} else {
 				// State Automata: If pageToQuery is not null, perform a GROUP BY query and set the page again to null...
 				String query ;
@@ -124,7 +128,11 @@ public class PageCountsBenchmark {
 					pageToQuery = null;
 					querySequence = 0;
 				}
-				return st.getResult().size();
+				if(st.getResult() != null) {
+					return st.getResult().size();
+				} else {
+					return 0;
+				}
 			}
 		}
 	}

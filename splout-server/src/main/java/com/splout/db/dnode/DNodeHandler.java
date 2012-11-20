@@ -86,7 +86,6 @@ public class DNodeHandler implements IDNodeHandler {
 	private CoordinationStructures coord;
 
 	// The {@link Fetcher} is the responsible for downloading new deployment data.
-	private Fetcher fetcher;
 	Cache dbCache;
 
 	protected ExecutorService deployThread;
@@ -111,6 +110,13 @@ public class DNodeHandler implements IDNodeHandler {
 	private AtomicInteger failedQueries = new AtomicInteger(0);
 	private long upSince;
 
+	// The {@link Fetcher} is the responsible for downloading new deployment data.
+	private Fetcher fetcher;
+	
+	public DNodeHandler(Fetcher fetcher) {
+		this.fetcher = fetcher;
+	}
+	
 	public DNodeHandler() {
 	}
 
@@ -135,10 +141,12 @@ public class DNodeHandler implements IDNodeHandler {
 		// http://stackoverflow.com/questions/2583429/how-to-differentiate-between-time-to-live-and-time-to-idle-in-ehcache
 		dbCache = new Cache("dbCache", maxCachePools, false, false, Integer.MAX_VALUE, evictionSeconds);
 		dbCache.initialise();
+		if(fetcher == null) {
+			// The Fetcher in charge of downloading new deployments
+			this.fetcher = new Fetcher(config);
+		}
 		// When a tablespace version is expired, the connection pool is closed by an expiration handler
 		dbCache.getCacheEventNotificationService().registerListener(new CacheListener());
-		// The Fetcher in charge of downloading new deployments
-		fetcher = new Fetcher(config);
 		// The thread that will execute deployments asynchronously
 		deployThread = Executors.newFixedThreadPool(1);
 		// Connect with the cluster.
