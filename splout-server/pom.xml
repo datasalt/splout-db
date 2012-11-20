@@ -32,6 +32,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<hadoop.version>0.20.2</hadoop.version>
 		<jackson.version>1.7.9</jackson.version>
+		<splout.skip.distribution>true</splout.skip.distribution>
 	</properties>
 
 	<build>
@@ -214,7 +215,7 @@
 			</plugin>
 		</plugins>
 	</build>
-
+	
 	<dependencies>
 
 		<dependency>
@@ -452,12 +453,8 @@
 						<configuration>
 							<descriptors>
 								<descriptor>src/main/assembly/distro.xml</descriptor>
+								<descriptor>src/main/assembly/pre-full-distro.xml</descriptor>
 							</descriptors>
-							<archive>
-								<manifest>
-									<mainClass>com.splout.db.hadoop.Driver</mainClass>
-								</manifest>
-							</archive>
 						</configuration>
 						<executions>
 							<execution>
@@ -472,5 +469,12 @@
 				</plugins>
 			</build>
 		</profile>
+		
+    <profile>
+      <id>release</id>
+      <properties>
+        <splout.skip.distribution>false</splout.skip.distribution>
+      </properties>
+    </profile>		
 	</profiles>
 </project>

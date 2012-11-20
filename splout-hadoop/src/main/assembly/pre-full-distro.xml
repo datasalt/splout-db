@@ -1,7 +1,8 @@
 <assembly xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
-  <id>distro</id>
+  <id>pre-full-distro</id>
+  <includeBaseDirectory>false</includeBaseDirectory>
   <formats>
     <format>tar.gz</format>
   </formats>
@@ -14,11 +15,14 @@
   </file>
   </files>  
   <fileSets>
-  	<fileSet>
-  		<directory>target/maven-shared-archive-resources</directory>
-  		<outputDirectory>native</outputDirectory>  	
-  	</fileSet>
-	<fileSet>
+ 		<fileSet>  		
+  		<directory></directory>
+  		<includes>
+  			<include>SPLOUT-HADOOP-LICENSING</include>  			
+			</includes>
+  		<outputDirectory></outputDirectory>  	
+  	</fileSet>  	
+		<fileSet>
   		<directory>examples</directory>
   		<outputDirectory>examples</outputDirectory>  	
   	</fileSet>
@@ -35,11 +39,4 @@
   		<outputDirectory>pagecounts</outputDirectory>
   	</fileSet>
   </fileSets>
-  <dependencySets>
-    <dependencySet>
-      <unpack>false</unpack>
-      <scope>runtime</scope>
-      <outputDirectory>lib</outputDirectory>
-    </dependencySet>
-  </dependencySets>
 </assembly>
