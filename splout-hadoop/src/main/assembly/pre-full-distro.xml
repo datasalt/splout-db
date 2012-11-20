@@ -32,11 +32,11 @@
   	</fileSet>
   	<fileSet>
   		<directory>src/main/resources/pagecounts-sample</directory>
-  		<outputDirectory>pagecounts-sample</outputDirectory>
+  		<outputDirectory>examples/pagecounts/pagecounts-sample</outputDirectory>
   	</fileSet>
   	<fileSet>
   		<directory>src/main/resources/pagecounts</directory>
-  		<outputDirectory>pagecounts</outputDirectory>
+  		<outputDirectory>examples/pagecounts</outputDirectory>
   	</fileSet>
   </fileSets>
 </assembly>

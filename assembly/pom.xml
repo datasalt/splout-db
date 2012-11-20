@@ -26,10 +26,6 @@
 		</license>
 	</licenses>
 
-  <properties>
-    <splout.skip.distribution>true</splout.skip.distribution>
-  </properties>
-
 	<name>Splout SQL Assembly</name>
 	<description>Splout module just to build the distribution assembly</description>
 	<build>
@@ -42,7 +38,6 @@
 						<descriptor>src/main/assembly/distro.xml</descriptor>
 					</descriptors>
 					<appendAssemblyId>false</appendAssemblyId>
-					<skipAssembly>${splout.skip.distribution}</skipAssembly>
 				</configuration>
 				<executions>
 					<execution>
@@ -56,15 +51,6 @@
 			</plugin>
 		</plugins>
 	</build>
-
-  <profiles>
-    <profile>
-      <id>release</id>
-      <properties>
-        <splout.skip.distribution>false</splout.skip.distribution>
-      </properties>
-    </profile>
-  </profiles>
 
 	<dependencies>
 		<dependency>
