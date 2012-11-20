@@ -13,7 +13,7 @@
 	</parent>
 
 	<groupId>com.splout.db</groupId>
-	<artifactId>assembly</artifactId>
+	<artifactId>splout-distribution</artifactId>
 	<version>${project.parent.version}</version>
 
 	<packaging>pom</packaging>
@@ -26,6 +26,10 @@
 		</license>
 	</licenses>
 
+  <properties>
+    <splout.skip.distribution>true</splout.skip.distribution>
+  </properties>
+
 	<name>Splout SQL Assembly</name>
 	<description>Splout module just to build the distribution assembly</description>
 	<build>
@@ -37,6 +41,8 @@
 					<descriptors>
 						<descriptor>src/main/assembly/distro.xml</descriptor>
 					</descriptors>
+					<appendAssemblyId>false</appendAssemblyId>
+					<skipAssembly>${splout.skip.distribution}</skipAssembly>
 				</configuration>
 				<executions>
 					<execution>
@@ -51,17 +57,30 @@
 		</plugins>
 	</build>
 
+  <profiles>
+    <profile>
+      <id>release</id>
+      <properties>
+        <splout.skip.distribution>false</splout.skip.distribution>
+      </properties>
+    </profile>
+  </profiles>
+
 	<dependencies>
 		<dependency>
 			<groupId>com.splout.db</groupId>
 			<artifactId>splout-hadoop</artifactId>
-			<version>${project.parent.version}</version>			
+			<version>${project.parent.version}</version>
+			<type>tar.gz</type>
+			<classifier>pre-full-distro</classifier>			
 		</dependency>
 		
 		<dependency>
 			<groupId>com.splout.db</groupId>
 			<artifactId>splout-server</artifactId>
-			<version>${project.parent.version}</version>			
+			<version>${project.parent.version}</version>
+			<type>tar.gz</type>
+			<classifier>pre-full-distro</classifier>								
 		</dependency>		
 	</dependencies>
 

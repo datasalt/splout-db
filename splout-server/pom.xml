@@ -90,7 +90,7 @@
 				<artifactId>maven-antrun-plugin</artifactId>
 				<executions>
 					<execution>
-						<id>default-cli</id>
+						<id>thrift</id>
 						<configuration>
 							<tasks>
 								<exec executable="/usr/local/bin/thrift">
@@ -219,6 +219,7 @@
 				<configuration>
 					<descriptors>
 						<descriptor>src/main/assembly/distro.xml</descriptor>
+						<descriptor>src/main/assembly/pre-full-distro.xml</descriptor>
 					</descriptors>
 					<archive>
 						<manifest>
@@ -232,13 +233,14 @@
 						<phase>package</phase>
 						<goals>
 							<goal>single</goal>
-						</goals>
+						</goals>						
 					</execution>
 				</executions>
 			</plugin>
+						
 		</plugins>
 	</build>
-
+	
 	<dependencies>
 
 		<dependency>
@@ -458,4 +460,5 @@
 			<version>2.1.2</version>
 		</dependency>
 	</dependencies>
+		
 </project>

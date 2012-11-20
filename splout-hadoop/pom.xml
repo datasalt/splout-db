@@ -30,7 +30,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<hadoop.version>0.20.2</hadoop.version>
-		<jackson.version>1.7.9</jackson.version>
+		<jackson.version>1.7.9</jackson.version>		
 	</properties>
 
 	<build>
@@ -176,6 +176,7 @@
 					<descriptors>
 						<descriptor>src/main/assembly/hadoop-job.xml</descriptor>
 						<descriptor>src/main/assembly/distro.xml</descriptor>
+						<descriptor>src/main/assembly/pre-full-distro.xml</descriptor>
 					</descriptors>
 					<archive>
 						<manifest>
@@ -196,7 +197,7 @@
 
 		</plugins>
 	</build>
-
+  
 	<dependencies>
 
 		<dependency>

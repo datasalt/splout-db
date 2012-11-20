@@ -43,8 +43,8 @@
 				<configuration>
 					<projectNameTemplate>[artifactId]</projectNameTemplate>
 					<manifest />
-					<downloadSources>false</downloadSources>
-					<downloadJavadocs>false</downloadJavadocs>
+					<downloadSources>true</downloadSources>
+					<downloadJavadocs>true</downloadJavadocs>
 				</configuration>
 			</plugin>
 			<plugin>
