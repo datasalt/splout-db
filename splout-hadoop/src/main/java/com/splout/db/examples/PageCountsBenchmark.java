@@ -75,7 +75,7 @@ public class PageCountsBenchmark {
 		String pageToQuery = null;
 
 		int querySequence = 0;
-		
+
 		@Override
 		public void init(Map<String, String> context) throws Exception {
 			client = new SploutClient(context.get("qnodes").split(","));
@@ -95,56 +95,64 @@ public class PageCountsBenchmark {
 		}
 
 		@SuppressWarnings("unchecked")
-    @Override
+		@Override
 		public int nextQuery() throws Exception {
-			if(pageToQuery == null) {
-				// State Automata: If pageToQuery is null, get a random one from an auto-suggest query...
-				String pref = new String(randomPrefix());
-				String query = "SELECT * FROM pagecounts WHERE pagename LIKE '" + pref + "%' LIMIT 10";
-				QueryStatus st = client.query(tablespace, pref.substring(0, Math.min(pref.length(), 2)), query);
-				if(st.getResult() != null && st.getResult().size() > 0) {
-					Map<String, Object> obj = (Map<String, Object>) st.getResult().get(
-					    (int) (Math.random() * st.getResult().size()));
-					pageToQuery = (String) obj.get("pagename");
-				}
-				if(st.getResult() != null) {
-					return st.getResult().size();
+			try {
+				if(pageToQuery == null) {
+					// State Automata: If pageToQuery is null, get a random one from an auto-suggest query...
+					String pref = new String(randomPrefix());
+					String query = "SELECT * FROM pagecounts WHERE pagename LIKE '" + pref + "%' LIMIT 10";
+					QueryStatus st = client
+					    .query(tablespace, pref.substring(0, Math.min(pref.length(), 2)), query);
+					if(st.getResult() != null && st.getResult().size() > 0) {
+						Map<String, Object> obj = (Map<String, Object>) st.getResult().get(
+						    (int) (Math.random() * st.getResult().size()));
+						pageToQuery = (String) obj.get("pagename");
+					}
+					if(st.getResult() != null) {
+						return st.getResult().size();
+					} else {
+						return 0;
+					}
 				} else {
-					return 0;
+					// State Automata: If pageToQuery is not null, perform a GROUP BY query and set the page again to null...
+					String query;
+					if(querySequence == 0) {
+						query = "SELECT SUM(pageviews) AS totalpageviews, date FROM pagecounts WHERE pagename = '"
+						    + pageToQuery + "' GROUP BY date;";
+					} else {
+						query = "SELECT SUM(pageviews) AS totalpageviews, hour FROM pagecounts WHERE pagename = '"
+						    + pageToQuery + "' GROUP BY hour;";
+					}
+					QueryStatus st = client.query(tablespace,
+					    pageToQuery.substring(0, Math.min(pageToQuery.length(), 2)), query);
+					querySequence++;
+					if(querySequence == 2) {
+						pageToQuery = null;
+						querySequence = 0;
+					}
+					if(st.getResult() != null) {
+						return st.getResult().size();
+					} else {
+						return 0;
+					}
 				}
-			} else {
-				// State Automata: If pageToQuery is not null, perform a GROUP BY query and set the page again to null...
-				String query ;
-				if(querySequence == 0) {
-					query = "SELECT SUM(pageviews) AS totalpageviews, date FROM pagecounts WHERE pagename = '"
-				    + pageToQuery + "' GROUP BY date;";
-				} else {
-					query = "SELECT SUM(pageviews) AS totalpageviews, hour FROM pagecounts WHERE pagename = '" 
-						+ pageToQuery + "' GROUP BY hour;";					
-				}
-				QueryStatus st = client.query(tablespace, pageToQuery.substring(0, Math.min(pageToQuery.length(), 2)), query);
-				querySequence++;
-				if(querySequence == 2) {
-					pageToQuery = null;
-					querySequence = 0;
-				}
-				if(st.getResult() != null) {
-					return st.getResult().size();
-				} else {
-					return 0;
-				}
+			} catch(java.net.SocketTimeoutException e) {
+				//
+				System.err.println("More than 20 seconds... ");
+				return 0;
 			}
 		}
 	}
-	
+
 	public static void main(String[] args) throws InterruptedException {
 		PageCountsBenchmark benchmarkTool = new PageCountsBenchmark();
-		
+
 		JCommander jComm = new JCommander(benchmarkTool);
 		jComm.setProgramName("PageCounts Benchmark Tool");
 		try {
 			jComm.parse(args);
-		} catch (ParameterException e){
+		} catch(ParameterException e) {
 			System.out.println(e.getMessage());
 			System.out.println();
 			jComm.usage();
@@ -154,7 +162,7 @@ public class PageCountsBenchmark {
 			jComm.usage();
 			System.exit(-1);
 		}
-		
+
 		benchmarkTool.start();
 		System.exit(0);
 	}

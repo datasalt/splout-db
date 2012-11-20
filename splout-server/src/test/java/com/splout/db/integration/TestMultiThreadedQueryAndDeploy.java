@@ -36,7 +36,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.io.FileUtils;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,7 +76,6 @@ public class TestMultiThreadedQueryAndDeploy extends BaseIntegrationTest {
 	public final static String TMP_FOLDER = "tmp-" + TestMultiThreadedQueryAndDeploy.class.getName();
 
 	@Test
-	@Ignore
 	public void test() throws Throwable {
 		FileUtils.deleteDirectory(new File(TMP_FOLDER));
 		new File(TMP_FOLDER).mkdirs();
