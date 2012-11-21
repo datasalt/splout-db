@@ -30,7 +30,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<hadoop.version>0.20.2</hadoop.version>
 		<jackson.version>1.7.9</jackson.version>
-		<pangool.version>0.43.6-SNAPSHOT</pangool.version>		
+		<pangool.version>0.43.6-SNAPSHOT</pangool.version>
 	</properties>
 
 	<build>
@@ -152,20 +152,20 @@
 							<licenseName>apache_v2</licenseName>
 						</configuration>
 					</execution>
-          <execution>
-            <id>update-file-header</id>
-            <goals>
-              <goal>update-file-header</goal>
-            </goals>
-            <phase>process-sources</phase>
-            <configuration>
-              <licenseName>apache_v2</licenseName>
-              <roots>
-                <root>src/main/java</root>
-                <root>src/test/java</root>
-              </roots>              
-            </configuration>
-          </execution>										
+					<execution>
+						<id>update-file-header</id>
+						<goals>
+							<goal>update-file-header</goal>
+						</goals>
+						<phase>process-sources</phase>
+						<configuration>
+							<licenseName>apache_v2</licenseName>
+							<roots>
+								<root>src/main/java</root>
+								<root>src/test/java</root>
+							</roots>
+						</configuration>
+					</execution>
 				</executions>
 			</plugin>
 
@@ -197,7 +197,7 @@
 
 		</plugins>
 	</build>
-  
+
 	<dependencies>
 
 		<dependency>

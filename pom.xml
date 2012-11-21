@@ -17,11 +17,11 @@
 		<artifactId>oss-parent</artifactId>
 		<version>7</version>
 	</parent>
-	
+
 	<groupId>com.splout.db</groupId>
 	<artifactId>splout-top-level</artifactId>
 	<version>0.1-SNAPSHOT</version>
-	
+
 	<modules>
 		<module>splout-resources</module>
 		<module>splout-server</module>
@@ -34,7 +34,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<hadoop.version>0.20.2</hadoop.version>
-		<jackson.version>1.7.9</jackson.version>		
+		<jackson.version>1.7.9</jackson.version>
 	</properties>
 
 	<dependencies />
@@ -147,8 +147,8 @@
 	<mailingLists />
 
 	<scm>
-		<url>https://github.com/datasalt/splout-db</url> 
-		<connection>scm:git:git://github.com/datasalt/splout-db.git</connection> 
+		<url>https://github.com/datasalt/splout-db</url>
+		<connection>scm:git:git://github.com/datasalt/splout-db.git</connection>
 		<developerConnection>scm:git:git@github.com:datasalt/splout-db.git</developerConnection>
 	</scm>
 
@@ -160,16 +160,16 @@
 
 	<repositories>
 		<repository>
-	     <id>pangool-snapshots</id>
-	     <name>Pangool Snapshot Repository</name>
-	     <url>http://clinker.pangool.net/nexus/content/groups/public-snapshots</url>
-	     <releases>
-	         <enabled>false</enabled>
-	     </releases>
-	     <snapshots>
-	         <enabled>true</enabled>
-	     </snapshots>
-	 </repository>
+			<id>pangool-snapshots</id>
+			<name>Pangool Snapshot Repository</name>
+			<url>http://clinker.pangool.net/nexus/content/groups/public-snapshots</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
 	</repositories>
 
 	<pluginRepositories />
