@@ -17,9 +17,11 @@
 		<artifactId>oss-parent</artifactId>
 		<version>7</version>
 	</parent>
+	
 	<groupId>com.splout.db</groupId>
 	<artifactId>splout-top-level</artifactId>
 	<version>0.1-SNAPSHOT</version>
+	
 	<modules>
 		<module>splout-resources</module>
 		<module>splout-server</module>
@@ -28,6 +30,12 @@
 		<module>splout-javaclient</module>
 		<module>assembly</module>
 	</modules>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<hadoop.version>0.20.2</hadoop.version>
+		<jackson.version>1.7.9</jackson.version>		
+	</properties>
 
 	<dependencies />
 
@@ -135,12 +143,13 @@
 
 	<!-- Environment Information -->
 
+	<!-- TODO -->
 	<mailingLists />
 
-	<!-- TODO -->
 	<scm>
-		<!-- <url>https://github.com/datasalt/pangool</url> <connection>scm:git:git@github.com:datasalt/pangool.git</connection> 
-			<developerConnection>scm:git:git@github.com:datasalt/pangool.git</developerConnection> -->
+		<url>https://github.com/datasalt/splout-db</url> 
+		<connection>scm:git:git://github.com/datasalt/splout-db.git</connection> 
+		<developerConnection>scm:git:git@github.com:datasalt/splout-db.git</developerConnection>
 	</scm>
 
 	<!-- TODO -->
@@ -149,13 +158,20 @@
 
 	<!-- Maven Environment -->
 
-	<repositories />
+	<repositories>
+		<repository>
+	     <id>pangool-snapshots</id>
+	     <name>Pangool Snapshot Repository</name>
+	     <url>http://clinker.pangool.net/nexus/content/groups/public-snapshots</url>
+	     <releases>
+	         <enabled>false</enabled>
+	     </releases>
+	     <snapshots>
+	         <enabled>true</enabled>
+	     </snapshots>
+	 </repository>
+	</repositories>
 
 	<pluginRepositories />
-
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-	</properties>
-
 	<!-- TODO Snapshots ? -->
 </project>

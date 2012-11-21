@@ -13,7 +13,6 @@
 
 	<groupId>com.splout.db</groupId>
 	<artifactId>splout-hadoop</artifactId>
-	<version>${project.parent.version}</version>
 	<packaging>jar</packaging>
 
 	<name>Splout SQL Hadoop library</name>
@@ -30,7 +29,8 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<hadoop.version>0.20.2</hadoop.version>
-		<jackson.version>1.7.9</jackson.version>		
+		<jackson.version>1.7.9</jackson.version>
+		<pangool.version>0.43.6-SNAPSHOT</pangool.version>		
 	</properties>
 
 	<build>
@@ -359,7 +359,7 @@
 		<dependency>
 			<groupId>com.datasalt.pangool</groupId>
 			<artifactId>pangool-core</artifactId>
-			<version>0.43.5</version>
+			<version>${pangool.version}</version>
 			<exclusions>
 				<exclusion>
 					<!-- Excluded because license incompatibility -->
