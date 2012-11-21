@@ -292,8 +292,13 @@
 		projects[projectName] = {}; // Add project to project map if it didn't exist
 		e.preventDefault();
 		
+		var sep = "'";
+		if(projectName.indexOf("'") != -1) {
+			sep = "\"";
+		}
+			
 		// Total pageviews per day base query:
-		var query = "SELECT SUM(pageviews) AS totalpageviews, date FROM pagecounts WHERE pagename = '" + projectName + "'";
+		var query = "SELECT SUM(pageviews) AS totalpageviews, date FROM pagecounts WHERE pagename = " + sep + projectName + sep;
 		
 		// Add date constraints to the query if needed
 		var since = $("#dp1").val();
@@ -325,7 +330,7 @@
 		);
         		
        	// Total pageviews per hour of day base query:
-       	query = "SELECT SUM(pageviews) AS totalpageviews, hour FROM pagecounts WHERE pagename = '" + projectName + "'";
+       	query = "SELECT SUM(pageviews) AS totalpageviews, hour FROM pagecounts WHERE pagename = " + sep + projectName + sep;
        	
        	// Add date constraints to the query if needed
        	if(since != "Oldest") {
@@ -371,13 +376,19 @@
 		if(autocompleteCache[val]) {
   			inputSearch.autocomplete({ source: autocompleteCache[val] });
 		} else {
-			var query = "SELECT DISTINCT(pagename) FROM pagecounts WHERE pagename LIKE '";
+			var query = "SELECT DISTINCT(pagename) FROM pagecounts WHERE pagename LIKE ";
+			var sep = "'";
+			if(val.indexOf("'") != -1) {
+				sep = "\"";
+			}
+			query += sep;
 			if(val.indexOf("_") != -1) { 
 				val = val.split('_').join('\\_');
-				query = query + val + "%25' ESCAPE '\\' "; 
+				query = query + val + "%25" + sep + " ESCAPE '\\' "; 
 			} else {
-				query = query + val + "%25'"; 
+				query = query + val + "%25" + sep; 
 			}
+			
 			query = query + " LIMIT 10;"
 	    	$.getJSON("/api?key=" + val.substring(0, 2) + "&sql=" + query,
   				function(data) {
