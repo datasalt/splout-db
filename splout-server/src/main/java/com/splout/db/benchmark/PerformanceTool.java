@@ -41,9 +41,10 @@ public class PerformanceTool {
 		startTime.set(System.currentTimeMillis());
 	}
 	
-	public void endQuery() {
+	public long endQuery() {
 		long time = System.currentTimeMillis() - startTime.get();
 		histogram.add(time);
+		return time;
 	}
 	
 	public int getNQueries() {
