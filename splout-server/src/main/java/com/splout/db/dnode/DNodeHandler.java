@@ -113,6 +113,8 @@ public class DNodeHandler implements IDNodeHandler {
 	// The {@link Fetcher} is the responsible for downloading new deployment data.
 	private Fetcher fetcher;
 	
+	private long absoluteSlowQueryLimit;
+	
 	public DNodeHandler(Fetcher fetcher) {
 		this.fetcher = fetcher;
 	}
@@ -137,6 +139,7 @@ public class DNodeHandler implements IDNodeHandler {
 		long evictionSeconds = config.getLong(DNodeProperties.EH_CACHE_SECONDS);
 		maxResultsPerQuery = config.getInt(DNodeProperties.MAX_RESULTS_PER_QUERY);
 		int maxCachePools = config.getInt(DNodeProperties.EH_CACHE_N_ELEMENTS);
+		absoluteSlowQueryLimit = config.getLong(DNodeProperties.SLOW_QUERY_ABSOLUTE_LIMIT);
 		// We create a Cache for holding SQL connection pools to different tablespace versions
 		// http://stackoverflow.com/questions/2583429/how-to-differentiate-between-time-to-live-and-time-to-idle-in-ehcache
 		dbCache = new Cache("dbCache", maxCachePools, false, false, Integer.MAX_VALUE, evictionSeconds);
@@ -238,8 +241,17 @@ public class DNodeHandler implements IDNodeHandler {
 					// Query the {@link SQLite4JavaManager} and return
 					String result = ((SQLite4JavaManager) dbPoolInCache.getObjectValue()).query(query,
 					    maxResultsPerQuery);
-					performanceTool.endQuery();
-					log.info("serving query [" + tablespace + "]"  + " [" + version + "] [" + partition + "] [" + query + "] OK.");
+					long time = performanceTool.endQuery();
+					log.info("serving query [" + tablespace + "]"  + " [" + version + "] [" + partition + "] [" + query + "] time [" + time + "] OK.");
+					double prob = performanceTool.getHistogram().getLeftAccumulatedProbability(time);
+					if(prob > 0.95) {
+						// slow query!
+						log.warn("[SLOW QUERY] Query time over 95 percentil: [" + query + "] time [" + time + "]");
+					}
+					if(time > absoluteSlowQueryLimit) {
+						// slow query!
+						log.warn("[SLOW QUERY] Query time over absolute slow query time (" + absoluteSlowQueryLimit + ") : [" + query + "] time [" + time + "]");						
+					}
 					return result;
 				} else {
 					throw new DNodeException(

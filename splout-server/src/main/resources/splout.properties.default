@@ -79,6 +79,12 @@ dnode.max.results.per.query	100
 dnode.handle.test.commands	false
 
 #
+# In milliseconds, queries that are slower will be logged with a WARNING. 
+#
+	 
+dnode.slow.query.abs.limit	2500
+
+#
 # DNode Data Fetcher Properties
 #
 

@@ -41,6 +41,7 @@ import com.splout.db.common.JSONSerDe;
 import com.splout.db.qnode.IQNodeHandler;
 import com.splout.db.qnode.QNode;
 import com.splout.db.qnode.beans.DeployRequest;
+import com.splout.db.qnode.beans.QueryStatus;
 import com.splout.db.qnode.beans.SwitchVersionRequest;
 
 /**
@@ -68,9 +69,10 @@ public class RESTAPI {
 		for(String strKey : keys) {
 			key += strKey;
 		}
+		QueryStatus st = ((IQNodeHandler) rc.getProperties().get("handler")).query(tablespace, key, sql);
 		log.info(Thread.currentThread().getName() + ": Query request received, tablespace[" + tablespace + "], key[" + key + "], sql[" + sql
-		    + "]");
-		String resp = JSONSerDe.ser(((IQNodeHandler) rc.getProperties().get("handler")).query(tablespace, key, sql));
+		    + "] time [" + st.getMillis() + "]");
+		String resp = JSONSerDe.ser(st);
 		return resp;
 	}
 

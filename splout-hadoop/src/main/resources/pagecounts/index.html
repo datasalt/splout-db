@@ -63,7 +63,7 @@
 						<label class="control-label">End date:</label>
 						<div class="controls">
 							<input type="text" value="Most recent" id="dp2" >
-							<input type="submit" value="Recalculate" />
+							<button type="button" onclick="javascript:recalculate();">Recalculate!</button>
 						</div>
 					</form>
 				</div>
@@ -268,14 +268,14 @@
         chart.draw(chartData, options);  		
 	}
 	
-	$("#dateform").bind("submit", function() {
+	function recalculate() {
 		chartDataMap = {};
 		hourDataMap = {};
 		projects = {};
 		$('#autocompleters').find('.autocompleteform').each(function() { 
 			$(this).submit();
 		});
-	});
+	}
 	
 	// Function that is called when a query is specified, main business logic here:
  	$(".autocompleteform").live("submit", function(e) {
@@ -292,8 +292,13 @@
 		projects[projectName] = {}; // Add project to project map if it didn't exist
 		e.preventDefault();
 		
+		var sep = "'";
+		if(projectName.indexOf("'") != -1) {
+			sep = "\"";
+		}
+			
 		// Total pageviews per day base query:
-		var query = "SELECT SUM(pageviews) AS totalpageviews, date FROM pagecounts WHERE pagename = '" + projectName + "'";
+		var query = "SELECT SUM(pageviews) AS totalpageviews, date FROM pagecounts WHERE pagename = " + sep + projectName + sep;
 		
 		// Add date constraints to the query if needed
 		var since = $("#dp1").val();
@@ -325,7 +330,7 @@
 		);
         		
        	// Total pageviews per hour of day base query:
-       	query = "SELECT SUM(pageviews) AS totalpageviews, hour FROM pagecounts WHERE pagename = '" + projectName + "'";
+       	query = "SELECT SUM(pageviews) AS totalpageviews, hour FROM pagecounts WHERE pagename = " + sep + projectName + sep;
        	
        	// Add date constraints to the query if needed
        	if(since != "Oldest") {
@@ -371,15 +376,20 @@
 		if(autocompleteCache[val]) {
   			inputSearch.autocomplete({ source: autocompleteCache[val] });
 		} else {
-			var query = "SELECT DISTINCT(pagename) FROM pagecounts WHERE pagename LIKE '";
-//			if(val.indexOf("_") != -1) { 
-//				val = val.split('_').join('\\_');
-//				query = query + val + "%25' ESCAPE '\\' "; 
-//			} else {
-				query = query + val + "%25'"; 
-//			}
+			var query = "SELECT DISTINCT(pagename) FROM pagecounts WHERE pagename LIKE ";
+			var sep = "'";
+			if(val.indexOf("'") != -1) {
+				sep = "\"";
+			}
+			query += sep;
+			if(val.indexOf("_") != -1) { 
+				val = val.split('_').join('\\_');
+				query = query + val + "%25" + sep + " ESCAPE '\\' "; 
+			} else {
+				query = query + val + "%25" + sep; 
+			}
+			
 			query = query + " LIMIT 10;"
-//	    	$.getJSON("/api?key=" + val.substring(0, 2) + "&sql=SELECT DISTINCT(pagename) FROM (SELECT pagename FROM pagecounts WHERE pagename LIKE  '" + val + "%25' LIMIT 80) LIMIT 10;",
 	    	$.getJSON("/api?key=" + val.substring(0, 2) + "&sql=" + query,
   				function(data) {
   					var results = [];

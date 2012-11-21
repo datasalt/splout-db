@@ -71,4 +71,8 @@ public class DNodeProperties {
 	 * tablespace + version + partitions.
 	 */
 	public final static String EH_CACHE_N_ELEMENTS = "dnode.pool.cache.n.elements";
+	/**
+	 * In milliseconds, queries that are slower will be logged with a WARNING. 
+	 */
+	public final static String SLOW_QUERY_ABSOLUTE_LIMIT = "dnode.slow.query.abs.limit";
 }
