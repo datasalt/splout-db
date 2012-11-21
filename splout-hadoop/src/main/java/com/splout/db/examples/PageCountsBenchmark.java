@@ -117,20 +117,21 @@ public class PageCountsBenchmark {
 				} else {
 					// State Automata: If pageToQuery is not null, perform a GROUP BY query and set the page again to null...
 					String query;
-					if(querySequence == 0) {
-						query = "SELECT SUM(pageviews) AS totalpageviews, date FROM pagecounts WHERE pagename = '"
-						    + pageToQuery + "' GROUP BY date;";
-					} else {
-						query = "SELECT SUM(pageviews) AS totalpageviews, hour FROM pagecounts WHERE pagename = '"
-						    + pageToQuery + "' GROUP BY hour;";
-					}
+					query = "SELECT SUM(pageviews) AS totalpageviews FROM pagecounts WHERE pagename = '" + pageToQuery + "';";
+//					if(querySequence == 0) {
+//						query = "SELECT SUM(pageviews) AS totalpageviews, date FROM pagecounts WHERE pagename = '"
+//						    + pageToQuery + "' GROUP BY date;";
+//					} else {
+//						query = "SELECT SUM(pageviews) AS totalpageviews, hour FROM pagecounts WHERE pagename = '"
+//						    + pageToQuery + "' GROUP BY hour;";
+//					}
 					QueryStatus st = client.query(tablespace,
 					    pageToQuery.substring(0, Math.min(pageToQuery.length(), 2)), query);
-					querySequence++;
-					if(querySequence == 2) {
+//					querySequence++;
+//					if(querySequence == 2) {
 						pageToQuery = null;
-						querySequence = 0;
-					}
+//						querySequence = 0;
+//					}
 					if(st.getResult() != null) {
 						return st.getResult().size();
 					} else {
