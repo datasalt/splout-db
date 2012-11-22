@@ -59,6 +59,7 @@ import com.splout.db.common.SQLite4JavaManager;
 import com.splout.db.common.SploutConfiguration;
 import com.splout.db.common.ThriftReader;
 import com.splout.db.common.ThriftWriter;
+import com.splout.db.common.TimeoutThread;
 import com.splout.db.dnode.beans.DNodeStatusResponse;
 import com.splout.db.dnode.beans.DNodeSystemStatus;
 import com.splout.db.hazelcast.CoordinationStructures;
@@ -113,7 +114,11 @@ public class DNodeHandler implements IDNodeHandler {
 	// The {@link Fetcher} is the responsible for downloading new deployment data.
 	private Fetcher fetcher;
 	
+	// Above this query time the query will be logged as slow query
 	private long absoluteSlowQueryLimit;
+	
+	// This thread will interrupt long-running queries
+	private TimeoutThread timeoutThread;
 	
 	public DNodeHandler(Fetcher fetcher) {
 		this.fetcher = fetcher;
@@ -140,6 +145,7 @@ public class DNodeHandler implements IDNodeHandler {
 		maxResultsPerQuery = config.getInt(DNodeProperties.MAX_RESULTS_PER_QUERY);
 		int maxCachePools = config.getInt(DNodeProperties.EH_CACHE_N_ELEMENTS);
 		absoluteSlowQueryLimit = config.getLong(DNodeProperties.SLOW_QUERY_ABSOLUTE_LIMIT);
+		timeoutThread = new TimeoutThread(config.getLong(DNodeProperties.MAX_QUERY_TIME));
 		// We create a Cache for holding SQL connection pools to different tablespace versions
 		// http://stackoverflow.com/questions/2583429/how-to-differentiate-between-time-to-live-and-time-to-idle-in-ehcache
 		dbCache = new Cache("dbCache", maxCachePools, false, false, Integer.MAX_VALUE, evictionSeconds);
@@ -229,8 +235,10 @@ public class DNodeHandler implements IDNodeHandler {
 								PartitionMetadata partitionMetadata = (PartitionMetadata) reader
 								    .read(new PartitionMetadata());
 								reader.close();
-								dbPoolInCache = new Element(dbKey, new SQLite4JavaManager(dbFolder + "/" + file,
-								    partitionMetadata.getInitStatements()));
+								SQLite4JavaManager manager = new SQLite4JavaManager(dbFolder + "/" + file,
+								    partitionMetadata.getInitStatements());
+								manager.setTimeoutThread(timeoutThread);
+								dbPoolInCache = new Element(dbKey, manager);
 								dbCache.put(dbPoolInCache);
 								break;
 							}
@@ -484,6 +492,7 @@ public class DNodeHandler implements IDNodeHandler {
 	public void stop() throws Exception {
 		dbCache.dispose();
 		deployThread.shutdownNow();
+		timeoutThread.interrupt();
 		hz.getLifecycleService().shutdown();
 	}
 
