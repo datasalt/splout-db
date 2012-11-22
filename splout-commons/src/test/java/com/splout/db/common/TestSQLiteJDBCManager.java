@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Test;
 
@@ -58,8 +59,10 @@ public class TestSQLiteJDBCManager {
 
 		String json = manager.query("SELECT COUNT(*) FROM t;", 100);
 		ArrayList results = JSONSerDe.deSer(json, ArrayList.class);
-  	assertEquals(((Map)results.get(0)).get("COUNT(*)"), 1000);
+		assertEquals(((Map) results.get(0)).get("COUNT(*)"), 1000);
 
+		final AtomicBoolean failed = new AtomicBoolean(false);
+		
 		// Read with some parallel threads
 		ExecutorService service = Executors.newFixedThreadPool(nThreads);
 		for(int i = 0; i < nThreads; i++) {
@@ -68,10 +71,10 @@ public class TestSQLiteJDBCManager {
 				public void run() {
 					try {
 						for(int i = 0; i < nOpsPerThread; i++) {
-							manager.query("SELECT * FROM t;", 100);
+							manager.query("SELECT * FROM t;", 2000);
 						}
 					} catch(Exception e) {
-						throw new RuntimeException(e);
+						failed.set(true);
 					}
 				}
 			});
@@ -81,13 +84,12 @@ public class TestSQLiteJDBCManager {
 			Thread.sleep(100);
 		}
 
+		assertEquals(false, failed.get());
 		manager.exec("DROP TABLE t;");
 	}
 
 	@Test
 	public void test() throws Exception {
-//		SploutConfiguration.setDevelopmentJavaLibraryPath();
-		
 		File dbFile = new File(TEST_DB_1);
 		if(dbFile.exists()) {
 			dbFile.delete();
@@ -101,7 +103,7 @@ public class TestSQLiteJDBCManager {
 		final SQLiteJDBCManager jdbcManager = new SQLiteJDBCManager(TEST_DB_1, 1);
 		basicTest(jdbcManager);
 		jdbcManager.close();
-		
+
 		dbFile.delete();
 	}
 
@@ -120,25 +122,31 @@ public class TestSQLiteJDBCManager {
 			manager.exec("INSERT INTO t (a, b) VALUES (" + randInt + ", \"" + fooStr + "\")");
 		}
 		manager.exec("COMMIT");
-
+		
 		// Query with hard limit = 100
-		@SuppressWarnings("rawtypes")
-		ArrayList result = JSONSerDe.deSer(manager.query("SELECT * FROM t;", 100), ArrayList.class);
-		assertEquals(100, result.size());
+		try {
+			JSONSerDe.deSer(manager.query("SELECT * FROM t;", 100), ArrayList.class);
+			throw new AssertionError("Exception was not thrown but it was expected (query hard limit)");
+		} catch(SQLException e) {
+		}
 
 		// Query with hard limit = 10
-		result = JSONSerDe.deSer(manager.query("SELECT * FROM t;", 10), ArrayList.class);
-		assertEquals(10, result.size());
+		try {
+			JSONSerDe.deSer(manager.query("SELECT * FROM t;", 10), ArrayList.class);
+			throw new AssertionError("Exception was not thrown but it was expected (query hard limit)");
+		} catch(SQLException e) {
+		}
 
 		// Query with hard limit = 1
-		result = JSONSerDe.deSer(manager.query("SELECT * FROM t;", 1), ArrayList.class);
-		assertEquals(1, result.size());
+		try {
+			JSONSerDe.deSer(manager.query("SELECT * FROM t;", 1), ArrayList.class);
+			throw new AssertionError("Exception was not thrown but it was expected (query hard limit)");
+		} catch(SQLException e) {
+		}
 	}
 
 	@Test
 	public void testQuerySizeLimiting() throws SQLException, ClassNotFoundException, JSONSerDeException {
-//		SploutConfiguration.setDevelopmentJavaLibraryPath();
-
 		File dbFile = new File(TEST_DB_2);
 		if(dbFile.exists()) {
 			dbFile.delete();
@@ -147,7 +155,7 @@ public class TestSQLiteJDBCManager {
 		querySizeLimitingTest(manager);
 		manager.close();
 		dbFile.delete();
-		
+
 		final SQLite4JavaManager sqlite4Java = new SQLite4JavaManager(TEST_DB_2, null);
 		querySizeLimitingTest(sqlite4Java);
 		sqlite4Java.close();

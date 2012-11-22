@@ -110,6 +110,9 @@ public class SQLiteJDBCManager implements ISQLiteManager {
 			}
 			list.add(row);
 		}
+		if(list.size() == maxResults) {
+			throw new SQLException("Hard limit on number of results reached (" + maxResults + "), please use a LIMIT for this query.");
+		}
 		return list;
 	}
 

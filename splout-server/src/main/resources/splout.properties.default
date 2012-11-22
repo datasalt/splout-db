@@ -70,7 +70,7 @@ dnode.deploy.timeout.seconds	36000
 
 #  A hard limit on the number of results per each SQL query that this DNode may send back to QNodes
 
-dnode.max.results.per.query	100
+dnode.max.results.per.query	50000
 
 # If set, this DNode will listen for test commands. This property is used to activate
 # responsiveness to some commands that are useful for integration testing: making a DNode 

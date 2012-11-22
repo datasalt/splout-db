@@ -97,6 +97,9 @@ public class SQLite4JavaManager implements ISQLiteManager {
 					list.add(objectToRead);
 				} while(st.step() && list.size() < maxResults);
 			}
+			if(list.size() == maxResults) {
+				throw new SQLException("Hard limit on number of results reached (" + maxResults + "), please use a LIMIT for this query.");
+			}
 			return JSONSerDe.ser(list);
 		} catch(SQLiteException e) {
 			throw new SQLException(e);
