@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Splout-db :  A web-latency SQL spout for Hadoop." />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Splout-db</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/datasalt/splout-db">View on GitHub</a>
+
+          <h1 id="project_title">Splout-db</h1>
+          <h2 id="project_tagline"> A web-latency SQL spout for Hadoop.</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/datasalt/splout-db/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/datasalt/splout-db/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>Splout SQL: A web-latency SQL spout for Hadoop.</h1>
+
+<p>Splout is a scalable, open-source, easy-to-manage SQL big data view. Splout is to Hadoop + SQL what Voldemort or Elephant DB are to Hadoop + Key/Value. Splout serves a read-only, partitioned SQL view which is generated and indexed by Hadoop. In a nutshell:</p>
+
+<ul>
+<li>Splout allows serving an <strong>arbitrarily big dataset</strong> with <strong>high QPS rates</strong> and at the same time provides <strong>full SQL</strong> query syntax.</li>
+<li>Splout uses Hadoop for <strong>decoupling database creation</strong> from database serving. The data is always <strong>optimally indexed</strong> and evenly distributed among partitions, plus updating all the data at once doesn’t affect the serving of the datasets.</li>
+<li>Splout provides an <strong>easy-to-manage API</strong> for deploying partitioned datasets. Splout manages many <em>tablespaces</em> and their versioning, allowing for <strong>rollback of</strong> previous versions when needed.</li>
+<li>Splout is <strong>horizontally scalable</strong>. You can increase throughput linearly by just adding more machines.</li>
+<li>Splout is <strong>replicated for failover</strong>. Splout transparently replicates your dataset for properly handling failover scenarios such as network splits or hardware corruption.</li>
+<li>Splout is very <strong>flexible</strong>. Even though it is relational, by being a read-only store with atomic data loading we allow the user to change the entire data model from one day to another, seamlessly, without pain.</li>
+<li>Splout <strong>plays well with Hadoop</strong>. Splout uses <a href="https://pangool.net">Pangool</a> for balancing, indexing and deploying your data seamlessly without affecting the serving of queries through friendly command-line tools and a more sofisticated Java API. </li>
+<li>Splout is <strong>ready for the web</strong>. Splout is appropriated for web page serving, many low latency lookups, scenarios such as mobile or web applications with demanding performance. Splout offers a <em>REST</em> API that returns <em>JSON</em> for any query.</li>
+</ul><h2>Architecture</h2>
+
+<p>The overall architecture is quite simple:</p>
+
+<ul>
+<li>
+<a href="https://github.com/datasalt/splout-db/tree/master/splout-server">splout-server</a> is installed on a cluster of commodity hardware machines. Each of the machines runs a DNode service and optionally a QNode service.</li>
+<li>QNodes implement a REST API for serving users' queries.</li>
+<li>QNodes talk to the appropriate DNode for serving a query and the DNode responds back with the query’s result.</li>
+<li>A Hadoop cluster is used by <a href="https://github.com/datasalt/splout-db/tree/master/splout-hadoop">splout-hadoop</a> for indexing and balancing the data. The resultant SQL files are fetched by the DNodes by handling a data deploy request.</li>
+</ul><p><img src="https://raw.github.com/datasalt/splout-db/master/Splout_SQL.jpg" alt="Splout arch"></p>
+
+<h2>Modules</h2>
+
+<p>Splout is divided in several modules:</p>
+
+<ul>
+<li>
+<a href="https://github.com/datasalt/splout-db/tree/master/splout-server">splout-server</a>: The server itself. You can use this module for running a server or a cluster of servers.</li>
+<li>
+<a href="https://github.com/datasalt/splout-db/tree/master/splout-hadoop">splout-hadoop</a>: Command-line tools and Java API for balancing, indexing and deploying datasets using Hadoop. You can use this module to interact with the server. It also contains examples to play with.</li>
+<li>
+<em>splout-javaclient</em>: A Java client for the <em>splout-server</em> REST API. Used by both <em>splout-server</em> and <em>splout-hadoop</em>. You can use this module in your own Java project for communicating with Splout.</li>
+</ul><p>The following two are only transitively needed for development and you don't need to interact with them directly:</p>
+
+<ul>
+<li>
+<em>splout-resources</em>: Contains native libraries, used by most of the modules.</li>
+<li>
+<em>splout-commons</em>: Used as a dependency by most of the modules.</li>
+</ul><h2>Getting started</h2>
+
+<p>For playing with Splout you will need:</p>
+
+<ul>
+<li>Java 1.6+.</li>
+<li>
+<a href="http://hadoop.apache.org/releases.html#Download">Hadoop</a> stable (1.0.4) or previous versions of it (0.20.X, etc) installed on your machine. Splout has been tested to run successfully at least on 1.0.4, 0.20.205 and CDH3r5.</li>
+</ul><p>The best thing for getting started with Splout is launching a local server in your machine. You will find instructions on that in <a href="https://github.com/datasalt/splout-db/tree/master/splout-server">splout-server</a>. After that, you can execute one or two examples from <a href="https://github.com/datasalt/splout-db/tree/master/splout-hadoop">splout-hadoop</a>.</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Splout-db maintained by <a href="https://github.com/datasalt">datasalt</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
