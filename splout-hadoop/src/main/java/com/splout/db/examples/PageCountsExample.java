@@ -129,6 +129,8 @@ public class PageCountsExample implements Tool {
 			    .partitionByJavaScript("function partition(record) { var str = record.get('pagename').toString(); if(str.length() > 2) { return str.substring(0, 2); } else { return str; } }");
 			tableBuilder.createIndex("date");
 			tableBuilder.createIndex("pagename");
+			// TODO Temporal fix
+			tableBuilder.preSQL("PRAGMA temp_store=2;");
 
 			TablespaceBuilder tablespaceBuilder = new TablespaceBuilder();
 

@@ -81,6 +81,6 @@ public class PageCountsDataGenerator {
 	
 	public static void main(String[] args) throws IOException {
 		PageCountsDataGenerator generator = new PageCountsDataGenerator();
-		generator.generate(new File("/home/pere/pagecounts-s3/names.txt"), 5, new File("out-synthetic-pagecounts"));
+		generator.generate(new File("names.txt"), 90, new File("out-synthetic-pagecounts"));
 	}
 }
