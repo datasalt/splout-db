@@ -125,11 +125,10 @@ public class PageCountsExample implements Tool {
 			}
 
 			// Partition by the first two characters of the page so we can easily implement auto suggest
-			tableBuilder
-			    .partitionByJavaScript("function partition(record) { var str = record.get('pagename').toString(); if(str.length() > 2) { return str.substring(0, 2); } else { return str; } }");
+//			tableBuilder
+//			    .partitionByJavaScript("function partition(record) { var str = record.get('pagename').toString(); if(str.length() > 2) { return str.substring(0, 2); } else { return str; } }");
+			tableBuilder.partitionBy("pagename");
 			tableBuilder.createIndex("pagename", "date");
-			// TODO Temporal fix
-			tableBuilder.preSQL("PRAGMA temp_store=2;");
 
 			TablespaceBuilder tablespaceBuilder = new TablespaceBuilder();
 
