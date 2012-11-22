@@ -13,21 +13,6 @@
 			},
 			"paths": [ "examples/meteo/meteo.txt" ]
 		}]
-	},{
-		"name": "stations",
-		"schema": "stn:int,wban:int,name:string,ctry:string,country:string,state:string,call:string,lat:int,lon:int,elev:int",
-		"partitionFields": "stn,wban",
-		"indexes" : [ "stn,wban" ],
-		"tableInputs": [{
-			"inputSpecs": {
-				"separatorChar": ",",
-				"quotesChar": "\"",
-				"escapeChar": "\\",
-				"skipHeader": true,
-				"nullString": ""
-			},		
-			"paths": [ "examples/meteo/ish-history.csv" ]
-		}]
 	}],
 	"replicateAllTables": [{
 		"name": "countries",
@@ -40,6 +25,21 @@
 			},
 		"paths": [ "examples/meteo/country-list.txt" ]	
 		}]
-	}]
+	},
+	{
+        "name": "stations",
+        "schema": "stn:int,wban:int,name:string,ctry:string,country:string,state:string,call:string,lat:int,lon:int,elev:int",
+        "indexes" : [ "stn,wban" ],
+        "tableInputs": [{
+            "inputSpecs": {
+                "separatorChar": ",",
+                "quotesChar": "\"",
+                "escapeChar": "\\",
+                "skipHeader": true,
+                "nullString": ""
+            },
+            "paths": [ "examples/meteo/ish-history.csv" ]
+        }]
+    }]
 }
 

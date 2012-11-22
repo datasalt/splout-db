@@ -20,25 +20,6 @@ package com.splout.db.hadoop;
  * #L%
  */
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import javax.script.ScriptException;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.OutputFormat;
-import org.apache.hadoop.mapreduce.RecordReader;
-import org.mortbay.log.Log;
-
 import com.datasalt.pangool.io.Fields;
 import com.datasalt.pangool.io.ITuple;
 import com.datasalt.pangool.io.Schema;
@@ -55,6 +36,23 @@ import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.PartitionEntry;
 import com.splout.db.common.PartitionMap;
 import com.splout.db.common.Tablespace;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.OutputFormat;
+import org.apache.hadoop.mapreduce.RecordReader;
+import org.mortbay.log.Log;
+
+import javax.script.ScriptException;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * A process that generates the SQL data stores needed for deploying a tablespace in Splout, giving a file set table
@@ -349,7 +347,7 @@ public class TablespaceGenerator implements Serializable {
 			fields.add(Field.create("partition", Type.INT));
 			final Schema schema = table.getTableSpec().getSchema();
 			fields.add(Fields.createTupleField("tuple", new NullableSchema(schema)));
-			final Schema metaSchema = new Schema("metaSchema", fields);
+			final Schema metaSchema = new Schema("metaSchema" + schemaCounter++, fields);
 			builder.addIntermediateSchema(metaSchema);
 			// For each input file for the Table we add an input and a TupleMapper
 			for(TableInput inputFile : table.getFiles()) {
