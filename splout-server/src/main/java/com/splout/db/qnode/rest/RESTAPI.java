@@ -21,28 +21,21 @@ package com.splout.db.qnode.rest;
  * #L%
  */
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.type.TypeReference;
-import org.glassfish.jersey.server.ResourceConfig;
-
 import com.splout.db.common.JSONSerDe;
 import com.splout.db.qnode.IQNodeHandler;
 import com.splout.db.qnode.QNode;
 import com.splout.db.qnode.beans.DeployRequest;
 import com.splout.db.qnode.beans.QueryStatus;
 import com.splout.db.qnode.beans.SwitchVersionRequest;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.type.TypeReference;
+import org.glassfish.jersey.server.ResourceConfig;
+
+import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Jersey (<a href='http://jersey.java.net/'>http://jersey.java.net/</a>) implementation of a RESTful webservice for
@@ -53,14 +46,14 @@ public class RESTAPI {
 
 	@Context
 	ResourceConfig rc;
-	
+
 	private final static Log log = LogFactory.getLog(RESTAPI.class);
 
 	@GET
 	@Path("/query/{tablespace}")
 	@Produces({ "json/html;charset=UTF-8" })
 	public String query(@PathParam("tablespace") String tablespace, @QueryParam("key") List<String> keys,
-	    @QueryParam("sql") String sql) throws Exception {
+	    @QueryParam("sql") String sql, @QueryParam("callback") String callback) throws Exception {
 
 		// When receiving more than one key we just concatenate them in the same way partition by multiple fields is done
 		// Notice that order is important here and it shoulb de consistent with the "partition by" clause, otherwise
@@ -73,6 +66,10 @@ public class RESTAPI {
 		log.info(Thread.currentThread().getName() + ": Query request received, tablespace[" + tablespace + "], key[" + key + "], sql[" + sql
 		    + "] time [" + st.getMillis() + "]");
 		String resp = JSONSerDe.ser(st);
+        // For supporting cross domain requests
+        if ( callback != null ) {
+            resp = callback + "(" + resp + ")";
+        }
 		return resp;
 	}
 
