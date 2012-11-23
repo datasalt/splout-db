@@ -146,6 +146,7 @@ public class DNodeHandler implements IDNodeHandler {
 		int maxCachePools = config.getInt(DNodeProperties.EH_CACHE_N_ELEMENTS);
 		absoluteSlowQueryLimit = config.getLong(DNodeProperties.SLOW_QUERY_ABSOLUTE_LIMIT);
 		timeoutThread = new TimeoutThread(config.getLong(DNodeProperties.MAX_QUERY_TIME));
+		timeoutThread.start();
 		// We create a Cache for holding SQL connection pools to different tablespace versions
 		// http://stackoverflow.com/questions/2583429/how-to-differentiate-between-time-to-live-and-time-to-idle-in-ehcache
 		dbCache = new Cache("dbCache", maxCachePools, false, false, Integer.MAX_VALUE, evictionSeconds);

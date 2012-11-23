@@ -20,7 +20,9 @@ package com.splout.db.common;
  * #L%
  */
 
-import java.util.Map;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.logging.Log;
@@ -37,18 +39,20 @@ public class TimeoutThread extends Thread {
 	private final static Log log = LogFactory.getLog(TimeoutThread.class);
 
 	private ConcurrentHashMap<SQLiteConnection, QueryAndTime> currentQueries = new ConcurrentHashMap<SQLiteConnection, QueryAndTime>();
+	private Set<SQLiteConnection> connections = Collections.synchronizedSet(new HashSet<SQLiteConnection>());
+	
 	private long timeout;
 
 	static class QueryAndTime {
 		String query;
 		Long time;
-		
+
 		public QueryAndTime(String query, Long time) {
 			this.query = query;
 			this.time = time;
 		}
 	}
-	
+
 	/**
 	 * @param timeout
 	 *          The timeout in milliseconds. If a SQLite connection monitored by this Thread has a query that runs for
@@ -60,30 +64,45 @@ public class TimeoutThread extends Thread {
 
 	@Override
 	public void run() {
+		log.info("Starting Timeout Thread...");
 		try {
 			while(true) {
-				Thread.sleep(1000);
 				long now = System.currentTimeMillis();
-				for(Map.Entry<SQLiteConnection, QueryAndTime> entry: currentQueries.entrySet()) {
-					if((now - entry.getValue().time) > timeout) {
-						// Timeout: we should interrupt this connection!
-						SQLiteConnection conn = entry.getKey();
-						try {
-							
-							/*
-							 * Even though SQLiteConnections are not thread-safe, this method *IS* thread-safe
-							 * and that's why we can implement this thread. The thread that launched the query
-							 * is busy waiting for the result so another thread must interrupt it!
-							 * 
-							 * SQLite4Java docs: http://almworks.com/sqlite4java/javadoc/com/almworks/sqlite4java/SQLiteConnection.html#interrupt()
-							 * SQLite docs: http://www.sqlite.org/c3ref/interrupt.html
-							 */
-							log.info("Long running query [" + entry.getValue().query + "] ran for more than [" + timeout + "] ms. Interrupting it!");
-	            conn.interrupt();
-            } catch(SQLiteException e) {
-            	//
-            }
+				for(SQLiteConnection conn : connections) {
+					QueryAndTime queryAndTime = currentQueries.get(conn);
+					long time = queryAndTime.time;
+					if(time < 0) { // means this connection is not active
+						continue;
 					}
+					synchronized(conn) {
+						if((now - time) > timeout) {
+							// Timeout: we should interrupt this connection!
+
+							try {
+
+								/*
+								 * Even though SQLiteConnections are not thread-safe, this method *IS* thread-safe and that's why we can
+								 * implement this thread. The thread that launched the query is busy waiting for the result so another
+								 * thread must interrupt it!
+								 * 
+								 * SQLite4Java docs:
+								 * http://almworks.com/sqlite4java/javadoc/com/almworks/sqlite4java/SQLiteConnection.html#interrupt()
+								 * SQLite docs: http://www.sqlite.org/c3ref/interrupt.html
+								 */
+								log.info("Long running query [" + queryAndTime.query + "] ran for more than ["
+								    + timeout + "] ms. Interrupting it!");
+								conn.interrupt();
+							} catch(SQLiteException e) {
+								//
+							} finally {
+								queryAndTime.time = -1l; // connection will not be considered until a new query is executed
+							}
+						}
+					}
+				}
+				long andNow = System.currentTimeMillis();
+				if((andNow - now) < 1000) {
+					Thread.sleep(1000 - (andNow - now));
 				}
 			}
 		} catch(InterruptedException e) {
@@ -92,11 +111,23 @@ public class TimeoutThread extends Thread {
 	}
 
 	/**
-	 * A Thread provides its thread-local connection to be monitored when a query starts.
-	 * The SQL query is provided just for logging purposes.
+	 * A Thread provides its thread-local connection to be monitored when a query starts. The SQL query is provided just
+	 * for logging purposes.
 	 */
 	public void startQuery(SQLiteConnection connection, String query) {
-		currentQueries.put(connection, new QueryAndTime(query, System.currentTimeMillis()));
+		synchronized(connection) {
+			if(!connections.contains(connection)) {
+				connections.add(connection);
+			}
+			QueryAndTime qAndTime = currentQueries.get(connection);
+			if(qAndTime == null) {
+				qAndTime = new QueryAndTime(query, System.currentTimeMillis());
+				currentQueries.put(connection, qAndTime);
+			} else {
+				qAndTime.query = query;
+				qAndTime.time = System.currentTimeMillis();
+			}
+		}
 	}
 
 	/**
@@ -105,6 +136,14 @@ public class TimeoutThread extends Thread {
 	 * (Thread-local). {@link SQLite4JavaManager} behaves like this.
 	 */
 	public void endQuery(SQLiteConnection connection) {
-		currentQueries.remove(connection);
+		synchronized(connection) {
+			QueryAndTime qAndTime = currentQueries.get(connection);
+			if(qAndTime == null) {
+				return;
+			} else {
+				qAndTime.query = null;
+				qAndTime.time = -1l; // connection will not be considered until a new query is executed
+			}
+		}
 	}
 }
