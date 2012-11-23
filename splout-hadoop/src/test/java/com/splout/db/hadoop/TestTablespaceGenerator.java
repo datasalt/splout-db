@@ -31,7 +31,6 @@ import org.apache.avro.generic.GenericData.Record;
 import org.apache.avro.reflect.ReflectDatumWriter;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.datasalt.pangool.io.Fields;
@@ -54,7 +53,6 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary {
 	static Schema theSchema2 = new Schema("schema2", Fields.parse("id:string, value:string, intValue:int, doubleValue:double, strValue:string"));
 
   @Test
-  @Ignore
 	public void simpleTest() throws Exception {
 		initHadoop();
 		trash(INPUT, OUTPUT);

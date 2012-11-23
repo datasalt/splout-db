@@ -24,7 +24,7 @@ import org.junit.Test;
 
 import com.datasalt.pangool.io.Fields;
 import com.datasalt.pangool.io.Schema;
-import com.splout.db.hadoop.TableBuilder;
+import com.datasalt.pangool.tuplemr.OrderBy;
 import com.splout.db.hadoop.TableBuilder.TableBuilderException;
 
 public class TestTableBuilder {
@@ -40,7 +40,7 @@ public class TestTableBuilder {
 
 	@Test
 	public void testCorrectPartitionedTable() throws TableBuilderException {
-		new TableBuilder(SCHEMA).addCSVTextFile("foo.txt").partitionBy("id").build();
+		new TableBuilder(SCHEMA).addCSVTextFile("foo.txt").partitionBy("id").insertionSortOrder(OrderBy.parse("id:desc, value:desc")).build();
 	}
 	
 	@Test
@@ -112,5 +112,10 @@ public class TestTableBuilder {
 	@Test(expected=TableBuilderException.class)
 	public void testInvalidJavaScript2() throws TableBuilderException {
 		new TableBuilder(SCHEMA).addCSVTextFile("foo.txt").partitionByJavaScript("function myfunct(record) { return \"a\"; }").build();
+	}
+	
+	@Test(expected=TableBuilderException.class)
+	public void testInvalidInsertionSortOrder() throws TableBuilderException {
+		new TableBuilder(SCHEMA).addCSVTextFile("foo.txt").partitionBy("id").insertionSortOrder(OrderBy.parse("id:desc, NONEXISTENT:desc")).build();		
 	}
 }

@@ -116,6 +116,7 @@ public class DNodeHandler implements IDNodeHandler {
 	
 	// Above this query time the query will be logged as slow query
 	private long absoluteSlowQueryLimit;
+	private long slowQueries = 0;
 	
 	// This thread will interrupt long-running queries
 	private TimeoutThread timeoutThread;
@@ -256,10 +257,12 @@ public class DNodeHandler implements IDNodeHandler {
 					if(prob > 0.95) {
 						// slow query!
 						log.warn("[SLOW QUERY] Query time over 95 percentil: [" + query + "] time [" + time + "]");
+						slowQueries++;
 					}
 					if(time > absoluteSlowQueryLimit) {
 						// slow query!
 						log.warn("[SLOW QUERY] Query time over absolute slow query time (" + absoluteSlowQueryLimit + ") : [" + query + "] time [" + time + "]");						
+						slowQueries++;
 					}
 					return result;
 				} else {
@@ -428,7 +431,7 @@ public class DNodeHandler implements IDNodeHandler {
 			status.setFailedQueries(failedQueries.get());
 			status.setnQueries(performanceTool.getNQueries());
 			status.setAverage(performanceTool.getAverage());
-			status.setSlowQueries(performanceTool.getHistogram().getRigthAccumulatedProbability(1000));
+			status.setSlowQueries(slowQueries);
 			status.setDeployInProgress(deployInProgress.get() > 0);
 			File folder = new File(config.getString(DNodeProperties.DATA_FOLDER));
 			status.setFreeSpaceInDisk(FileSystemUtils.freeSpaceKb());

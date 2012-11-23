@@ -42,7 +42,6 @@ import com.datasalt.pangool.io.Fields;
 import com.datasalt.pangool.io.ITuple;
 import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.io.Schema.Field;
-import com.datasalt.pangool.io.Tuple;
 import com.datasalt.pangool.tuplemr.IdentityTupleReducer;
 import com.datasalt.pangool.tuplemr.TupleMRBuilder;
 import com.datasalt.pangool.tuplemr.TupleMRException;
@@ -71,7 +70,7 @@ public class TestTupleSQLiteOutputFormat extends AbstractHadoopTestLibrary imple
 	public void testPreSQL() throws Exception {
 		final Schema tupleSchema1 = new Schema("schema1", Fields.parse("a:string, b:int"));
 		String[] preSQL = new String[] { "CREATE Mytable;", "ME_LO_INVENTO" };
-		TableSpec tableSpec = new TableSpec(tupleSchema1, new Field[] { tupleSchema1.getField(0) }, new FieldIndex[] { new FieldIndex(tupleSchema1.getField(0), tupleSchema1.getField(1)) }, preSQL, null);
+		TableSpec tableSpec = new TableSpec(tupleSchema1, new Field[] { tupleSchema1.getField(0) }, new FieldIndex[] { new FieldIndex(tupleSchema1.getField(0), tupleSchema1.getField(1)) }, preSQL, null, null);
 		String[] createTables = TupleSQLite4JavaOutputFormat.getCreateTables(tableSpec);
 		assertEquals("CREATE TABLE schema1 (a TEXT, b INTEGER);", createTables[0]);
 		assertEquals("CREATE Mytable;", createTables[1]);
@@ -82,7 +81,7 @@ public class TestTupleSQLiteOutputFormat extends AbstractHadoopTestLibrary imple
 	public void testPostSQL() throws Exception {
 		final Schema tupleSchema1 = new Schema("schema1", Fields.parse("a:string, b:int"));
 		String[] postSQL = new String[] { "DROP INDEX idx_schema1_ab", "CREATE INDEX blablabla" };
-		TableSpec tableSpec = new TableSpec(tupleSchema1, new Field[] { tupleSchema1.getField(0) }, new FieldIndex[] { new FieldIndex(tupleSchema1.getField(0), tupleSchema1.getField(1)) }, null, postSQL);
+		TableSpec tableSpec = new TableSpec(tupleSchema1, new Field[] { tupleSchema1.getField(0) }, new FieldIndex[] { new FieldIndex(tupleSchema1.getField(0), tupleSchema1.getField(1)) }, null, postSQL, null);
 		String[] createIndex = TupleSQLite4JavaOutputFormat.getCreateIndexes(tableSpec);
 		assertEquals("CREATE INDEX idx_schema1_ab ON schema1(a, b);", createIndex[0]);		
 		assertEquals("DROP INDEX idx_schema1_ab", createIndex[1]);
@@ -92,7 +91,7 @@ public class TestTupleSQLiteOutputFormat extends AbstractHadoopTestLibrary imple
 	@Test
 	public void testCompoundIndexes() throws TupleSQLiteOutputFormatException {
 		final Schema tupleSchema1 = new Schema("schema1", Fields.parse("a:string, b:int"));
-		TableSpec tableSpec = new TableSpec(tupleSchema1, new Field[] { tupleSchema1.getField(0) }, new FieldIndex[] { new FieldIndex(tupleSchema1.getField(0), tupleSchema1.getField(1)) }, null, null);
+		TableSpec tableSpec = new TableSpec(tupleSchema1, new Field[] { tupleSchema1.getField(0) }, new FieldIndex[] { new FieldIndex(tupleSchema1.getField(0), tupleSchema1.getField(1)) }, null, null, null);
 		String[] createIndex = TupleSQLite4JavaOutputFormat.getCreateIndexes(tableSpec);
 		assertEquals("CREATE INDEX idx_schema1_ab ON schema1(a, b);", createIndex[0]);
 	}
@@ -125,33 +124,30 @@ public class TestTupleSQLiteOutputFormat extends AbstractHadoopTestLibrary imple
 		final Schema tupleSchema2 = new Schema("schema2", Fields.parse("c:double, d:boolean"));
 		
 		List<Field> fields = new ArrayList<Field>();
-		fields.add(Field.create("partition", Schema.Field.Type.INT));
-		fields.add(Fields.createTupleField("tuple", new NullableSchema(tupleSchema1)));
-		final Schema metaSchema1  = new Schema("metaSchema1", fields);
+		fields.addAll(tupleSchema1.getFields());
+		fields.add(Field.create(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD, Schema.Field.Type.INT));
+		final Schema metaSchema1  = new Schema("schema1", fields);
 		
 		fields.clear();
-		fields.add(Field.create("partition", Schema.Field.Type.INT));
-		fields.add(Fields.createTupleField("tuple", new NullableSchema(tupleSchema2)));
-		final Schema metaSchema2  = new Schema("metaSchema2", fields);
+		fields.addAll(tupleSchema2.getFields());
+		fields.add(Field.create(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD, Schema.Field.Type.INT));
+		final Schema metaSchema2  = new Schema("schema2", fields);
 		
 		TupleMRBuilder builder = new TupleMRBuilder(getConf());
-		builder.addIntermediateSchema(metaSchema1);
-		builder.addIntermediateSchema(metaSchema2);
+		builder.addIntermediateSchema(new NullableSchema(metaSchema1));
+		builder.addIntermediateSchema(new NullableSchema(metaSchema2));
 		builder.addInput(new Path(INPUT1), new HadoopInputFormat(TextInputFormat.class),
 		    new TupleMapper<LongWritable, Text>() {
 
-			    ITuple tupleInTuple1 = new Tuple(metaSchema1);
-			    ITuple tuple1 = new Tuple(tupleSchema1);
+			    ITuple tupleInTuple1 = new NullableTuple(metaSchema1);
 
 			    @Override
 			    public void map(LongWritable key, Text value, TupleMRContext context, Collector collector)
 			        throws IOException, InterruptedException {
 				    String[] split = value.toString().split("\t");
-				    tuple1.set("a", split[0]);
-				    tuple1.set("b", Integer.parseInt(split[1]));
-
-				    tupleInTuple1.set("partition", 0);
-				    tupleInTuple1.set("tuple", new NullableTuple(tuple1));
+				    tupleInTuple1.set("a", split[0]);
+				    tupleInTuple1.set("b", Integer.parseInt(split[1]));
+				    tupleInTuple1.set(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD, 0);
 				    collector.write(tupleInTuple1);
 			    }
 		    });
@@ -159,18 +155,15 @@ public class TestTupleSQLiteOutputFormat extends AbstractHadoopTestLibrary imple
 		builder.addInput(new Path(INPUT2), new HadoopInputFormat(TextInputFormat.class),
 		    new TupleMapper<LongWritable, Text>() {
 
-			    ITuple tupleInTuple2 = new Tuple(metaSchema2);
-			    ITuple tuple2 = new Tuple(tupleSchema2);
+			    ITuple tupleInTuple2 = new NullableTuple(metaSchema2);
 
 			    @Override
 			    public void map(LongWritable key, Text value, TupleMRContext context, Collector collector)
 			        throws IOException, InterruptedException {
 				    String[] split = value.toString().split("\t");
-				    tuple2.set("c", Double.parseDouble(split[0]));
-				    tuple2.set("d", Boolean.parseBoolean(split[1]));
-
-				    tupleInTuple2.set("partition", 0);
-				    tupleInTuple2.set("tuple", new NullableTuple(tuple2));
+				    tupleInTuple2.set("c", Double.parseDouble(split[0]));
+				    tupleInTuple2.set("d", Boolean.parseBoolean(split[1]));
+				    tupleInTuple2.set(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD, 0);
 				    collector.write(tupleInTuple2);
 			    }
 		    });
@@ -178,7 +171,7 @@ public class TestTupleSQLiteOutputFormat extends AbstractHadoopTestLibrary imple
 		TableSpec table1 = new TableSpec(tupleSchema1, tupleSchema1.getField(0));
 		TableSpec table2 = new TableSpec(tupleSchema2, tupleSchema2.getField(0));
 		builder.setTupleReducer(new IdentityTupleReducer());
-		builder.setGroupByFields("partition");
+		builder.setGroupByFields(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD);
 		builder.setOutput(new Path(OUTPUT), new TupleSQLite4JavaOutputFormat(100000, table1, table2), ITuple.class, NullWritable.class);
 		builder.createJob().waitForCompletion(true);
 

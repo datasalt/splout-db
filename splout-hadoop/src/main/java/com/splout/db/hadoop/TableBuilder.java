@@ -32,6 +32,8 @@ import org.apache.hadoop.fs.Path;
 
 import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.io.Schema.Field;
+import com.datasalt.pangool.tuplemr.Criteria.SortElement;
+import com.datasalt.pangool.tuplemr.OrderBy;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleTextInputFormat;
 import com.splout.db.hadoop.TableSpec.FieldIndex;
@@ -63,6 +65,7 @@ public class TableBuilder {
 	private List<List<String>> compoundIndexes = new ArrayList<List<String>>();
 	private String[] postSQL = null;
 	private String[] preSQL = null;
+	private OrderBy orderBy;
 	
 	public TableBuilder(final Schema schema) {
 		this.schema = schema;
@@ -173,6 +176,16 @@ public class TableBuilder {
 		return this;
 	}
 	
+	public TableBuilder insertionSortOrder(OrderBy orderBy) throws TableBuilderException {
+		for(SortElement element: orderBy.getElements()) {
+			if(!schema.containsField(element.getName())) {
+				throw new TableBuilderException("Order by field: " + element.getName() + " not contained in table schema.");
+			}
+		}
+		this.orderBy = orderBy;
+		return this;
+	}
+	
 	public Table build() throws TableBuilderException {
 		if(schema == null) {
 			throw new TableBuilderException("No schema for table: Can't build a Table without a Schema.");
@@ -235,9 +248,9 @@ public class TableBuilder {
 		FieldIndex[] theIndexes = indexes.toArray(new FieldIndex[0]);
 		
 		if(partitionByJavaScript != null) {
-			spec = new TableSpec(schema, partitionByJavaScript, theIndexes, preSQL, postSQL);
+			spec = new TableSpec(schema, partitionByJavaScript, theIndexes, preSQL, postSQL, orderBy);
 		} else {
-			spec = new TableSpec(schema, partitionBySchemaFields, theIndexes, preSQL, postSQL);	
+			spec = new TableSpec(schema, partitionBySchemaFields, theIndexes, preSQL, postSQL, orderBy);	
 		}
 
 		// Now get the input Paths

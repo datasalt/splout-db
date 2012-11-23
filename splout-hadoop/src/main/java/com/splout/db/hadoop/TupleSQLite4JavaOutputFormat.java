@@ -52,17 +52,20 @@ import com.splout.db.hadoop.SQLiteOutputFormat.SQLRecordWriter;
 import com.splout.db.hadoop.TableSpec.FieldIndex;
 
 /**
- * An OutputFormat that accepts Pangool's Tuples and writes to a sqlite4Java SQLite file. The Tuples must conform a
- * particular schema: having a "partition" integer field (which will then create a file named "partition".db) and a
- * tuple inside a "tuple" field. This tuple's schema will be used for determining which table it will go to.
+ * An OutputFormat that accepts Pangool's Tuples and writes to a sqlite4Java SQLite file. The Tuples that are written to
+ * it must conform to a particular schema: having a "_partition" integer field (which will then create a file named
+ * "partition".db) and be a {@link NullableTuple} so that nulls are accepted as normal SQL values.
  * <p>
- * The different schemas that can be given to this OutputFormat are defined in the constructor by providing
- * {@link TableSpec}. These TableSpec contain information such as pre-SQL or post-SQL statements and most notably
- * contain a Schema so that a CREATE TABLE can be derived automatically from it.
+ * The different schemas that will be given to this OutputFormat are defined in the constructor by providing a
+ * {@link TableSpec}. These TableSpec also contains information such as pre-SQL or post-SQL statements but most notably
+ * contain a Schema so that a CREATE TABLE can be derived automatically from it. Note that the Schema provided to 
+ * TableSpec doesn't need to contain a "_partition" field or be nullable.
  */
 @SuppressWarnings("serial")
 public class TupleSQLite4JavaOutputFormat extends FileOutputFormat<ITuple, NullWritable> implements
     Serializable {
+
+	public final static String PARTITION_TUPLE_FIELD = "_partition";
 
 	public static Log LOG = LogFactory.getLog(TupleSQLite4JavaOutputFormat.class);
 	private int batchSize;
@@ -86,6 +89,12 @@ public class TupleSQLite4JavaOutputFormat extends FileOutputFormat<ITuple, NullW
 	private static String getCreateTable(TableSpec tableSpec) throws TupleSQLiteOutputFormatException {
 		String createTable = "CREATE TABLE " + tableSpec.getSchema().getName() + " (";
 		for(Field field : tableSpec.getSchema().getFields()) {
+			if(field.getName().equals(PARTITION_TUPLE_FIELD)) {
+				continue;
+			}
+			if(field.getName().equals(NullableSchema.NULLS_FIELD)) {
+				continue;
+			}
 			createTable += field.getName() + " ";
 			switch(field.getType()) {
 			/*
@@ -226,7 +235,7 @@ public class TupleSQLite4JavaOutputFormat extends FileOutputFormat<ITuple, NullW
 				// (from http://hadoop.apache.org/docs/mapreduce/r0.22.0/mapred_tutorial.html#Task+Execution+%26+Environment)
 				// So we bundle the native libs in the JAR and copy them to the working directory
 				String[] mapRedLocalDirs = conf.get("mapred.local.dir").split(",");
-				for(String mapRedLocaLDir: mapRedLocalDirs) {
+				for(String mapRedLocaLDir : mapRedLocalDirs) {
 					LOG.info("Mapred local dir: " + mapRedLocaLDir);
 					File[] nativeLibs = new File(mapRedLocaLDir + "/../jars").listFiles();
 					LOG.info("Examining: " + (mapRedLocaLDir + "/../jars"));
@@ -236,7 +245,8 @@ public class TupleSQLite4JavaOutputFormat extends FileOutputFormat<ITuple, NullW
 								FileUtils.copyFile(nativeLib, new File(".", nativeLib.getName()));
 							}
 						}
-						LOG.info("Found native libraries in : " + Arrays.toString(nativeLibs) + ", copied to task work directory.");
+						LOG.info("Found native libraries in : " + Arrays.toString(nativeLibs)
+						    + ", copied to task work directory.");
 						break;
 					}
 				}
@@ -282,13 +292,12 @@ public class TupleSQLite4JavaOutputFormat extends FileOutputFormat<ITuple, NullW
 		}
 
 		@Override
-		public void write(ITuple metaTuple, NullWritable ignore) throws IOException, InterruptedException {
-			int partition = (Integer) metaTuple.get("partition");
-			ITuple tuple = (ITuple) metaTuple.get("tuple");
+		public void write(ITuple tuple, NullWritable ignore) throws IOException, InterruptedException {
+			int partition = (Integer) tuple.get(PARTITION_TUPLE_FIELD);
 
 			Object nulls = null;
 			try {
-				nulls = tuple.get("_nulls");
+				nulls = tuple.get(NullableSchema.NULLS_FIELD);
 			} catch(IllegalArgumentException e) {
 				throw new RuntimeException("Expected a NullableTuple but received a normal Tuple instead.");
 			}
@@ -309,7 +318,8 @@ public class TupleSQLite4JavaOutputFormat extends FileOutputFormat<ITuple, NullW
 					SQLiteConnection conn = connCache.get(partition);
 					// Create a PreparedStatement according to the received Tuple
 					String preparedStatement = "INSERT INTO " + tuple.getSchema().getName() + " VALUES (";
-					for(int i = 0; i < tuple.getSchema().getFields().size() - 1; i++) {
+					// NOTE: tuple.getSchema().getFields().size() - 2 : quick way of skipping "_nulls" and "_partition" fields here
+					for(int i = 0; i < tuple.getSchema().getFields().size() - 2; i++) {
 						preparedStatement += "?, ";
 					}
 					preparedStatement = preparedStatement.substring(0, preparedStatement.length() - 2) + ");";
@@ -320,6 +330,9 @@ public class TupleSQLite4JavaOutputFormat extends FileOutputFormat<ITuple, NullW
 				int count = 1;
 				for(Field field : tuple.getSchema().getFields()) {
 					if(field.getName().equals(NullableSchema.NULLS_FIELD)) {
+						continue;
+					}
+					if(field.getName().equals(PARTITION_TUPLE_FIELD)) {
 						continue;
 					}
 

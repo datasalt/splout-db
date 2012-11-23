@@ -25,7 +25,6 @@ import static org.junit.Assert.assertEquals;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.datasalt.pangool.io.Fields;
@@ -38,7 +37,6 @@ import com.datasalt.pangool.io.Tuple;
 public class TestNullableTuple {
 
 	@Test
-	@Ignore
 	public void testNoNullableWrapper() {
 		Schema schema = new Schema("testSchema", Fields.parse("a:string, b:int, c:double, d:float, e:boolean, f:long"));
 		ITuple tuple = new Tuple(schema);
