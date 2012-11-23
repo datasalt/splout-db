@@ -33,6 +33,9 @@
     <script type="text/javascript">
         // Global variables
         var meteoSerie = [];
+        var sections = [];
+        var sectionsSize = 400;
+        var selectedSection = -1;
 
         // Perform queries to Splout asynchronously
         function sploutIt(keys, query, callback) {
@@ -44,8 +47,55 @@
             $.getJSON(sploutURL + '/api/query/meteo-pby-stn-wban?' + keyParams + 'sql=' + encodeURIComponent(query) + '&callback=?', callback);
         }
 
+        function selectSection(i) {
+          selectedSection = i;
+          calculateSections();
+          drawMeteoSerie(slice());
+        }
+
+        function slice() {
+          if (selectedSection == -1 || sections.length ==0) {
+            return [];
+          } else {
+            return meteoSerie.slice(sections[selectedSection][0], sections[selectedSection][1] + 1);
+          }
+        }
+
+        function sectionToStr(section) {
+          var row1 = meteoSerie[sections[section][0]];
+          var row2 = meteoSerie[sections[section][1]];
+          return dateToStr(row1) + '<br>' + dateToStr(row2);
+        }
+
+        function dateToStr(serieRow) {
+          return serieRow.year + '-' + serieRow.month + '-' + serieRow.day;
+        }
+
+        // Calculate the number of sections in which the serie will be divided
+        function calculateSections() {
+          sections = [];
+          for (var i=meteoSerie.length-1; i>=0; i-=sectionsSize) {
+            sections.push([Math.max(0,i-sectionsSize), i]);
+          }
+          if (selectedSection == -1) {
+            selectedSection = sections.length-1;
+          }
+          var innerHTML = "";
+          $.each(sections, function(i,range) {
+            selected = (i == selectedSection) ? ' class="active"' : '';
+            innerHTML += '<li' + selected + '><a href="javascript:void(0);" onclick="selectSection(' + i + ');"> ' +
+                sectionToStr(i) + '</a></li>';
+          });
+          $('#sections').html(innerHTML);
+          if (sections.length > 1) {
+            $('#sections').show();
+          } else {
+            $('#sections').hide();
+          }
+        }
+
         // Draws the chart from data in meteoSerie
-        function drawMeteoSerie() {
+        function drawMeteoSerie(meteoSerie) {
             if (meteoSerie.length > 0) {
                 var lastRow = meteoSerie[meteoSerie.length-1];
                 var lastDate = new Date(lastRow.year, lastRow.month, lastRow.day);
@@ -78,7 +128,7 @@
                     }
                 },
                 // Initial range: 2012-02-09 to 2012-03-20.
-                'state': {'range': {'start': new Date(lastDate-(90*60*24)), 'end': lastDate}}
+                'state': {'range': {'start': new Date(1900,01,01), 'end': new Date(2100,01,01)}}
             });
 
             maxTemp = 51;
@@ -119,7 +169,7 @@
             data.addColumn('number', 'Min & max temperatures range');
 
             $.each(meteoSerie, function(i, row) {
-                data.addRow([new Date(row.year, row.month, row.day), row.min, row.min, row.max, row.max]);
+                data.addRow([new Date(row.year, row.month-1, row.day), row.min, row.min, row.max, row.max]);
             });
 
             dashboard.bind(control, chart);
@@ -130,7 +180,7 @@
         function loadMeteoSerie() {
             // Clean up Chart
             meteoSerie = [];
-            drawMeteoSerie();
+            drawMeteoSerie(slice());
 
             query = 'select stn,wban from stations where name = "' + $("#station").val() + '"';
 
@@ -154,13 +204,10 @@
                                 meteoSerie.push(data);
                             });
 
-                            drawMeteoSerie()
+                            calculateSections();
+                            drawMeteoSerie(slice());
                         }
-                    ).error(function(jqXHR, textStatus, errorThrown) {
-                        $('#queryerror').html("<p><strong>Error: </strong>" + textStatus + "</p>");
-                        $('#queryerror').show();
-                        return;
-                    });
+                    );
                 }
             );
         }
@@ -219,6 +266,8 @@
         </div>
     </form>
     <div id="queryerror" class="alert alert-error" style="display:none"></div>
+    <ul id="sections"  class="nav nav-pills">
+    </ul>
     <div id="dashboard">
         <div id="chart" style='width: 915px; height: 300px;'></div>
         <div id="control" style='width: 915px; height: 50px;'></div>
