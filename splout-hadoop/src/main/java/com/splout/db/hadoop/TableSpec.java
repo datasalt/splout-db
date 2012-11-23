@@ -25,6 +25,7 @@ import java.util.Arrays;
 
 import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.io.Schema.Field;
+import com.datasalt.pangool.tuplemr.OrderBy;
 
 /**
  * Simple immutable bean that specifies the Pangool Schema of a Splout Table and the Fields that need to be indexed and how it is partitioned.
@@ -39,27 +40,30 @@ public class TableSpec implements Serializable {
 	private final String partitionByJavaScript;
 	private final String[] postSQL;
 	private final String[] preSQL;
+	private transient final OrderBy insertionOrderBy;
 	
 	public TableSpec(Schema schema, Field partitionField) {
-		this(schema, new Field[] { partitionField }, new FieldIndex[] { new FieldIndex(partitionField) }, null, null);
+		this(schema, new Field[] { partitionField }, new FieldIndex[] { new FieldIndex(partitionField) }, null, null, null);
 	}
 	
-	public TableSpec(Schema schema, Field[] partitionFields, FieldIndex[] indexes, String[] preSQL, String[] postSQL) {
+	public TableSpec(Schema schema, Field[] partitionFields, FieldIndex[] indexes, String[] preSQL, String[] postSQL, OrderBy insertionOrderBy) {
 		this.schema = schema;
 		this.partitionFields = partitionFields;
 		this.indexes = indexes;
 		this.partitionByJavaScript = null;
 		this.preSQL = preSQL;
 		this.postSQL = postSQL;
+		this.insertionOrderBy = insertionOrderBy;
 	}
 
-	public TableSpec(Schema schema, String partitionByJavaScript, FieldIndex[] indexes, String[] preSQL, String[] postSQL) {
+	public TableSpec(Schema schema, String partitionByJavaScript, FieldIndex[] indexes, String[] preSQL, String[] postSQL, OrderBy insertionOrderBy) {
 		this.schema = schema;
 		this.partitionFields = null;
 		this.partitionByJavaScript = partitionByJavaScript;
 		this.indexes = indexes;
 		this.preSQL = preSQL;
 		this.postSQL = postSQL;
+		this.insertionOrderBy = insertionOrderBy;
 	}
 	
 	/**
@@ -87,7 +91,7 @@ public class TableSpec implements Serializable {
 		}
 	}
 	
-	// ---- Getters & setters ---- //
+	// ---- Getters ---- //
 
 	public Schema getSchema() {
 		return schema;
@@ -106,5 +110,8 @@ public class TableSpec implements Serializable {
   }
 	public String[] getPreSQL() {
 	  return preSQL;
+  }
+	public OrderBy getInsertionSortOrder() {
+  	return insertionOrderBy;
   }
 }

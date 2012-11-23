@@ -41,13 +41,11 @@ import com.datasalt.pangool.io.Tuple;
  * A NullableTuple adds one more Field to the wrapped Tuple (see {@link NullableSchema}. This new fields indicate which
  * fields are null. The fields that are null contain a non-null value (0 for Integers, for instance) so that they can be
  * serialized. The overrided get() method returns those values so that Pangool can serialize the Tuple, however, for
- * null-aware getter one must use {@link #getNullable(int)} or {@link #getNullable(String)}. For conveniece, it is also
- * possible to create a non-serializable view whose get() will return nulls by using {@link NullableTupleView}.
+ * null-aware getter one must use {@link #getNullable(int)} or {@link #getNullable(String)}.
  */
 @SuppressWarnings("serial")
 public class NullableTuple extends Tuple {
 
-	private boolean wrappedIsNullable = false;
 	private int nFields;
 
 	public NullableTuple(ITuple tuple) {
@@ -65,12 +63,7 @@ public class NullableTuple extends Tuple {
 	 */
 	public NullableTuple(Schema schema) {
 		super(new NullableSchema(schema));
-		if(NullableSchema.isNullable(schema)) {
-			wrappedIsNullable = true;
-			nFields = schema.getFields().size() - 1;
-		} else {
-			nFields = schema.getFields().size();
-		}
+		nFields = getSchema().getFields().size() - 1;
 		initNulls();
 	}
 
@@ -80,26 +73,16 @@ public class NullableTuple extends Tuple {
 
 	public void setWrappedTuple(ITuple wrappedTuple, boolean deepCopy) {
 		clear();
-		if(wrappedIsNullable && !(wrappedTuple instanceof NullableTupleView)) {
-			super.set(nFields, wrappedTuple.get(NullableSchema.NULLS_FIELD));
-			// Shallow copy the values
-			for(int i = 0; i < nFields; i++) {
-				super.set(i, wrappedTuple.get(i));
+		for(Field field: wrappedTuple.getSchema().getFields()) {
+			Object obj = wrappedTuple.get(field.getName());
+			if(deepCopy && field.getType().equals(Type.STRING)) {
+				// for deep-copying primitive types we have to take
+				// into account that Strings are often wrapped into UTF8 objects in Pangool.
+				// Other than that, it is safe to shallow-copy primitive types as a deep copy.
+				// Usually you don't want to deep-copy unless you are keeping Tuples in an in-memory array.
+				obj = obj.toString();
 			}
-		} else {
-			// Do a first round of checking whether there are nulls or not
-			for(int i = 0; i < nFields; i++) {
-				Object obj = wrappedTuple.get(i);
-				Field field = wrappedTuple.getSchema().getField(i);
-				if(deepCopy && field.getType().equals(Type.STRING)) {
-					// for deep-copying primitive types we have to take
-					// into account that Strings are often wrapped into UTF8 objects in Pangool.
-					// Other than that, it is safe to shallow-copy primitive types as a deep copy.
-					// Usually you don't want to deep-copy unless you are keeping Tuples in an in-memory array.
-					obj = obj.toString();
-				}
-				set(field.getName(), obj);
-			}
+			set(field.getName(), obj);
 		}
 	}
 
@@ -132,6 +115,9 @@ public class NullableTuple extends Tuple {
 
 	@Override
 	public void set(int pos, Object object) {
+		if(pos == (nFields)) { // _nulls
+			super.set(nFields, object);
+		}
 		if(object != null) {
 			setNoNull(pos);
 		} else {

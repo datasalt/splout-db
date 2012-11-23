@@ -62,11 +62,6 @@ public class TestTablespaceGeneratorMultiTable {
 	public static File GEODATA_FILE = new File(TEST_INPUT, "geodata.txt");
 
 	@Before
-	public void jLibraryPath() {
-//		SploutConfiguration.setDevelopmentJavaLibraryPath();
-	}
-	
-	@Before
 	@After
 	public void cleanUp() throws IOException {
 		for(String cleanUpFolder: new String[] { TEST_INPUT, TEST_OUTPUT }) {

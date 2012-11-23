@@ -29,7 +29,6 @@ import java.util.Arrays;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.datasalt.pangool.io.Fields;
@@ -50,7 +49,6 @@ public class TestTupleSampler extends AbstractHadoopTestLibrary {
 	public static String OUTPUT = "output-" + TestTupleSampler.class.getName();
 
 	@Test
-	@Ignore
 	public void testDefault() throws IOException, InterruptedException, TupleSamplerException {
 		testDefault(Long.MAX_VALUE);
 		testDefault(1024 * 100);

@@ -20,22 +20,16 @@ package com.splout.db.hadoop;
  * #L%
  */
 
-import com.datasalt.pangool.io.Fields;
-import com.datasalt.pangool.io.ITuple;
-import com.datasalt.pangool.io.Schema;
-import com.datasalt.pangool.io.Schema.Field;
-import com.datasalt.pangool.io.Schema.Field.Type;
-import com.datasalt.pangool.io.Tuple;
-import com.datasalt.pangool.tuplemr.Criteria.Order;
-import com.datasalt.pangool.tuplemr.IdentityTupleReducer;
-import com.datasalt.pangool.tuplemr.OrderBy;
-import com.datasalt.pangool.tuplemr.TupleMRBuilder;
-import com.datasalt.pangool.tuplemr.TupleMapper;
-import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat.TupleInputReader;
-import com.splout.db.common.JSONSerDe;
-import com.splout.db.common.PartitionEntry;
-import com.splout.db.common.PartitionMap;
-import com.splout.db.common.Tablespace;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import javax.script.ScriptException;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -45,14 +39,23 @@ import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.mortbay.log.Log;
 
-import javax.script.ScriptException;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import com.datasalt.pangool.io.Fields;
+import com.datasalt.pangool.io.ITuple;
+import com.datasalt.pangool.io.Schema;
+import com.datasalt.pangool.io.Schema.Field;
+import com.datasalt.pangool.io.Schema.Field.Type;
+import com.datasalt.pangool.tuplemr.Criteria.Order;
+import com.datasalt.pangool.tuplemr.Criteria.SortElement;
+import com.datasalt.pangool.tuplemr.IdentityTupleReducer;
+import com.datasalt.pangool.tuplemr.OrderBy;
+import com.datasalt.pangool.tuplemr.TupleMRBuilder;
+import com.datasalt.pangool.tuplemr.TupleMapper;
+import com.datasalt.pangool.tuplemr.TupleReducer;
+import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat.TupleInputReader;
+import com.splout.db.common.JSONSerDe;
+import com.splout.db.common.PartitionEntry;
+import com.splout.db.common.PartitionMap;
+import com.splout.db.common.Tablespace;
 
 /**
  * A process that generates the SQL data stores needed for deploying a tablespace in Splout, giving a file set table
@@ -103,6 +106,8 @@ public class TablespaceGenerator implements Serializable {
 	private int batchSize = 1000000;
 	private PartitionMap partitionMap;
 
+	private TupleReducer<ITuple, NullWritable> customReducer = null;
+	
 	public TablespaceGenerator(TablespaceSpec tablespace, Path outputPath) {
 		this.tablespace = tablespace;
 		this.outputPath = outputPath;
@@ -240,23 +245,18 @@ public class TablespaceGenerator implements Serializable {
 		TupleMRBuilder builder = new TupleMRBuilder(conf, "Splout View Builder");
 
 		List<TableSpec> tableSpecs = new ArrayList<TableSpec>();
-		List<String> partitionedSchemaNames = new ArrayList<String>();
 
 		// For each Table we add an intermediate Pangool schema
-		int schemaCounter = 1;
+		int schemaCounter = 0;
+
 		for(Table table : tablespace.getPartitionedTables()) {
 			List<Field> fields = new ArrayList<Field>();
-			// The schema is composed by the common field "partition" and the tuple meta field
-			// The tuple meta field will be different for each Table but that is OK
-			fields.add(Field.create("partition", Type.INT));
-			fields.add(Field.create("key", Type.STRING));
-			fields.add(Fields.createTupleField("tuple", new NullableSchema(table.getTableSpec().getSchema())));
-			final Schema metaSchema = new Schema("metaSchema" + schemaCounter, fields);
-			partitionedSchemaNames.add("metaSchema" + schemaCounter);
+			fields.addAll(table.getTableSpec().getSchema().getFields());
+			fields.add(Field.create(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD, Type.INT));
+			final Schema tableSchema = new Schema(table.getTableSpec().getSchema().getName(), fields);
 			final TableSpec tableSpec = table.getTableSpec();
 			schemaCounter++;
-			builder.addIntermediateSchema(metaSchema);
-			final Schema schema = table.getTableSpec().getSchema();
+			builder.addIntermediateSchema(new NullableSchema(tableSchema));
 
 			// For each input file for the Table we add an input and a TupleMapper
 			for(TableInput inputFile : table.getFiles()) {
@@ -266,10 +266,7 @@ public class TablespaceGenerator implements Serializable {
 				for(Path path : inputFile.getPaths()) {
 					builder.addInput(path, inputFile.getFormat(), new TupleMapper<ITuple, NullWritable>() {
 
-						ITuple metaTuple = new Tuple(metaSchema);
-						NullableTuple tableTuple = new NullableTuple(schema);
-						NullableTuple inputNullableTuple;
-						NullableTupleView inputTupleView;
+						NullableTuple tableTuple = new NullableTuple(tableSchema);
 						JavascriptEngine jsEngine = null;
 						CounterInterface counterInterface = null;
 
@@ -290,19 +287,11 @@ public class TablespaceGenerator implements Serializable {
 								}
 							}
 
-							// Wrap the input file Tuple into a NullableTuple for convenience
-							if(inputNullableTuple == null) {
-								inputNullableTuple = new NullableTuple(fileTuple);
-								inputTupleView = new NullableTupleView(inputNullableTuple);
-							} else {
-								inputNullableTuple.setWrappedTuple(fileTuple);
-							}
-
 							// For each input Tuple from this File execute the RecordProcessor
 							// The Default IdentityRecordProcessor just bypasses the same Tuple
 							ITuple processedTuple = null;
 							try {
-								processedTuple = recordProcessor.process(inputTupleView, counterInterface);
+								processedTuple = recordProcessor.process(fileTuple, counterInterface);
 							} catch(Throwable e1) {
 								throw new RuntimeException(e1);
 							}
@@ -311,12 +300,10 @@ public class TablespaceGenerator implements Serializable {
 								return;
 							}
 
-							tableTuple.setWrappedTuple(processedTuple);
-
 							// Get the partition Id from this record
 							String strKey = "";
 							try {
-								strKey = getPartitionByKey(tableTuple, tableSpec, jsEngine);
+								strKey = getPartitionByKey(processedTuple, tableSpec, jsEngine);
 							} catch(Throwable e) {
 								throw new RuntimeException(e);
 							}
@@ -327,10 +314,11 @@ public class TablespaceGenerator implements Serializable {
 							}
 
 							// Finally write it to the Hadoop output
-							metaTuple.set("key", strKey);
-							metaTuple.set("tuple", tableTuple);
-							metaTuple.set("partition", shardId);
-							collector.write(metaTuple);
+							for(Field field : processedTuple.getSchema().getFields()) {
+								tableTuple.set(field.getName(), processedTuple.get(field.getName()));
+							}
+							tableTuple.set(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD, shardId);
+							collector.write(tableTuple);
 						}
 					});
 				}
@@ -342,31 +330,31 @@ public class TablespaceGenerator implements Serializable {
 		// We will send the data to all the partitions
 		for(final Table table : tablespace.getReplicateAllTables()) {
 			List<Field> fields = new ArrayList<Field>();
-			// The schema is composed by the common field "partition" and the tuple meta field
-			// The tuple meta field will be different for each Table but that is OK
-			fields.add(Field.create("partition", Type.INT));
-			final Schema schema = table.getTableSpec().getSchema();
-			fields.add(Fields.createTupleField("tuple", new NullableSchema(schema)));
-			final Schema metaSchema = new Schema("metaSchema" + schemaCounter++, fields);
-			builder.addIntermediateSchema(metaSchema);
+			fields.addAll(table.getTableSpec().getSchema().getFields());
+			fields.add(Field.create(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD, Type.INT));
+			final Schema tableSchema = new Schema(table.getTableSpec().getSchema().getName(), fields);
+			schemaCounter++;
+			fields.add(Fields.createTupleField("tuple", new NullableSchema(tableSchema)));
+			builder.addIntermediateSchema(new NullableSchema(tableSchema));
 			// For each input file for the Table we add an input and a TupleMapper
 			for(TableInput inputFile : table.getFiles()) {
 				for(Path path : inputFile.getPaths()) {
 					builder.addInput(path, inputFile.getFormat(), new TupleMapper<ITuple, NullWritable>() {
 
-						ITuple metaTuple = new Tuple(metaSchema);
-						NullableTuple tableTuple = new NullableTuple(schema);
+						NullableTuple tableTuple = new NullableTuple(tableSchema);
 
 						@Override
 						public void map(ITuple key, NullWritable value, TupleMRContext context, Collector collector)
 						    throws IOException, InterruptedException {
 
-							tableTuple.setWrappedTuple(key);
-							metaTuple.set("tuple", tableTuple);
+							for(int i = 0; i < key.getSchema().getFields().size(); i++) {
+								tableTuple.set(i, key.get(i));
+							}
+
 							// Send the data of the replicated table to all partitions!
 							for(int i = 0; i < nPartitions; i++) {
-								metaTuple.set("partition", i);
-								collector.write(metaTuple);
+								tableTuple.set(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD, i);
+								collector.write(tableTuple);
 							}
 						}
 					});
@@ -376,21 +364,44 @@ public class TablespaceGenerator implements Serializable {
 		}
 
 		// Group by partition
-		builder.setGroupByFields("partition");
-		if(tablespace.getReplicateAllTables().size() == 0) { // only partitioned tables
-			// sort by partition and key
-			builder.setOrderBy(OrderBy.parse("partition:desc, key:desc"));
-		} else {
-			// need to add specific ordering for partitioned tables only
-			// replicated tables are not secondary sorted by key because they don't have a key
-			builder.setOrderBy(OrderBy.parse("partition:desc").addSchemaOrder(Order.DESC));
-			for(String partitionedSchema : partitionedSchemaNames) {
-				builder.setSpecificOrderBy(partitionedSchema, OrderBy.parse("key:desc"));
+		builder.setGroupByFields(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD);
+
+		if(schemaCounter == 1) {
+			OrderBy orderBy = new OrderBy();
+			orderBy.add(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD, Order.ASC);
+			// The only table we have, check if it has specific order by
+			OrderBy specificOrderBy = tablespace.getPartitionedTables().get(0).getTableSpec()
+			    .getInsertionSortOrder();
+			if(specificOrderBy != null) {
+				for(SortElement elem : specificOrderBy.getElements()) {
+					orderBy.add(elem.getName(), elem.getOrder());
+				}
+			}
+			builder.setOrderBy(orderBy);
+		} else { // > 1
+			// More than one schema: set common order by
+			builder.setOrderBy(OrderBy.parse(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD + ":asc").addSchemaOrder(Order.ASC));
+			// And then as many particular order bys as needed - ....
+			for(Table partitionedTable : tablespace.getPartitionedTables()) {
+				if(partitionedTable.getTableSpec().getInsertionSortOrder() != null) {
+					builder.setSpecificOrderBy(partitionedTable.getTableSpec().getSchema().getName(),
+					    partitionedTable.getTableSpec().getInsertionSortOrder());
+				}
+			}
+			for(Table replicatedTable : tablespace.getReplicateAllTables()) {
+				if(replicatedTable.getTableSpec().getInsertionSortOrder() != null) {
+					builder.setSpecificOrderBy(replicatedTable.getTableSpec().getSchema().getName(),
+							replicatedTable.getTableSpec().getInsertionSortOrder());
+				}				
 			}
 		}
 
-		builder.setTupleReducer(new IdentityTupleReducer());
-		
+		if(customReducer == null) {
+			builder.setTupleReducer(new IdentityTupleReducer());
+		} else {
+			builder.setTupleReducer(customReducer);
+		}
+
 		builder.setJarByClass(TablespaceGenerator.class);
 		// Define the output format - Tuple to SQL
 		OutputFormat outputFormat = new TupleSQLite4JavaOutputFormat(batchSize,
@@ -408,6 +419,11 @@ public class TablespaceGenerator implements Serializable {
 		Log.info("Tablespace store generated in " + (end - start) + " ms.");
 	}
 
+	// Package-access, to be used for unit testing
+	void setCustomReducer(TupleReducer<ITuple, NullWritable> customReducer) {
+		this.customReducer = customReducer;
+	}
+	
 	/**
 	 * Returns the generated {@link PartitionMap}. It is also written to the HDFS. This is mainly used for testing.
 	 */
