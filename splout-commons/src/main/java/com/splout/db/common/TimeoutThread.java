@@ -95,6 +95,7 @@ public class TimeoutThread extends Thread {
 							} catch(SQLiteException e) {
 								//
 							} finally {
+								queryAndTime.query = null;
 								queryAndTime.time = -1l; // connection will not be considered until a new query is executed
 							}
 						}
@@ -146,4 +147,13 @@ public class TimeoutThread extends Thread {
 			}
 		}
 	}
+
+	// --- package-access getters for unit testing --- //
+	
+	ConcurrentHashMap<SQLiteConnection, QueryAndTime> getCurrentQueries() {
+  	return currentQueries;
+  }
+	Set<SQLiteConnection> getConnections() {
+  	return connections;
+  }
 }

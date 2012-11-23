@@ -21,9 +21,11 @@ package com.splout.db.common;
  */
 
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Test;
@@ -33,6 +35,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import com.almworks.sqlite4java.SQLiteConnection;
 import com.almworks.sqlite4java.SQLiteException;
+import com.splout.db.common.TimeoutThread.QueryAndTime;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ SQLiteConnection.class })
@@ -67,6 +70,7 @@ public class TestTimeoutThread {
           } catch(Throwable e) {
           	// expected
           }
+          timeoutThread.endQuery(conn);
 				};
 			};
 			t[i].start();
@@ -77,6 +81,13 @@ public class TestTimeoutThread {
 		}
 		
 		assertEquals(false, failed.get());
+		
+		assertEquals(10, timeoutThread.getConnections().size());
+		assertEquals(10, timeoutThread.getCurrentQueries().size());
+		for(Map.Entry<SQLiteConnection, QueryAndTime> entry: timeoutThread.getCurrentQueries().entrySet()) {
+			assertEquals(new Long(-1l), entry.getValue().time);
+			assertNull(entry.getValue().query);
+		}
 	}
 	
 	@Test
@@ -118,5 +129,12 @@ public class TestTimeoutThread {
 		}
 		
 		assertEquals(false, failed.get());
+		
+		assertEquals(10, timeoutThread.getConnections().size());
+		assertEquals(10, timeoutThread.getCurrentQueries().size());
+		for(Map.Entry<SQLiteConnection, QueryAndTime> entry: timeoutThread.getCurrentQueries().entrySet()) {
+			assertEquals(new Long(-1l), entry.getValue().time);
+			assertNull(entry.getValue().query);
+		}
 	}
 }
