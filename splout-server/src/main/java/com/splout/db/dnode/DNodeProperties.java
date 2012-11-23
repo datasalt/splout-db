@@ -75,4 +75,8 @@ public class DNodeProperties {
 	 * In milliseconds, queries that are slower will be logged with a WARNING. 
 	 */
 	public final static String SLOW_QUERY_ABSOLUTE_LIMIT = "dnode.slow.query.abs.limit";
+	/**
+	 * Queries that run for more than this time will be interrupted.
+	 */
+	public final static String MAX_QUERY_TIME = "dnode.max.query.time";
 }

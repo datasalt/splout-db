@@ -78,6 +78,10 @@ dnode.max.results.per.query	50000
  
 dnode.handle.test.commands	false
 
+# Queries that run for more than this time will be interrupted. Must be greater than 1000.
+
+dnode.max.query.time	15000
+
 #
 # In milliseconds, queries that are slower will be logged with a WARNING. 
 #

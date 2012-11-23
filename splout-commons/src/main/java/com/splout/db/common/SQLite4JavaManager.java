@@ -46,6 +46,9 @@ public class SQLite4JavaManager implements ISQLiteManager {
 	private final File dbFile;
 	private final List<String> initStatements;
 	
+	// If present, will monitor long-running queries and kill them if needed
+	private TimeoutThread timeoutThread = null;
+	
 	ThreadLocal<SQLiteConnection> db = new ThreadLocal<SQLiteConnection>() {
 
 		protected SQLiteConnection initialValue() {
@@ -71,6 +74,15 @@ public class SQLite4JavaManager implements ISQLiteManager {
 		this.initStatements = initStatements;
 	}
 
+	/**
+	 * Optionally sets a {@TimeoutThread} that will take care of cancelling long-running queries.
+	 * If present, each SQLiteConnectiona associated with each thread will be monitored by this thread
+	 * to see if there is some query that needs to be interrupted.
+	 */
+	public void setTimeoutThread(TimeoutThread timeoutThread) {
+		this.timeoutThread = timeoutThread;
+	}
+	
 	@Override
 	public String exec(String query) throws SQLException, JSONSerDeException {
 		try {
@@ -85,7 +97,14 @@ public class SQLite4JavaManager implements ISQLiteManager {
 	public String query(String query, int maxResults) throws SQLException, JSONSerDeException {
 		SQLiteStatement st = null;
 		try {
-			st = db.get().prepare(query);
+			SQLiteConnection conn = db.get();
+			if(timeoutThread != null) {
+				timeoutThread.startQuery(conn, query);
+			}
+			st = conn.prepare(query);
+			if(timeoutThread != null) {
+				timeoutThread.endQuery(conn);
+			}
 			List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
 			if(st.step()) {
 				do {
