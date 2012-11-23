@@ -5,6 +5,8 @@
 		"name": "meteo",
 		"schema": "station:string,date:string,metric:string,measure:int,ignore1:string,ignore2:string,ignore3:string,ignore4:string",
 		"partitionFields": "station",
+		"preInsertStatements": ["create index pru on meteo(station)", "create index pru2 on meteo(metric)"],
+		"finalStatements": ["analyze table station"],
 		"tableInputs": [{
 			"inputSpecs": {
 				"separatorChar": ","

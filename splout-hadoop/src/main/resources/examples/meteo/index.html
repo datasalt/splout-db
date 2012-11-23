@@ -31,6 +31,10 @@
         google.load('visualization', '1.1', {packages: ['corechart', 'controls']});
     </script>
     <script type="text/javascript">
+        // Global variables
+        var meteoSerie = [];
+
+        // Perform queries to Splout asynchronously
         function sploutIt(keys, query, callback) {
             keyParams = "";
             $.each(keys, function (i, key) {
@@ -40,9 +44,16 @@
             $.getJSON(sploutURL + '/api/query/meteo-pby-stn-wban?' + keyParams + 'sql=' + encodeURIComponent(query) + '&callback=?', callback);
         }
 
+        // Draws the chart from data in meteoSerie
         function drawMeteoSerie() {
+            if (meteoSerie.length > 0) {
+                var lastRow = meteoSerie[meteoSerie.length-1];
+                var lastDate = new Date(lastRow.year, lastRow.month, lastRow.day);
+            } else {
+                var lastDate = new Date(2050,01,01);
+            }
 
-            var dashboard = new google.visualization.Dashboard(
+        var dashboard = new google.visualization.Dashboard(
                 document.getElementById('dashboard'));
 
             var control = new google.visualization.ControlWrapper({
@@ -67,7 +78,7 @@
                     }
                 },
                 // Initial range: 2012-02-09 to 2012-03-20.
-                'state': {'range': {'start': new Date(1900, 1, 9), 'end': new Date(2040, 2, 20)}}
+                'state': {'range': {'start': new Date(lastDate-(90*60*24)), 'end': lastDate}}
             });
 
             maxTemp = 51;
@@ -115,6 +126,7 @@
             dashboard.draw(data);
         }
 
+        // Loads the meteo serie, and draw it
         function loadMeteoSerie() {
             // Clean up Chart
             meteoSerie = [];
@@ -153,6 +165,7 @@
             );
         }
 
+        // Statin autosuggest function
         function suggestStation(query, callback) {
             $.getJSON(sploutURL + '/api/query/meteo-pby-stn-wban?key=any&sql=' + 'select name from stations where name like "' + query + '%" limit 20;' + '&callback=?',
                 function(data) {
