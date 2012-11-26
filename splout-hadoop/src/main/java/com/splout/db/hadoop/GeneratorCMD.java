@@ -48,7 +48,7 @@ public class GeneratorCMD implements Tool {
 
 	private final static Log log = LogFactory.getLog(GeneratorCMD.class);
 
-	@Parameter(required = true, names = { "-tf", "--tablespacefile" }, description = "The JSON config file with the Tablespaces specifications. Multiple files can be provided. In local filesystem.")
+	@Parameter(required = true, names = { "-tf", "--tablespacefile" }, description = "The JSON config file with the Tablespaces specifications. Multiple files can be provided. Non full qualified URLs forces to load the file from the current Hadoop filesystem.")
 	private List<String> tablespaceFiles;
 
 	@Parameter(required = true, names = { "-o", "--output" }, description = "Output path where the generated tablespaces will be saved. If you are running the process from Hadoop, relative paths would use the Hadoop filesystem. Use full qualified URIs instead if you want other behaviour.")
@@ -77,7 +77,7 @@ public class GeneratorCMD implements Tool {
 
 		for(String tablespaceFile : tablespaceFiles) {
 			Path file = new Path(tablespaceFile);
-			FileSystem fS = FileSystem.getLocal(getConf());
+			FileSystem fS = FileSystem.get(file.toUri(), getConf());
 
 			if(!fS.exists(file)) {
 				throw new IllegalArgumentException("Config input file: " + file + " doesn't exist!");
