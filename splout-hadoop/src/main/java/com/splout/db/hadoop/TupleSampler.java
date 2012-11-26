@@ -223,6 +223,10 @@ public class TupleSampler implements Serializable {
 		TupleRecordWriter writer = TupleRecordWriter.getTupleWriter(hadoopConf, new NullableSchema(
 		    tableSchema), outputPath);
 
+		if(outFs.listStatus(outReservoirPath) == null) {
+			throw new IOException("Output folder not created: the Job failed!");
+		}
+		
 		// Aggregate the output into a single file for being consistent with the other sampling methods
 		for(FileStatus fileStatus : outFs.listStatus(outReservoirPath)) {
 			Path thisPath = fileStatus.getPath();
