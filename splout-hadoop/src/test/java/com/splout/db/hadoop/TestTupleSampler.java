@@ -28,6 +28,7 @@ import java.util.Arrays;
 
 import com.datasalt.pangool.io.*;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.junit.Test;
@@ -47,7 +48,7 @@ public class TestTupleSampler extends AbstractHadoopTestLibrary {
 	public void testDefault() throws IOException, InterruptedException, TupleSamplerException {
 		testDefault(Long.MAX_VALUE);
 		testDefault(1024 * 100);
-		testDefault(1024);
+		testDefault(1024 * 10);
 	}
 	
 	@Test
@@ -126,16 +127,21 @@ public class TestTupleSampler extends AbstractHadoopTestLibrary {
 		Configuration conf = new Configuration();
 
     TupleFile.Writer writer = new TupleFile.Writer(fS,  getConf(), new Path(INPUT), schema);
-		for(int i = 0; i < 10000; i++) {
+		for(int i = 0; i < 1000; i++) {
 			writer.append(randomTuple());
 		}
 		writer.close();
 
-		SamplingOptions options = new TupleSampler.DefaultSamplingOptions();
+    // Requesting as many samples as splits so one sample is needed from each split.
+    FileStatus status = fS.getFileStatus(new Path(INPUT));
+    long expectedSplits = Math.max(1, (long) Math.ceil(((double) status.getLen()) / splitSize));
+
+		TupleSampler.DefaultSamplingOptions options = new TupleSampler.DefaultSamplingOptions();
 		options.setMaxInputSplitSize(splitSize);
+    options.setMaxSplitsToVisit(Integer.MAX_VALUE);
 		
 		TupleSampler sampler = new TupleSampler(SamplingType.DEFAULT, options);
-		sampler.sample(Arrays.asList(new TableInput[] { new TableInput(new TupleInputFormat(), schema, new IdentityRecordProcessor(), new Path(INPUT)) }), schema, conf, 10, new Path(OUTPUT));		
+		sampler.sample(Arrays.asList(new TableInput[] { new TableInput(new TupleInputFormat(), schema, new IdentityRecordProcessor(), new Path(INPUT)) }), schema, conf, expectedSplits, new Path(OUTPUT));
 		int nTuples = 0;
     TupleFile.Reader reader = new TupleFile.Reader(fS,  conf, new Path(OUTPUT));
     Tuple tuple = new Tuple(reader.getSchema());
@@ -147,7 +153,7 @@ public class TestTupleSampler extends AbstractHadoopTestLibrary {
 		String a = "";
 		a.split("foo");
 		
-		assertEquals(10, nTuples);
+		assertEquals(expectedSplits, nTuples);
 		trash(INPUT, OUTPUT);
 	}
 
