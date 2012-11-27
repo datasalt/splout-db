@@ -26,18 +26,13 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.util.Arrays;
 
+import com.datasalt.pangool.io.*;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.junit.Test;
 
-import com.datasalt.pangool.io.Fields;
-import com.datasalt.pangool.io.ITuple;
-import com.datasalt.pangool.io.Schema;
-import com.datasalt.pangool.io.Tuple;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat;
-import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat.TupleInputReader;
-import com.datasalt.pangool.tuplemr.mapred.lib.output.TupleOutputFormat.TupleRecordWriter;
 import com.datasalt.pangool.utils.test.AbstractHadoopTestLibrary;
 import com.splout.db.hadoop.TupleSampler.SamplingOptions;
 import com.splout.db.hadoop.TupleSampler.SamplingType;
@@ -63,15 +58,15 @@ public class TestTupleSampler extends AbstractHadoopTestLibrary {
 		Configuration conf = new Configuration();
 
 		final Schema schema = new Schema("schema", Fields.parse("id:string, foo:int"));
-		TupleRecordWriter writer = TupleRecordWriter.getTupleWriter(conf, schema, INPUT);
+    TupleFile.Writer writer = new TupleFile.Writer(fS,  getConf(), new Path(INPUT), schema);
 		for(int i = 0; i < 10000; i++) {
 			ITuple tuple = new Tuple(schema);
 			tuple.set("id", "id" + i);
 			// We save a number in the "foo" field which is consecutive: [0, 1, 2, ... 9999]
 			tuple.set("foo", i);
-			writer.write(tuple, NullWritable.get());
+			writer.append(tuple);
 		}
-		writer.close(null);
+		writer.close();
 		
 		// Sampling with default method should yield lower numbers
 		// Default input split size so only one InputSplit
@@ -82,11 +77,11 @@ public class TestTupleSampler extends AbstractHadoopTestLibrary {
 		int nTuples = 0;
 		int[] sampledKeys = new int[10];
 		
-		TupleInputReader reader = new TupleInputReader(conf);
-		reader.initialize(new Path(OUTPUT), conf);
-		while(reader.nextKeyValueNoSync()) {
+		TupleFile.Reader reader = new TupleFile.Reader(fS,  conf, new Path(OUTPUT));
+    Tuple tuple = new Tuple(reader.getSchema());
+		while(reader.next(tuple)) {
 			// Get the "foo" field from sampled Tuples
-			sampledKeys[nTuples] = Integer.parseInt(reader.getCurrentKey().get("foo").toString());
+			sampledKeys[nTuples] = Integer.parseInt(tuple.get("foo").toString());
 			nTuples++;
 		}
 		reader.close();
@@ -101,12 +96,12 @@ public class TestTupleSampler extends AbstractHadoopTestLibrary {
 		
 		nTuples = 0;
 		sampledKeys = new int[10];
-		
-		reader = new TupleInputReader(conf);
-		reader.initialize(new Path(OUTPUT), conf);
-		while(reader.nextKeyValueNoSync()) {
-			// Get the "foo" field from sampled Tuples
-			sampledKeys[nTuples] = Integer.parseInt(reader.getCurrentKey().get("foo").toString());
+
+    reader = new TupleFile.Reader(fS,  conf, new Path(OUTPUT));
+    tuple = new Tuple(reader.getSchema());
+    while(reader.next(tuple)) {
+      // Get the "foo" field from sampled Tuples
+			sampledKeys[nTuples] = Integer.parseInt(tuple.get("foo").toString());
 			nTuples++;
 		}
 		reader.close();
@@ -130,11 +125,11 @@ public class TestTupleSampler extends AbstractHadoopTestLibrary {
 
 		Configuration conf = new Configuration();
 
-		TupleRecordWriter writer = TupleRecordWriter.getTupleWriter(conf, schema, INPUT);
+    TupleFile.Writer writer = new TupleFile.Writer(fS,  getConf(), new Path(INPUT), schema);
 		for(int i = 0; i < 10000; i++) {
-			writer.write(randomTuple(), NullWritable.get());
+			writer.append(randomTuple());
 		}
-		writer.close(null);
+		writer.close();
 
 		SamplingOptions options = new TupleSampler.DefaultSamplingOptions();
 		options.setMaxInputSplitSize(splitSize);
@@ -142,10 +137,9 @@ public class TestTupleSampler extends AbstractHadoopTestLibrary {
 		TupleSampler sampler = new TupleSampler(SamplingType.DEFAULT, options);
 		sampler.sample(Arrays.asList(new TableInput[] { new TableInput(new TupleInputFormat(), schema, new IdentityRecordProcessor(), new Path(INPUT)) }), schema, conf, 10, new Path(OUTPUT));		
 		int nTuples = 0;
-		TupleInputReader reader = new TupleInputReader(conf);
-		reader.initialize(new Path(OUTPUT), conf);
-		while(reader.nextKeyValueNoSync()) {
-			reader.getCurrentKey();
+    TupleFile.Reader reader = new TupleFile.Reader(fS,  conf, new Path(OUTPUT));
+    Tuple tuple = new Tuple(reader.getSchema());
+    while(reader.next(tuple)) {
 			nTuples++;
 		}
 		reader.close();

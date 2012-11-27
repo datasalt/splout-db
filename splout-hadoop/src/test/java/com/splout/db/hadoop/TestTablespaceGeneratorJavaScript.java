@@ -24,6 +24,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 
+import com.datasalt.pangool.io.TupleFile;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.generic.GenericData.Record;
 import org.apache.avro.reflect.ReflectDatumWriter;
@@ -36,7 +37,6 @@ import org.junit.Test;
 import com.datasalt.pangool.io.Fields;
 import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat;
-import com.datasalt.pangool.tuplemr.mapred.lib.output.TupleOutputFormat.TupleRecordWriter;
 import com.datasalt.pangool.utils.AvroUtils;
 import com.datasalt.pangool.utils.HadoopUtils;
 import com.datasalt.pangool.utils.test.AbstractHadoopTestLibrary;
@@ -60,20 +60,18 @@ public class TestTablespaceGeneratorJavaScript extends AbstractHadoopTestLibrary
 		initHadoop();
 		trash(INPUT, OUTPUT);
 
-		DataFileWriter<Record> avroWriter = new DataFileWriter<Record>(new ReflectDatumWriter<Record>());
-		avroWriter.create(AvroUtils.toAvroSchema(theSchema1), new File(INPUT));
-		TupleRecordWriter writer = new TupleRecordWriter(theSchema1, avroWriter, getConf());
+    TupleFile.Writer writer = new TupleFile.Writer(fS,  getConf(), new Path(INPUT), theSchema1);
 
-		writer.write(TestTablespaceGenerator.getTuple("aa1", "value1"), NullWritable.get());
-		writer.write(TestTablespaceGenerator.getTuple("aa2", "value2"), NullWritable.get());
+		writer.append(TestTablespaceGenerator.getTuple("aa1", "value1"));
+		writer.append(TestTablespaceGenerator.getTuple("aa2", "value2"));
 
-		writer.write(TestTablespaceGenerator.getTuple("ab1", "value3"), NullWritable.get());
-		writer.write(TestTablespaceGenerator.getTuple("ab2", "value4"), NullWritable.get());
+		writer.append(TestTablespaceGenerator.getTuple("ab1", "value3"));
+		writer.append(TestTablespaceGenerator.getTuple("ab2", "value4"));
 
-		writer.write(TestTablespaceGenerator.getTuple("bb1", "value5"), NullWritable.get());
-		writer.write(TestTablespaceGenerator.getTuple("bb2", "value6"), NullWritable.get());
+		writer.append(TestTablespaceGenerator.getTuple("bb1", "value5"));
+		writer.append(TestTablespaceGenerator.getTuple("bb2", "value6"));
 
-		writer.close(null);
+		writer.close();
 
 		TablespaceBuilder builder = new TablespaceBuilder();
 		builder.setNPartitions(3);

@@ -54,9 +54,11 @@ public class GeneratorCMD implements Tool {
 	@Parameter(required = true, names = { "-o", "--output" }, description = "Output path where the generated tablespaces will be saved. If you are running the process from Hadoop, relative paths would use the Hadoop filesystem. Use full qualified URIs instead if you want other behaviour.")
 	private String output;
 
-	private Configuration conf;
+  @Parameter(required = false, names = { "-st", "--sampling-type" }, description = "Selects the sampling type to use. DEFAULT: random selection of samples from the start of splits. RESERVOIR: sampling from the full dataset.")
+  private SamplingType samplingType = SamplingType.DEFAULT;
 
-	@Override
+  private Configuration conf;
+
 	public int run(String[] args) throws Exception {
 		JCommander jComm = new JCommander(this);
 		jComm
@@ -108,7 +110,7 @@ public class GeneratorCMD implements Tool {
 
 			log.info("Generating view with Hadoop (" + tablespace.getKey() + ")");
 			TablespaceGenerator viewGenerator = new TablespaceGenerator(spec, tablespaceOut);
-			viewGenerator.generateView(conf, SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions()); // TODO
+			viewGenerator.generateView(conf, samplingType, new TupleSampler.DefaultSamplingOptions()); // TODO
 																																																				 // Parametrize
 		}
 
@@ -116,12 +118,10 @@ public class GeneratorCMD implements Tool {
 		return 0;
 	}
 
-	@Override
 	public Configuration getConf() {
 		return conf;
 	}
 
-	@Override
 	public void setConf(Configuration conf) {
 		this.conf = conf;
 	}

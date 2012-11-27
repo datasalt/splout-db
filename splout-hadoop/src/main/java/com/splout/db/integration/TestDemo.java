@@ -20,6 +20,7 @@ package com.splout.db.integration;
  * #L%
  */
 
+import com.datasalt.pangool.io.TupleFile;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -27,7 +28,6 @@ import org.apache.hadoop.io.NullWritable;
 import org.mortbay.log.Log;
 
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat;
-import com.datasalt.pangool.tuplemr.mapred.lib.output.TupleOutputFormat.TupleRecordWriter;
 import com.datasalt.pangool.utils.HadoopUtils;
 import com.splout.db.common.PartitionMap;
 import com.splout.db.common.ReplicationMap;
@@ -53,15 +53,15 @@ public class TestDemo {
 		HadoopUtils.deleteIfExists(fS, outputPath);
 
 		NullWritable nullValue = NullWritable.get();
-		TupleRecordWriter writer = TupleRecordWriter.getTupleWriter(conf, SploutHadoopTestUtils.SCHEMA, fS.create(inputPath));
+		TupleFile.Writer writer = new TupleFile.Writer(fS,  conf, inputPath, SploutHadoopTestUtils.SCHEMA);
 		
 		// Writes nRegs Tuples to HDFS
 		long soFar = 0;
 		while(soFar < nRegs) {
-			writer.write(SploutHadoopTestUtils.getTuple("id" + soFar, (int) soFar), nullValue);
+			writer.append(SploutHadoopTestUtils.getTuple("id" + soFar, (int) soFar));
 			soFar++;
 		}
-		writer.close(null);
+		writer.close();
 		
 		// Generate Splout view
 		TablespaceSpec tablespace = TablespaceSpec.of(SploutHadoopTestUtils.SCHEMA, "id", inputPath, new TupleInputFormat(), nPartitions);

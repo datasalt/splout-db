@@ -20,6 +20,7 @@ package com.splout.db.integration;
  * #L%
  */
 
+import com.datasalt.pangool.io.*;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -28,12 +29,7 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.mortbay.log.Log;
 
-import com.datasalt.pangool.io.Fields;
-import com.datasalt.pangool.io.ITuple;
-import com.datasalt.pangool.io.Schema;
-import com.datasalt.pangool.io.Tuple;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat;
-import com.datasalt.pangool.tuplemr.mapred.lib.output.TupleOutputFormat.TupleRecordWriter;
 import com.datasalt.pangool.utils.HadoopUtils;
 import com.splout.db.common.PartitionMap;
 import com.splout.db.common.ReplicationMap;
@@ -68,7 +64,7 @@ public class RetailDemo {
 		    Fields.parse("tienda:string, cliente:int, ticket:double, producto:int, precio:double, fecha:string"));
 		ITuple tuple = new Tuple(retailSchema);
 
-		TupleRecordWriter writer = TupleRecordWriter.getTupleWriter(conf, retailSchema, fS.create(inputPath));
+		TupleFile.Writer writer = new TupleFile.Writer(fS, conf, inputPath, retailSchema);
 
 		// Writes nRegs Tuples to HDFS
 		long soFar = 0;
@@ -93,11 +89,11 @@ public class RetailDemo {
 				int producto = (int) (Math.random() * N_PRODUCTOS);
 				tuple.set("precio", precios[i]);
 				tuple.set("producto", producto);
-				writer.write(tuple, nullValue);
+				writer.append(tuple);
 				soFar++;
 			}
 		}
-		writer.close(null);
+		writer.close();
 
 		// Generate Splout view (cliente)
 		String[] dnodeArray = dnodes.split(",");

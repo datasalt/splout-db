@@ -30,6 +30,7 @@ import java.util.List;
 
 import javax.script.ScriptException;
 
+import com.datasalt.pangool.io.*;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -39,9 +40,6 @@ import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.mortbay.log.Log;
 
-import com.datasalt.pangool.io.Fields;
-import com.datasalt.pangool.io.ITuple;
-import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.io.Schema.Field;
 import com.datasalt.pangool.io.Schema.Field.Type;
 import com.datasalt.pangool.tuplemr.Criteria.Order;
@@ -51,7 +49,6 @@ import com.datasalt.pangool.tuplemr.OrderBy;
 import com.datasalt.pangool.tuplemr.TupleMRBuilder;
 import com.datasalt.pangool.tuplemr.TupleMapper;
 import com.datasalt.pangool.tuplemr.TupleReducer;
-import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat.TupleInputReader;
 import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.PartitionEntry;
 import com.splout.db.common.PartitionMap;
@@ -71,7 +68,7 @@ import com.splout.db.common.Tablespace;
  * the list of sampled keys and outputPath + / + {@link #OUT_STORE} for the folder containing the generated SQL store.
  * <p>
  * For creating the store we first sample the input dataset with {@link TupleSampler} and then execute a Hadoop job that
- * distributes the data accordingly. The Hadoop job will use {@link TupleSQLiteOutputFormat}.
+ * distributes the data accordingly. The Hadoop job will use {@link TupleSQLite4JavaOutputFormat}.
  */
 @SuppressWarnings({ "serial", "rawtypes" })
 public class TablespaceGenerator implements Serializable {
@@ -177,11 +174,10 @@ public class TablespaceGenerator implements Serializable {
 				    sampledInput);
 
 				// 1.1 Read sampled keys
-				RecordReader<ITuple, NullWritable> reader = new TupleInputReader(conf);
-				((TupleInputReader) reader).initialize(sampledInput, conf);
+        TupleFile.Reader reader = new TupleFile.Reader(fileSystem, conf, sampledInput);
+        Tuple tuple = new Tuple(reader.getSchema());
 
-				while(reader.nextKeyValue()) {
-					ITuple tuple = new NullableTuple(reader.getCurrentKey());
+				while(reader.next(tuple)) {
 					String key;
 					try {
 						key = getPartitionByKey(tuple, table.getTableSpec(), jsEngine);

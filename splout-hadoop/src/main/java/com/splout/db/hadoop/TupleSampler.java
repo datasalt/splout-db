@@ -28,6 +28,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.datasalt.pangool.io.Tuple;
+import com.datasalt.pangool.io.TupleFile;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -51,8 +53,6 @@ import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.tuplemr.MapOnlyJobBuilder;
 import com.datasalt.pangool.tuplemr.TupleMRException;
 import com.datasalt.pangool.tuplemr.mapred.MapOnlyMapper;
-import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat.TupleInputReader;
-import com.datasalt.pangool.tuplemr.mapred.lib.output.TupleOutputFormat.TupleRecordWriter;
 import com.splout.db.common.PartitionMap;
 
 /**
@@ -156,7 +156,7 @@ public class TupleSampler implements Serializable {
 	    Path outputPath, final int nSplits, List<TableInput> inputFiles) throws IOException,
 	    InterruptedException, ClassNotFoundException, TupleMRException, URISyntaxException {
 
-		MapOnlyJobBuilder builder = new MapOnlyJobBuilder(hadoopConf);
+		MapOnlyJobBuilder builder = new MapOnlyJobBuilder(hadoopConf, "Reservoir Sampling");
 		for(TableInput inputFile : inputFiles) {
 			final RecordProcessor processor = inputFile.getRecordProcessor();
 			for(Path path : inputFile.getPaths()) {
@@ -220,8 +220,8 @@ public class TupleSampler implements Serializable {
 
 		FileSystem outFs = outReservoirPath.getFileSystem(hadoopConf);
 		// Instantiate the writer we will write samples to
-		TupleRecordWriter writer = TupleRecordWriter.getTupleWriter(hadoopConf, new NullableSchema(
-		    tableSchema), outputPath);
+    TupleFile.Writer writer = new TupleFile.Writer(outFs, hadoopConf, outputPath, new NullableSchema(
+		    tableSchema));
 
 		if(outFs.listStatus(outReservoirPath) == null) {
 			throw new IOException("Output folder not created: the Job failed!");
@@ -231,16 +231,16 @@ public class TupleSampler implements Serializable {
 		for(FileStatus fileStatus : outFs.listStatus(outReservoirPath)) {
 			Path thisPath = fileStatus.getPath();
 			if(thisPath.getName().startsWith("part-m-")) {
-				TupleInputReader reader = new TupleInputReader(hadoopConf);
-				reader.initialize(thisPath, hadoopConf);
-				while(reader.nextKeyValueNoSync()) {
-					writer.write(reader.getCurrentKey(), NullWritable.get());
+				TupleFile.Reader reader = new TupleFile.Reader(outFs, hadoopConf, thisPath);
+        Tuple tuple = new Tuple(reader.getSchema());
+				while(reader.next(tuple)) {
+					writer.append(tuple);
 				}
 				reader.close();
 			}
 		}
 
-		writer.close(null);
+		writer.close();
 		outFs.delete(outReservoirPath, true);
 	}
 
@@ -253,11 +253,12 @@ public class TupleSampler implements Serializable {
 	    Map<InputSplit, RecordProcessor> recordProcessorPerSplit) throws IOException, InterruptedException {
 
 		// Instantiate the writer we will write samples to
-		TupleRecordWriter writer = TupleRecordWriter.getTupleWriter(hadoopConf, new NullableSchema(
-		    tableSchema), outFile);
+    FileSystem fs = FileSystem.get(outFile.toUri(), hadoopConf);
+		TupleFile.Writer writer = new TupleFile.Writer(fs, hadoopConf, outFile, new NullableSchema(
+		    tableSchema));
 
 		if(splits.size() == 0) {
-			throw new IllegalArgumentException("There are nos plits to sample from!");
+			throw new IllegalArgumentException("There are no splits to sample from!");
 		}
 		logger.info("Sampling from input splits > " + splits);
 		int samples = Math.min(10, splits.size());
@@ -294,7 +295,7 @@ public class TupleSampler implements Serializable {
 					throw new RuntimeException(e);
 				}
 				if(uTuple != null) { // user may have filtered the record
-					writer.write(new NullableTuple(uTuple), NullWritable.get());
+					writer.append(new NullableTuple(uTuple));
 					records += 1;
 					if((i + 1) * recordsPerSample <= records) {
 						break;
@@ -303,6 +304,6 @@ public class TupleSampler implements Serializable {
 			}
 		}
 
-		writer.close(null);
+		writer.close();
 	}
 }

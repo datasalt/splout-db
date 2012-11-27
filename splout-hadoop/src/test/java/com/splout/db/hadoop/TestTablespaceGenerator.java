@@ -26,6 +26,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.util.List;
 
+import com.datasalt.pangool.io.*;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.generic.GenericData.Record;
 import org.apache.avro.reflect.ReflectDatumWriter;
@@ -33,12 +34,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.junit.Test;
 
-import com.datasalt.pangool.io.Fields;
-import com.datasalt.pangool.io.ITuple;
-import com.datasalt.pangool.io.Schema;
-import com.datasalt.pangool.io.Tuple;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat;
-import com.datasalt.pangool.tuplemr.mapred.lib.output.TupleOutputFormat.TupleRecordWriter;
 import com.datasalt.pangool.utils.AvroUtils;
 import com.datasalt.pangool.utils.test.AbstractHadoopTestLibrary;
 import com.splout.db.common.PartitionEntry;
@@ -57,31 +53,29 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary {
 		initHadoop();
 		trash(INPUT, OUTPUT);
 		
-		DataFileWriter<Record> avroWriter = new DataFileWriter<Record>(new ReflectDatumWriter<Record>());
-		avroWriter.create(AvroUtils.toAvroSchema(theSchema1), new File(INPUT));
-		TupleRecordWriter writer = new TupleRecordWriter(theSchema1, avroWriter, getConf());
-		
-		writer.write(getTuple("id1", "value11"), NullWritable.get());
-		writer.write(getTuple("id1", "value12"), NullWritable.get());
-		writer.write(getTuple("id1", "value13"), NullWritable.get());
-		writer.write(getTuple("id1", "value14"), NullWritable.get());
+		TupleFile.Writer writer = new TupleFile.Writer(fS,  getConf(), new Path(INPUT), theSchema1);
 
-		writer.write(getTuple("id2", "value21"), NullWritable.get());
-		writer.write(getTuple("id2", "value22"), NullWritable.get());
-		writer.write(getTuple("id3", "value31"), NullWritable.get());
-		writer.write(getTuple("id4", "value41"), NullWritable.get());
-		
-		writer.write(getTuple("id5", "value51"), NullWritable.get());
-		writer.write(getTuple("id5", "value52"), NullWritable.get());
-		writer.write(getTuple("id6", "value53"), NullWritable.get());
-		writer.write(getTuple("id6", "value54"), NullWritable.get());
-		writer.write(getTuple("id7", "value55"), NullWritable.get());
-		writer.write(getTuple("id7", "value56"), NullWritable.get());
+    writer.append(getTuple("id1", "value12"));
+    writer.append(getTuple("id1", "value11"));
+    writer.append(getTuple("id1", "value13"));
+		writer.append(getTuple("id1", "value14"));
 
-		writer.write(getTuple("id8", "value61"), NullWritable.get());
-		writer.write(getTuple("id8", "value62"), NullWritable.get());
+		writer.append(getTuple("id2", "value21"));
+		writer.append(getTuple("id2", "value22"));
+		writer.append(getTuple("id3", "value31"));
+		writer.append(getTuple("id4", "value41"));
+
+		writer.append(getTuple("id5", "value51"));
+		writer.append(getTuple("id5", "value52"));
+		writer.append(getTuple("id6", "value53"));
+		writer.append(getTuple("id6", "value54"));
+		writer.append(getTuple("id7", "value55"));
+		writer.append(getTuple("id7", "value56"));
+
+		writer.append(getTuple("id8", "value61"));
+		writer.append(getTuple("id8", "value62"));
 		
-		writer.close(null);
+		writer.close();
 		
 		TablespaceSpec tablespace = TablespaceSpec.of(theSchema1, "id", new Path(INPUT), new TupleInputFormat(),  4);
 		TablespaceGenerator viewGenerator = new TablespaceGenerator(tablespace, new Path(OUTPUT));
@@ -115,17 +109,15 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary {
   	
 		trash(INPUT, OUTPUT);
 		
-		DataFileWriter<Record> avroWriter = new DataFileWriter<Record>(new ReflectDatumWriter<Record>());
-		avroWriter.create(AvroUtils.toAvroSchema(new NullableSchema(theSchema2)), new File(INPUT));
-		TupleRecordWriter writer = new TupleRecordWriter(new NullableSchema(theSchema2), avroWriter, getConf());
+    TupleFile.Writer writer = new TupleFile.Writer(fS,  getConf(), new Path(INPUT), theSchema2);
+
+		writer.append(new NullableTuple(getTupleWithNulls("id1", "value11", null, -1.0, null)));
+		writer.append(new NullableTuple(getTupleWithNulls("id1", "value12", null, null, "Hello")));
+		writer.append(new NullableTuple(getTupleWithNulls("id1", "value13", 100, null, "Hello")));
+		writer.append(new NullableTuple(getTupleWithNulls("id1", "value14", 100, 2.0, "")));
+		writer.append(new NullableTuple(getTupleWithNulls("id1", "value15", 100, 2.0, null)));
 		
-		writer.write(new NullableTuple(getTupleWithNulls("id1", "value11", null, -1.0, null)), NullWritable.get());
-		writer.write(new NullableTuple(getTupleWithNulls("id1", "value12", null, null, "Hello")), NullWritable.get());
-		writer.write(new NullableTuple(getTupleWithNulls("id1", "value13", 100, null, "Hello")), NullWritable.get());
-		writer.write(new NullableTuple(getTupleWithNulls("id1", "value14", 100, 2.0, "")), NullWritable.get());
-		writer.write(new NullableTuple(getTupleWithNulls("id1", "value15", 100, 2.0, null)), NullWritable.get());
-		
-		writer.close(null);
+		writer.close();
 		
 		TablespaceSpec tablespace = TablespaceSpec.of(theSchema2, "id", new Path(INPUT), new TupleInputFormat(), 1);
 		TablespaceGenerator viewGenerator = new TablespaceGenerator(tablespace, new Path(OUTPUT));

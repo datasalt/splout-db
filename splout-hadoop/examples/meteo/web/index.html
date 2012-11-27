@@ -64,7 +64,7 @@
         function sectionToStr(section) {
           var row1 = meteoSerie[sections[section][0]];
           var row2 = meteoSerie[sections[section][1]];
-          return dateToStr(row1) + '<br>' + dateToStr(row2);
+          return dateToStr(row1) + ' to ' + dateToStr(row2);
         }
 
         function dateToStr(serieRow) {
@@ -83,14 +83,14 @@
           var innerHTML = "";
           $.each(sections, function(i,range) {
             selected = (i == selectedSection) ? ' class="active"' : '';
-            innerHTML += '<li' + selected + '><a href="javascript:void(0);" onclick="selectSection(' + i + ');"> ' +
+            innerHTML += '<li' + selected + '></i><a href="javascript:void(0);" onclick="selectSection(' + i + ');"> ' +
                 sectionToStr(i) + '</a></li>';
           });
           $('#sections').html(innerHTML);
           if (sections.length > 1) {
-            $('#sections').show();
+            $('#sections-div').show();
           } else {
-            $('#sections').hide();
+            $('#sections-div').hide();
           }
         }
 
@@ -266,8 +266,18 @@
         </div>
     </form>
     <div id="queryerror" class="alert alert-error" style="display:none"></div>
-    <ul id="sections"  class="nav nav-pills">
-    </ul>
+    <div id="aggregation-div">
+        <h5><i class="icon-filter"></i> Dates filter</h5>
+        <ul class="nav nav-pills">
+            <li><a href="">Daily</a></li>
+            <li><a href="">Monthly</a></li>
+        </ul>
+    </div>
+    <div id="sections-div">
+        <h5><i class="icon-calendar"></i> Dates filter</h5>
+        <ul id="sections"  class="nav nav-pills">
+        </ul>
+    </div>
     <div id="dashboard">
         <div id="chart" style='width: 915px; height: 300px;'></div>
         <div id="control" style='width: 915px; height: 50px;'></div>
