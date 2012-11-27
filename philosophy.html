@@ -1,0 +1,52 @@
+---
+layout: default
+title: Splout SQL
+---
+<div class="page-header">
+  <h2 style="align:center;">Splout's philosophy</h2>
+</div>
+
+<h2>Why read-only? Why Big Data views?</h2>
+
+<p>
+Database-centric systems are complex. Handling incremental state is harsh and error-prone. There are many use cases where this complexity can be avoided.
+
+Batch processing of all historical raw data is a simpler data processing paradigm that has many advantages. For example, it is very easy to change the entire data model or data processing logic without much effort, and it is very easy and cheap to scale - this is very well explained by <a href='#'>Nathan Marz in his Lambda Architecture idea</a>.
+</p>
+<p>
+Splout makes it dead-simple to serve an arbitrarily big dataset by batch processing, indexing and deploying it. Splout does it carefully by keeping atomicity and efficiency in mind. Instead of updating Splout with random inserts, Splout atomically replaces already-built database files without affecting query serving. There are other tools that do that such as <a href='#'>Voldemort</a>, but they lack all the features of a rich query language such as SQL.
+
+<p>
+So, we think Splout is <strong>the missing tool for serving Big Data views in web-latency scenarios</strong>.
+</p>
+
+<h2>Why SQL?</h2>
+
+<p>
+In the past few years we have lived a revolution in the Big Data processing and serving world. We have slowly abandoned monolithic database-centric systems after Big Data and replaced them for a wide variety of systems: from Hadoop-centric data flows to NoSQL-centric systems (document-oriented databases, graph-oriented databases and so on).
+
+</p>
+<p>
+NoSQL-centric systems are a good fit for some notable cases, but they pose about the same problems than previous monolithic database-centric systems: incrementality. Incremental systems are needed for real-time, but they are complex: errors are hard to repair and business logic tends to become more and more complex as more operations and updates are needed within the datastore.
+</p>
+
+<p>
+On the other hand, Hadoop-based solutions are easy to scale and maintain, but they need a rich companion data store that serves as output and which can be updated easily and efficiently. 
+</p>
+
+<p>
+The combination of Hadoop and NoSQL offers the best of both worlds, however, as we have seen, there are few options and notably the powerfulness of richer query languages such as SQL has been lost in the way. 
+
+Many could argue that SQL is not needed anymore since we have Hadoop for precomputing aggregations, inverted indexes and such, however, there are many problems where one would desire to be able to pre-compute certain aggregations while still being able to aggregate data in real-time.
+</p>
+<p>
+Imagine, for example, a Google-analytics-like application. With Hadoop we can easily pre-compute the pageviews for each day and page, however, we want to offer the user the possibility of having aggregated statistics within arbitrary date periods. With SQL, we can just add the appropriate indexes and perform real-time GROUP-BYs over the already pre-calculated aggregations. A Key/Value store is not sufficient for this case, neither any database that doesn’t offer true real-time aggregations. It is also not feasible to precompute all possible date periods as there are way too many.
+</p>
+
+<center><img src='img/SQL.jpg'></center>
+
+<h2>Recapitulating</h2>
+
+<p>
+Splout is, on one hand, a datastore that has been thought from the start for atomically deploying and web-serving Hadoop-scale datasets, and, on the other hand, a rich datastore that offers full-SQL query language. This achievement is made by posing a simple restriction: read-onlyness. This means that data will be entirely replaced in hours time, not in minutes or seconds time. For applications that need real-time, Splout is not the ultimate solution, but it can be used together with a real-time layer to form a <a href='#'>“Lambda Architecture” like Nathan Marz explains here</a>.
+</p>

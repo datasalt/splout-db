@@ -1,0 +1,40 @@
+---
+layout: default
+title: Splout SQL
+---
+<div class="page-header">
+  <h2 style="align:center;">Splout's architecture</h2>
+</div>
+
+<p>Splout SQL is a read-only DB. Because of this, the overall architecture is quite simple.</p>
+
+<ul>
+	<li>Splout SQL is installed on a cluster of commodity hardware machines. Each of the machines runs a <strong>DNode</strong> service and optionally a <strong>QNode</strong> service (<em>but there must be at least one QNode service among the cluster</em>).</li>
+	<li>QNodes implement a <strong>REST API</strong> for serving users' queries or receiving deploy / rollback requests.</li>
+	<li>Because <strong>data is partitioned</strong>, QNodes talk to the appropriate DNode for serving a query and the DNode responds back with the query’s result.</li>
+	<li>A <strong>Hadoop cluster</strong> is used for indexing and balancing the data. The resultant SQL files are fetched by the DNodes by handling a data deploy request.</li>
+</ul>
+
+<center><img src='img/Splout_SQL.jpg'></center>
+
+<h2>Data balancing & indexing</h2>
+
+<p>Arbitrarily big datasets are handled by Splout by using a Hadoop batch process that partitions and indexes the data according to a users' partitioning policy.</p>
+
+<ul>
+<li>Usually this involves partitioning by one or more columns in a columnar dataset, for example <strong>customer_id</strong>. But you can also partition by an arbitrary Java or JavaScript function, for instance.</li>
+<li>Splout uses <strong>sampling methods</strong> for deciding how to split the dataset after applying users’ partitioning function.</li>
+<li>A simple method (a-la-<a href='http://hadoop.apache.org/docs/current/api/org/apache/hadoop/examples/terasort/package-summary.html' target='_blank'>Hadoop's TeraSort</a>) is the default one, but a more sophisticated one - althought more computationally expensive - (<a href='http://en.wikipedia.org/wiki/Reservoir_sampling'>Reservoir Sampling</a>) can be used in datasets where the default one is not enough.</li>
+<li>The DNodes fetch new data on a deploy request. The data is downloaded, <strong>atomically replaced and versioned</strong>. The cluster coordinates itself for assuring version consistency and no downtime while deploying. The user can choose to <strong>rollback</strong> to previous versions anytime, and the operation will be as quick as a "mv" between folders.</li>
+</ul>
+
+<h2>Technology choices</h2>
+
+<ul>
+
+<li>QNodes, DNodes are implemented as <strong>Java</strong> services serving queries through a <a href='http://jersey.java.net/' target='_blank'>Jersey</a> REST interface.</li>
+<li>Splout SQL cluster handles membership and coordinates deployments and rollbacks through <a href='http://jersey.java.net/' target='_blank'>Hazelcast</a>.</li>
+<li>Splout uses <a href='http://pangool.net' target='_blank'>Pangool</a> for low-level Java Hadoop development. In this way, the code for data store generation is pretty simple and performant at the same time.</li>
+<li>Splout generates <a href='http://www.sqlite.org/' target='_blank'>SQLite</a> files that are used by DNodes for serving data.</li>
+
+</ul>
