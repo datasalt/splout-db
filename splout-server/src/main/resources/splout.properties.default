@@ -131,9 +131,14 @@ hz.persistent.data.folder=hz-data
 
 hz.join.method=multicast
 
+# Uncomment and use these properties if method=MULTICAST and fine tuning is needed:
+
+#hz.multicast.group=
+#hz.multicast.port=
+
 # Uncomment and use this property if method=TCP:
 
-#hz.tcp.cluster=1.1.1.1:5703,2.2.2.2:5703
+#hz.tcp.cluster=1.1.1.1,2.2.2.2
 
 # Uncomment and use this property if method=AWS and only a certain security group is to be examined:
 

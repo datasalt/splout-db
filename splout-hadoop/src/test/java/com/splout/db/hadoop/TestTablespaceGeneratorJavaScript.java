@@ -22,22 +22,15 @@ package com.splout.db.hadoop;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.File;
-
-import com.datasalt.pangool.io.TupleFile;
-import org.apache.avro.file.DataFileWriter;
-import org.apache.avro.generic.GenericData.Record;
-import org.apache.avro.reflect.ReflectDatumWriter;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.NullWritable;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.datasalt.pangool.io.Fields;
 import com.datasalt.pangool.io.Schema;
+import com.datasalt.pangool.io.TupleFile;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat;
-import com.datasalt.pangool.utils.AvroUtils;
 import com.datasalt.pangool.utils.HadoopUtils;
 import com.datasalt.pangool.utils.test.AbstractHadoopTestLibrary;
 import com.splout.db.common.JSONSerDe;

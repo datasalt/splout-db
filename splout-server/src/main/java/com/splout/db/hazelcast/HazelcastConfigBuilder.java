@@ -30,7 +30,6 @@ import com.hazelcast.config.Config;
 import com.hazelcast.config.Join;
 import com.hazelcast.config.MapConfig;
 import com.hazelcast.config.NetworkConfig;
-import com.hazelcast.nio.Address;
 import com.splout.db.common.SploutConfiguration;
 
 /**
@@ -144,8 +143,7 @@ public class HazelcastConfigBuilder {
 			String[] cluster = tcpCluster.split(",");
 			for(String host : cluster) {
 				try {
-					join.getTcpIpConfig().addAddress(
-					    new Address(host, Integer.parseInt(host.substring(host.indexOf(":") + 1, host.length()))));
+					join.getTcpIpConfig().addMember(host);
 				} catch(Throwable e) {
 		    	log.error("Invalid host in TCP cluster", e);
 					throw new HazelcastConfigBuilderException("Invalid host in TCP cluster: " + host);

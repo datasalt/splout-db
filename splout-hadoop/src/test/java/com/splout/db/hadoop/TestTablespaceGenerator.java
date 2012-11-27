@@ -23,19 +23,17 @@ package com.splout.db.hadoop;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
 import java.util.List;
 
-import com.datasalt.pangool.io.*;
-import org.apache.avro.file.DataFileWriter;
-import org.apache.avro.generic.GenericData.Record;
-import org.apache.avro.reflect.ReflectDatumWriter;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.NullWritable;
 import org.junit.Test;
 
+import com.datasalt.pangool.io.Fields;
+import com.datasalt.pangool.io.ITuple;
+import com.datasalt.pangool.io.Schema;
+import com.datasalt.pangool.io.Tuple;
+import com.datasalt.pangool.io.TupleFile;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat;
-import com.datasalt.pangool.utils.AvroUtils;
 import com.datasalt.pangool.utils.test.AbstractHadoopTestLibrary;
 import com.splout.db.common.PartitionEntry;
 import com.splout.db.common.SQLiteJDBCManager;
@@ -109,7 +107,7 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary {
   	
 		trash(INPUT, OUTPUT);
 		
-    TupleFile.Writer writer = new TupleFile.Writer(fS,  getConf(), new Path(INPUT), theSchema2);
+    TupleFile.Writer writer = new TupleFile.Writer(fS,  getConf(), new Path(INPUT), new NullableSchema(theSchema2));
 
 		writer.append(new NullableTuple(getTupleWithNulls("id1", "value11", null, -1.0, null)));
 		writer.append(new NullableTuple(getTupleWithNulls("id1", "value12", null, null, "Hello")));

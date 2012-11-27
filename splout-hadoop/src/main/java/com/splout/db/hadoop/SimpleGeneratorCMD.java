@@ -92,7 +92,7 @@ public class SimpleGeneratorCMD implements Tool {
 	@Parameter(names = { "-ns", "--nullstring" }, description = "A string sequence which, if found and not quoted, it's considered null. For example, \\N in mysqldumps.")
 	private String nullString = TupleTextInputFormat.NO_NULL_STRING;
 	
-	@Parameter(names = { "-fw", "--fixedwidthfields" }, description = "Use is when you have a file with fixed width fields. You must provide a list of pairs indicating fields. For example \"0,2,4,4\" indicates that there is a first field of 3 characters at the start of the line, and a second field of one character in the position 4. 0 is the first character of the line. This option can be used in combination with --nullstring parameter. The rest of CSV parameters are ignored.")
+	@Parameter(names = { "-fw", "--fixedwidthfields" }, description = "When used, you must provide a comma-separated list of numbers. These numbers will be interpreted by pairs, as [beginning, end] inclusive position offsets. For example: 0,3,5,7 means there are two fields, the first one of 4 characters at offsets [0, 3] and the second one of 3 characters at offsets [5, 7]. This option can be used in combination with --nullstring parameter. The rest of CSV parameters are ignored.")
 	private String fixedWidthFields;
 	
 	

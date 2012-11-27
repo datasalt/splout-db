@@ -46,7 +46,7 @@ public class HazelcastProperties {
 	}
 	
 	/**
-	 * Comma-separated host:port values that will be added to a TCP/IP Hazelcast cluster, if hz.join.method = TCP 
+	 * Comma-separated list of hosts values that will be added to a TCP/IP Hazelcast cluster, if hz.join.method = TCP 
 	 */
 	public static final String TCP_CLUSTER = "hz.tcp.cluster"; // comma-separated, default null
 	/**
