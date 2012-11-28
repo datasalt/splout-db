@@ -38,7 +38,7 @@ public class DNodeClient {
 	 * Get a Thrift client given an address (host:port) 
 	 */
 	public static DNodeService.Client get(String hostPort) throws TTransportException {
-		int separator = hostPort.indexOf(":");
+		int separator = hostPort.lastIndexOf(":");
 		String host = hostPort.substring(0, separator);
 		int port = Integer.parseInt(hostPort.substring(separator + 1, hostPort.length()));
 		return get(host, port);

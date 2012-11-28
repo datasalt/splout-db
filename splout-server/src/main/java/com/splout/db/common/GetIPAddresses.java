@@ -22,6 +22,7 @@ package com.splout.db.common;
  */
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Collection;
@@ -38,12 +39,10 @@ import com.splout.db.dnode.DNode;
  */
 public class GetIPAddresses {
 
-	private final static Log log = LogFactory.getLog(DNode.class);
+	private final static Log log = LogFactory.getLog(GetIPAddresses.class);
 	
 	/**
 	 * Returns all available IP addresses.
-	 * <p>
-	 * To get the first/main local ip only you could use also {@link #getLocalIP() }.
 	 * <p>
 	 * In error case or if no network connection is established, we return an empty list here.
 	 * <p>
