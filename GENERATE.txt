@@ -1,0 +1,9 @@
+Nice HTML: 
+
+	a2x -f xhtml user_guide.txt
+
+Nice multi-HTML (warning, generates index.html file):
+
+	asciidoc -d book --backend=docbook --out-file user_guide.xml user_guide.txt
+	x2doc/bin/x2doc -t htmlmulti -f user_guide.xml
+

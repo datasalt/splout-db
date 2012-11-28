@@ -148,7 +148,7 @@
   
 <div class="container">
 
- <div class="navbar navbar-fixed-top">
+ <div class="navbar navbar-fixed-top navbar-static">
    <div class="navbar-inner">
      <div class="container">
         <a class="brand" href="index.html">Splout SQL</a>
@@ -157,15 +157,39 @@
             <li><a href="features.html">Features</a></li>
             <li><a href="philosophy.html">Philosophy</a></li>
             <li><a href="architecture.html">Architecture</a></li>
-            <li><a href="gettingstarted.html">Getting started</a></li>
-            <li class="dropdown"><a href="user_guide.html">User guide</a>
+            <li class="dropdown">
+            	<a href="gettingstarted.html" class="dropdown-toggle" data-toggle="dropdown">Getting started <b class="caret"></b></a>
+              	<ul class="dropdown-menu">
+                	<li><a href="gettingstarted.html">Installing & running Splout</a></li>
+                	<li><a href="gettingstarted.html#loading">Loading an example dataset</a></li>
+              	</ul>
+            </li>
+            <li class="dropdown">
+            	<a href="#" class="dropdown-toggle" data-toggle="dropdown">User guide <b class="caret"></b></a>
+              	<ul class="dropdown-menu">
+                	<li><a href="user_guide.html">Single page HTML</a></li>
+                	<li><a href="#">Multiple-page HTML</a></li>
+              	</ul>
+            </li>
+            <li class="dropdown">
+            	<a href="#" class="dropdown-toggle" data-toggle="dropdown">Contributing <b class="caret"></b></a>
+              	<ul class="dropdown-menu">
+                	<li><a href="#">Source code</a></li>
+                	<li><a href="#">Continuous integration</a></li>
+                	<li><a href="#">Code quality</a></li>
+              	</ul>
             </li>
             <li><a href="#">F.A.Q.</a></li>
           </ul>
           <ul class="nav pull-right">
             <li class="divider-vertical"></li>
             <li class="dropdown">
-              <a href="#">About</a>
+              <a href="about.html" class="dropdown-toggle" data-toggle="dropdown">About <b class="caret"></b></a>
+              <ul class="dropdown-menu">
+                <li><a href="#">License</a></li>
+                <li><a href="#">Team</a></li>
+                <li><a href="#">Mailing list</a></li>
+              </ul>
             </li>
           </ul>
         </div><!-- /.nav-collapse -->
@@ -183,12 +207,12 @@
 
 <ul>
 	<li>Java >= 1.6</li>
-	<li>Hadoop stable or previous versions of it  installed on your machine. HADOOP_HOME must be defined.</li>
+	<li><a href='http://www.apache.org/dyn/closer.cgi/hadoop/common/' target='_blank'>Hadoop stable or previous versions of it</a>  installed on your machine. HADOOP_HOME must be defined.</li>
 </ul>
 
-<p>You can <a href='https://github.com/datasalt/splout-db/downloads'>download a release of Splout in Github</a>. After that, you just need to decompress it.</p>
+<p>You can <a href='https://github.com/datasalt/splout-db/downloads' target='_blank'>download a release of Splout in Github</a>. After that, you just need to decompress it.</p>
 
-<h3>Running a local cluster</h3>
+<h3 id="running">Running a local cluster</h3>
 
 <p>The best thing for getting started with Splout is launching a local server in your machine:</p>
 
@@ -196,7 +220,7 @@
 	bin/splout-service.sh dnode start
 </tt></pre>
 
-<p>Now, if everything went fine, and assuming you had nothing running on port 4412 before, you will see a nice panel in localhost:4412 like this:</p>
+<p>Now, if everything went fine, and assuming you had nothing running on port 4412 before, you will see a nice panel in <a href='http://localhost:4412' target='_blank'>localhost:4412</a> like this:</p>
 
 <center><img src="img/Panel.png"/></center>
 
@@ -206,7 +230,7 @@
 	bin/splout-service.sh dnode stop
 </tt></pre>
 
-<div class="page-header">
+<div class="page-header" id="loading">
   <h2 style="align:center;">Loading an example dataset</h2>
 </div>
 
@@ -379,6 +403,7 @@
 <br>
 
 <p>Note that all the queries presented before are compatible with the partitioning decided for the tablespace. Otherwise they would have not worked properly. Also, be careful to properly define the needed indexes in order to answer queries fast.</p> 
+
 
 <br><br><br><br>
       <!-- Footer -->

@@ -322,5 +322,340 @@ For example, you may choose to narrow your input Tuple and emit a subset of it, 
 REST API
 --------
 
-Troubleshooting
----------------
+You can interact with the server through the Java client or directly through the REST interface. These are the basic methods of the REST interface:
+
+.Rest API overview
+|========================
+| *Method type* | *Path* | *Parameters* | *Explanation* | *Example*
+| GET | api/overview | (none) | Returns a QNodeStatus object with the overview of the cluster. | http://localhost:4412/api/overview
+| GET | api/dnodelist | (none) | Returns the list of DNodes in the cluster. | http://localhost:4412/api/dnodelist
+| GET | api/tablespaces | (none) | Returns the list of active tablespaces in the cluster. | http://localhost:4412/api/tablespaces
+| GET | api/tablespace/\{tablespace\} | (none) | Returns a Tablespace object with the info for this particular tablespace. | http://localhost:4412/api/tablespace/mytablespace
+| GET | api/tablespace/\{tablespace\}/versions | (none) | Returns a Map<Long, Tablespace> object with all the available versions for this tablespace. | http://localhost:4412/api/tablespace/mytablespace/versions
+| GET | api/dnode/\{dnode\}/status | (none) | Returns a DNodeSystemStatus object for the specified dnode. | http://localhost:4412/api/dnode/localhost:4422/status
+| GET | api/query/\{tablespace\} | key, sql, [callback] | Performs a SQL query to the specified tablespace and returns a QueryStatus object. | http://localhost:4412/api/mytablespace?key=K1&sql=SELECT%201;
+| POST | api/deploy | List<DeployRequest> | Performs a deploy according to the associated DeployRequest objects passed as body for the request and returns a DeployInfo object. |  
+| POST | api/rollback | List<SwitchVersionRequest> | Performs a rollback according to the associated DeployRequest objects passed as body for the request and returns a StatusMessage object. | 
+|========================
+
+Following we will see each method with a little more detail:
+
+api/overview
+~~~~~~~~~~~~
+
+Use this method for obtaining an overview on the cluster status. Returns a QNodeStatus status object.
+Example response:
+
+ {
+ 	dNodes: {
+ 		192.168.1.3:4422: {
+ 			average: "NaN",
+ 			files: [ ],
+ 			freeSpaceInDisk: 289065160,
+ 			upSince: 1354124108706,
+ 			nQueries: 0,
+ 			failedQueries: 0,
+ 			slowQueries: 0,
+ 			systemStatus: "UP",
+ 			deployInProgress: false,
+ 			occupiedSpaceInDisk: 0,
+ 			lastExceptionTime: -1
+ 		}
+ 	},
+ 	tablespaceMap: { },
+ 	clusterSize: 2
+ }
+
+.QNodeStatus object
+|========================
+| *Property* | *Type* | *Explanation*
+| dNodes | Map<String, DNodeSystemStatus> | Alive DNodes in cluster and their associated information. 
+| tablespaceMap | Map<String, Tablespace> | Current tablespaces being served by the cluster and their associated information. 
+| clusterSize | integer | Number of services (QNodes + DNodes) in the cluster.
+|========================
+
+.DNodeSystemStatus object 
+|========================
+| *Property* | *Type* | *Explanation*
+| systemStatus | string | "UP" if everything is fine. Otherwise "Last exception" together with a short Exception message will appear indicating that some Java Exception was thrown by the DNode.
+| lastExceptionTime | long | The time when the last Java Exception was thrown corresponding to the sytemStatus caption.
+| deployInProgress | boolean | Whether the DNode is fetching data for a deployment or not.
+| upSince | long | The time when this DNode was started.
+| nQueries | int | The number of queries that this DNode has served.
+| failedQueries | int | The number of queries that this DNode has failed to serve.
+| slowQueries | double | The number of queries considered to be "slow". Slow queries are configured by configuration property "dnode.slow.query.abs.limit".
+| average | double | The average query time for this DNode.
+| occupiedSpaceInDisk | long | The number of bytes occupied by the data that this DNode holds.
+| freeSpaceInDisk | long | The free disk space in the disk that this DNode is using.
+| files | List<String> | The list of files for this DNode, and the size of each file in parenthesis.
+|========================
+
+.Tablespace object
+|========================
+| *Property* | *Type* | *Explanation*
+| partitionMap | PartitionMap | The partition map that is being used to route queries for this tablespace.
+| replicationMap | ReplicationMap | The replication map that is being used for failover for this tablespace.
+| version | long | The version number of this tablespace.
+| creationDate | long | The time when this tablespace was deployed.
+|========================
+
+.PartitionMap object
+|========================
+| *Property* | *Type* | *Explanation*
+| partitionEntries | List<PartitionEntry> | The list of partition entries with (min, max) ranges for this tablespace.
+|========================
+
+.PartitionEntry object
+|========================
+| *Property* | *Type* | *Explanation*
+| min | string | If a key falls between [min, max) it will be routed to this shard. Min is inclusive.
+| max | string | If a key falls between [min, max) it will be routed to this shard. Max is not inclusive.
+| shard | int | If a key falls between [min, max) it will be routed to this shard.
+|========================
+
+.ReplicationMap object
+|========================
+| *Property* | *Type* | *Explanation*
+| replicationEntries | List<ReplicationEntry> | The list of replication entries with list of dnodes for this tablespace.
+|========================
+
+.ReplicationEntry object
+|========================
+| *Property* | *Type* | *Explanation*
+| shard | int | This shard can be served by any dnode in the "nodes" list.
+| nodes | list<string> | This shard can be served by any dnode in the "nodes" list.
+|========================
+
+api/dnodelist
+~~~~~~~~~~~~~
+
+Use this method for getting the list of alive DNodes. Returns a list of strings. Example response:
+
+ [
+ 	"192.168.1.3:4422",
+ 	"192.168.1.4:4422",
+ ]
+
+api/tablespaces
+~~~~~~~~~~~~~~~
+
+Use this method for getting the list of tablespaces being served in the cluster. Returns a list of strings. Example reponse:
+
+ [
+ 	"pagecounts"
+ ]
+ 
+api/tablespace/\{tablespace\}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use this method for getting the associated information of a tablespace being served by the cluster. Returns a Tablespace object. Example response:
+
+ {
+ 	partitionMap: {
+ 		partitionEntries: [
+ 			{
+ 				shard: 0,
+ 				max: "Sp",
+ 				min: null
+ 			},
+ 			{
+ 				shard: 1,
+ 				max: null,
+ 				min: "Sp"
+ 			}
+ 		]
+ 	},
+ 	version: 5649092059,
+ 	replicationMap: {
+ 		replicationEntries: [
+ 			{
+ 				shard: 0,
+ 				nodes: [
+ 					"192.168.1.3:4422"
+ 				]
+ 			},
+ 			{
+ 				shard: 1,
+ 				nodes: [
+ 					"192.168.1.3:4422"
+ 				]
+ 			}
+ 		]
+ 	},
+ 	creationDate: 1354124763853
+ }
+
+api/tablespace/\{tablespace\}/versions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Returns all available versions for the specified tablespace, including the one which may be being served at the moment by the cluster. Returns a Map<Long, Tablespace>.
+For every version in the key of the map, returns the associated Tablespace object information. Example response:
+
+ {
+ 	5649092059:
+ 		partitionMap: {
+ 			partitionEntries: [
+ 				{
+ 					shard: 0,
+ 					max: "Sp",
+ 					min: null
+ 				},
+ 				{
+ 					shard: 1,
+ 					max: null,
+ 					min: "Sp"
+ 				}
+ 			]
+ 		},
+ 		version: 5649092059,
+ 		replicationMap: {
+ 			replicationEntries: [
+ 				{
+ 					shard: 0,
+ 					nodes: [
+ 						"192.168.1.3:4422"
+ 					]
+ 				},
+ 				{
+ 					shard: 1,
+ 					nodes: [
+ 						"192.168.1.3:4422"
+ 					]
+ 				}
+ 			]
+ 		},
+ 		creationDate: 1354124763853
+ 	}
+ }
+
+api/dnode/\{dnode\}/status
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Returns a DNodeSystemStatus object filled with the detailed information of the specified DNode. Example response:
+
+ {
+ 	average: "NaN",
+ 	files: [
+ 		"/var/opt/splout/./dnode-staging (13512 bytes)",
+ 		"/var/opt/splout/./dnode-staging/pagecounts (13512 bytes)",
+ 		"/var/opt/splout/./dnode-staging/pagecounts/5649092059 (13512 bytes)",
+ 		"/var/opt/splout/./dnode-staging/pagecounts/5649092059/0 (3072 bytes)",
+ 		"/var/opt/splout/./dnode-staging/pagecounts/5649092059/0.meta (100 bytes)",
+ 		"/var/opt/splout/./dnode-staging/pagecounts/5649092059/0/0.db (3072 bytes)",
+ 		"/var/opt/splout/./dnode-staging/pagecounts/5649092059/1 (10240 bytes)",
+ 		"/var/opt/splout/./dnode-staging/pagecounts/5649092059/1.meta (100 bytes)",
+ 		"/var/opt/splout/./dnode-staging/pagecounts/5649092059/1/1.db (10240 bytes)"
+ 	],
+ 	freeSpaceInDisk: 289059948,
+ 	upSince: 1354124108706,
+ 	nQueries: 0,
+ 	failedQueries: 0,
+ 	slowQueries: 0,
+ 	systemStatus: "UP",
+ 	deployInProgress: false,
+ 	occupiedSpaceInDisk: 13512,
+ 	lastExceptionTime: -1
+ }
+
+api/query/\{tablespace\}
+~~~~~~~~~~~~~~~~~~~~~~
+
+Perform a SQL query and get a JSON result back. Returns a QueryStatus object with some metadata about the query execution. Example response for key=Up, sql=SELECT * FROM pagecounts LIMIT 1 and tablespace pagecounts (http://localhost:4412/api/query/pagecounts?key=Up&sql=SELECT%20*%20FROM%20pagecounts%20LIMIT%201;):
+
+ {
+ 	"millis": 135,
+ 	"error":null,
+ 	"result": [
+ 		{
+ 			"pagename": "zh:注音符號",
+ 			"hour": "23",
+ 			"pageviews": 1,
+ 			"date": "20090430"
+ 		}
+ 	],
+ 	"shard": 1
+ }
+ 
+.QueryStatus object
+|=====================
+| *Property* | *Type* | *Explanation*
+| result | list<Object> | The query result from the database, which has been JSONified. If there was an error, it will be empty.
+| shard | int | The shard that the query was routed to.
+| millis | long | The time the query took to be executed.
+| error | string | The error message if there was any.
+|=====================
+
+api/deploy
+~~~~~~~~~~
+
+WARNING: You won't usually need to perform a deploy manually using this REST method. However, you can refer to this documentation in case
+you need to do something very specific. For doing deploys you will usually use the "deployer" command-line tool or the StoreDeployerTool Java class.
+
+By providing a list of DeployRequest objects we can perform a deploy through this POST method. We need to specify a tablespace name,
+an URI from where binary objects must be fetched, a PartitionMap and a ReplicationMap and optionally a list of SQL statements that will
+be executed each time a connection is made to the database. 
+
+Example post body:
+
+ [
+ 	{
+ 		"tablespace": "pagecounts",
+ 		"data_uri": "file:/opt/splout-db/splout-hadoop/out-pagecounts/store",
+ 		"partitionMap": [
+ 			{ 
+ 				"min": null,
+ 				"max": "Sp",
+ 				"shard":0
+ 			},
+ 			{
+ 				"min": "Sp",
+ 			 	"max": null,
+ 			 	"shard":1
+ 			}
+ 		],
+ 		"replicationMap": [
+ 			{
+ 				"shard": 0,
+ 				"nodes": [
+ 					"192.168.1.3:4422"
+ 				]
+ 			},
+ 			{
+ 				"shard": 1,
+ 				"nodes": ["192.168.1.3:4422"]
+ 			}
+ 		],
+ 		"initStatements": [
+ 			"pragma case_sensitive_like=true;"
+ 		]
+ 	}
+ ]
+
+.DeployRequest object
+|=====================
+| *Property* | *Type* | *Explanation*
+| tablespace | string | The tablespace name. It will be used as identifier after being deployed if it doesn't exist. If it exists, a new version will be promoted for it.
+| data_uri | string | The absolute URI where the binary files can be found.
+| initStatements | list<string> | A list of SQL statements that will be executed everytime a connection is made to the database files. Useful for using custom SQLite PRAGMAs.
+| partitionMap | list<PartitionEntry> | The Partition map to be used for routing queries from this tablespace.
+| replicationMap | list<ReplicationEntry> | The Replication map to be used for failover for this tablespace.
+|===================== 
+
+TIP: Java users can use SploutClient or higher-level StoreDeployerTool (which uses SploutClient underneath) instead of the raw REST API for doing deploys.
+TIP: Partition maps are automatically generated by sampling methods in the generator tools and saved in the output folder that was used for the tool. The tools use the TablespaceGenerator Java class underneath.
+TIP: Typical replication maps can be built easily with the Java API methods ReplicationMap.roundRobinMap() and ReplicationMap.oneToOneMap(). 
+
+api/rollback
+~~~~~~~~~~~~
+
+By providing a list of SwitchVersionRequest objects we can perform a rollback through this POST method. We just need to specify the tablespace
+name (which must be being served by the cluster at the moment of the rollback) and the version we want to set it to. 
+
+.SwitchVersionRequest object
+|====================
+| *Property* | *Type* | *Explanation*
+| tablespace | string | The tablespace name, used as identifier.
+| version | long | The version to rollback to. It must be available in the cluster.
+|====================
+
+TIP: Java users can use SploutClient instead of the raw REST API for doing rollbacks.
