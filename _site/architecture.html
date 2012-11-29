@@ -20,6 +20,8 @@
 	<link rel="stylesheet" href="./css/xhtml11.css" type="text/css" />
 	<link rel="stylesheet" href="./css/xhtml11-quirks.css" type="text/css" />
 	
+	<script src="js/asciidoc.js"></script>
+	
     <style>
 
     /* GLOBAL STYLES
@@ -42,6 +44,10 @@
 	
 	dl {
 	 padding-bottom: 15px;
+	}
+	
+	div#toc a:visited { 
+	  color: #dd4814 !important; 
 	}
 
     /* Carousel base class */
@@ -86,6 +92,7 @@
       color: #fff;
       text-shadow: 0 1px 1px rgba(0,0,0,.4);
     }
+    
     .carousel-caption .btn {
       margin-top: 10px;
     }
@@ -228,6 +235,7 @@
 <ul>
 
 <li>QNodes, DNodes are implemented as <strong>Java</strong> services serving queries through a <a href='http://jersey.java.net/' target='_blank'>Jersey</a> REST interface.</li>
+<li>QNodes and DNodes communicate between them using <a href='http://thrift.apache.org/'>Thrift</a>.</li>
 <li>Splout SQL cluster handles membership and coordinates deployments and rollbacks through <a href='http://jersey.java.net/' target='_blank'>Hazelcast</a>.</li>
 <li>Splout uses <a href='http://pangool.net' target='_blank'>Pangool</a> for low-level Java Hadoop development. In this way, the code for data store generation is pretty simple and performant at the same time.</li>
 <li>Splout generates <a href='http://www.sqlite.org/' target='_blank'>SQLite</a> files that are used by DNodes for serving data.</li>

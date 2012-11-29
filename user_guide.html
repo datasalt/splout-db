@@ -2,11 +2,16 @@
 layout: default
 title: Splout SQL User Guide
 ---
+<script>window.onload = function(){asciidoc.footnotes(); asciidoc.toc(2);}</script>
 <div id="header">
 <h1>Splout SQL User Guide</h1>
+<div id="toc">
+  <div id="toctitle">Table of Contents</div>
+  <noscript><p><b>JavaScript must be enabled in your browser to display the table of contents.</b></p></noscript>
+</div>
 </div>
 <div id="content">
-<h2 id="_splout_sql_installation">Splout SQL installation</h2>
+<h2 id="main">Splout SQL installation</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>For running Splout SQL, the underlying system must have the following:</p></div>
 <div class="ulist"><ul>
@@ -17,12 +22,12 @@ Java 1.6 or higher.
 </li>
 <li>
 <p>
-Hadoop (versions 0.20.X including CDH3 or stable 1.0.4). Splout has been tested to run successfully at least on 1.0.4, 0.20.205 and CDH3r5.
+<a href="http://hadoop.apache.org/releases.html#Download">Hadoop</a> (versions 0.20.X including CDH3 or stable 1.0.4). Splout has been tested to run successfully at least on 1.0.4, 0.20.205 and CDH3r5.
 </p>
 </li>
 </ul></div>
 <div class="paragraph"><p>You must have HADOOP_HOME environment variable defined in your system. Splout will load the libraries from your Hadoop distribution in runtime.</p></div>
-<div class="paragraph"><p>When Splout SQL is uncompressed in a path we will refer to as SPLOUT_HOME, it can be used straight-away. However, the Configuration section has to be revised carefully in order to adjust everything properly.</p></div>
+<div class="paragraph"><p>When Splout SQL is <a href="https://github.com/datasalt/splout-db/downloads">downloaded</a> and uncompressed in a path - which we will refer to as SPLOUT_HOME - it can be used straight-away. However, the <a href="#splout_configuration">Configuration</a> section has to be revised carefully in order to adjust everything properly.</p></div>
 <div class="paragraph"><p>Launching the server daemons is as easy as:</p></div>
 <div class="literalblock">
 <div class="content">
@@ -43,12 +48,13 @@ bin/splout-service.sh dnode start</tt></pre>
 <td class="icon">
 <div class="title">Warning</div>
 </td>
-<td class="content">By default, DNode data is written in “dnode-staging” in the same folder where it is launched. Please read carefully the Configuration section to override this default.</td>
+<td class="content">By default, DNode data is written in “dnode-staging” in the same folder where it is launched. Please read carefully the <a href="#splout_configuration">Configuration</a> section to override this default.</td>
 </tr></table>
 </div>
-<div class="paragraph"><p>It is possible to have more than one QNode and more than one DNode in a single machine, but for that it is important to understand the Configuration and modify a few properties, specially if you launch the services from the same folder.</p></div>
-<div class="paragraph"><p>Logs are stored in logs/ folder from where daemons are launched. Apache commons-logging is used for logging.</p></div>
-<div class="paragraph"><div class="title">Splout SQL has been tested to perform correctly under both AMD64 and i386 default Amazon AMIs. Splout is compatible with the latest Elastic Map Reduce AMI.</div><p>Splout SQL is still beta, so if you find any strange problem or issue please contact us or raise a bug in Github.</p></div>
+<div class="paragraph"><p>It is possible to have more than one QNode and more than one DNode in a single machine, but for that it is important to understand the <a href="#splout_configuration">Configuration</a> and modify a few properties, specially if you launch the services from the same folder.</p></div>
+<div class="paragraph"><p>Logs are stored in logs/ folder from where daemons are launched. <a href="http://commons.apache.org/logging/">Commons-logging</a> is used for logging.</p></div>
+<div class="paragraph"><div class="title">Splout SQL has been tested to perform correctly under both AMD64 and i386 default Amazon AMIs. Splout is compatible with the latest Elastic Map Reduce AMI.</div><p>Splout SQL is still beta, so if you find any strange problem or issue please contact us or <a href="https://github.com/datasalt/splout-db/issues">raise a bug in Github</a>.</p></div>
+<div class="paragraph"><p><a href="user_guide.html"> &gt; Back to table of contents</a></p></div>
 </div>
 <h2 id="_the_basics">The basics</h2>
 <div class="sectionbody">
@@ -70,12 +76,12 @@ Deploy: Splout "deploys" data from a Hadoop-compatible file system such as HDFS 
 </li>
 <li>
 <p>
-Rollback: Splout can "rollback" previous versions if they are kept in the local storage of all DNodes. DNodes may keep up to some number of versions for each tablespace, which is a configurable property (see the Configuration section for that).
+Rollback: Splout can "rollback" previous versions if they are kept in the local storage of all DNodes. DNodes may keep up to some number of versions for each tablespace, which is a configurable property (see the <a href="#splout_configuration">Configuration</a> section for that).
 </p>
 </li>
 </ul></div>
-<h4 id="_table_definitions">Table definitions</h4>
-<div class="paragraph"><p>A table schema&#8217;s is defined the same way a Pangool&#8217;s tuple schema is defined. However, the data types are adjusted to match those which are compatible with SQLite.
+<h3 id="_table_definitions">Table definitions</h3><div style="clear:left"></div>
+<div class="paragraph"><p>A table schema&#8217;s is defined the same way a <a href="http://pangool.net/userguide/schemas.html">Pangool Tuple schema</a> is defined. However, the data types are adjusted to match <a href="http://www.sqlite.org/datatype3.html">those which are compatible with SQLite</a>.
 The following table shows the correspondence between a Pangool type and the underlying SQLite type used:</p></div>
 <div class="tableblock">
 <table rules="all"
@@ -117,22 +123,24 @@ cellspacing="0" cellpadding="4">
 </tbody>
 </table>
 </div>
-<h4 id="_table_types_and_restrictions">Table types and restrictions</h4>
+<h3 id="_table_types_and_restrictions">Table types and restrictions</h3><div style="clear:left"></div>
 <div class="paragraph"><p>A table is either partitioned or replicated to all partitions. However, a tablespace should have at least one partitioned table for the indexer to be able to distribute the data among partitions!</p></div>
-<h4 id="_partitioning">Partitioning</h4>
+<h3 id="_partitioning">Partitioning</h3><div style="clear:left"></div>
+<div class="paragraph"><p>Partitioning is the basis of Splout and it allows it to balance data before indexing and deploying it.</p></div>
 <div class="paragraph"><p>The most usual case of partitioning is columnar partitioning, meaning that a table is partitioned using one or more columns of its schema.</p></div>
 <div class="paragraph"><p>When more than one table is partitioned in the same tablespace, they must be co-partitioned using the same kind of fields. For example, if a tablespace A contains tables A1, A2 and A3, and A1 and A2
 are partitioned tables and A3 is replicated to all partitions, then if A1 is partitioned by a pair of (string, int) columns, then A2 should also be partitioned by a pair of (string, int) columns.</p></div>
-<div class="paragraph"><p>Note that when a table is partitioned by some columns, Splout just concatenates the value of those columns as a single string. From that point of view, partitioning is a function of a row that returns a string.
-Therefore, it is also possible to partition using arbitrary functions, for example a javascript function that takes the first two characters of a field. You can check this in the Advanced API section.</p></div>
-<h4 id="_partitioning_and_querying">Partitioning and Querying</h4>
+<div class="paragraph"><div class="title">TIP: Note that when a table is partitioned by some columns, Splout just concatenates the value of those columns as a single string. From that point of view, partitioning is a function of a row that returns a string.</div><p>Therefore, it is also possible to partition using arbitrary functions, for example a javascript function that takes the first two characters of a field. You can check this in the <a href="#_hadoop_java_api">Advanced API section</a>.</p></div>
+<h3 id="_partitioning_and_querying">Partitioning and Querying</h3><div style="clear:left"></div>
 <div class="paragraph"><p>Because data is explicitly partitioned, the user must also explicitly provide a partitioning key when querying Splout.
 For example, if a dataset has been partitioned by "customer_id", then the user will provide the appropriated "customer_id" together with the SQL query when querying Splout through its REST interface.</p></div>
+<div class="paragraph"><p><a href="user_guide.html"> &gt; Back to table of contents</a></p></div>
 </div>
-<h2 id="_splout_sql_configuration">Splout SQL Configuration</h2>
+<h2 id="splout_configuration">Splout SQL Configuration</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Splout uses a dual-configuration method, one file for the defaults and one file for overriding them. All you need to do if you want to override a default is specify it in a “splout.properties” file. This file must be in SPLOUT_HOME or in any other place from where you will launch the daemons or in any location of the classpath.</p></div>
-<div class="paragraph"><p>This table shows the property names, the explanation of each property and its default value.</p></div>
+<div class="paragraph"><p>Splout uses a dual-configuration method, one file for the defaults and one file for overriding them. The defaults file is bundled in the JAR and loaded from the classpath. All you need to do if you want to override a default is specify it in a new “splout.properties” file. This file must be in SPLOUT_HOME or in any other place from where you will launch the daemons or in any location of the classpath.</p></div>
+<div class="paragraph"><p>This table shows the property names, the explanation of each property and its default value. Properties that start with "qnode" affect the configuration of the QNode service. Properties that start with "dnode" affect the configuration of the DNode service.
+Properties that start with "fetcher" affect the configuration of the DNode&#8217;s fetcher that is used for deploying new data from a remote location (HDFS, S3, etc). Properties that start with "hz" affect the behavior of the coordination system used among the cluster, which is based on <a href="http://hazelcast.com">Hazelcast</a>.</p></div>
 <div class="tableblock">
 <table rules="all"
 width="100%"
@@ -145,7 +153,7 @@ cellspacing="0" cellpadding="4">
 <tbody>
 <tr>
 <td align="left" valign="top"><p class="table">qnode.port</p></td>
-<td align="left" valign="top"><p class="table">The port this QNode will run on,</p></td>
+<td align="left" valign="top"><p class="table">The port this QNode will run on.</p></td>
 <td align="left" valign="top"><p class="table">4412</p></td>
 </tr>
 <tr>
@@ -160,12 +168,12 @@ cellspacing="0" cellpadding="4">
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">qnode.versions.per.tablespace</p></td>
-<td align="left" valign="top"><p class="table">The number of succeessfully deployed versions that will be kept in the system (per tablespace).</p></td>
+<td align="left" valign="top"><p class="table">The number of successfully deployed versions that will be kept in the system (per tablespace).</p></td>
 <td align="left" valign="top"><p class="table">10</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">qnode.deploy.seconds.to.check.error</p></td>
-<td align="left" valign="top"><p class="table">The number of seconds to wait before checking each time if a DNode has failed or if timeout has ocurred in the middle of a deploy.</p></td>
+<td align="left" valign="top"><p class="table">The number of seconds to wait before checking each time if a DNode has failed or if a timeout has occurred in the middle of a deploy.</p></td>
 <td align="left" valign="top"><p class="table">60</p></td>
 </tr>
 <tr>
@@ -195,7 +203,7 @@ cellspacing="0" cellpadding="4">
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">dnode.pool.cache.seconds</p></td>
-<td align="left" valign="top"><p class="table">The amount of seconds that the DNode will cache SQL connection pools. After that time, it will close them. Remember that the DNode may receive requests for different versions in the middle of a deployment, so that&#8217;s why we want to expire connection pools after some time (to not cache connection pools that will not be used anymore).</p></td>
+<td align="left" valign="top"><p class="table">The amount of seconds that the DNode will cache SQL connection pools. After that time, it will close them. Because the DNode may receive requests for different versions in the middle of a deployment, we want to expire connection pools after some time (to not cache connection pools that will not be used anymore).</p></td>
 <td align="left" valign="top"><p class="table">3600</p></td>
 </tr>
 <tr>
@@ -210,7 +218,7 @@ cellspacing="0" cellpadding="4">
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">dnode.max.results.per.query</p></td>
-<td align="left" valign="top"><p class="table">A hard limit on the number of results per each SQL query that this DNode may send back to QNodes.</p></td>
+<td align="left" valign="top"><p class="table">A hard limit on the number of results per each SQL query that this DNode may send back to QNodes. If the limit is hit, an error will be returned.</p></td>
 <td align="left" valign="top"><p class="table">50000</p></td>
 </tr>
 <tr>
@@ -225,17 +233,22 @@ cellspacing="0" cellpadding="4">
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">dnode.slow.query.abs.limit</p></td>
-<td align="left" valign="top"><p class="table">In milliseconds, queries that are slower will be logged with a WARNING.</p></td>
+<td align="left" valign="top"><p class="table">In milliseconds, queries that are slower will be logged with a WARNING and registered as "slow queries" for this DNode&#8217;s stats.</p></td>
 <td align="left" valign="top"><p class="table">2500</p></td>
 </tr>
 <tr>
+<td align="left" valign="top"><p class="table">dnode.db.connections.per.pool</p></td>
+<td align="left" valign="top"><p class="table">Size of the connection pool to each partition that this DNode services.</p></td>
+<td align="left" valign="top"><p class="table">10</p></td>
+</tr>
+<tr>
 <td align="left" valign="top"><p class="table">fetcher.s3.access.key</p></td>
-<td align="left" valign="top"><p class="table">If using S3 fetching, specify here your AWS credentials. Uncomment when needed.</p></td>
+<td align="left" valign="top"><p class="table">If using S3 fetching, specify here your AWS credentials.</p></td>
 <td align="left" valign="top"><p class="table">(none)</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">fetcher.s3.secret.key</p></td>
-<td align="left" valign="top"><p class="table">If using S3 fetching, specify here your AWS credentials. Uncomment when needed.</p></td>
+<td align="left" valign="top"><p class="table">If using S3 fetching, specify here your AWS credentials.</p></td>
 <td align="left" valign="top"><p class="table">(none)</p></td>
 </tr>
 <tr>
@@ -250,17 +263,17 @@ cellspacing="0" cellpadding="4">
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">fetcher.hadoop.fs.name</p></td>
-<td align="left" valign="top"><p class="table">If using Hadoop fetching, the address of the NameNode for being able download data from HDFS. Uncomment when needed.</p></td>
+<td align="left" valign="top"><p class="table">If using Hadoop fetching, the address of the NameNode for being able to download data from HDFS.</p></td>
 <td align="left" valign="top"><p class="table">(none)</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">hz.persistent.data.folder</p></td>
-<td align="left" valign="top"><p class="table">Folder to be used to persist Hazelcast state information needed to persist current version information. If not present, no information is stored.</p></td>
+<td align="left" valign="top"><p class="table">Folder to be used to persist Hazelcast state information needed to persist current version information. If not present, no information is stored, and restarting a cluster will cause it to start without any active tablespace.</p></td>
 <td align="left" valign="top"><p class="table">hz-data</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">hz.port</p></td>
-<td align="left" valign="top"><p class="table">Enable this property if you want your service to bind to an specific port. Otherwise the default Hazelcast port is used (5701), and auto-incremented if needed.</p></td>
+<td align="left" valign="top"><p class="table">Enable this property if you want your Hazelcast service to bind to an specific port. Otherwise the default Hazelcast port is used (5701), and auto-incremented if needed.</p></td>
 <td align="left" valign="top"><p class="table">(none)</p></td>
 </tr>
 <tr>
@@ -280,7 +293,7 @@ cellspacing="0" cellpadding="4">
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">hz.tcp.cluster</p></td>
-<td align="left" valign="top"><p class="table">Uncomment and use this property if method=TCP. Specify a comma-separated list of host:ip cluster members.</p></td>
+<td align="left" valign="top"><p class="table">Uncomment and use this property if method=TCP. Specify a comma-separated list of host cluster members.</p></td>
 <td align="left" valign="top"><p class="table">(none)</p></td>
 </tr>
 <tr>
@@ -305,12 +318,12 @@ cellspacing="0" cellpadding="4">
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">hz.disable.wait.when.joining</p></td>
-<td align="left" valign="top"><p class="table">Hazelcast waits 5 seconds before joining a member. That is good in production because improves the posibilities of joining several members at the same time. But very bad for testing&#8230; This property allows you to disable it for testing.</p></td>
+<td align="left" valign="top"><p class="table">Hazelcast waits 5 seconds before joining a member. That is good in production because it improves the possibilities of joining several members at the same time. But very bad for testing&#8230; This property allows you to disable it for testing.</p></td>
 <td align="left" valign="top"><p class="table">false</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">hz.oldest.members.leading.count</p></td>
-<td align="left" valign="top"><p class="table">Number of the oldest members leading operations in the cluster. Sometimes only these members answer to events, in order to reduce coordination traffic.</p></td>
+<td align="left" valign="top"><p class="table">Number of oldest members leading operations in the cluster. Sometimes only these members answer to events, in order to reduce coordination traffic.</p></td>
 <td align="left" valign="top"><p class="table">3</p></td>
 </tr>
 <tr>
@@ -318,16 +331,11 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">Max time, in minutes, to check if the member is registered. This check is used to assure eventual consistency in rare cases of network partitions where replication was not enough to ensure that no data is lost.</p></td>
 <td align="left" valign="top"><p class="table">5</p></td>
 </tr>
-<tr>
-<td align="left" valign="top"><p class="table">dnode.db.connections.per.pool</p></td>
-<td align="left" valign="top"><p class="table">Size of the connection pool to each partition that this DNode services.</p></td>
-<td align="left" valign="top"><p class="table">10</p></td>
-</tr>
 </tbody>
 </table>
 </div>
-<h4 id="_typical_distributed_configurations">Typical distributed configurations</h4>
-<div class="paragraph"><p>It is fairy easy to install Splout in a distributed environment. By default, Splout will use Hazelcast in Multicast mode for finding members, but it is possible to configure Splout for explicit TCP/IP or Amazon AWS auto-discovery. Following there are some examples of distributed configurations:</p></div>
+<h3 id="_typical_distributed_configurations">Typical distributed configurations</h3><div style="clear:left"></div>
+<div class="paragraph"><p>It is fairly easy to install Splout in a distributed environment. By default, Splout will use <a href="http://hazelcast.com">Hazelcast</a> in Multicast mode for finding members, but it is possible to configure Splout for explicit TCP/IP or Amazon AWS auto-discovery. Following there are some examples of distributed configurations:</p></div>
 <div class="tableblock">
 <table rules="all"
 width="100%"
@@ -356,10 +364,15 @@ cellspacing="0" cellpadding="4">
 </tbody>
 </table>
 </div>
+<div class="paragraph"><p><a href="user_guide.html"> &gt; Back to table of contents</a></p></div>
 </div>
 <h2 id="_splout_hadoop_api">Splout-Hadoop API</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>The Splout-Hadoop API contains the libraries and command-line tools needed for deploying tablespaces to Splout.</p></div>
+<div class="paragraph"><p>The Splout-Hadoop API contains the libraries and command-line tools needed for indexing and deploying "Tablespaces" to Splout. Splout uses <a href="http://pangool.net">Pangool</a> jobs for balancing and creating
+the needed binary files for being able to serve the provided datasets afterwards. Tablespaces can be generated according to some partitioning policy specified by the user. The partitioning is
+then leveraged by sampling processes to equitatively distribute data among partitions.</p></div>
+<div class="paragraph"><p>The output of these processes is usually a set of binary SQLite ".db" files and a partition map which specifies how queries should be routed to these files. Then, a "deployer" process
+is used to distribute these files to the Splout cluster. The "deployer" can also make the same file replicate several times in order to have fail-over replication.</p></div>
 <h3 id="_command_line_tools">Command line tools</h3><div style="clear:left"></div>
 <div class="paragraph"><p>The command line tools have been developed to ease the most common use cases. They only work with textual (CSV or fixed-width) files at this moment.
 There are two "generator" tools that are responsible for launching a Hadoop process that will balance and index the input files,
@@ -367,10 +380,10 @@ and there is one "deployer" tool that is able to deploy the result of any of the
 <h4 id="_simple_generator">Simple generator</h4>
 <div class="paragraph"><p>The "Simple generator" allows us to seamlessly index and deploy a single tablespace made up by a single table, which is a very common use case.
 By invoking the tool with no parameters we obtain an explanation of all possible parameters. We will see a few examples of how to use this tool:</p></div>
-<div class="paragraph"><p>The following line generates the structures needed for deploying a tablespace called "customers" containing a table named "customers" whose schema is made up by an integer "customer_id" field, a "name" string and an integer "age". The file is present in input folder "my-input", will be partitioned in 12 partitions and the binary resultant files will be saved in "my-output":</p></div>
+<div class="paragraph"><p>The following line generates the structures needed for deploying a tablespace called "customers" containing a table named "customers" whose schema is made up by an integer "customer_id" field, a "name" string and an integer "age". The file is present in input folder "my-input", will be partitioned in 12 partitions and the binary resultant files will be saved in "my-output". The partitioning policy is a columnar partitioning based on the column "customer_id".</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><tt>hadoop jar splout-hadoop-0.1-SNAPSHOT-hadoop.jar simple-generate -i my-input -o my-output -pby customer_id -p 12 -s "customer_id:int,name:string,age:int" -t customers -tb customers</tt></pre>
+<pre><tt>hadoop jar splout-hadoop-*-hadoop.jar simple-generate -i my-input -o my-output -pby customer_id -p 12 -s "customer_id:int,name:string,age:int" -t customers -tb customers</tt></pre>
 </div></div>
 <div class="admonitionblock">
 <table><tr>
@@ -384,7 +397,7 @@ By invoking the tool with no parameters we obtain an explanation of all possible
 <div class="paragraph"><p>The following line generates the structures for the same tablespace, but specifying a custom CSV format which is comma-separated, escaped by character "\", uses strict quotes (""), has a header line and may contain a sequence of characters which has to be interpreted as null: "\N".</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><tt>hadoop jar splout-hadoop-0.1-SNAPSHOT-hadoop.jar simple-generate --separator , --escape \\ --quotes \"\"\" --nullstring \\N -i my-input -o my-output -pby customer_id -p 12 -s "customer_id:int,name:string,age:int" -t customers -tb customers</tt></pre>
+<pre><tt>hadoop jar splout-hadoop-*-hadoop.jar simple-generate --separator , --escape \\ --quotes \"\"\" --nullstring \\N -i my-input -o my-output -pby customer_id -p 12 -s "customer_id:int,name:string,age:int" -t customers -tb customers</tt></pre>
 </div></div>
 <div class="admonitionblock">
 <table><tr>
@@ -394,6 +407,7 @@ By invoking the tool with no parameters we obtain an explanation of all possible
 <td class="content">Notice how we needed to escape backslashes when passing them through command-line parameters.</td>
 </tr></table>
 </div>
+<div class="paragraph"><p>Strict quotes means that any field which is not quoted will be considered as null. When a field can&#8217;t be parsed to its expected format, it is returned as null. For example, an empty integer field will be considered null.</p></div>
 <div class="admonitionblock">
 <table><tr>
 <td class="icon">
@@ -408,23 +422,25 @@ By invoking the tool with no parameters we obtain an explanation of all possible
 <div class="literalblock">
 <div class="content">
 <pre><tt>{
-  "name": "meteo",
-  "nPartitions": 16,
-  "partitionedTables": [{
-    "name": "meteo",
-    "schema": "station:string,date:string,metric:string,measure:int",
-    "partitionFields": "station",
-    "tableInputs": [{
-        "inputSpecs": {
-        "separatorChar": ","
-      },
-      "paths": [ "small.csv" ]
-    }]
-  }]
+       "name": "meteo",
+       "nPartitions": 16,
+       "partitionedTables": [{
+               "name": "meteo",
+               "schema": "station:string,date:string,metric:string,measure:int",
+               "partitionFields": "station",
+               "tableInputs": [{
+                       "inputSpecs": {
+                               "separatorChar": ","
+                       },
+                       "paths": [
+                               "small.csv"
+                       ]
+               }]
+       }]
 }</tt></pre>
 </div></div>
-<div class="paragraph"><p>Following we will show the full schema of the JSON object (JSONTablespaceDefinition) that can be passed through this file:</p></div>
-<div class="tableblock">
+<div class="paragraph"><p>Following we will show the full schema of the JSON object (<a href="#JSONTablespaceDefinition">JSONTablespaceDefinition</a>) that can be passed through this file:</p></div>
+<div class="tableblock" id="JSONTablespaceDefinition">
 <table rules="all"
 width="100%"
 frame="border"
@@ -451,19 +467,19 @@ cellspacing="0" cellpadding="4">
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">partitionedTables</p></td>
-<td align="left" valign="top"><p class="table">array of JSONTableDefinition</p></td>
+<td align="left" valign="top"><p class="table">array of <a href="#JSONTableDefinition">JSONTableDefinition</a></p></td>
 <td align="left" valign="top"><p class="table">The partitioned tables of this tablespace. There must be one, at least.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">replicateAllTables</p></td>
-<td align="left" valign="top"><p class="table">array of JSONTableDefinition</p></td>
+<td align="left" valign="top"><p class="table">array of <a href="#JSONTableDefinition">JSONTableDefinition</a></p></td>
 <td align="left" valign="top"><p class="table">The tables that are replicated to all the partitions.</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="paragraph"><p>This is the spec of the JSONTableDefinition object:</p></div>
-<div class="tableblock">
+<div class="tableblock" id="JSONTableDefinition">
 <table rules="all"
 width="100%"
 frame="border"
@@ -485,7 +501,7 @@ cellspacing="0" cellpadding="4">
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">tableInputs</p></td>
-<td align="left" valign="top"><p class="table">array of JSONTableInputDefinition</p></td>
+<td align="left" valign="top"><p class="table">array of <a href="#JSONTableInputDefinition">JSONTableInputDefinition</a></p></td>
 <td align="left" valign="top"><p class="table">The input locations of this table.</p></td>
 </tr>
 <tr>
@@ -513,11 +529,16 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">array of string</p></td>
 <td align="left" valign="top"><p class="table">Raw SQL commands that will be performed after inserting all the data to the table.</p></td>
 </tr>
+<tr>
+<td align="left" valign="top"><p class="table">insertionOrderBy</p></td>
+<td align="left" valign="top"><p class="table">string</p></td>
+<td align="left" valign="top"><p class="table">In-line Pangool Order By clause (in the form "field1:asc, field2:desc,&#8230;,fieldn:asc") that will be used for sorting the data before inserting it in a SQLite table.</p></td>
+</tr>
 </tbody>
 </table>
 </div>
-<div class="paragraph"><p>This is the spec of the JSONTableInputDefinition object:</p></div>
-<div class="tableblock">
+<div class="paragraph"><p>This is the spec of the <a href="#JSONTableInputDefinition">JSONTableInputDefinition</a> object:</p></div>
+<div class="tableblock" id="JSONTableInputDefinition">
 <table rules="all"
 width="100%"
 frame="border"
@@ -534,7 +555,7 @@ cellspacing="0" cellpadding="4">
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">inputSpecs</p></td>
-<td align="left" valign="top"><p class="table">TextInputSpecs</p></td>
+<td align="left" valign="top"><p class="table"><a href="#TextInputSpecs">TextInputSpecs</a></p></td>
 <td align="left" valign="top"><p class="table">Specifies how to parse the text file.</p></td>
 </tr>
 <tr>
@@ -545,8 +566,8 @@ cellspacing="0" cellpadding="4">
 </tbody>
 </table>
 </div>
-<div class="paragraph"><p>And this is the spec of the TextInputSpecs object:</p></div>
-<div class="tableblock">
+<div class="paragraph"><p>And this is the spec of the <a href="#TextInputSpecs">TextInputSpecs</a> object:</p></div>
+<div class="tableblock" id="TextInputSpecs">
 <table rules="all"
 width="100%"
 frame="border"
@@ -607,7 +628,7 @@ For the common case of deploying only one tablespace, you can use straight comma
 <pre><tt>hadoop jar splout-hadoop-0.1-SNAPSHOT-hadoop.jar deploy -r 2 -root my-generated-tablespace -tn mytablespace -q http://localhost:4412</tt></pre>
 </div></div>
 <div class="paragraph"><p>The above line will deploy binary files generated in "my-generated-tablespace" folder using replication 2. The deployed tablespace will be named "mytablespace" and it will be deployed to the alive Splout cluster using the local QNode address at port 4412.
-The corresponding file tree for this example would have been the following:</p></div>
+The corresponding expected file tree for this example would have been the following:</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><tt>hdfs://.../my-generated-tablespace/
@@ -615,6 +636,7 @@ hdfs://.../my-generated-tablespace/partition-map
 hdfs://.../my-generated-tablespace/sampled-input
 hdfs://.../my-generated-tablespace/store</tt></pre>
 </div></div>
+<div class="paragraph"><p>(This file tree corresponds to the output of a "generator" process with "my-generated-tablespace" as output folder.)</p></div>
 <div class="admonitionblock">
 <table><tr>
 <td class="icon">
@@ -624,7 +646,7 @@ hdfs://.../my-generated-tablespace/store</tt></pre>
 <div class="title">Replication</div>For failover, it is convenient to replicate your tablespace when deploying it. If ommitted, only one copy of each binary file will be distributed to the cluster, meaning that if one machine fails there will be a portion of your data that will not be available for serving. A replication factor of 2 will mean that there will be 2 copies of each file, so one machine can fail and all the data will still be served. When deploying to a cluster with less machines than the replication factor specified, it will be automatically downgraded to the minimum viable one.</td>
 </tr></table>
 </div>
-<div class="paragraph"><p>For deploying more than one tablespace with the same replication factor, you can also use command-line parameters:</p></div>
+<div class="paragraph"><p>For deploying more than one tablespace atomically and with the same replication factor, you can also use command-line parameters:</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><tt>hadoop jar splout-hadoop-0.1-SNAPSHOT-hadoop.jar deploy -r 2 -root my-root-folder -tn mytablespace1,mytablespace2,mytablespace3 -q http://localhost:4412</tt></pre>
@@ -642,8 +664,8 @@ hdfs://.../my-root-folder/mytablespace3/partition-map
 hdfs://.../my-root-folder/mytablespace3/sampled-input
 hdfs://.../my-root-folder/mytablespace3/store/...</tt></pre>
 </div></div>
-<div class="paragraph"><p>Last but not least, if we are to deploy a more complex combination of tablespaces, we can also use a JSON configuration file for that. This file will contain an array of "TablespaceDepSpec" objects whose spec is the following:</p></div>
-<div class="tableblock">
+<div class="paragraph"><p>Last but not least, if we are to atomically deploy a more complex combination of tablespaces, we can also use a JSON configuration file for that. This file will contain an array of "TablespaceDepSpec" objects whose spec is the following:</p></div>
+<div class="tableblock" id="TablespaceDepSpec">
 <table rules="all"
 width="100%"
 frame="border"
@@ -682,41 +704,43 @@ cellspacing="0" cellpadding="4">
 <pre><tt>hadoop jar splout-hadoop-0.1-SNAPSHOT-hadoop.jar -c my-config.json -q http://localhost:4412</tt></pre>
 </div></div>
 <h3 id="_hadoop_java_api">Hadoop Java API</h3><div style="clear:left"></div>
-<div class="paragraph"><p>All the command-line tools use the underlying Java API that we have implemented for Splout. You can also use this Java API directly in your Java project and you can have access to more advanced features such specifying custom partitioning functions, record processing functions and such.</p></div>
+<div class="paragraph"><p>All the command-line tools use the underlying Java API that we have implemented for Splout. You can also use this Java API directly in your Java project and you can have access to more advanced features such as specifying custom partitioning functions, record processing functions and such.</p></div>
 <h4 id="_basic_api">Basic API</h4>
 <div class="paragraph"><p>The basic API consists of the following classes:</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
-TableBuilder: a builder used to obtain a Table instance. Table instances can be used in TablespaceBuilder for constructing a tablespace specification.
+<a href="apidocs/splout-hadoop/com/splout/db/hadoop/TableBuilder.html">TableBuilder</a>: a builder used to obtain a Table instance. Table instances can be used in TablespaceBuilder for constructing a tablespace specification.
 </p>
 </li>
 <li>
 <p>
-TablespaceBuilder: a builder used to obtain a TablespaceSpec instance.
+<a href="apidocs/splout-hadoop/com/splout/db/hadoop/TablespaceBuilder.html">TablespaceBuilder</a>: a builder used to obtain a TablespaceSpec instance.
 </p>
 </li>
 <li>
 <p>
-TablespaceGenerator: It can be used to generate the binary files according to a TablespaceSpec instance.
+<a href="apidocs/splout-hadoop/com/splout/db/hadoop/TablespaceGenerator.html">TablespaceGenerator</a>: It can be used to generate the binary files according to a TablespaceSpec instance.
 </p>
 </li>
 <li>
 <p>
-StoreDeployerTool: It can be used to deploy the files generated by the TablespaceGenerator to an alive Splout cluster. It will accept TablespaceDepSpec instances, which have been documented in the previous sections.
+<a href="apidocs/splout-hadoop/com/splout/db/hadoop/StoreDeployerTool.html">StoreDeployerTool</a>: It can be used to deploy the files generated by the <a href="apidocs/splout-hadoop/com/splout/db/hadoop/TablespaceGenerator.html">TablespaceGenerator</a> to an alive Splout cluster. It will accept <a href="#TablespaceDepSpec">TablespaceDepSpec</a> instances, which have been documented in the previous sections.
 </p>
 </li>
 </ul></div>
-<div class="paragraph"><p>The javadoc of each of these classes should guide you well into using them in your custom Java project.</p></div>
+<div class="paragraph"><p>The javadoc of each of these classes should guide you well into using them in your custom Java project. In addition, you can <a href="https://github.com/datasalt/splout-db/blob/master/splout-hadoop/src/main/java/com/splout/db/examples/PageCountsExample.java">check this example</a> which uses the <a href="http://dom.as/2007/12/10/wikipedia-page-counters/">Wikipedia Pagecounts data</a> for seeing a practical example on how to use this programmatic API.</p></div>
 <h5 id="_custom_partitioning">Custom partitioning</h5>
 <div class="paragraph"><p>Aside of column-based partitioning, an arbitrary partitioning function can be provided in the form of a Javascript function. This function ca be passed to TableBuilder&#8217;s partitionByJavaScript() method.</p></div>
 <h5 id="_recordprocessor">RecordProcessor</h5>
 <div class="paragraph"><p>If you want to have more control on the generation process, you can implement your own RecordProcessor which will receive Tuples as they have been parsed by the input files and should emit Tuples as you want them to be indexed in your SQL tables.
 For example, you may choose to narrow your input Tuple and emit a subset of it, modify some field by decoding its content, and so on. The RecordProcessor may also act as a filter. If "null" is returned, the input Tuple would have been filtered out from the generation process.</p></div>
+<div class="paragraph"><p>The <a href="https://github.com/datasalt/splout-db/blob/master/splout-hadoop/src/main/java/com/splout/db/examples/PageCountsRecordProcessor.java">pagecounts example RecordProcessor</a> is a good example.</p></div>
+<div class="paragraph"><p><a href="user_guide.html"> &gt; Back to table of contents</a></p></div>
 </div>
 <h2 id="_rest_api">REST API</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>You can interact with the server through the Java client or directly through the REST interface. These are the basic methods of the REST interface:</p></div>
+<div class="paragraph"><p>You can interact with the server through the <a href="apidocs/splout-javaclient/com/splout/db/common/SploutClient.html">Java client</a> or directly through the REST interface. These are the basic methods of the REST interface:</p></div>
 <div class="tableblock">
 <table rules="all"
 width="100%"
@@ -740,7 +764,7 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">GET</p></td>
 <td align="left" valign="top"><p class="table">api/overview</p></td>
 <td align="left" valign="top"><p class="table">(none)</p></td>
-<td align="left" valign="top"><p class="table">Returns a QNodeStatus object with the overview of the cluster.</p></td>
+<td align="left" valign="top"><p class="table">Returns a <a href="#QNodeStatus">QNodeStatus</a> object with the overview of the cluster.</p></td>
 <td align="left" valign="top"><p class="table"><a href="http://localhost:4412/api/overview">http://localhost:4412/api/overview</a></p></td>
 </tr>
 <tr>
@@ -768,14 +792,14 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">GET</p></td>
 <td align="left" valign="top"><p class="table">api/tablespace/{tablespace}/versions</p></td>
 <td align="left" valign="top"><p class="table">(none)</p></td>
-<td align="left" valign="top"><p class="table">Returns a Map&lt;Long, Tablespace&gt; object with all the available versions for this tablespace.</p></td>
+<td align="left" valign="top"><p class="table">Returns a Map&lt;Long, <a href="#Tablespace">Tablespace</a>&gt; object with all the available versions for this tablespace.</p></td>
 <td align="left" valign="top"><p class="table"><a href="http://localhost:4412/api/tablespace/mytablespace/versions">http://localhost:4412/api/tablespace/mytablespace/versions</a></p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">GET</p></td>
 <td align="left" valign="top"><p class="table">api/dnode/{dnode}/status</p></td>
 <td align="left" valign="top"><p class="table">(none)</p></td>
-<td align="left" valign="top"><p class="table">Returns a DNodeSystemStatus object for the specified dnode.</p></td>
+<td align="left" valign="top"><p class="table">Returns a <a href="#DNodeSystemStatus">DNodeSystemStatus</a> object for the specified dnode.</p></td>
 <td align="left" valign="top"><p class="table"><a href="http://localhost:4412/api/dnode/localhost:4422/status">http://localhost:4412/api/dnode/localhost:4422/status</a></p></td>
 </tr>
 <tr>
@@ -789,14 +813,14 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table">POST</p></td>
 <td align="left" valign="top"><p class="table">api/deploy</p></td>
 <td align="left" valign="top"><p class="table">List&lt;DeployRequest&gt;</p></td>
-<td align="left" valign="top"><p class="table">Performs a deploy according to the associated DeployRequest objects passed as body for the request and returns a DeployInfo object.</p></td>
+<td align="left" valign="top"><p class="table">Performs a deploy according to the associated <a href="#DeployRequest">DeployRequest</a> objects passed as body for the request and returns a <a href="#DeployInfo">DeployInfo</a> object.</p></td>
 <td align="left" valign="top"><p class="table"></p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">POST</p></td>
 <td align="left" valign="top"><p class="table">api/rollback</p></td>
 <td align="left" valign="top"><p class="table">List&lt;SwitchVersionRequest&gt;</p></td>
-<td align="left" valign="top"><p class="table">Performs a rollback according to the associated DeployRequest objects passed as body for the request and returns a StatusMessage object.</p></td>
+<td align="left" valign="top"><p class="table">Performs a rollback according to the associated <a href="#DeployRequest">DeployRequest</a> objects passed as body for the request and returns a <a href="#StatusMessage">StatusMessage</a> object.</p></td>
 <td align="left" valign="top"><p class="table"></p></td>
 </tr>
 </tbody>
@@ -828,7 +852,7 @@ Example response:</p></div>
        clusterSize: 2
 }</tt></pre>
 </div></div>
-<div class="tableblock">
+<div class="tableblock" id="QNodeStatus">
 <table rules="all"
 width="100%"
 frame="border"
@@ -845,12 +869,12 @@ cellspacing="0" cellpadding="4">
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">dNodes</p></td>
-<td align="left" valign="top"><p class="table">Map&lt;String, DNodeSystemStatus&gt;</p></td>
+<td align="left" valign="top"><p class="table">Map&lt;String, <a href="#DNodeSystemStatus">DNodeSystemStatus</a>&gt;</p></td>
 <td align="left" valign="top"><p class="table">Alive DNodes in cluster and their associated information.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">tablespaceMap</p></td>
-<td align="left" valign="top"><p class="table">Map&lt;String, Tablespace&gt;</p></td>
+<td align="left" valign="top"><p class="table">Map&lt;String, <a href="#Tablespace">Tablespace</a>&gt;</p></td>
 <td align="left" valign="top"><p class="table">Current tablespaces being served by the cluster and their associated information.</p></td>
 </tr>
 <tr>
@@ -861,7 +885,7 @@ cellspacing="0" cellpadding="4">
 </tbody>
 </table>
 </div>
-<div class="tableblock">
+<div class="tableblock" id="DNodeSystemStatus">
 <table rules="all"
 width="100%"
 frame="border"
@@ -934,7 +958,7 @@ cellspacing="0" cellpadding="4">
 </tbody>
 </table>
 </div>
-<div class="tableblock">
+<div class="tableblock" id="Tablespace">
 <table rules="all"
 width="100%"
 frame="border"
@@ -951,12 +975,12 @@ cellspacing="0" cellpadding="4">
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">partitionMap</p></td>
-<td align="left" valign="top"><p class="table">PartitionMap</p></td>
+<td align="left" valign="top"><p class="table"><a href="#PartitionMap">PartitionMap</a></p></td>
 <td align="left" valign="top"><p class="table">The partition map that is being used to route queries for this tablespace.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">replicationMap</p></td>
-<td align="left" valign="top"><p class="table">ReplicationMap</p></td>
+<td align="left" valign="top"><p class="table"><a href="#ReplicationMap">ReplicationMap</a></p></td>
 <td align="left" valign="top"><p class="table">The replication map that is being used for failover for this tablespace.</p></td>
 </tr>
 <tr>
@@ -972,7 +996,7 @@ cellspacing="0" cellpadding="4">
 </tbody>
 </table>
 </div>
-<div class="tableblock">
+<div class="tableblock" id="PartitionMap">
 <table rules="all"
 width="100%"
 frame="border"
@@ -989,13 +1013,13 @@ cellspacing="0" cellpadding="4">
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">partitionEntries</p></td>
-<td align="left" valign="top"><p class="table">List&lt;PartitionEntry&gt;</p></td>
+<td align="left" valign="top"><p class="table">List&lt;<a href="#PartitionEntry">PartitionEntry</a>&gt;</p></td>
 <td align="left" valign="top"><p class="table">The list of partition entries with (min, max) ranges for this tablespace.</p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<div class="tableblock">
+<div class="tableblock" id="PartitionEntry">
 <table rules="all"
 width="100%"
 frame="border"
@@ -1028,7 +1052,7 @@ cellspacing="0" cellpadding="4">
 </tbody>
 </table>
 </div>
-<div class="tableblock">
+<div class="tableblock" id="ReplicationMap">
 <table rules="all"
 width="100%"
 frame="border"
@@ -1045,13 +1069,13 @@ cellspacing="0" cellpadding="4">
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">replicationEntries</p></td>
-<td align="left" valign="top"><p class="table">List&lt;ReplicationEntry&gt;</p></td>
+<td align="left" valign="top"><p class="table">List&lt;<a href="#ReplicationEntry">ReplicationEntry</a>&gt;</p></td>
 <td align="left" valign="top"><p class="table">The list of replication entries with list of dnodes for this tablespace.</p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<div class="tableblock">
+<div class="tableblock" id="ReplicationEntry">
 <table rules="all"
 width="100%"
 frame="border"
@@ -1097,7 +1121,7 @@ cellspacing="0" cellpadding="4">
 ]</tt></pre>
 </div></div>
 <h3 id="_api_tablespace_tablespace">api/tablespace/{tablespace}</h3><div style="clear:left"></div>
-<div class="paragraph"><p>Use this method for getting the associated information of a tablespace being served by the cluster. Returns a Tablespace object. Example response:</p></div>
+<div class="paragraph"><p>Use this method for getting the associated information of a tablespace being served by the cluster. Returns a <a href="#Tablespace">Tablespace</a> object. Example response:</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><tt>{
@@ -1136,8 +1160,8 @@ cellspacing="0" cellpadding="4">
 }</tt></pre>
 </div></div>
 <h3 id="_api_tablespace_tablespace_versions">api/tablespace/{tablespace}/versions</h3><div style="clear:left"></div>
-<div class="paragraph"><p>Returns all available versions for the specified tablespace, including the one which may be being served at the moment by the cluster. Returns a Map&lt;Long, Tablespace&gt;.
-For every version in the key of the map, returns the associated Tablespace object information. Example response:</p></div>
+<div class="paragraph"><p>Returns all available versions for the specified tablespace, including the one which may be being served at the moment by the cluster. Returns a Map&lt;Long, <a href="#Tablespace">[Tablespace]</a>&gt;.
+For every version in the key of the map, returns the associated <a href="#Tablespace">Tablespace</a> object information. Example response:</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><tt>{
@@ -1178,7 +1202,7 @@ For every version in the key of the map, returns the associated Tablespace objec
 }</tt></pre>
 </div></div>
 <h3 id="_api_dnode_dnode_status">api/dnode/{dnode}/status</h3><div style="clear:left"></div>
-<div class="paragraph"><p>Returns a DNodeSystemStatus object filled with the detailed information of the specified DNode. Example response:</p></div>
+<div class="paragraph"><p>Returns a <a href="#DNodeSystemStatus">DNodeSystemStatus</a> object filled with the detailed information of the specified DNode. Example response:</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><tt>{
@@ -1268,11 +1292,11 @@ cellspacing="0" cellpadding="4">
 <div class="title">Warning</div>
 </td>
 <td class="content">You won&#8217;t usually need to perform a deploy manually using this REST method. However, you can refer to this documentation in case
-you need to do something very specific. For doing deploys you will usually use the "deployer" command-line tool or the StoreDeployerTool Java class.</td>
+you need to do something very specific. For doing deploys you will usually use the "deployer" command-line tool or the <a href="apidocs/splout-hadoop/com/splout/db/hadoop/StoreDeployerTool.html">StoreDeployerTool</a> Java class.</td>
 </tr></table>
 </div>
-<div class="paragraph"><p>By providing a list of DeployRequest objects we can perform a deploy through this POST method. We need to specify a tablespace name,
-an URI from where binary objects must be fetched, a PartitionMap and a ReplicationMap and optionally a list of SQL statements that will
+<div class="paragraph"><p>By providing a list of <a href="#DeployRequest">DeployRequest</a> objects we can perform a deploy through this POST method. We need to specify a tablespace name,
+an URI from where binary objects must be fetched, a <a href="#PartitionMap">PartitionMap</a> and a <a href="#ReplicationMap">ReplicationMap</a> and optionally a list of SQL statements that will
 be executed each time a connection is made to the database.</p></div>
 <div class="paragraph"><p>Example post body:</p></div>
 <div class="literalblock">
@@ -1311,7 +1335,7 @@ be executed each time a connection is made to the database.</p></div>
        }
 ]</tt></pre>
 </div></div>
-<div class="tableblock">
+<div class="tableblock" id="DeployRequest">
 <table rules="all"
 width="100%"
 frame="border"
@@ -1343,12 +1367,12 @@ cellspacing="0" cellpadding="4">
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">partitionMap</p></td>
-<td align="left" valign="top"><p class="table">list&lt;PartitionEntry&gt;</p></td>
+<td align="left" valign="top"><p class="table">list&lt;<a href="#PartitionEntry">[PartitionEntry]</a>&gt;</p></td>
 <td align="left" valign="top"><p class="table">The Partition map to be used for routing queries from this tablespace.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">replicationMap</p></td>
-<td align="left" valign="top"><p class="table">list&lt;ReplicationEntry&gt;</p></td>
+<td align="left" valign="top"><p class="table">list&lt;<a href="#ReplicationEntry">[ReplicationEntry]</a>&gt;</p></td>
 <td align="left" valign="top"><p class="table">The Replication map to be used for failover for this tablespace.</p></td>
 </tr>
 </tbody>
@@ -1359,20 +1383,68 @@ cellspacing="0" cellpadding="4">
 <td class="icon">
 <div class="title">Tip</div>
 </td>
-<td class="content">Java users can use SploutClient or higher-level StoreDeployerTool (which uses SploutClient underneath) instead of the raw REST API for doing deploys.
-TIP: Partition maps are automatically generated by sampling methods in the generator tools and saved in the output folder that was used for the tool. The tools use the TablespaceGenerator Java class underneath.
-TIP: Typical replication maps can be built easily with the Java API methods ReplicationMap.roundRobinMap() and ReplicationMap.oneToOneMap().</td>
+<td class="content">Java users can use <a href="apidocs/splout-javaclient/com/splout/db/common/SploutClient.html">SploutClient</a> or higher-level <a href="apidocs/splout-hadoop/com/splout/db/hadoop/StoreDeployerTool.html">StoreDeployerTool</a> (which uses apidocs/splout-javaclient/com/splout/db/common/SploutClient.html[SploutClient] underneath) instead of the raw REST API for doing deploys.</td>
 </tr></table>
 </div>
-<h3 id="_api_rollback">api/rollback</h3><div style="clear:left"></div>
-<div class="paragraph"><p>By providing a list of SwitchVersionRequest objects we can perform a rollback through this POST method. We just need to specify the tablespace
-name (which must be being served by the cluster at the moment of the rollback) and the version we want to set it to.</p></div>
-<div class="tableblock">
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<div class="title">Tip</div>
+</td>
+<td class="content">Partition maps are automatically generated by sampling methods in the generator tools and saved in the output folder that was used for the tool. The tools use the <a href="apidocs/splout-hadoop/com/splout/db/hadoop/TablespaceGenerator.html">TablespaceGenerator</a> Java class underneath.</td>
+</tr></table>
+</div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<div class="title">Tip</div>
+</td>
+<td class="content">Typical replication maps can be built easily with the Java API methods <a href="apidocs/splout-commons/com/splout/db/common/ReplicationMap.html">ReplicationMap.roundRobinMap()</a> and <a href="apidocs/splout-commons/com/splout/db/common/ReplicationMap.html">ReplicationMap.oneToOneMap()</a>.</td>
+</tr></table>
+</div>
+<div class="paragraph"><p>The deploy is an asynchronous operation coordinated by the cluster members. A deploy request returns inmediately with a <a href="#DeployInfo">[DeployInfo]</a> object indicating whether it could be started or whether there was some error trying to start it:</p></div>
+<div class="tableblock" id="DeployInfo">
 <table rules="all"
 width="100%"
 frame="border"
 cellspacing="0" cellpadding="4">
-<caption class="title">Table 19. SwitchVersionRequest object</caption>
+<caption class="title">Table 19. DeployInfo object</caption>
+<col width="33%" />
+<col width="33%" />
+<col width="33%" />
+<tbody>
+<tr>
+<td align="left" valign="top"><p class="table"><strong>Property</strong></p></td>
+<td align="left" valign="top"><p class="table"><strong>Type</strong></p></td>
+<td align="left" valign="top"><p class="table"><strong>Explanation</strong></p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table">error</p></td>
+<td align="left" valign="top"><p class="table">string</p></td>
+<td align="left" valign="top"><p class="table">If there is any error starting the deploy.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table">string</p></td>
+<td align="left" valign="top"><p class="table">startedAt</p></td>
+<td align="left" valign="top"><p class="table">A timestamp indicating the time when this deploy started.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table">version</p></td>
+<td align="left" valign="top"><p class="table">long</p></td>
+<td align="left" valign="top"><p class="table">The version number that the tablespace will have when the deploy is promoted.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<h3 id="_api_rollback">api/rollback</h3><div style="clear:left"></div>
+<div class="paragraph"><p>By providing a list of <a href="#SwitchVersionRequest">SwitchVersionRequest</a> objects we can perform a rollback through this POST method. We just need to specify the tablespace
+name (which must be being served by the cluster at the moment of the rollback) and the version we want to set it to.</p></div>
+<div class="tableblock" id="SwitchVersionRequest">
+<table rules="all"
+width="100%"
+frame="border"
+cellspacing="0" cellpadding="4">
+<caption class="title">Table 20. SwitchVersionRequest object</caption>
 <col width="33%" />
 <col width="33%" />
 <col width="33%" />
@@ -1400,14 +1472,39 @@ cellspacing="0" cellpadding="4">
 <td class="icon">
 <div class="title">Tip</div>
 </td>
-<td class="content">Java users can use SploutClient instead of the raw REST API for doing rollbacks.</td>
+<td class="content">Java users can use <a href="apidocs/splout-javaclient/com/splout/db/common/SploutClient.html">SploutClient</a> instead of the raw REST API for doing rollbacks.</td>
 </tr></table>
 </div>
+<div class="paragraph"><p>Rollback is a synchronous operation and the return type is <a href="#StatusMessage">[StatusMessage]</a>:</p></div>
+<div class="tableblock" id="StatusMessage">
+<table rules="all"
+width="100%"
+frame="border"
+cellspacing="0" cellpadding="4">
+<caption class="title">Table 21. StatusMessage object</caption>
+<col width="33%" />
+<col width="33%" />
+<col width="33%" />
+<tbody>
+<tr>
+<td align="left" valign="top"><p class="table"><strong>Property</strong></p></td>
+<td align="left" valign="top"><p class="table"><strong>Type</strong></p></td>
+<td align="left" valign="top"><p class="table"><strong>Explanation</strong></p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table">status</p></td>
+<td align="left" valign="top"><p class="table">string</p></td>
+<td align="left" valign="top"><p class="table">"Done" if it could be done, otherwise an error will be printed here.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="paragraph"><p><a href="user_guide.html"> &gt; Back to table of contents</a></p></div>
 </div>
 </div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2012-11-28 19:37:43 CEST
+Last updated 2012-11-29 14:23:46 CEST
 </div>
 </div>

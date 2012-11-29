@@ -5,7 +5,7 @@
 #
 
 # Call asciidoc
-asciidoc -d book --backend=xhtml11  -a linkcss -a stylesheet=css/bootstrap.min.css --out-file user_guide.html user_guide.txt
+asciidoc -a toc -a linkcss -a stylesheet=css/bootstrap.min.css --out-file user_guide.html user_guide.txt
 
 # Get rid of all the header until <body> part
 NLINES=`wc -l user_guide.html | awk '{ print $1 }'`
@@ -20,6 +20,8 @@ echo "---" > user_guide.html
 echo "layout: default" >> user_guide.html
 echo "title: Splout SQL User Guide" >> user_guide.html
 echo "---" >> user_guide.html
+
+echo "<script>window.onload = function(){asciidoc.footnotes(); asciidoc.toc(2);}</script>" >> user_guide.html
 
 # Mix it up
 cat user_guide_trimmed.html >> user_guide.html

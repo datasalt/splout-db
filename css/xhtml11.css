@@ -275,25 +275,29 @@ div#toc {
 
 div#toctitle {
   color: #dd4814;
-  font-size: 1.1em;
+  font-size: 150%;
   font-weight: bold;
   margin-top: 1.0em;
-  margin-bottom: 0.1em;
+  margin-bottom: 0.5em;
+}
+
+div.toclevel1 {
+  font-size: 130%;
 }
 
 div.toclevel1, div.toclevel2, div.toclevel3, div.toclevel4 {
-  margin-top: 0;
-  margin-bottom: 0;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
 }
+
 div.toclevel2 {
   margin-left: 2em;
-  font-size: 0.9em;
 }
+
 div.toclevel3 {
   margin-left: 4em;
-  font-size: 0.9em;
 }
+
 div.toclevel4 {
   margin-left: 6em;
-  font-size: 0.9em;
 }
