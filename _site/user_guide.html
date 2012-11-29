@@ -163,7 +163,13 @@
           <ul class="nav">
             <li><a href="features.html">Features</a></li>
             <li><a href="philosophy.html">Philosophy</a></li>
-            <li><a href="architecture.html">Architecture</a></li>
+            <li class="dropdown">
+            	<a href="#" class="dropdown-toggle" data-toggle="dropdown">Technical details <b class="caret"></b></a>
+              	<ul class="dropdown-menu">
+                	<li><a href="architecture.html">Architecture</a></li>
+                	<li><a href="performance.html">Performance</a></li>
+                </ul>
+            </li>
             <li class="dropdown">
             	<a href="gettingstarted.html" class="dropdown-toggle" data-toggle="dropdown">Getting started <b class="caret"></b></a>
               	<ul class="dropdown-menu">
@@ -178,24 +184,25 @@
                 	<li><a href="user_guide.pdf">Download as PDF</a></li>
               	</ul>
             </li>
-            <li class="dropdown">
-            	<a href="#" class="dropdown-toggle" data-toggle="dropdown">Contributing <b class="caret"></b></a>
-              	<ul class="dropdown-menu">
-                	<li><a href="#">Source code</a></li>
-                	<li><a href="#">Continuous integration</a></li>
-                	<li><a href="#">Code quality</a></li>
-              	</ul>
-            </li>
-            <li><a href="#">F.A.Q.</a></li>
+            <li><a href="faq.html">F.A.Q.</a></li>
           </ul>
           <ul class="nav pull-right">
             <li class="divider-vertical"></li>
+            <li class="dropdown">
+            	<a href="#" class="dropdown-toggle" data-toggle="dropdown">Contributing <b class="caret"></b></a>
+              	<ul class="dropdown-menu">
+                	<li><a href="https://github.com/datasalt/splout-db/">Source code</a></li>
+                	<li><a href="#">Continuous integration</a></li>
+                	<li><a href="#">Code quality</a></li>
+                	<li><a href="https://groups.google.com/forum/#!forum/sploutdb-dev">Developers group</a></li>
+              	</ul>
+            </li>
             <li class="dropdown">
               <a href="about.html" class="dropdown-toggle" data-toggle="dropdown">About <b class="caret"></b></a>
               <ul class="dropdown-menu">
                 <li><a href="#">License</a></li>
                 <li><a href="#">Team</a></li>
-                <li><a href="#">Mailing list</a></li>
+                <li><a href="https://groups.google.com/forum/?fromgroups#!forum/sploutdb-users">Users group</a></li>
               </ul>
             </li>
           </ul>
@@ -940,7 +947,7 @@ For example, you may choose to narrow your input Tuple and emit a subset of it, 
 <div class="paragraph"><p>The <a href="https://github.com/datasalt/splout-db/blob/master/splout-hadoop/src/main/java/com/splout/db/examples/PageCountsRecordProcessor.java">pagecounts example RecordProcessor</a> is a good example.</p></div>
 <div class="paragraph"><p><a href="user_guide.html"> &gt; Back to table of contents</a></p></div>
 </div>
-<h2 id="_rest_api">REST API</h2>
+<h2 id="RESTAPI">REST API</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>You can interact with the server through the <a href="apidocs/splout-javaclient/com/splout/db/common/SploutClient.html">Java client</a> or directly through the REST interface. These are the basic methods of the REST interface:</p></div>
 <div class="tableblock">
@@ -1703,11 +1710,50 @@ cellspacing="0" cellpadding="4">
 </div>
 <div class="paragraph"><p><a href="user_guide.html"> &gt; Back to table of contents</a></p></div>
 </div>
+<h2 id="_tips_troubleshooting">Tips / Troubleshooting</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>In this section we will take a look to the common problems or tips that one has to take into account when using Splout:</p></div>
+<h3 id="_query_speed">Query speed</h3><div style="clear:left"></div>
+<div class="paragraph"><p>There are a wide variety of reasons why queries may or may not perform well.
+It is important to understand that each query is executed in a SQLite connection of a binary SQLite file.
+When troubleshooting query performance, it is advisable to take a look to the <a href="http://www.sqlite.org/">SQLite documentation</a>
+and in addition check things like:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+PRAGMA index_list(table) - to check if we have created the appropriated indexes or not.
+</p>
+</li>
+<li>
+<p>
+EXPLAIN QUERY PLAN (query) - to show if SQLite is using the expected indexes or not.
+</p>
+</li>
+<li>
+<p>
+PRAGMA case_sensitive_like - when doing LIKE queries, SQLite will use an index only if this pragma is set to true and the index was created using standard collation, or if this pragma is set to false and the index was created using COLLATE NOCASE.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Remember that you can fine-tune your data indexing process with preInsertStatements, finalStatements
+(see <a href="#JSONTableDefinition">[JSONTableDefinition]</a>) and initStatements (see <a href="#DeployRequest">[DeployRequest]</a>). All these features are available as part of
+the standard Java API of <a href="apidocs/splout-hadoop/com/splout/db/hadoop/TableBuilder.html">TableBuilder</a> and
+<a href="apidocs/splout-hadoop/com/splout/db/hadoop/TablespaceBuilder.html">TablespaceBuilder</a>.
+Use them for adding custom PRAGMA or custom CREATE INDEX commands if needed.</p></div>
+<div class="paragraph"><p>It is also very important to keep in mind that colocating data in disk is crucial for query speed. For example, if your query impacts 1000 records and these records need to be loaded from the main table, if they are not colocated in disk and the database doesn&#8217;t fit in memory, it would mean that the server has to peform 1000 potential seeks.
+You can control the data colocation policy with "insertionOrderBy" as explained in <a href="#JSONTableDefinition">[JSONTableDefinition]</a>, which is also available in <a href="apidocs/splout-hadoop/com/splout/db/hadoop/TableBuilder.html">TableBuilder</a>.</p></div>
+<div class="paragraph"><p>As an example, we have used data colocation techniques within Splout SQL to obtain &lt; 50ms average query time with 10 threads on dynamic GROUP BY&#8217;s that hit an average of 2000 records each in a multi-gigabyte database that exceeded available RAM in orders of magnitude in a m1.small EC2 machine.</p></div>
+<h3 id="_deploys_failing_or_taking_too_long">Deploys failing or taking too long</h3><div style="clear:left"></div>
+<div class="paragraph"><p>Because deployments are asynchronous operations, it can be tricky to know if they have succeeded or not. You can monitor a deployment using the information returned by the <a href="#RESTAPI">API</a> (deployInProgress flags).</p></div>
+<div class="paragraph"><p>A deploy may fail if some of the DNodes fail, if a timeout is reached (see <a href="#splout_configuration">Configuration</a>) or if the leader QNode dies. The default timeout is 10 hours, so it shouldn&#8217;t be hit under normal circumstances.</p></div>
+<h3 id="_the_cluster_is_inconsistent_there_are_less_dnodes_than_expected">The cluster is inconsistent: there are less DNodes than expected</h3><div style="clear:left"></div>
+<div class="paragraph"><p>In big networks in can take some time for Hazelcast to negotiate the membership. It can be a matter of minutes.</p></div>
+</div>
 </div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2012-11-29 14:23:46 CEST
+Last updated 2012-11-29 17:42:43 CEST
 </div>
 </div>
 

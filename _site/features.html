@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>Splout SQL</title>
+    <title>Splout SQL's features</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
@@ -163,7 +163,13 @@
           <ul class="nav">
             <li><a href="features.html">Features</a></li>
             <li><a href="philosophy.html">Philosophy</a></li>
-            <li><a href="architecture.html">Architecture</a></li>
+            <li class="dropdown">
+            	<a href="#" class="dropdown-toggle" data-toggle="dropdown">Technical details <b class="caret"></b></a>
+              	<ul class="dropdown-menu">
+                	<li><a href="architecture.html">Architecture</a></li>
+                	<li><a href="performance.html">Performance</a></li>
+                </ul>
+            </li>
             <li class="dropdown">
             	<a href="gettingstarted.html" class="dropdown-toggle" data-toggle="dropdown">Getting started <b class="caret"></b></a>
               	<ul class="dropdown-menu">
@@ -178,24 +184,25 @@
                 	<li><a href="user_guide.pdf">Download as PDF</a></li>
               	</ul>
             </li>
-            <li class="dropdown">
-            	<a href="#" class="dropdown-toggle" data-toggle="dropdown">Contributing <b class="caret"></b></a>
-              	<ul class="dropdown-menu">
-                	<li><a href="#">Source code</a></li>
-                	<li><a href="#">Continuous integration</a></li>
-                	<li><a href="#">Code quality</a></li>
-              	</ul>
-            </li>
-            <li><a href="#">F.A.Q.</a></li>
+            <li><a href="faq.html">F.A.Q.</a></li>
           </ul>
           <ul class="nav pull-right">
             <li class="divider-vertical"></li>
+            <li class="dropdown">
+            	<a href="#" class="dropdown-toggle" data-toggle="dropdown">Contributing <b class="caret"></b></a>
+              	<ul class="dropdown-menu">
+                	<li><a href="https://github.com/datasalt/splout-db/">Source code</a></li>
+                	<li><a href="#">Continuous integration</a></li>
+                	<li><a href="#">Code quality</a></li>
+                	<li><a href="https://groups.google.com/forum/#!forum/sploutdb-dev">Developers group</a></li>
+              	</ul>
+            </li>
             <li class="dropdown">
               <a href="about.html" class="dropdown-toggle" data-toggle="dropdown">About <b class="caret"></b></a>
               <ul class="dropdown-menu">
                 <li><a href="#">License</a></li>
                 <li><a href="#">Team</a></li>
-                <li><a href="#">Mailing list</a></li>
+                <li><a href="https://groups.google.com/forum/?fromgroups#!forum/sploutdb-users">Users group</a></li>
               </ul>
             </li>
           </ul>

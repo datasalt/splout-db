@@ -1,0 +1,23 @@
+---
+layout: default
+title: Splout SQL's performance
+---
+<div class="page-header">
+  <h2 style="align:center;">Splout's performance</h2>
+</div>
+<p>Splout has been designed keeping performance and efficiency in mind.</p>
+
+<p>Splout uses <a href='http://www.sqlite.org/'>SQLite</a>, which we have measured to be quite fast with big database files.</p>
+
+<p>In the early development stages we compared SQLite to MySQL in an Amazon m1.large instance using a 20GB database. We performed uniformly random GROUP BY queries over a dataset whose group distribution was based on a zipfian. These are the results we obtained for different number of concurrent threads:</p>
+
+<center><img src='img/mysqlperf1.png'/></center>
+
+<p>We have also compared Splout to Voldemort in order to demonstrate that Splout can also behave well as a Key/Value store in addition to provide full SQL richness. We did so in a physical machine with the following characteristics: 4G RAM, quad core 1.6 MHz, HD 75 MB/Sg (73 seeks/sg). The database had 60000000 rows with values of 1024 bytes size. We executed 10000 uniformly random queries in three iterations.</p>
+
+<center>
+	<img src='img/voldperf1.png'/>
+	<img src='img/voldperf2.png'/>
+</center>
+
+ 

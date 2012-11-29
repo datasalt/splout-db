@@ -1,0 +1,32 @@
+---
+layout: default
+title: Splout SQL F.A.Q.
+---
+<div class="page-header">
+  <h2 style="align:center;">Splout SQL F.A.Q.</h2>
+</div>
+
+<dl>
+   <dt>What's the difference between Splout SQL and Dremel-like solutions such as BigQuery, Impala or Apache Drill?</dt>
+   <dd>Splout SQL is not a "fast analytics" Dremel-like thingy. Althought it can probably be also used for analytics, it is more thought to be used for serving datasets under web / mobile high-throughput, low-latency applications. Splout SQL is more like a NoSQL database in the sense that it has been thought for answering queries under sub-second latencies. It has been thought for performing lookups, queries that return a small subset of the data, not queries that analyze the whole dataset at once.</dd>
+</dl>
+
+<dl>
+	<dt>Is it really so fast?</dt>
+	<dd>Splout SQL is as fast as SQLite can be. The very good thing about Splout SQL is that, because it is a read-only store and data is replaced entirely every time, it always has the data optimally indexed, there is zero fragmentation and data colocation in disk can be controlled using sorting in the Hadoop indexer process (insertionOrderBy). As an example, we have used data colocation techniques within Splout SQL to obtain < 50ms average query time with 10 threads on dynamic GROUP BY's that hit an average of 2000 records each in a multi-gigabyte database that exceeded available RAM in orders of magnitude in a m1.small EC2 machine.</dd>
+</dl>
+
+<dl>
+   <dt>Can a DNode use more than one disk for storing data?</dt>
+   <dd>Currently a DNode's working directory is fixed to be in a single disk location, however, there is nothing that prevents you from installing two DNode services in the same machine, as long as you configure everything properly so that they bind to different ports, for example.</dd>
+</dl>
+
+<dl>
+   <dt>Can I execute INSERTs / UPDATEs on Splout SQL?</dt>
+   <dd>There is nothing that will block or prevent you from executing INSERT / UPDATE statements through Splout SQL's interface. However, it is not the way you are supposed to use it. Splout SQL has been conceived to be a read-only store, and its data can be updated entirely by an atomic deploy mechanism, meaning that the whole dataset is replaced by another version of it. This fits well into batch-processing since usually you will have a new copy of the whole dataset each time you run your batch process, for example in Hadoop. But it doesn't fit well if you want to incrementally update your dataset in real-time.</dd>
+</dl>
+
+<dl>
+   <dt>But really, what happens if I INSERT / UPDATE?</dt>
+   <dd>What will happen is that your statements will be executed in one of the replicas of the partition that was hit, so you will have unconsistent data across partitions. It would be only fine if you didn't use replication, but in that case you wouldn't have failover, so it's not something you really want to get into.</dd>
+</dl>

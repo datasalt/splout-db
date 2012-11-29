@@ -1,6 +1,6 @@
 ---
 layout: default
-title: Splout SQL
+title: Getting started with Splout SQL
 ---
 <div class="page-header">
   <h2 style="align:center;">Getting started with Splout SQL</h2>
@@ -21,8 +21,8 @@ title: Splout SQL
 
 <p>The best thing for getting started with Splout is launching a local server in your machine:</p>
 
-<pre><tt>	bin/splout-service.sh qnode start
-	bin/splout-service.sh dnode start
+<pre><tt>bin/splout-service.sh qnode start
+bin/splout-service.sh dnode start
 </tt></pre>
 
 <p>Now, if everything went fine, and assuming you had nothing running on port 4412 before, you will see a nice panel in <a href='http://localhost:4412' target='_blank'>localhost:4412</a> like this:</p>
@@ -31,8 +31,8 @@ title: Splout SQL
 
 <p>Notice how there is no tablespace loaded in the system. That is expected, we will load an example one later. In logs/ folder you will find the logs of both the QNode and the DNode service. You can shutdown the services anytime with:</p>
 
-<pre><tt>	bin/splout-service.sh qnode stop
-	bin/splout-service.sh dnode stop
+<pre><tt>bin/splout-service.sh qnode stop
+bin/splout-service.sh dnode stop
 </tt></pre>
 
 <div class="page-header" id="loading">
@@ -42,35 +42,30 @@ title: Splout SQL
 <p>Splout comes with a few examples, one of which consists of miscellaneous world facts. We will load it and play with it to get used to the system and its behavior.</p>
 <p>First, upload to HDFS the examples folder, as it contains the input files for all examples.</p> 
 
-<pre>
-	hadoop fs -put examples examples
-</pre>
+<pre><tt>hadoop fs -put examples examples
+</tt></pre>
 
 <h3>Single Table Loading:</h3>
 
 <p>Load the table city from the CSV file city.csv and use the country_code field to partition it into 4 partitions:</p>  
 
-<pre>
-	hadoop jar splout-*-hadoop.jar simple-generate --input examples/world/city.csv --output database-files --tablespace city_pby_country_code --table city --separator , --escape \\ --quotes \"\"\" --nullstring \\N --schema "id:int,name:string,country_code:string,district:string,population:int" --partitionby country_code --partitions 4
-</pre>
+<pre><tt>hadoop jar splout-*-hadoop.jar simple-generate --input examples/world/city.csv --output database-files --tablespace city_pby_country_code --table city --separator , --escape \\ --quotes \"\"\" --nullstring \\N --schema "id:int,name:string,country_code:string,district:string,population:int" --partitionby country_code --partitions 4
+</tt></pre>
 
 <p>Finally, deploy the results into Splout, using replication 2. That is, there will be 2 replicas per each partition:</p>
 
-<pre>
-	hadoop jar splout-*-hadoop.jar deploy --root database-files --tablespaces city_pby_country_code --replication 2 --qnode http://localhost:4412
-</pre>
+<pre><tt>hadoop jar splout-*-hadoop.jar deploy --root database-files --tablespaces city_pby_country_code --replication 2 --qnode http://localhost:4412
+</tt></pre>
 
 <p>In this particular example, as you have only one dnode, replication will be adjusted automatically to 1. Look at the panel to see the information of the created tablespace:</p>
 
-<pre>
-	<a href='http://localhost:4412/tablespace.html?tablespace=city_pby_country_code' target='_blank'>http://localhost:4412/tablespace.html?tablespace=city_pby_country_code</a>
-</pre>
+<pre><tt><a href='http://localhost:4412/tablespace.html?tablespace=city_pby_country_code' target='_blank'>http://localhost:4412/tablespace.html?tablespace=city_pby_country_code</a>
+</tt></pre>
 
 <p>Particularly, look at how partitions has been distributed using different country_code ranges. Now, you can launch some queries at the query console:</p>
 
-<pre>
-	<a href='http://localhost:4412/console.html' target='_blank'>http://localhost:4412/console.html</a>
-</pre>
+<pre><tt><a href='http://localhost:4412/console.html' target='_blank'>http://localhost:4412/console.html</a>
+</tt></pre>
 
 <p>Perform the following query to show all the tables in the tablespace:</p>
 
@@ -107,9 +102,8 @@ title: Splout SQL
 <p>Note that the shard 2 (partition 2) was hit. That is because we provided "JPN" as partition key. Otherwise, a wrong partition would have been hit, and no results would have been presented. Perform a test. Repeat the query, but keep the partition key empty. You'll see no results and partition 0 being hit.</p>
 <p>The former query can be performed just using the REST Splout SQL interface. For the former query the URL would be the following:</p>
 
-<pre>
-	<a href='http://localhost:4412/api/query/city_pby_country_code?key=JPN&sql=SELECT%20*%20FROM%20city%20WHERE%20country_code%20%3D%20%22JPN%22' target='_blank'>http://localhost:4412/api/query/city_pby_country_code?key=JPN&sql=SELECT%20*%20FROM%20city%20WHERE%20country_code%20%3D%20%22JPN%22</a>
-</pre>
+<pre><tt><a href='http://localhost:4412/api/query/city_pby_country_code?key=JPN&sql=SELECT%20*%20FROM%20city%20WHERE%20country_code%20%3D%20%22JPN%22' target='_blank'>http://localhost:4412/api/query/city_pby_country_code?key=JPN&sql=SELECT%20*%20FROM%20city%20WHERE%20country_code%20%3D%20%22JPN%22</a>
+</tt></pre>
 
 <h3>Multiple Tables:</h3>
 
@@ -139,22 +133,19 @@ title: Splout SQL
 <p>The structure of these tablespaces, and the the specification of the input data are in the files: <strong>world-pby-country.json</strong> and <strong>world-pby-continent-region.json</strong></p>
 <p>Launch the following command to create both tablespaces:</p>
 
-<pre>
-	hadoop jar splout-*-hadoop.jar generate --output database-files --tablespacefile examples/world/world-pby-country.json --tablespacefile examples/world/world-pby-continent-region.json
-</pre>
+<pre><tt>hadoop jar splout-*-hadoop.jar generate --output database-files --tablespacefile examples/world/world-pby-country.json --tablespacefile examples/world/world-pby-continent-region.json
+</tt></pre>
 
 <p>Have a look to the database-files folder:</p>
 
-<pre>
-	hadoop fs -ls database-files
-</pre>
+<pre><tt>hadoop fs -ls database-files
+</tt></pre>
 
 <p>At this point, the tablespace files have been created, but they are not still present at Splout SQL. We have to deploy them. We can deploy both tablespaces at the same time atomically, so we can be sure that information between tablespaces will be consistent. Whichever of the following command performs the deploy of the tablespaces.</p> 
 
-<pre>
-	hadoop jar splout-*-hadoop.jar deploy -root database-files -ts world-pby-continent-region -ts world-pby-country -r 2 -q http://localhost:4412
-	hadoop jar splout-*-hadoop.jar deploy --config-file examples/world/deployment.json --qnode http://localhost:4412
-</pre>
+<pre><tt>hadoop jar splout-*-hadoop.jar deploy -root database-files -ts world-pby-continent-region -ts world-pby-country -r 2 -q http://localhost:4412
+hadoop jar splout-*-hadoop.jar deploy --config-file examples/world/deployment.json --qnode http://localhost:4412
+</tt></pre>
 
 <p>Now both tablespaces should be present at Splout SQL. Have a look to the console.</p> 
 
