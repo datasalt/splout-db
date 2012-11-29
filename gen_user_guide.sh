@@ -4,6 +4,8 @@
 # A script for auto-generating the full single-page HTML of the user_guide.txt with asciidoc + bootstrap + github pages
 #
 
+echo "Generating single page HTML..."
+
 # Call asciidoc
 asciidoc -a toc -a linkcss -a stylesheet=css/bootstrap.min.css --out-file user_guide.html user_guide.txt
 
@@ -28,3 +30,18 @@ cat user_guide_trimmed.html >> user_guide.html
 
 # And get rid of the temporal file
 rm user_guide_trimmed.html
+
+NOPDF="yes"
+
+if [ $# -gt 0 ]; then
+	NOPDF=$1
+fi
+if [ $NOPDF != "--nopdf" ]; then
+	#
+	# Now generate the PDF!
+	#
+	echo "Generating PDF..."
+
+	asciidoc -d book --backend=docbook --out-file user_guide.xml user_guide.txt
+	x2doc/bin/x2doc -t pdf -f user_guide.xml
+fi
