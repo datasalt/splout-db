@@ -29,7 +29,7 @@ import com.datasalt.pangool.tuplemr.OrderBy;
 
 /**
  * Simple immutable bean that specifies the Pangool Schema of a Splout Table and the Fields that need to be indexed and how it is partitioned.
- * It is part of a {@link Table} bean. It is also used by {@link TupleSQLiteOutputFormat}.
+ * It is part of a {@link Table} bean. It is also used by {@link TupleSQLite4JavaOutputFormat}.
  */
 @SuppressWarnings("serial")
 public class TableSpec implements Serializable {

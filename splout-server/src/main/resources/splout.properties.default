@@ -170,7 +170,3 @@ hz.oldest.members.leading.count=3
 # was not enough to ensure that no data is lost.
    
 hz.registry.max.time.to.check.registration=5
-
-# Size of the connection pool to each partition that this DNode services.
-
-dnode.db.connections.per.pool=10

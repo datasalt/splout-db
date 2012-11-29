@@ -41,7 +41,7 @@ import com.splout.db.qnode.beans.DeployInfo;
 import com.splout.db.qnode.beans.DeployRequest;
 
 /**
- * A generic class for deploying an already generated store by {@link TablespaceViewGenerator}.
+ * A generic class for deploying an already generated store by {@link TablespaceGenerator}.
  */
 public class StoreDeployerTool {
 

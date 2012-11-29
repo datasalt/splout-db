@@ -34,6 +34,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.datasalt.pangool.io.Fields;
 import com.datasalt.pangool.io.Schema;
+import com.datasalt.pangool.tuplemr.OrderBy;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleTextInputFormat;
 import com.datasalt.pangool.utils.HadoopUtils;
 import com.splout.db.hadoop.StoreDeployerTool;
@@ -106,44 +107,58 @@ public class PageCountsExample implements Tool {
 
 			FileStatus[] fileStatuses = inputFileSystem.listStatus(inputPath);
 
+			// define the schema that the resultant table will have: date, hour, pagename, pageviews
 			Schema tableSchema = new Schema("pagecounts",
 			    Fields.parse("date:string, hour:string, pagename:string, pageviews:int"));
+			// define the schema of the input files: projectcode, pagename, pageviews, bytes
 			Schema fileSchema = new Schema("pagecountsfile",
 			    Fields.parse("projectcode:string, pagename:string, pageviews:int, bytes:long"));
 
+			// instantiate a TableBuilder
 			TableBuilder tableBuilder = new TableBuilder(tableSchema);
 
+			// for every input file...
 			for(FileStatus fileStatus : fileStatuses) {
 				String fileName = fileStatus.getPath().getName().toString();
+				// strip the date and the hour from the file name
 				String fileDate = fileName.split("-")[1];
 				String fileHour = fileName.split("-")[2].substring(0, 2);
+				// instantiate a custom RecordProcessor to process the records of this file
 				PageCountsRecordProcessor recordProcessor = new PageCountsRecordProcessor(tableSchema, fileDate,
 				    fileHour);
+				// use the tableBuilder method for adding each of the files to the mix
 				tableBuilder.addCSVTextFile(fileStatus.getPath(), ' ', TupleTextInputFormat.NO_QUOTE_CHARACTER,
 				    TupleTextInputFormat.NO_ESCAPE_CHARACTER, false, false, TupleTextInputFormat.NO_NULL_STRING,
 				    fileSchema, recordProcessor);
 			}
 
-			// Partition by the first two characters of the page so we can easily implement auto suggest
-//			tableBuilder
-//			    .partitionByJavaScript("function partition(record) { var str = record.get('pagename').toString(); if(str.length() > 2) { return str.substring(0, 2); } else { return str; } }");
-			tableBuilder.partitionBy("pagename");
-			tableBuilder.createIndex("pagename", "date");
+			// partition by the first two characters of the page so we can easily implement auto suggest
+			tableBuilder
+			    .partitionByJavaScript("function partition(record) { var str = record.get('pagename').toString(); if(str.length() > 2) { return str.substring(0, 2); } else { return str; } }");
+			// create a compound index on pagename, date so that typical queries for the dataset will be fast
+			tableBuilder.createIndex("pagename", "date");			
+			// insertion order is very important for optimizing query speed because it makes data be co-located in disk
+			tableBuilder.insertionSortOrder(OrderBy.parse("pagename:asc, date:asc"));
 
+			// instantiate a TablespaceBuilder
 			TablespaceBuilder tablespaceBuilder = new TablespaceBuilder();
 
+			// we will partition this dataset in as many partitions as: 
 			tablespaceBuilder.setNPartitions(nPartitions);
 			tablespaceBuilder.add(tableBuilder.build());
-			tablespaceBuilder.initStatements("pragma encoding=\"UTF-8\";", "pragma case_sensitive_like=true;");
+			// we turn a specific SQLite pragma on for making autocomplete queries fast
+			tablespaceBuilder.initStatements("pragma case_sensitive_like=true;");
 
 			HadoopUtils.deleteIfExists(outFs, outPath);
 
+			// finally, instantiate a TablespaceGenerator and execute it
 			TablespaceGenerator tablespaceViewBuilder = new TablespaceGenerator(tablespaceBuilder.build(),
 			    outPath);
 			tablespaceViewBuilder.generateView(getConf(), SamplingType.RESERVOIR, new TupleSampler.DefaultSamplingOptions());
 		}
 
 		if(deploy) {
+			// use StoreDeployerTool for deploying the already generated dataset
 			StoreDeployerTool deployer = new StoreDeployerTool(qnode, getConf());
 			ArrayList<TablespaceDepSpec> deployments = new ArrayList<TablespaceDepSpec>();
 			deployments.add(new TablespaceDepSpec("pagecounts", outPath.toString(), repFactor));

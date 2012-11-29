@@ -31,7 +31,7 @@ import org.codehaus.jackson.type.TypeReference;
  * Integer then T = Integer.
  * <p>
  * A partition map is composed by several {@link PartitionEntry}. The partition map implements the logic of finding a
- * partition number given a key of type <T> in {@link #findPartition(Comparable)}.
+ * partition number given a key of type <T> in {@link #findPartition(String)}.
  */
 @SuppressWarnings("serial")
 public class PartitionMap implements Serializable {

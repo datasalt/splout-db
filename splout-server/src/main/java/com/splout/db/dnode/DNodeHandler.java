@@ -253,12 +253,12 @@ public class DNodeHandler implements IDNodeHandler {
 					    maxResultsPerQuery);
 					long time = performanceTool.endQuery();
 					log.info("serving query [" + tablespace + "]"  + " [" + version + "] [" + partition + "] [" + query + "] time [" + time + "] OK.");
-					double prob = performanceTool.getHistogram().getLeftAccumulatedProbability(time);
-					if(prob > 0.95) {
-						// slow query!
-						log.warn("[SLOW QUERY] Query time over 95 percentil: [" + query + "] time [" + time + "]");
-						slowQueries++;
-					}
+//					double prob = performanceTool.getHistogram().getLeftAccumulatedProbability(time);
+//					if(prob > 0.95) {
+//						// slow query!
+//						log.warn("[SLOW QUERY] Query time over 95 percentil: [" + query + "] time [" + time + "]");
+//						slowQueries++;
+//					}
 					if(time > absoluteSlowQueryLimit) {
 						// slow query!
 						log.warn("[SLOW QUERY] Query time over absolute slow query time (" + absoluteSlowQueryLimit + ") : [" + query + "] time [" + time + "]");						
