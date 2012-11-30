@@ -81,7 +81,7 @@ public class TablespaceSpec {
 			fields.add(field);
 		}
 		Field[] partitionByFields = fields.toArray(new Field[0]);
-		partitionedTables.add(new Table(new TableInput(inputFormat, schema, new IdentityRecordProcessor(), input), new TableSpec(schema, partitionByFields, new FieldIndex[] { new FieldIndex(partitionByFields) }, null, null, null)));
+		partitionedTables.add(new Table(new TableInput(inputFormat, schema, new IdentityRecordProcessor(), input), new TableSpec(schema, partitionByFields, new FieldIndex[] { new FieldIndex(partitionByFields) },null, null, null, null, null)));
 		TablespaceSpec tablespace = new TablespaceSpec(partitionedTables, new ArrayList<Table>(), nPartitions, null);
 		return tablespace;
 	}

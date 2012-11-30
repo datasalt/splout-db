@@ -71,11 +71,17 @@ public class JSONTablespaceDefinition {
     }
 
     // Adding pre and post SQL
+    if (table.getInitialStatements().size() != 0) {
+      tableBuilder.preInsertsSQL(table.getInitialStatements().toArray(new String[0]));
+    }
     if (table.getPreInsertStatements().size() != 0) {
-      tableBuilder.preSQL(table.getPreInsertStatements().toArray(new String[0]));
+      tableBuilder.preInsertsSQL(table.getPreInsertStatements().toArray(new String[0]));
+    }
+    if (table.getPostInsertStatements().size() != 0) {
+      tableBuilder.preInsertsSQL(table.getPostInsertStatements().toArray(new String[0]));
     }
     if (table.getFinalStatements().size() != 0) {
-      tableBuilder.postSQL(table.getFinalStatements().toArray(new String[0]));
+      tableBuilder.finalSQL(table.getFinalStatements().toArray(new String[0]));
     }
 
     for (JSONTableInputDefinition tableInput : table.getTableInputs()) {
@@ -144,7 +150,9 @@ public class JSONTablespaceDefinition {
     private String schema;
     private String partitionFields;
     private List<String> indexes = new ArrayList<String>();
+    private List<String> initialStatements = new ArrayList<String>();
     private List<String> preInsertStatements = new ArrayList<String>();
+    private List<String> postInsertStatements = new ArrayList<String>();
     private List<String> finalStatements = new ArrayList<String>();
 
     public List<JSONTableInputDefinition> getTableInputs() {
@@ -177,6 +185,22 @@ public class JSONTablespaceDefinition {
 
     public void setIndexes(List<String> indexes) {
       this.indexes = indexes;
+    }
+
+    public List<String> getInitialStatements() {
+      return initialStatements;
+    }
+
+    public void setInitialStatements(List<String> initialStatements) {
+      this.initialStatements = initialStatements;
+    }
+
+    public List<String> getPostInsertStatements() {
+      return postInsertStatements;
+    }
+
+    public void setPostInsertStatements(List<String> postInsertStatements) {
+      this.postInsertStatements = postInsertStatements;
     }
 
     public String getName() {

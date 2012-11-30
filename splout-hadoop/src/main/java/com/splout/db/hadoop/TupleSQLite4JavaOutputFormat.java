@@ -130,14 +130,21 @@ public class TupleSQLite4JavaOutputFormat extends FileOutputFormat<ITuple, NullW
 	// Get all the CREATE TABLE... for a list of {@link TableSpec}
 	protected static String[] getCreateTables(TableSpec... tableSpecs)
 	    throws TupleSQLiteOutputFormatException {
-		List<String> createTables = new ArrayList<String>();
+    List<String> createTables = new ArrayList<String>();
+    // First the initSQL provided by user
+    for(TableSpec tableSpec : tableSpecs) {
+      if(tableSpec.getInitialSQL() != null) {
+        createTables.addAll(Arrays.asList(tableSpec.getInitialSQL()));
+      }
+    }
+    // CREATE TABLE statements
 		for(TableSpec tableSpec : tableSpecs) {
 			createTables.add(getCreateTable(tableSpec));
 		}
+    // Add user preInsertsSQL if exists just after the CREATE TABLE's
 		for(TableSpec tableSpec : tableSpecs) {
-			// Add user pre-SQL if exists at the beginning
-			if(tableSpec.getPreSQL() != null) {
-				createTables.addAll(Arrays.asList(tableSpec.getPreSQL()));
+			if(tableSpec.getPreInsertsSQL() != null) {
+				createTables.addAll(Arrays.asList(tableSpec.getPreInsertsSQL()));
 			}
 		}
 		return createTables.toArray(new String[0]);
@@ -147,7 +154,13 @@ public class TupleSQLite4JavaOutputFormat extends FileOutputFormat<ITuple, NullW
 	protected static String[] getCreateIndexes(TableSpec... tableSpecs)
 	    throws TupleSQLiteOutputFormatException {
 		List<String> createIndexes = new ArrayList<String>();
-		for(TableSpec tableSpec : tableSpecs) {
+    // Add user postInsertsSQL if exists just before the CREATE INDEX statements
+    for(TableSpec tableSpec : tableSpecs) {
+      if(tableSpec.getPostInsertsSQL() != null) {
+        createIndexes.addAll(Arrays.asList(tableSpec.getPostInsertsSQL()));
+      }
+    }
+    for(TableSpec tableSpec : tableSpecs) {
 			for(FieldIndex index : tableSpec.getIndexes()) {
 				for(Field field : index.getIndexFields()) {
 					if(!tableSpec.getSchema().getFields().contains(field)) {
@@ -168,10 +181,10 @@ public class TupleSQLite4JavaOutputFormat extends FileOutputFormat<ITuple, NullW
 				createIndexes.add(createIndex);
 			}
 		}
+    // Add user finalSQL if exists just after the CREATE INDEX statements
 		for(TableSpec tableSpec : tableSpecs) {
-			// Add user post-SQL if exists at the beginning
-			if(tableSpec.getPostSQL() != null) {
-				createIndexes.addAll(Arrays.asList(tableSpec.getPostSQL()));
+			if(tableSpec.getFinalSQL() != null) {
+				createIndexes.addAll(Arrays.asList(tableSpec.getFinalSQL()));
 			}
 		}
 		return createIndexes.toArray(new String[0]);
@@ -276,13 +289,26 @@ public class TupleSQLite4JavaOutputFormat extends FileOutputFormat<ITuple, NullW
 				SQLiteStatement st = conn.prepare("PRAGMA temp_store_directory");
 				st.step();
 				LOG.info("Changed temp_store_directory to: " + st.columnString(0));
-				connCache.put(partition, conn);
+        // journal_mode=OFF speeds up insertions
+        conn.exec("PRAGMA journal_mode=OFF");
+        /* page_size is one of of the most important parameters for speed up indexation.
+         * SQLite performs a merge sort for sorting data before inserting it in an index.
+         * The buffer SQLites uses for sorting has a size equals to
+         * page_size * SQLITE_DEFAULT_TEMP_CACHE_SIZE. Unfortunately, SQLITE_DEFAULT_TEMP_CACHE_SIZE
+         * is a compilation parameter. That is then fixed to the sqlite4java library used. We have
+         * recompiled that library to increase SQLITE_DEFAULT_TEMP_CACHE_SIZE (up to 32000 at
+         * the point of writing this lines), so, at runtime the unique way to change the buffer size
+         * used for sorting is change the page_size. page_size must be changed BEFORE CREATE
+         * STATEMENTS, otherwise it won't have effect. page_size should be a multiple of
+         * the sector size (1024 on linux) in order to be efficient.
+         **/
+        conn.exec("PRAGMA page_size=8192;");
+        connCache.put(partition, conn);
 				// Init transaction
 				for(String sql : preSQL) {
 					LOG.info("Executing: " + sql);
 					conn.exec(sql);
 				}
-				conn.exec("PRAGMA journal_mode=OFF");
 				conn.exec("BEGIN");
 				Map<String, SQLiteStatement> stMap = new HashMap<String, SQLiteStatement>();
 				stCache.put(partition, stMap);

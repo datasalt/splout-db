@@ -20,24 +20,6 @@ package com.splout.db.hadoop;
  * #L%
  */
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Serializable;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
-import org.junit.Before;
-import org.junit.Test;
-
 import com.datasalt.pangool.io.Fields;
 import com.datasalt.pangool.io.ITuple;
 import com.datasalt.pangool.io.Schema;
@@ -53,6 +35,23 @@ import com.splout.db.common.JSONSerDe.JSONSerDeException;
 import com.splout.db.common.SQLiteJDBCManager;
 import com.splout.db.hadoop.TableSpec.FieldIndex;
 import com.splout.db.hadoop.TupleSQLite4JavaOutputFormat.TupleSQLiteOutputFormatException;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Serializable;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 
 @SuppressWarnings("serial")
 public class TestTupleSQLiteOutputFormat extends AbstractHadoopTestLibrary implements Serializable {
@@ -69,30 +68,40 @@ public class TestTupleSQLiteOutputFormat extends AbstractHadoopTestLibrary imple
 	@Test
 	public void testPreSQL() throws Exception {
 		final Schema tupleSchema1 = new Schema("schema1", Fields.parse("a:string, b:int"));
-		String[] preSQL = new String[] { "CREATE Mytable;", "ME_LO_INVENTO" };
-		TableSpec tableSpec = new TableSpec(tupleSchema1, new Field[] { tupleSchema1.getField(0) }, new FieldIndex[] { new FieldIndex(tupleSchema1.getField(0), tupleSchema1.getField(1)) }, preSQL, null, null);
-		String[] createTables = TupleSQLite4JavaOutputFormat.getCreateTables(tableSpec);
-		assertEquals("CREATE TABLE schema1 (a TEXT, b INTEGER);", createTables[0]);
-		assertEquals("CREATE Mytable;", createTables[1]);
-		assertEquals("ME_LO_INVENTO", createTables[2]);
-	}
+    String[] initSQL = new String[]{"init1", "init2"};
+    String[] preInsertSQL = new String[]{"CREATE Mytable;", "ME_LO_INVENTO"};
+    TableSpec tableSpec = new TableSpec(tupleSchema1, new Field[]{tupleSchema1.getField(0)},
+        new FieldIndex[]{new FieldIndex(tupleSchema1.getField(0), tupleSchema1.getField(1))},
+        initSQL, preInsertSQL, null, null, null);
+    String[] createTables = TupleSQLite4JavaOutputFormat.getCreateTables(tableSpec);
+    assertEquals("init1", createTables[0]);
+    assertEquals("init2", createTables[1]);
+    assertEquals("CREATE TABLE schema1 (a TEXT, b INTEGER);", createTables[2]);
+    assertEquals("CREATE Mytable;", createTables[3]);
+    assertEquals("ME_LO_INVENTO", createTables[4]);
+  }
 	
 	@Test
 	public void testPostSQL() throws Exception {
 		final Schema tupleSchema1 = new Schema("schema1", Fields.parse("a:string, b:int"));
-		String[] postSQL = new String[] { "DROP INDEX idx_schema1_ab", "CREATE INDEX blablabla" };
-		TableSpec tableSpec = new TableSpec(tupleSchema1, new Field[] { tupleSchema1.getField(0) }, new FieldIndex[] { new FieldIndex(tupleSchema1.getField(0), tupleSchema1.getField(1)) }, null, postSQL, null);
-		String[] createIndex = TupleSQLite4JavaOutputFormat.getCreateIndexes(tableSpec);
-		assertEquals("CREATE INDEX idx_schema1_ab ON schema1(a, b);", createIndex[0]);		
-		assertEquals("DROP INDEX idx_schema1_ab", createIndex[1]);
-		assertEquals("CREATE INDEX blablabla", createIndex[2]);
-	}
+    String[] afterInsertSQL = new String[]{"afterinsert1", "afterinsert2"};
+    String[] finalSQL = new String[]{"DROP INDEX idx_schema1_ab", "CREATE INDEX blablabla"};
+    TableSpec tableSpec = new TableSpec(tupleSchema1, new Field[]{tupleSchema1.getField(0)},
+        new FieldIndex[]{new FieldIndex(tupleSchema1.getField(0), tupleSchema1.getField(1))},
+        null, null, afterInsertSQL, finalSQL, null);
+    String[] createIndex = TupleSQLite4JavaOutputFormat.getCreateIndexes(tableSpec);
+    assertEquals("afterinsert1", createIndex[0]);
+    assertEquals("afterinsert2", createIndex[1]);
+    assertEquals("CREATE INDEX idx_schema1_ab ON schema1(a, b);", createIndex[2]);
+    assertEquals("DROP INDEX idx_schema1_ab", createIndex[3]);
+    assertEquals("CREATE INDEX blablabla", createIndex[4]);
+  }
 	
 	@Test
 	public void testCompoundIndexes() throws TupleSQLiteOutputFormatException {
 		final Schema tupleSchema1 = new Schema("schema1", Fields.parse("a:string, b:int"));
-		TableSpec tableSpec = new TableSpec(tupleSchema1, new Field[] { tupleSchema1.getField(0) }, new FieldIndex[] { new FieldIndex(tupleSchema1.getField(0), tupleSchema1.getField(1)) }, null, null, null);
-		String[] createIndex = TupleSQLite4JavaOutputFormat.getCreateIndexes(tableSpec);
+    TableSpec tableSpec = new TableSpec(tupleSchema1, new Field[]{tupleSchema1.getField(0)}, new FieldIndex[]{new FieldIndex(tupleSchema1.getField(0), tupleSchema1.getField(1))}, null, null, null, null, null);
+    String[] createIndex = TupleSQLite4JavaOutputFormat.getCreateIndexes(tableSpec);
 		assertEquals("CREATE INDEX idx_schema1_ab ON schema1(a, b);", createIndex[0]);
 	}
 	

@@ -37,7 +37,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputFormat;
-import org.apache.hadoop.mapreduce.RecordReader;
 import org.mortbay.log.Log;
 
 import com.datasalt.pangool.io.Schema.Field;
@@ -367,7 +366,7 @@ public class TablespaceGenerator implements Serializable {
 			orderBy.add(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD, Order.ASC);
 			// The only table we have, check if it has specific order by
 			OrderBy specificOrderBy = tablespace.getPartitionedTables().get(0).getTableSpec()
-			    .getInsertionSortOrder();
+			    .getInsertionOrderBy();
 			if(specificOrderBy != null) {
 				for(SortElement elem : specificOrderBy.getElements()) {
 					orderBy.add(elem.getName(), elem.getOrder());
@@ -379,15 +378,15 @@ public class TablespaceGenerator implements Serializable {
 			builder.setOrderBy(OrderBy.parse(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD + ":asc").addSchemaOrder(Order.ASC));
 			// And then as many particular order bys as needed - ....
 			for(Table partitionedTable : tablespace.getPartitionedTables()) {
-				if(partitionedTable.getTableSpec().getInsertionSortOrder() != null) {
+				if(partitionedTable.getTableSpec().getInsertionOrderBy() != null) {
 					builder.setSpecificOrderBy(partitionedTable.getTableSpec().getSchema().getName(),
-					    partitionedTable.getTableSpec().getInsertionSortOrder());
+					    partitionedTable.getTableSpec().getInsertionOrderBy());
 				}
 			}
 			for(Table replicatedTable : tablespace.getReplicateAllTables()) {
-				if(replicatedTable.getTableSpec().getInsertionSortOrder() != null) {
+				if(replicatedTable.getTableSpec().getInsertionOrderBy() != null) {
 					builder.setSpecificOrderBy(replicatedTable.getTableSpec().getSchema().getName(),
-							replicatedTable.getTableSpec().getInsertionSortOrder());
+							replicatedTable.getTableSpec().getInsertionOrderBy());
 				}				
 			}
 		}
