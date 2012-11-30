@@ -75,7 +75,7 @@ public class SQLite4JavaManager implements ISQLiteManager {
 	}
 
 	/**
-	 * Optionally sets a {@TimeoutThread} that will take care of cancelling long-running queries.
+	 * Optionally sets a {@link TimeoutThread} that will take care of cancelling long-running queries.
 	 * If present, each SQLiteConnectiona associated with each thread will be monitored by this thread
 	 * to see if there is some query that needs to be interrupted.
 	 */

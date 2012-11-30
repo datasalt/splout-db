@@ -42,7 +42,7 @@ import com.splout.db.common.JSONSerDe.JSONSerDeException;
 
 /**
  * A Hazelcast MapLoader and MapStore that saves each map key/value in a file named "key" that contains "value" as a string (JSON).
- * Saves data for {@link CoordinationStructures.#VERSIONS_BEING_SERVED}.
+ * Saves data for CoordinationStructures.VERSIONS_BEING_SERVED
  */
 public class TablespaceVersionStore implements MapLoader<String, Map<String, Long>>, MapStore<String, Map<String, Long>> {
 

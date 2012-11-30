@@ -377,14 +377,13 @@ public class QNodeHandler implements IQNodeHandler {
 	}
 
 	/**
-	 * Rollback: Set the version of some tablespaces to a particular one. TODO: Coordinate with
-	 * {@link #synchronizeTablespaceVersions()} because one could being deleting some tablespace when other is trying a
-	 * rollback.
+	 * Rollback: Set the version of some tablespaces to a particular one.
 	 * <p>
 	 * Returns a {@link StatusMessage}.
 	 */
 	public StatusMessage rollback(List<SwitchVersionRequest> rollbackRequest) throws JSONSerDeException {
 		try {
+			// TODO: Coordinate with context.synchronizeTablespaceVersions() because one could being deleting some tablespace when other is trying a rollback.
 			deployer.switchVersions(rollbackRequest);
 			// TODO: Change this status message to something more programmatic
 			return new StatusMessage("Done");

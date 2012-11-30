@@ -20,15 +20,17 @@ package com.splout.db.hadoop;
  * #L%
  */
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.hadoop.fs.Path;
+
 import com.datasalt.pangool.io.Fields;
 import com.datasalt.pangool.io.Schema;
+import com.datasalt.pangool.tuplemr.OrderBy;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleTextInputFormat;
 import com.splout.db.hadoop.TableBuilder.TableBuilderException;
 import com.splout.db.hadoop.TablespaceBuilder.TablespaceBuilderException;
-import org.apache.hadoop.fs.Path;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A JSON-friendly bean that can map to a {@link TablespaceSpec} easily. It only supports text input. Use
@@ -84,6 +86,10 @@ public class JSONTablespaceDefinition {
       tableBuilder.finalSQL(table.getFinalStatements().toArray(new String[0]));
     }
 
+    if(table.getInsertionOrderBy() != null) {
+    	tableBuilder.insertionSortOrder(OrderBy.parse(table.getInsertionOrderBy()));
+    }
+    
     for (JSONTableInputDefinition tableInput : table.getTableInputs()) {
       TextInputSpecs specs = tableInput.getInputSpecs();
       if (specs == null) {
@@ -149,6 +155,7 @@ public class JSONTablespaceDefinition {
     private List<JSONTableInputDefinition> tableInputs;
     private String schema;
     private String partitionFields;
+    private String insertionOrderBy;
     private List<String> indexes = new ArrayList<String>();
     private List<String> initialStatements = new ArrayList<String>();
     private List<String> preInsertStatements = new ArrayList<String>();
@@ -225,6 +232,14 @@ public class JSONTablespaceDefinition {
 
     public void setFinalStatements(List<String> finalStatements) {
       this.finalStatements = finalStatements;
+    }
+
+		String getInsertionOrderBy() {
+    	return insertionOrderBy;
+    }
+
+		void setInsertionOrderBy(String insertionOrderBy) {
+    	this.insertionOrderBy = insertionOrderBy;
     }
   }
 

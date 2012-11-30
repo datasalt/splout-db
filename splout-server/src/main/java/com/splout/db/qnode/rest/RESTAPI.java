@@ -51,7 +51,7 @@ public class RESTAPI {
 
 	@GET
 	@Path("/query/{tablespace}")
-	@Produces({ "json/html;charset=UTF-8" })
+	@Produces({ "application/json;charset=UTF-8" })
 	public String query(@PathParam("tablespace") String tablespace, @QueryParam("key") List<String> keys,
 	    @QueryParam("sql") String sql, @QueryParam("callback") String callback) throws Exception {
 
@@ -63,13 +63,13 @@ public class RESTAPI {
 			key += strKey;
 		}
 		QueryStatus st = ((IQNodeHandler) rc.getProperties().get("handler")).query(tablespace, key, sql);
-		log.info(Thread.currentThread().getName() + ": Query request received, tablespace[" + tablespace + "], key[" + key + "], sql[" + sql
-		    + "] time [" + st.getMillis() + "]");
+		log.info(Thread.currentThread().getName() + ": Query request received, tablespace[" + tablespace
+		    + "], key[" + key + "], sql[" + sql + "] time [" + st.getMillis() + "]");
 		String resp = JSONSerDe.ser(st);
-        // For supporting cross domain requests
-        if ( callback != null ) {
-            resp = callback + "(" + resp + ")";
-        }
+		// For supporting cross domain requests
+		if(callback != null) {
+			resp = callback + "(" + resp + ")";
+		}
 		return resp;
 	}
 
@@ -78,12 +78,17 @@ public class RESTAPI {
 	@Produces({ "application/json;charset=UTF-8" })
 	public String multiQuery(@QueryParam("keymins") List<String> keyMins,
 	    @QueryParam("keymaxs") List<String> keyMaxs, @PathParam("tablespace") String tablespace,
-	    @QueryParam("sql") String sql) throws Exception {
+	    @QueryParam("sql") String sql, @QueryParam("callback") String callback) throws Exception {
 
-		log.info(Thread.currentThread().getName() + ": MultiQuery request received, tablespace[" + tablespace + "], keymins[" + keyMins
-		    + "], keymaxs[" + keyMaxs + "], sql[" + sql + "]");
-		return JSONSerDe.ser(((IQNodeHandler) rc.getProperties().get("handler")).multiQuery(tablespace, keyMins, keyMaxs,
-		    sql));
+		log.info(Thread.currentThread().getName() + ": MultiQuery request received, tablespace["
+		    + tablespace + "], keymins[" + keyMins + "], keymaxs[" + keyMaxs + "], sql[" + sql + "]");
+		// For supporting cross domain requests
+		String resp = JSONSerDe.ser(((IQNodeHandler) rc.getProperties().get("handler")).multiQuery(
+		    tablespace, keyMins, keyMaxs, sql));
+		if(callback != null) {
+			resp = callback + "(" + resp + ")";
+		}
+		return resp;
 	}
 
 	public final static TypeReference<ArrayList<DeployRequest>> DEPLOY_REQ_REF = new TypeReference<ArrayList<DeployRequest>>() {
@@ -95,7 +100,8 @@ public class RESTAPI {
 	public String deploy(String body) throws Exception {
 
 		List<DeployRequest> deployReq = JSONSerDe.deSer(body, DEPLOY_REQ_REF);
-		log.info(Thread.currentThread().getName() + ": Deploy request received [" + deployReq + "]"); // List of DeployRequest
+		log.info(Thread.currentThread().getName() + ": Deploy request received [" + deployReq + "]"); // List of
+		                                                                                              // DeployRequest
 		for(DeployRequest request : deployReq) {
 			if(request.getReplicationMap() == null || request.getReplicationMap().size() < 1) {
 				throw new IllegalArgumentException("Invalid deploy request with empty replication map ["
@@ -118,7 +124,8 @@ public class RESTAPI {
 	public String rollback(String body) throws Exception {
 
 		ArrayList<SwitchVersionRequest> rReq = JSONSerDe.deSer(body, ROLLBACK_REQ_REF);
-		log.info(Thread.currentThread().getName() + ": Rollback request received [" + rReq + "]"); // List of RollbackRequest
+		log.info(Thread.currentThread().getName() + ": Rollback request received [" + rReq + "]"); // List of
+		                                                                                           // RollbackRequest
 		return JSONSerDe.ser(((IQNodeHandler) rc.getProperties().get("handler")).rollback(rReq));
 	}
 

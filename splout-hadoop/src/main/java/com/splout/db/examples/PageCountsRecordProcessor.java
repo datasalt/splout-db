@@ -30,23 +30,23 @@ import com.splout.db.hadoop.CounterInterface;
 import com.splout.db.hadoop.RecordProcessor;
 
 /**
- * Custom record processor that filters out some records and URL-Decodes a field.
- * Made for the Wikipedia pagecounts dataset example.
+ * Custom record processor that filters out some records and URL-Decodes a field. Made for the Wikipedia pagecounts
+ * dataset example.
  */
 @SuppressWarnings("serial")
 public class PageCountsRecordProcessor implements RecordProcessor {
 
 	// The resulting Table Tuple
 	private ITuple tuple;
-	
+
 	public PageCountsRecordProcessor(Schema pageCountsSchema, String date, String hour) {
 		this.tuple = new Tuple(pageCountsSchema);
 		this.tuple.set("date", date);
 		this.tuple.set("hour", hour);
 	}
-	
+
 	@Override
-  public ITuple process(ITuple record, CounterInterface context) throws Throwable {
+	public ITuple process(ITuple record, CounterInterface context) throws Throwable {
 		// Filter out records that are not from English Wikipedia
 		if(!record.get("projectcode").toString().equals("en")) {
 			// count for stats
@@ -54,7 +54,7 @@ public class PageCountsRecordProcessor implements RecordProcessor {
 			return null;
 		}
 		try {
-			// URL-Denormalize the pagenames  
+			// URL-Denormalize the pagenames
 			String pageName = record.get("pagename").toString();
 			record.set("pagename", decode(pageName));
 		} catch(Throwable t) {
@@ -74,9 +74,9 @@ public class PageCountsRecordProcessor implements RecordProcessor {
 		tuple.set("pagename", record.get("pagename"));
 		tuple.set("pageviews", record.get("pageviews"));
 		// return the Tuple
-	  return tuple;
-  }
-	
+		return tuple;
+	}
+
 	public static String decode(String str) throws UnsupportedEncodingException {
 		return URLDecoder.decode(str, "UTF-8");
 	}

@@ -56,7 +56,7 @@ import com.splout.db.common.HeartBeater;
  * the database is created (e.g. CREATE TABLE and such). It also accepts finalization statements (e.g. CREATE INDEX).
  * <p>
  * This OutputFormat can be used as a basis for creating more complex OutputFormats such as
- * {@link TupleSQLiteOutputFormat}.
+ * {@link TupleSQLite4JavaOutputFormat}.
  * <p>
  * Moreover, using this OutputFormat directly can result in poor-performing Jobs as it can't cache PreparedStatements
  * (it has to create a new Statement for every SQL it receives).
