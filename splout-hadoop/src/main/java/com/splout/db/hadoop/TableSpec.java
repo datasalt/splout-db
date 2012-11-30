@@ -38,32 +38,85 @@ public class TableSpec implements Serializable {
 	private final Field[] partitionFields;
 	private final FieldIndex[] indexes;
 	private final String partitionByJavaScript;
-	private final String[] postSQL;
-	private final String[] preSQL;
+  private final String[] initialSQL;
+	private final String[] preInsertsSQL;
+  private final String[] postInsertsSQL;
+  private final String[] finalSQL;
 	private transient final OrderBy insertionOrderBy;
 	
 	public TableSpec(Schema schema, Field partitionField) {
-		this(schema, new Field[] { partitionField }, new FieldIndex[] { new FieldIndex(partitionField) }, null, null, null);
+		this(schema, new Field[] { partitionField }, new FieldIndex[] { new FieldIndex(partitionField) }, null, null, null, null, null);
 	}
-	
-	public TableSpec(Schema schema, Field[] partitionFields, FieldIndex[] indexes, String[] preSQL, String[] postSQL, OrderBy insertionOrderBy) {
+
+  /**
+   * Creates a Table specification.
+   *
+   * @param schema The schema that defines the table
+   * @param partitionFields fields to partition the table by
+   * @param indexes The indexes that mus be created
+   * @param initialSQL SQL statements that will be executed at the start of the process, just after
+   *                   some default PRAGMA statements and just before the CREATE TABLE statements.
+   * @param preInsertsSQL SQL statements that will be executed just after the CREATE TABLE statements
+   *                      but just before the INSERT statements used to insert data.
+   * @param postInsertsSQL SQL statements that will be executed just after all data is inserted but
+   *                       just before the CREATE INDEX statements.
+   * @param finalSQL SQL statements that will be executed al the end of the process, just after the
+   *                 CREATE INDEX statements.
+   * @param insertionOrderBy The order in which data is inserted in the database. That is very important
+   *                         because affect data locality and some queries could go faster or very
+   *                         slow depending on the order the data is stored. Usually, data should be
+   *                         sorted in the same order than the main index that you will use for queries.
+   *                         As a common rule, sort data in the proper order to answer the most important
+   *                         queries of your system.
+   */
+	public TableSpec(Schema schema, Field[] partitionFields, FieldIndex[] indexes,
+                   String[] initialSQL, String[] preInsertsSQL, String[] postInsertsSQL,
+                   String[] finalSQL, OrderBy insertionOrderBy) {
 		this.schema = schema;
 		this.partitionFields = partitionFields;
 		this.indexes = indexes;
 		this.partitionByJavaScript = null;
-		this.preSQL = preSQL;
-		this.postSQL = postSQL;
+    this.initialSQL = initialSQL;
+		this.preInsertsSQL = preInsertsSQL;
+    this.postInsertsSQL = postInsertsSQL;
+		this.finalSQL = finalSQL;
 		this.insertionOrderBy = insertionOrderBy;
 	}
 
-	public TableSpec(Schema schema, String partitionByJavaScript, FieldIndex[] indexes, String[] preSQL, String[] postSQL, OrderBy insertionOrderBy) {
+  /**
+   * Creates a Table specification.
+   *
+   * @param schema The schema that defines the table
+   * @param partitionByJavaScript JavaScript function that applies to rows and returns a key that must
+   *                              be used to partition.
+   * @param indexes The indexes that mus be created
+   * @param initialSQL SQL statements that will be executed at the start of the process, just after
+   *                   some default PRAGMA statements and just before the CREATE TABLE statements.
+   * @param preInsertsSQL SQL statements that will be executed just after the CREATE TABLE statements
+   *                      but just before the INSERT statements used to insert data.
+   * @param postInsertsSQL SQL statements that will be executed just after all data is inserted but
+   *                       just before the CREATE INDEX statements.
+   * @param finalSQL SQL statements that will be executed al the end of the process, just after the
+   *                 CREATE INDEX statements.
+   * @param insertionOrderBy The order in which data is inserted in the database. That is very important
+   *                         because affect data locality and some queries could go faster or very
+   *                         slow depending on the order the data is stored. Usually, data should be
+   *                         sorted in the same order than the main index that you will use for queries.
+   *                         As a common rule, sort data in the proper order to answer the most important
+   *                         queries of your system.
+   */
+	public TableSpec(Schema schema, String partitionByJavaScript, FieldIndex[] indexes,
+                   String[] initialSQL, String[] preInsertsSQL, String[] postInsertsSQL,
+                   String[] finalSQL, OrderBy insertionOrderBy) {
 		this.schema = schema;
 		this.partitionFields = null;
 		this.partitionByJavaScript = partitionByJavaScript;
 		this.indexes = indexes;
-		this.preSQL = preSQL;
-		this.postSQL = postSQL;
-		this.insertionOrderBy = insertionOrderBy;
+    this.initialSQL = initialSQL;
+    this.preInsertsSQL = preInsertsSQL;
+    this.postInsertsSQL = postInsertsSQL;
+    this.finalSQL = finalSQL;
+    this.insertionOrderBy = insertionOrderBy;
 	}
 	
 	/**
@@ -105,13 +158,19 @@ public class TableSpec implements Serializable {
 	public String getPartitionByJavaScript() {
   	return partitionByJavaScript;
   }
-	public String[] getPostSQL() {
-	  return postSQL;
+  public String[] getPostInsertsSQL() {
+    return postInsertsSQL;
   }
-	public String[] getPreSQL() {
-	  return preSQL;
+  public String[] getInitialSQL() {
+    return initialSQL;
   }
-	public OrderBy getInsertionSortOrder() {
+  public String[] getFinalSQL() {
+	  return finalSQL;
+  }
+	public String[] getPreInsertsSQL() {
+	  return preInsertsSQL;
+  }
+	public OrderBy getInsertionOrderBy() {
   	return insertionOrderBy;
   }
 }

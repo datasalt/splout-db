@@ -20,16 +20,6 @@ package com.splout.db.hadoop;
  * #L%
  */
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.fs.Path;
-
 import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.io.Schema.Field;
 import com.datasalt.pangool.tuplemr.Criteria.SortElement;
@@ -37,6 +27,11 @@ import com.datasalt.pangool.tuplemr.OrderBy;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleTextInputFormat;
 import com.splout.db.hadoop.TableSpec.FieldIndex;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.fs.Path;
+
+import java.util.*;
 
 /**
  * This builder can be used to obtain {@link Table} beans. These beans can then be used to obtain a
@@ -45,8 +40,9 @@ import com.splout.db.hadoop.TableSpec.FieldIndex;
 public class TableBuilder {
 
 	private final static Log log = LogFactory.getLog(TableBuilder.class);
-	/**
-	 * Exception that is thrown if a Table cannot be built because there is missing data or inconsistent data has been specified. The reason is specified as the message of the Exception.
+
+  /**
+   * Exception that is thrown if a Table cannot be built because there is missing data or inconsistent data has been specified. The reason is specified as the message of the Exception.
 	 */
 	@SuppressWarnings("serial")
 	public static class TableBuilderException extends Exception {
@@ -63,10 +59,12 @@ public class TableBuilder {
 	private boolean isReplicated = false;
 	private Set<String> fieldsToIndex = new HashSet<String>();
 	private List<List<String>> compoundIndexes = new ArrayList<List<String>>();
-	private String[] postSQL = null;
-	private String[] preSQL = null;
-	private OrderBy orderBy;
-	
+  private String[] initialSQL;
+  private String[] preInsertsSQL = null;
+  private String[] postInsertsSQL;
+  private String[] finalSQL = null;
+  private OrderBy orderBy;
+
 	public TableBuilder(final Schema schema) {
 		this.schema = schema;
 	}
@@ -75,12 +73,12 @@ public class TableBuilder {
 		addFile(new TableInput(new TupleTextInputFormat(schema, fields, hasHeader, nullString), schema, (recordProcessor == null) ? new IdentityRecordProcessor() : recordProcessor, path));
 		return this;
 	}
-	
+
 	public TableBuilder addCSVTextFile(Path path, char separator, char quoteCharacter, char escapeCharacter, boolean hasHeader, boolean strictQuotes, String nullString, Schema fileSchema, RecordProcessor recordProcessor) {
 		addFile(new TableInput(new TupleTextInputFormat(fileSchema, hasHeader, strictQuotes, separator, quoteCharacter, escapeCharacter, TupleTextInputFormat.FieldSelector.NONE, nullString), fileSchema, recordProcessor, path));
 		return this;
 	}
-	
+
 	public TableBuilder addCSVTextFile(String path, char separator, char quoteCharacter, char escapeCharacter, boolean hasHeader, boolean strictQuotes, String nullString, Schema fileSchema, RecordProcessor recordProcessor) {
 		return addCSVTextFile(new Path(path), separator, quoteCharacter, escapeCharacter, hasHeader, strictQuotes, nullString, fileSchema, recordProcessor);
 	}
@@ -95,8 +93,8 @@ public class TableBuilder {
 
 	public TableBuilder addCSVTextFile(Path path, Schema fileSchema, RecordProcessor recordProcessor) {
 		return addCSVTextFile(path, '\t', TupleTextInputFormat.NO_QUOTE_CHARACTER, TupleTextInputFormat.NO_ESCAPE_CHARACTER, false, false, TupleTextInputFormat.NO_NULL_STRING, fileSchema, recordProcessor);
-	}	
-	
+	}
+
 	public TableBuilder addCSVTextFile(String path, Schema fileSchema, RecordProcessor recordProcessor) {
 		return addCSVTextFile(new Path(path), fileSchema, recordProcessor);
 	}
@@ -104,30 +102,56 @@ public class TableBuilder {
 	public TableBuilder addCSVTextFile(Path path) {
 		return addCSVTextFile(path, schema, new IdentityRecordProcessor());
 	}
-	
+
 	public TableBuilder addCSVTextFile(String path) {
 		return addCSVTextFile(path, schema, new IdentityRecordProcessor());
 	}
-	
+
 	public TableBuilder addTupleFile(Path path) {
 		addFile(new TableInput(new TupleInputFormat(), schema, null, path));
 		return this;
 	}
 
-	public TableBuilder postSQL(String... postSQLStatements) {
-		this.postSQL = postSQLStatements;
-		return this;
-	}
-	
-	public TableBuilder preSQL(String... preSQLStatements) {
-		this.preSQL = preSQLStatements;
-		return this;
-	}
-	
-	public TableBuilder tupleFile(String path) {
+  /**
+   * @param initialSQLStatements SQL statements that will be executed at the start of the process, just after
+   *                             some default PRAGMA statements and just before the CREATE TABLE statements.
+   */
+  public TableBuilder initialSQL(String... initialSQLStatements) {
+    this.initialSQL = initialSQLStatements;
+    return this;
+  }
+
+  /**
+   * @param preInsertsSQLStatements SQL statements that will be executed just after the CREATE TABLE statements
+   *                      but just before the INSERT statements used to insert data.
+   */
+  public TableBuilder preInsertsSQL(String... preInsertsSQLStatements) {
+    this.preInsertsSQL = preInsertsSQLStatements;
+    return this;
+  }
+
+  /**
+   * @param postInsertsSQLStatements SQL statements that will be executed just after all data is inserted but
+   *                                 just before the CREATE INDEX statements.
+   */
+  public TableBuilder postInsertsSQL(String... postInsertsSQLStatements) {
+    this.postInsertsSQL = postInsertsSQLStatements;
+    return this;
+  }
+
+  /**
+   * @param finalSQLStatements SQL statements that will be executed al the end of the process, just after the
+   *                           CREATE INDEX statements.
+   */
+  public TableBuilder finalSQL(String... finalSQLStatements) {
+    this.finalSQL = finalSQLStatements;
+    return this;
+  }
+
+  public TableBuilder tupleFile(String path) {
 		return addTupleFile(new Path(path));
 	}
-	
+
 	public TableBuilder createIndex(String... indexFields) {
 		if(indexFields.length == 1) {
 			fieldsToIndex.add(indexFields[0]);
@@ -141,17 +165,17 @@ public class TableBuilder {
 		this.partitionByFields = partitionByFields;
 		return this;
 	}
-	
+
 	public TableBuilder partitionByJavaScript(String javascript) throws TableBuilderException {
 		// Check that javascript is valid
 		// It must be evaluated and we will also check that it has a "partition" function
-		JavascriptEngine engine; 
+		JavascriptEngine engine;
 		try {
 			engine = new JavascriptEngine(javascript);
     } catch(Throwable e) {
     	log.error("Error evaluating javascript", e);
 	    throw new TableBuilderException("Invalid javascript: " + e.getMessage());
-    } 
+    }
 
     try {
       engine.execute("partition", new Object[0]);
@@ -161,7 +185,7 @@ public class TableBuilder {
     } catch(Throwable e) {
       // skip - might be null pointers as we are passing a null object
     }
-    
+
     partitionByJavaScript = javascript;
 		return this;
 	}
@@ -175,7 +199,7 @@ public class TableBuilder {
 		files.add(tableFile);
 		return this;
 	}
-	
+
 	public TableBuilder insertionSortOrder(OrderBy orderBy) throws TableBuilderException {
 		for(SortElement element: orderBy.getElements()) {
 			if(!schema.containsField(element.getName())) {
@@ -185,7 +209,7 @@ public class TableBuilder {
 		this.orderBy = orderBy;
 		return this;
 	}
-	
+
 	public Table build() throws TableBuilderException {
 		if(schema == null) {
 			throw new TableBuilderException("No schema for table: Can't build a Table without a Schema.");
@@ -210,7 +234,7 @@ public class TableBuilder {
 					partitionBySchemaFields[i] = partitionField;
 					i++;
 				}
-			} 
+			}
 		} else {
 			if(partitionByFields != null) {
 				throw new TableBuilderException("Replicated table with partition fields is an inconsistent specification. Please check if you are doing something wrong.");
@@ -246,11 +270,11 @@ public class TableBuilder {
 		// Schema + indexes = TableSpec
 		TableSpec spec;
 		FieldIndex[] theIndexes = indexes.toArray(new FieldIndex[0]);
-		
+
 		if(partitionByJavaScript != null) {
-			spec = new TableSpec(schema, partitionByJavaScript, theIndexes, preSQL, postSQL, orderBy);
-		} else {
-			spec = new TableSpec(schema, partitionBySchemaFields, theIndexes, preSQL, postSQL, orderBy);	
+      spec = new TableSpec(schema, partitionByJavaScript, theIndexes, initialSQL, preInsertsSQL, postInsertsSQL, finalSQL, orderBy);
+    } else {
+      spec = new TableSpec(schema, partitionBySchemaFields, theIndexes, initialSQL, preInsertsSQL, postInsertsSQL, finalSQL, orderBy);
 		}
 
 		// Now get the input Paths

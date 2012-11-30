@@ -64,13 +64,13 @@ public class Querier extends QNodeHandlerModule {
 		// TODO This logic is repeated in Handler
 		Long version = context.getCurrentVersionsMap().get(tablespaceName);
 		if(version == null) {
-			return new ErrorQueryStatus("Unknown tablespace! (" + tablespaceName + ")");
+			return new ErrorQueryStatus("Unknown tablespace or not version ready to be served! (" + tablespaceName + ")");
 		}
 		// TODO Not very efficient object creation etc
 		Tablespace tablespace = context.getTablespaceVersionsMap().get(
 		    new TablespaceVersion(tablespaceName, version));
 		if(tablespace == null) {
-			return new ErrorQueryStatus("Unknown tablespace! (" + tablespaceName + ")");
+			return new ErrorQueryStatus("Unknown tablespace version:(" + version +") tablespace:(" + tablespaceName + ")");
 		}
 		PartitionMap partitionMap = tablespace.getPartitionMap();
 		// Find the partition
