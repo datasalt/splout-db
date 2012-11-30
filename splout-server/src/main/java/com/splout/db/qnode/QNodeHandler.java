@@ -365,7 +365,7 @@ public class QNodeHandler implements IQNodeHandler {
 	/**
 	 * Given a list of {@link DeployRequest}, perform an asynchronous deploy. This is currently the most important part of
 	 * Splout and the most complex one. Here we are involving several DNodes asynchronously and later we will check that
-	 * everything finished by using a ZooKeeper barrier.
+	 * everything finished.
 	 * <p>
 	 * Returns a {@link DeployInfo}.
 	 */
