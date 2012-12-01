@@ -33,8 +33,29 @@
         // Global variables
         var meteoSerie = [];
         var sections = [];
-        var sectionsSize = 400;
+        var sectionsSize = 200;
         var selectedSection = -1;
+        var Period = {
+            DAY: {value:0, name:"Daily"},
+            MONTH: {value:1, name:"Monthly"}
+        };
+        var currentPeriod = Period.DAY;
+
+        function selectPeriod(period) {
+          currentPeriod = Period[period];
+          periodsSection();
+          loadMeteoSerie();
+        }
+
+        function periodsSection() {
+            innerHTML = '';
+            $.each(Period, function(i,period) {
+              selected = (period == currentPeriod) ? ' class="active"' : '';
+              innerHTML += '<li' + selected + '></i><a href="javascript:void(0);" onclick="selectPeriod(\'' + i + '\');"> ' +
+                 period.name + '</a></li>';
+            });
+            $('#periods').html(innerHTML);
+        }
 
         // Perform queries to Splout asynchronously
         function sploutIt(keys, query, callback) {
@@ -67,7 +88,7 @@
         }
 
         function dateToStr(serieRow) {
-          return serieRow.year + '-' + serieRow.month + '-' + serieRow.day;
+          return serieRow.year + '-' + serieRow.month +  ((currentPeriod == Period.DAY) ? ('-' + serieRow.day) : '');
         }
 
         // Calculate the number of sections in which the serie will be divided
@@ -95,12 +116,6 @@
 
         // Draws the chart from data in meteoSerie
         function drawMeteoSerie(meteoSerie) {
-            if (meteoSerie.length > 0) {
-                var lastRow = meteoSerie[meteoSerie.length-1];
-                var lastDate = new Date(lastRow.year, lastRow.month, lastRow.day);
-            } else {
-                var lastDate = new Date(2050,01,01);
-            }
 
         var dashboard = new google.visualization.Dashboard(
                 document.getElementById('dashboard'));
@@ -153,7 +168,8 @@
                     'columns': [
                         {
                         'calc': function(dataTable, rowIndex) {
-                            return dataTable.getFormattedValue(rowIndex, 0);
+                            var date = new Date(dataTable.getValue(rowIndex, 0));
+                            return date.getFullYear() + '-' + (date.getMonth()+1) +  ((currentPeriod == Period.DAY) ? ('-' + date.getDate()) : '');
                             },
                         'type': 'string'
                         }, 1, 2, 3, 4]
@@ -168,7 +184,7 @@
             data.addColumn('number', 'Min & max temperatures range');
 
             $.each(meteoSerie, function(i, row) {
-                data.addRow([new Date(row.year, row.month-1, row.day), row.min, row.min, row.max, row.max]);
+                 data.addRow([new Date(row.year, row.month-1, (currentPeriod == Period.DAY) ? row.day : 15), row.min, row.min, row.max, row.max]);
             });
 
             dashboard.bind(control, chart);
@@ -190,7 +206,15 @@
                     stn = data.result[0].stn;
                     wban = data.result[0].wban;
 
-                    query = 'select year,month,day,min,max from meteo where stn=' + stn + ' and wban = ' + wban + ' order by year,month,day;';
+                    switch(currentPeriod) {
+                    case Period.DAY:
+                        query = 'select year,month,day,min,max from meteo where stn=' + stn + ' and wban = ' + wban + ' order by year,month,day;';
+                        break;
+                    case Period.MONTH:
+                        query = 'select year,month,min(min) as min,max(max) as max from meteo where stn=' + stn + ' and wban = ' + wban + ' group by year,month order by year,month;';
+                        break;
+                    }
+
                     sploutIt([stn,wban], query,
                         function(data) {
                             if(data.error != null) {
@@ -203,6 +227,8 @@
                                 meteoSerie.push(data);
                             });
 
+                            selectedSection = -1;
+                            periodsSection();
                             calculateSections();
                             drawMeteoSerie(slice());
                         }
@@ -211,7 +237,7 @@
             );
         }
 
-        // Statin autosuggest function
+        // Autosuggest function
         function suggestStation(query, callback) {
             $.getJSON(sploutURL + '/api/query/meteo-pby-stn-wban?key=any&sql=' + 'select name from stations where name like "' + query + '%" limit 20;' + '&callback=?',
                 function(data) {
@@ -266,10 +292,8 @@
     </form>
     <div id="queryerror" class="alert alert-error" style="display:none"></div>
     <div id="aggregation-div">
-        <h5><i class="icon-filter"></i> Dates filter</h5>
-        <ul class="nav nav-pills">
-            <li><a href="">Daily</a></li>
-            <li><a href="">Monthly</a></li>
+        <h5><i class="icon-filter"></i> Period filter</h5>
+        <ul id="periods" class="nav nav-pills">
         </ul>
     </div>
     <div id="sections-div">
