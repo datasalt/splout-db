@@ -143,18 +143,23 @@
 
 	<!-- Environment Information -->
 
-	<!-- TODO -->
-	<mailingLists />
+        <mailingLists />
+
+        <issueManagement>
+            <system>github</system>
+            <url>https://github.com/datasalt/splout-db/</url>
+        </issueManagement>
+
+        <ciManagement>
+            <system>Jenkins CI</system>
+            <url>http://clinker.datasalt.com/jenkins/view/Splout-db/</url>
+        </ciManagement>
 
 	<scm>
 		<url>https://github.com/datasalt/splout-db</url>
 		<connection>scm:git:git://github.com/datasalt/splout-db.git</connection>
 		<developerConnection>scm:git:git@github.com:datasalt/splout-db.git</developerConnection>
 	</scm>
-
-	<!-- TODO -->
-	<!-- <issueManagement> <system>github</system> <url></url> </issueManagement> 
-		<ciManagement> <system>Jenkins CI</system> <url></url> </ciManagement> -->
 
 	<!-- Maven Environment -->
 
@@ -173,5 +178,11 @@
 	</repositories>
 
 	<pluginRepositories />
-	<!-- TODO Snapshots ? -->
+
+        <distributionManagement>
+            <snapshotRepository>
+                <id>sploutdb-snapshots</id>
+                <url>http://clinker.datasalt.com/nexus/content/groups/public-snapshots</url>
+            </snapshotRepository>
+        </distributionManagement>
 </project>
