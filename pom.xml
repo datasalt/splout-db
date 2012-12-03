@@ -165,9 +165,9 @@
 
 	<repositories>
 		<repository>
-			<id>pangool-snapshots</id>
-			<name>Pangool Snapshot Repository</name>
-			<url>http://clinker.pangool.net/nexus/content/groups/public-snapshots</url>
+			<id>datasalt-snapshots</id>
+			<name>Datasalt Snapshot Repository</name>
+			<url>http://clinker.datasalt.com/nexus/content/groups/public-snapshots</url>
 			<releases>
 				<enabled>false</enabled>
 			</releases>
