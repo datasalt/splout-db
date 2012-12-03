@@ -237,8 +237,10 @@ This is the spec of the JSONTableDefinition object:
 | schema | string | The in-line Pangool schema that defines the structure of this table.
 | partitionFields | array of string | If used, the table will be partitioned by one or more columns, otherwise it will be replicated to all partitions.
 | indexes | array of string | List of columns that need to be indexed after the data is added to the table. You can also specify compound indexes here, comma-separated. 
-| preInsertStatements | array of string | Raw SQL commands that will be performed before inserting all the data to the table.
-| finalStatements | array of string | Raw SQL commands that will be performed after inserting all the data to the table.
+| initialStatements | array of string | Raw SQL commands that will be performed before the CREATE TABLE, but just after some defaults. Rigth place to put your PRAGMA statements.
+| preInsertStatements | array of string | Raw SQL commands that will be performed before inserting all the data to the table, just after the CREATE TABLE statements. For example, that is a good place to alter the table schema at your own.
+| postInsertStatements | array of string | Raw SQL commands that will be performed just after inserting all the data, but just before the CREATE INDEX statements
+| finalStatements | array of string | Raw SQL commands that will be performed just after all the other statements, at the end of the process.
 | insertionOrderBy | string | In-line Pangool Order By clause (in the form "field1:asc, field2:desc,...,fieldn:asc") that will be used for sorting the data before inserting it in a SQLite table.
 |==============
 
@@ -745,7 +747,7 @@ and in addition check things like:
 - EXPLAIN QUERY PLAN (query) - to show if SQLite is using the expected indexes or not.
 - PRAGMA case_sensitive_like - when doing LIKE queries, SQLite will use an index only if this pragma is set to true and the index was created using standard collation, or if this pragma is set to false and the index was created using COLLATE NOCASE.
 
-Remember that you can fine-tune your data indexing process with preInsertStatements, finalStatements 
+Remember that you can fine-tune your data indexing process with initialStatements, preInsertStatements, postInsertStatements and finalStatements
 (see <<JSONTableDefinition>>) and initStatements (see <<DeployRequest>>). All these features are available as part of 
 the standard Java API of link:apidocs/splout-hadoop/com/splout/db/hadoop/TableBuilder.html[TableBuilder] and 
 link:apidocs/splout-hadoop/com/splout/db/hadoop/TablespaceBuilder.html[TablespaceBuilder]. 
