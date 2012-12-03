@@ -143,7 +143,19 @@
 
 	<!-- Environment Information -->
 
-        <mailingLists />
+        <mailingLists>
+            <mailingList>
+                <name>Splout SQL User List</name>
+                <post>sploutdb-users@googlegroups.com</post>
+                <archive>https://groups.google.com/forum/?fromgroups#!forum/sploutdb-users</archive>
+            </mailingList>
+
+            <mailingList>
+                <name>Splout SQL Developers List</name>
+                <post>sploutdb-dev@googlegroups.com</post>
+                <archive>https://groups.google.com/forum/?fromgroups#!forum/sploutdb-dev</archive>
+            </mailingList>
+        </mailingLists>
 
         <issueManagement>
             <system>github</system>
