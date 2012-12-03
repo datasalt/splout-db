@@ -1,263 +1,284 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>Splout SQL</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="">
-    <meta name="author" content="">
+<head>
+  <meta charset="utf-8">
+  <title>Splout SQL</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
 
-    <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
-    <!--[if lt IE 9]>
-      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
+  <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
 
-    <!-- Le styles -->
-    <link href="css/bootstrap.min.css" rel="stylesheet">
-    <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
-	
-	<!-- Modified asciidoc css -->
-	<link rel="stylesheet" href="./css/xhtml11.css" type="text/css" />
-	<link rel="stylesheet" href="./css/xhtml11-quirks.css" type="text/css" />
-	
-	<script src="js/asciidoc.js"></script>
-	
-    <style>
+  <!-- Le styles -->
+  <link href="css/bootstrap.min.css" rel="stylesheet">
+  <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
+
+  <!-- Modified asciidoc css -->
+  <link rel="stylesheet" href="./css/xhtml11.css" type="text/css"/>
+  <link rel="stylesheet" href="./css/xhtml11-quirks.css" type="text/css"/>
+
+  <script src="js/asciidoc.js"></script>
+
+  <style>
 
     /* GLOBAL STYLES
     -------------------------------------------------- */
     /* Padding below the footer and lighter body text */
-	
-	p, h1, h2, h3, h4, h5 {
-	  padding-bottom: 5px; /* general breathing for everything */
-	}
-	
-    body {
-      padding-bottom: 40px;
-      color: #5a5a5a;
+
+    p, h1, h2, h3, h4, h5 {
+    padding-bottom: 5px; /* general breathing for everything */
     }
 
-	dt {
-	  padding-bottom: 5px;
-	  font-size:20px;
-	}
-	
-	dl {
-	 padding-bottom: 15px;
-	}
-	
-	div#toc a:visited { 
-	  color: #dd4814 !important; 
-	}
+    body {
+    padding-bottom: 40px;
+    color: #5a5a5a;
+    }
+
+    dt {
+    padding-bottom: 5px;
+    font-size:20px;
+    }
+
+    dl {
+    padding-bottom: 15px;
+    }
+
+    div#toc a:visited {
+    color: #dd4814 !important;
+    }
 
     /* Carousel base class */
     .carousel {
-      margin-bottom: 60px;
+    margin-bottom: 60px;
     }
 
     .carousel .container {
-      position: absolute;
-      right: 0;
-      bottom: 0;
-      left: 0;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
     }
 
     .carousel-control {
-      background-color: transparent;
-      border: 0;
-      font-size: 120px;
-      margin-top: 0;
-      text-shadow: 0 1px 1px rgba(0,0,0,.4);
+    background-color: transparent;
+    border: 0;
+    font-size: 120px;
+    margin-top: 0;
+    text-shadow: 0 1px 1px rgba(0,0,0,.4);
     }
 
     .carousel .item {
-      height: 250px;
+    height: 250px;
     }
     .carousel img {
-      min-width: 100%;
-      height: 250px;
+    min-width: 100%;
+    height: 250px;
     }
 
     .carousel-caption {
-      background-color: transparent;
-      position: static;
-      max-width: 550px;
-      padding: 0 20px;
-      margin-bottom: 100px;
+    background-color: transparent;
+    position: static;
+    max-width: 550px;
+    padding: 0 20px;
+    margin-bottom: 100px;
     }
     .carousel-caption h1,
     .carousel-caption .lead {
-      margin: 0;
-      line-height: 1.25;
-      color: #fff;
-      text-shadow: 0 1px 1px rgba(0,0,0,.4);
+    margin: 0;
+    line-height: 1.25;
+    color: #fff;
+    text-shadow: 0 1px 1px rgba(0,0,0,.4);
     }
-    
+
     .carousel-caption .btn {
-      margin-top: 10px;
+    margin-top: 10px;
     }
 
     /* RESPONSIVE CSS
     -------------------------------------------------- */
 
     @media (max-width: 979px) {
-      .container.navbar-wrapper {
-        margin-bottom: 0;
-        width: auto;
-      }
-      .navbar-inner {
-        border-radius: 0;
-        margin: -20px 0;
-      }
+    .container.navbar-wrapper {
+    margin-bottom: 0;
+    width: auto;
+    }
+    .navbar-inner {
+    border-radius: 0;
+    margin: -20px 0;
+    }
 
-      .carousel .item {
-        height: 300px;
-      }
-      .carousel img {
-        width: auto;
-        height: 300px;
-      }
+    .carousel .item {
+    height: 300px;
+    }
+    .carousel img {
+    width: auto;
+    height: 300px;
+    }
     }
 
     @media (max-width: 767px) {
-      .navbar-inner {
-        margin: -20px;
-      }
-      .carousel {
-        margin-left: -20px;
-        margin-right: -20px;
-      }
-      .carousel .container {
-      }
-      .carousel .item {
-        height: 300px;
-      }
-      .carousel img {
-        height: 300px;
-      }
-      .carousel-caption {
-        width: 65%;
-        padding: 0 70px;
-        margin-bottom: 40px;
-      }
-      .carousel-caption h1 {
-        font-size: 30px;
-      }
-      .carousel-caption .lead,
-      .carousel-caption .btn {
-        font-size: 18px;
-      }
+    .navbar-inner {
+    margin: -20px;
     }
-    </style>
-  </head>
+    .carousel {
+    margin-left: -20px;
+    margin-right: -20px;
+    }
+    .carousel .container {
+    }
+    .carousel .item {
+    height: 300px;
+    }
+    .carousel img {
+    height: 300px;
+    }
+    .carousel-caption {
+    width: 65%;
+    padding: 0 70px;
+    margin-bottom: 40px;
+    }
+    .carousel-caption h1 {
+    font-size: 30px;
+    }
+    .carousel-caption .lead,
+    .carousel-caption .btn {
+    font-size: 18px;
+    }
+    }
+  </style>
+</head>
 
 <body style="padding-top: 50px;">
-  
+
 <div class="container">
 
- <div class="navbar navbar-fixed-top navbar-static">
-   <div class="navbar-inner">
-     <div class="container">
+  <div class="navbar navbar-fixed-top navbar-static">
+    <div class="navbar-inner">
+      <div class="container">
         <a class="brand" href="index.html">Splout SQL</a>
+
         <div class="nav-collapse">
           <ul class="nav">
             <li><a href="features.html">Features</a></li>
             <li><a href="philosophy.html">Philosophy</a></li>
             <li class="dropdown">
-            	<a href="#" class="dropdown-toggle" data-toggle="dropdown">Technical details <b class="caret"></b></a>
-              	<ul class="dropdown-menu">
-                	<li><a href="architecture.html">Architecture</a></li>
-                	<li><a href="performance.html">Performance</a></li>
-                </ul>
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Technical details <b
+                  class="caret"></b></a>
+              <ul class="dropdown-menu">
+                <li><a href="architecture.html">Architecture</a></li>
+                <li><a href="performance.html">Performance</a></li>
+              </ul>
             </li>
             <li class="dropdown">
-            	<a href="gettingstarted.html" class="dropdown-toggle" data-toggle="dropdown">Getting started <b class="caret"></b></a>
-              	<ul class="dropdown-menu">
-                	<li><a href="gettingstarted.html">Installing & running Splout</a></li>
-                	<li><a href="gettingstarted.html#loading">Loading an example dataset</a></li>
-              	</ul>
+              <a href="gettingstarted.html" class="dropdown-toggle" data-toggle="dropdown">Getting
+                started <b class="caret"></b></a>
+              <ul class="dropdown-menu">
+                <li><a href="gettingstarted.html">Installing & running Splout</a></li>
+                <li><a href="gettingstarted.html#loading">Loading an example dataset</a></li>
+              </ul>
             </li>
             <li class="dropdown">
-            	<a href="#" class="dropdown-toggle" data-toggle="dropdown">User guide <b class="caret"></b></a>
-              	<ul class="dropdown-menu">
-                	<li><a href="user_guide.html">HTML</a></li>
-                	<li><a href="user_guide.pdf">Download as PDF</a></li>
-              	</ul>
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">User guide <b class="caret"></b></a>
+              <ul class="dropdown-menu">
+                <li><a href="user_guide.html">HTML</a></li>
+                <li><a href="user_guide.pdf">Download as PDF</a></li>
+              </ul>
             </li>
             <li><a href="faq.html">F.A.Q.</a></li>
           </ul>
           <ul class="nav pull-right">
             <li class="divider-vertical"></li>
             <li class="dropdown">
-            	<a href="#" class="dropdown-toggle" data-toggle="dropdown">Contributing <b class="caret"></b></a>
-              	<ul class="dropdown-menu">
-                	<li><a href="https://github.com/datasalt/splout-db/">Source code</a></li>
-                	<li><a href="#">Continuous integration</a></li>
-                	<li><a href="#">Code quality</a></li>
-                	<li><a href="https://groups.google.com/forum/#!forum/sploutdb-dev">Developers group</a></li>
-              	</ul>
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Contributing <b
+                  class="caret"></b></a>
+              <ul class="dropdown-menu">
+                <li><a href="https://github.com/datasalt/splout-db/">Source code</a></li>
+                <li><a href="#">Continuous integration</a></li>
+                <li><a href="#">Code quality</a></li>
+                <li><a href="https://groups.google.com/forum/#!forum/sploutdb-dev">Developers group</a>
+                </li>
+              </ul>
             </li>
             <li class="dropdown">
-              <a href="about.html" class="dropdown-toggle" data-toggle="dropdown">About <b class="caret"></b></a>
+              <a href="about.html" class="dropdown-toggle" data-toggle="dropdown">About <b
+                  class="caret"></b></a>
               <ul class="dropdown-menu">
                 <li><a href="#">License</a></li>
                 <li><a href="#">Team</a></li>
-                <li><a href="https://groups.google.com/forum/?fromgroups#!forum/sploutdb-users">Users group</a></li>
+                <li><a href="https://groups.google.com/forum/?fromgroups#!forum/sploutdb-users">Users
+                  group</a></li>
               </ul>
             </li>
           </ul>
-        </div><!-- /.nav-collapse -->
-     </div>
-   </div>
- </div><!-- /navbar -->
+        </div>
+        <!-- /.nav-collapse -->
+      </div>
+    </div>
+  </div>
+  <!-- /navbar -->
 
-<div class="carousel slide">
-	<div class="carousel-inner">
-        <div class="item active">
-          <img src="http://twitter.github.com/bootstrap/assets/img/examples/slide-01.jpg" alt="">
-          <div class="container">
-            <div class="carousel-caption">
-              <h1 style="font-size: 54px;">Splout SQL</h1>
-              <p class="lead">A web-latency SQL spout for Hadoop.</p>
-            </div>
+  <div class="carousel slide">
+    <div class="carousel-inner">
+      <div class="item active">
+        <img src="http://twitter.github.com/bootstrap/assets/img/examples/slide-01.jpg" alt="">
+
+        <div class="container">
+          <div class="carousel-caption">
+            <h1 style="font-size: 54px;">Splout SQL</h1>
+
+            <p class="lead">A web-latency SQL spout for Hadoop.</p>
           </div>
         </div>
+      </div>
     </div>
+  </div>
+
+  <div class="row">
+
+    <div class="span4">
+      <h3>Ready for the web</h3>
+
+      <p>
+        Splout allows serving an <strong>arbitrarily big dataset</strong> with <strong>high QPS
+        rates</strong> and at the same time provides <strong>full SQL</strong> query syntax.
+        Splout is appropriated for web page serving, many <strong>low latency lookups</strong>, scenarios
+        such as mobile or web applications with demanding performance.</p>
+
+      <p>
+
+      </p>
+    </div>
+
+    <div class="span4">
+      <h3>Plays well with Hadoop</h3>
+      Splout uses <a href='http://pangool.net'>Pangool</a> for <strong>decoupling database
+      creation</strong> from database serving. The data is always <strong>optimally indexed</strong> and
+      evenly distributed among partitions, plus updating all the data at once doesn’t affect the serving
+      of the datasets.
+    </div>
+
+    <div class="span4">
+      <h3>Scalable</h3>
+      Splout is <strong>horizontally scalable</strong>. You can increase throughput linearly by just
+      adding more machines.
+      Splout is <strong>replicated for failover</strong>. Splout transparently replicates your dataset
+      for properly handling failover scenarios such as network splits or hardware corruption.
+    </div>
+
+  </div>
+
+  <br><br><br><br>
+  <!-- Footer -->
+  <footer class="footer">
+    <p class="pull-right"><a href="http://datasalt.com">Splout is maintained by Datasalt</a></p>
+  </footer>
 </div>
-
-<div class="row">
-
-<div class="span4">
-<h3>Ready for the web</h3>
-<p>
-Splout allows serving an <strong>arbitrarily big dataset</strong> with <strong>high QPS rates</strong> and at the same time provides <strong>full SQL</strong> query syntax.
-Splout is appropriated for web page serving, many <strong>low latency lookups</strong>, scenarios such as mobile or web applications with demanding performance.</p>
-<p>
-
-</p>
-</div>
-
-<div class="span4">
-<h3>Plays well with Hadoop</h3>
-Splout uses <a href='http://pangool.net'>Pangool</a> for <strong>decoupling database creation</strong> from database serving. The data is always <strong>optimally indexed</strong> and evenly distributed among partitions, plus updating all the data at once doesn’t affect the serving of the datasets.
-</div>
-
-<div class="span4">
-<h3>Scalable</h3>
-Splout is <strong>horizontally scalable</strong>. You can increase throughput linearly by just adding more machines.
-Splout is <strong>replicated for failover</strong>. Splout transparently replicates your dataset for properly handling failover scenarios such as network splits or hardware corruption.
-</div>
-
-</div>
-
-<br><br><br><br>
-      <!-- Footer -->
-      <footer class="footer">
-        <p class="pull-right"><a href="http://datasalt.com">Splout is maintained by Datasalt</a></p>
-      </footer>
-</div><!-- /container -->
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
-    <script src="js/bootstrap.min.js"></script>
-    <script src="js/bootswatch.js"></script>
-  </body>
+<!-- /container -->
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/bootswatch.js"></script>
+</body>
 </html>

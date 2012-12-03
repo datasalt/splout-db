@@ -1,269 +1,304 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>Splout SQL's features</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="">
-    <meta name="author" content="">
+<head>
+  <meta charset="utf-8">
+  <title>Splout SQL's features</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
 
-    <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
-    <!--[if lt IE 9]>
-      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
+  <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
 
-    <!-- Le styles -->
-    <link href="css/bootstrap.min.css" rel="stylesheet">
-    <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
-	
-	<!-- Modified asciidoc css -->
-	<link rel="stylesheet" href="./css/xhtml11.css" type="text/css" />
-	<link rel="stylesheet" href="./css/xhtml11-quirks.css" type="text/css" />
-	
-	<script src="js/asciidoc.js"></script>
-	
-    <style>
+  <!-- Le styles -->
+  <link href="css/bootstrap.min.css" rel="stylesheet">
+  <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
+
+  <!-- Modified asciidoc css -->
+  <link rel="stylesheet" href="./css/xhtml11.css" type="text/css"/>
+  <link rel="stylesheet" href="./css/xhtml11-quirks.css" type="text/css"/>
+
+  <script src="js/asciidoc.js"></script>
+
+  <style>
 
     /* GLOBAL STYLES
     -------------------------------------------------- */
     /* Padding below the footer and lighter body text */
-	
-	p, h1, h2, h3, h4, h5 {
-	  padding-bottom: 5px; /* general breathing for everything */
-	}
-	
-    body {
-      padding-bottom: 40px;
-      color: #5a5a5a;
+
+    p, h1, h2, h3, h4, h5 {
+    padding-bottom: 5px; /* general breathing for everything */
     }
 
-	dt {
-	  padding-bottom: 5px;
-	  font-size:20px;
-	}
-	
-	dl {
-	 padding-bottom: 15px;
-	}
-	
-	div#toc a:visited { 
-	  color: #dd4814 !important; 
-	}
+    body {
+    padding-bottom: 40px;
+    color: #5a5a5a;
+    }
+
+    dt {
+    padding-bottom: 5px;
+    font-size:20px;
+    }
+
+    dl {
+    padding-bottom: 15px;
+    }
+
+    div#toc a:visited {
+    color: #dd4814 !important;
+    }
 
     /* Carousel base class */
     .carousel {
-      margin-bottom: 60px;
+    margin-bottom: 60px;
     }
 
     .carousel .container {
-      position: absolute;
-      right: 0;
-      bottom: 0;
-      left: 0;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
     }
 
     .carousel-control {
-      background-color: transparent;
-      border: 0;
-      font-size: 120px;
-      margin-top: 0;
-      text-shadow: 0 1px 1px rgba(0,0,0,.4);
+    background-color: transparent;
+    border: 0;
+    font-size: 120px;
+    margin-top: 0;
+    text-shadow: 0 1px 1px rgba(0,0,0,.4);
     }
 
     .carousel .item {
-      height: 250px;
+    height: 250px;
     }
     .carousel img {
-      min-width: 100%;
-      height: 250px;
+    min-width: 100%;
+    height: 250px;
     }
 
     .carousel-caption {
-      background-color: transparent;
-      position: static;
-      max-width: 550px;
-      padding: 0 20px;
-      margin-bottom: 100px;
+    background-color: transparent;
+    position: static;
+    max-width: 550px;
+    padding: 0 20px;
+    margin-bottom: 100px;
     }
     .carousel-caption h1,
     .carousel-caption .lead {
-      margin: 0;
-      line-height: 1.25;
-      color: #fff;
-      text-shadow: 0 1px 1px rgba(0,0,0,.4);
+    margin: 0;
+    line-height: 1.25;
+    color: #fff;
+    text-shadow: 0 1px 1px rgba(0,0,0,.4);
     }
-    
+
     .carousel-caption .btn {
-      margin-top: 10px;
+    margin-top: 10px;
     }
 
     /* RESPONSIVE CSS
     -------------------------------------------------- */
 
     @media (max-width: 979px) {
-      .container.navbar-wrapper {
-        margin-bottom: 0;
-        width: auto;
-      }
-      .navbar-inner {
-        border-radius: 0;
-        margin: -20px 0;
-      }
+    .container.navbar-wrapper {
+    margin-bottom: 0;
+    width: auto;
+    }
+    .navbar-inner {
+    border-radius: 0;
+    margin: -20px 0;
+    }
 
-      .carousel .item {
-        height: 300px;
-      }
-      .carousel img {
-        width: auto;
-        height: 300px;
-      }
+    .carousel .item {
+    height: 300px;
+    }
+    .carousel img {
+    width: auto;
+    height: 300px;
+    }
     }
 
     @media (max-width: 767px) {
-      .navbar-inner {
-        margin: -20px;
-      }
-      .carousel {
-        margin-left: -20px;
-        margin-right: -20px;
-      }
-      .carousel .container {
-      }
-      .carousel .item {
-        height: 300px;
-      }
-      .carousel img {
-        height: 300px;
-      }
-      .carousel-caption {
-        width: 65%;
-        padding: 0 70px;
-        margin-bottom: 40px;
-      }
-      .carousel-caption h1 {
-        font-size: 30px;
-      }
-      .carousel-caption .lead,
-      .carousel-caption .btn {
-        font-size: 18px;
-      }
+    .navbar-inner {
+    margin: -20px;
     }
-    </style>
-  </head>
+    .carousel {
+    margin-left: -20px;
+    margin-right: -20px;
+    }
+    .carousel .container {
+    }
+    .carousel .item {
+    height: 300px;
+    }
+    .carousel img {
+    height: 300px;
+    }
+    .carousel-caption {
+    width: 65%;
+    padding: 0 70px;
+    margin-bottom: 40px;
+    }
+    .carousel-caption h1 {
+    font-size: 30px;
+    }
+    .carousel-caption .lead,
+    .carousel-caption .btn {
+    font-size: 18px;
+    }
+    }
+  </style>
+</head>
 
 <body style="padding-top: 50px;">
-  
+
 <div class="container">
 
- <div class="navbar navbar-fixed-top navbar-static">
-   <div class="navbar-inner">
-     <div class="container">
+  <div class="navbar navbar-fixed-top navbar-static">
+    <div class="navbar-inner">
+      <div class="container">
         <a class="brand" href="index.html">Splout SQL</a>
+
         <div class="nav-collapse">
           <ul class="nav">
             <li><a href="features.html">Features</a></li>
             <li><a href="philosophy.html">Philosophy</a></li>
             <li class="dropdown">
-            	<a href="#" class="dropdown-toggle" data-toggle="dropdown">Technical details <b class="caret"></b></a>
-              	<ul class="dropdown-menu">
-                	<li><a href="architecture.html">Architecture</a></li>
-                	<li><a href="performance.html">Performance</a></li>
-                </ul>
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Technical details <b
+                  class="caret"></b></a>
+              <ul class="dropdown-menu">
+                <li><a href="architecture.html">Architecture</a></li>
+                <li><a href="performance.html">Performance</a></li>
+              </ul>
             </li>
             <li class="dropdown">
-            	<a href="gettingstarted.html" class="dropdown-toggle" data-toggle="dropdown">Getting started <b class="caret"></b></a>
-              	<ul class="dropdown-menu">
-                	<li><a href="gettingstarted.html">Installing & running Splout</a></li>
-                	<li><a href="gettingstarted.html#loading">Loading an example dataset</a></li>
-              	</ul>
+              <a href="gettingstarted.html" class="dropdown-toggle" data-toggle="dropdown">Getting
+                started <b class="caret"></b></a>
+              <ul class="dropdown-menu">
+                <li><a href="gettingstarted.html">Installing & running Splout</a></li>
+                <li><a href="gettingstarted.html#loading">Loading an example dataset</a></li>
+              </ul>
             </li>
             <li class="dropdown">
-            	<a href="#" class="dropdown-toggle" data-toggle="dropdown">User guide <b class="caret"></b></a>
-              	<ul class="dropdown-menu">
-                	<li><a href="user_guide.html">HTML</a></li>
-                	<li><a href="user_guide.pdf">Download as PDF</a></li>
-              	</ul>
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">User guide <b class="caret"></b></a>
+              <ul class="dropdown-menu">
+                <li><a href="user_guide.html">HTML</a></li>
+                <li><a href="user_guide.pdf">Download as PDF</a></li>
+              </ul>
             </li>
             <li><a href="faq.html">F.A.Q.</a></li>
           </ul>
           <ul class="nav pull-right">
             <li class="divider-vertical"></li>
             <li class="dropdown">
-            	<a href="#" class="dropdown-toggle" data-toggle="dropdown">Contributing <b class="caret"></b></a>
-              	<ul class="dropdown-menu">
-                	<li><a href="https://github.com/datasalt/splout-db/">Source code</a></li>
-                	<li><a href="#">Continuous integration</a></li>
-                	<li><a href="#">Code quality</a></li>
-                	<li><a href="https://groups.google.com/forum/#!forum/sploutdb-dev">Developers group</a></li>
-              	</ul>
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Contributing <b
+                  class="caret"></b></a>
+              <ul class="dropdown-menu">
+                <li><a href="https://github.com/datasalt/splout-db/">Source code</a></li>
+                <li><a href="#">Continuous integration</a></li>
+                <li><a href="#">Code quality</a></li>
+                <li><a href="https://groups.google.com/forum/#!forum/sploutdb-dev">Developers group</a>
+                </li>
+              </ul>
             </li>
             <li class="dropdown">
-              <a href="about.html" class="dropdown-toggle" data-toggle="dropdown">About <b class="caret"></b></a>
+              <a href="about.html" class="dropdown-toggle" data-toggle="dropdown">About <b
+                  class="caret"></b></a>
               <ul class="dropdown-menu">
                 <li><a href="#">License</a></li>
                 <li><a href="#">Team</a></li>
-                <li><a href="https://groups.google.com/forum/?fromgroups#!forum/sploutdb-users">Users group</a></li>
+                <li><a href="https://groups.google.com/forum/?fromgroups#!forum/sploutdb-users">Users
+                  group</a></li>
               </ul>
             </li>
           </ul>
-        </div><!-- /.nav-collapse -->
-     </div>
-   </div>
- </div><!-- /navbar -->
+        </div>
+        <!-- /.nav-collapse -->
+      </div>
+    </div>
+  </div>
+  <!-- /navbar -->
 
-<div class="page-header">
-  <h2 style="align:center;">Splout is a scalable, read-only SQL Big Data view.</h2>
+  <div class="page-header">
+    <h2 style="align:center;">Splout is a scalable, read-only SQL Big Data view.</h2>
+  </div>
+
+  <div class="page-header">
+    <p style="font-size:130%">Splout serves partitioned SQL views which are generated and indexed by
+      Hadoop.</p>
+    <br>
+
+    <p style="font-size:150%">Splout is to Hadoop + SQL what Voldemort or Elephant DB are to Hadoop +
+      Key/Value.</p>
+  </div>
+  <!--  -->
+
+  <dl>
+    <dt>Big Data Serving</dt>
+    <dd>There are many Big Data problems whose output is also Big Data. <strong>Splout allows serving an
+      arbitrarily big dataset by partitioning it</strong>.
+    </dd>
+  </dl>
+  <dl>
+    <dt>SQL</dt>
+    <dd>There are many databases that allow serving Big Data such as NoSQL solutions, but they don't have
+      a <strong>rich query language</strong> like SQL. You generally can't aggregate data in real-time
+      like you would do with a GROUP BY clause. Because you can't precompute everything, <strong>SQL is a
+        very convenient feature to have</strong> in a Big Data Serving solution.
+    </dd>
+  </dl>
+  <dl>
+    <dt>For Hadoop</dt>
+    <dd>Hadoop is nowadays the de-facto open-source solution for Big Data batch-processing. When the
+      output of a Hadoop process is big, there isn't a satisfying solution for serving it.
+      Think of pre-computed recommendations, for example, where the whole dataset may vary from one day
+      to another. <strong>Splout decouples database creation from database serving and makes it efficient
+        and safe to deploy Hadoop-generated datasets</strong>.
+    </dd>
+  </dl>
+  <dl>
+    <dt>Web-latency</dt>
+    <dd>Splout is not a "fast analytics" engine. <strong>Splout is made for demanding web or mobile
+      applications where query performance is critical</strong>. Arbitrary real-time aggregations should
+      be done in less than 200 milliseconds under high traffic load.
+    </dd>
+  </dl>
+  <dl>
+    <dt>Scalable</dt>
+    <dd><strong>Splout scales horizontally</strong>. By adding more machines you can increase throughput
+      linearly. Splout coordinates a cluster of machines to <strong>provide fail-over in case of network
+        splits or hardware corruption.</strong></dd>
+  </dl>
+  <dl>
+    <dt>Flexible</dt>
+    <dd>Even though Splout is relational, <strong>it is very flexible</strong>. Because data is deployed
+      atomically, <strong>you can change your data model from one day to another without pain</strong>.
+    </dd>
+  </dl>
+  <dl>
+    <dt>Easy-to-manage</dt>
+    <dd>Splout serves <strong>tablespaces</strong>. Each tablespace may have one or more
+      <strong>tables</strong>. Tables are either </strong>partitioned or replicated</strong> in every
+      partition. By using </strong>command-line tools</strong> you can index and deploy any dataset in
+      your HDFS, local system or remote S3 file system. You can also used the <strong>advanced Java
+        API</strong> for fine-tuning the whole process.
+    </dd>
+  </dl>
+  <dl>
+    <dt>RESTful</dt>
+    <dd>Splout provides a REST interface that return JSON to any SQL query.</dd>
+  </dl>
+
+  <br><br><br><br>
+  <!-- Footer -->
+  <footer class="footer">
+    <p class="pull-right"><a href="http://datasalt.com">Splout is maintained by Datasalt</a></p>
+  </footer>
 </div>
-
-<div class="page-header">
-<p style="font-size:130%">Splout serves partitioned SQL views which are generated and indexed by Hadoop.</p>
-<br>
-<p style="font-size:150%">Splout is to Hadoop + SQL what Voldemort or Elephant DB are to Hadoop + Key/Value.</p>
-</div>
- <!--  -->
- 
-<dl>
-   <dt>Big Data Serving</dt>
-   <dd>There are many Big Data problems whose output is also Big Data. <strong>Splout allows serving an arbitrarily big dataset by partitioning it</strong>.</dd>
-</dl>
-<dl>
-   <dt>SQL</dt>
-   <dd>There are many databases that allow serving Big Data such as NoSQL solutions, but they don't have a <strong>rich query language</strong> like SQL. You generally can't aggregate data in real-time like you would do with a GROUP BY clause. Because you can't precompute everything, <strong>SQL is a very convenient feature to have</strong> in a Big Data Serving solution.</dd>
-</dl>
-<dl>
-   <dt>For Hadoop</dt>
-   <dd>Hadoop is nowadays the de-facto open-source solution for Big Data batch-processing. When the output of a Hadoop process is big, there isn't a satisfying solution for serving it.
-    Think of pre-computed recommendations, for example, where the whole dataset may vary from one day to another. <strong>Splout decouples database creation from database serving and makes it efficient and safe to deploy Hadoop-generated datasets</strong>.</dd>
-</dl>
-<dl>
-   <dt>Web-latency</dt>
-   <dd>Splout is not a "fast analytics" engine. <strong>Splout is made for demanding web or mobile applications where query performance is critical</strong>. Arbitrary real-time aggregations should be done in less than 200 milliseconds under high traffic load.</dd>
-</dl>
-<dl>
-   <dt>Scalable</dt>
-   <dd><strong>Splout scales horizontally</strong>. By adding more machines you can increase throughput linearly. Splout coordinates a cluster of machines to <strong>provide fail-over in case of network splits or hardware corruption.</strong></dd>
-</dl>
-<dl>
-   <dt>Flexible</dt>
-   <dd>Even though Splout is relational, <strong>it is very flexible</strong>. Because data is deployed atomically, <strong>you can change your data model from one day to another without pain</strong>.</dd>
-</dl>
-<dl>
-   <dt>Easy-to-manage</dt>
-   <dd>Splout serves <strong>tablespaces</strong>. Each tablespace may have one or more <strong>tables</strong>. Tables are either </strong>partitioned or replicated</strong> in every partition. By using </strong>command-line tools</strong> you can index and deploy any dataset in your HDFS, local system or remote S3 file system. You can also used the <strong>advanced Java API</strong> for fine-tuning the whole process.</dd>
-</dl>
-<dl>
-   <dt>RESTful</dt>
-   <dd>Splout provides a REST interface that return JSON to any SQL query.</dd>
-</dl> 
-
-<br><br><br><br>
-      <!-- Footer -->
-      <footer class="footer">
-        <p class="pull-right"><a href="http://datasalt.com">Splout is maintained by Datasalt</a></p>
-      </footer>
-</div><!-- /container -->
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
-    <script src="js/bootstrap.min.js"></script>
-    <script src="js/bootswatch.js"></script>
-  </body>
+<!-- /container -->
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/bootswatch.js"></script>
+</body>
 </html>
