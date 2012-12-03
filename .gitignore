@@ -1,3 +1,5 @@
 user_guide.xml
 x2doc/
 _site
+*.iml
+.idea
