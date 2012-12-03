@@ -181,7 +181,7 @@
 
         <distributionManagement>
             <snapshotRepository>
-                <id>sploutdb-snapshots</id>
+                <id>datasalt-snapshots</id>
                 <url>http://clinker.datasalt.com/nexus/content/groups/public-snapshots</url>
             </snapshotRepository>
         </distributionManagement>
