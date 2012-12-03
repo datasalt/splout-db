@@ -26,20 +26,22 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.util.Arrays;
 
-import com.datasalt.pangool.io.*;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.NullWritable;
 import org.junit.Test;
 
+import com.datasalt.pangool.io.Fields;
+import com.datasalt.pangool.io.ITuple;
+import com.datasalt.pangool.io.Schema;
+import com.datasalt.pangool.io.Tuple;
+import com.datasalt.pangool.io.TupleFile;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat;
-import com.datasalt.pangool.utils.test.AbstractHadoopTestLibrary;
-import com.splout.db.hadoop.TupleSampler.SamplingOptions;
 import com.splout.db.hadoop.TupleSampler.SamplingType;
 import com.splout.db.hadoop.TupleSampler.TupleSamplerException;
 
-public class TestTupleSampler extends AbstractHadoopTestLibrary {
+public class TestTupleSampler {
 
 	public static String INPUT = "input-" + TestTupleSampler.class.getName();
 	public static String OUTPUT = "output-" + TestTupleSampler.class.getName();
@@ -53,13 +55,13 @@ public class TestTupleSampler extends AbstractHadoopTestLibrary {
 	
 	@Test
 	public void testReservoir() throws IOException, InterruptedException, TupleSamplerException {
-		initHadoop();
-		trash(INPUT, OUTPUT);
-
+		Runtime.getRuntime().exec("rm -rf " + INPUT);
+		Runtime.getRuntime().exec("rm -rf " + OUTPUT);
+		
 		Configuration conf = new Configuration();
 
 		final Schema schema = new Schema("schema", Fields.parse("id:string, foo:int"));
-    TupleFile.Writer writer = new TupleFile.Writer(fS,  getConf(), new Path(INPUT), schema);
+    TupleFile.Writer writer = new TupleFile.Writer(FileSystem.get(conf), conf, new Path(INPUT), schema);
 		for(int i = 0; i < 10000; i++) {
 			ITuple tuple = new Tuple(schema);
 			tuple.set("id", "id" + i);
@@ -78,7 +80,7 @@ public class TestTupleSampler extends AbstractHadoopTestLibrary {
 		int nTuples = 0;
 		int[] sampledKeys = new int[10];
 		
-		TupleFile.Reader reader = new TupleFile.Reader(fS,  conf, new Path(OUTPUT));
+		TupleFile.Reader reader = new TupleFile.Reader(FileSystem.get(conf),  conf, new Path(OUTPUT));
     Tuple tuple = new Tuple(reader.getSchema());
 		while(reader.next(tuple)) {
 			// Get the "foo" field from sampled Tuples
@@ -98,7 +100,7 @@ public class TestTupleSampler extends AbstractHadoopTestLibrary {
 		nTuples = 0;
 		sampledKeys = new int[10];
 
-    reader = new TupleFile.Reader(fS,  conf, new Path(OUTPUT));
+    reader = new TupleFile.Reader(FileSystem.get(conf), conf, new Path(OUTPUT));
     tuple = new Tuple(reader.getSchema());
     while(reader.next(tuple)) {
       // Get the "foo" field from sampled Tuples
@@ -117,23 +119,24 @@ public class TestTupleSampler extends AbstractHadoopTestLibrary {
 		// The lower bound is very low, usually the average key will be around 1/4th of the max key (10000).
 		assertTrue(avgKey > 100);
 		
-		trash(INPUT, OUTPUT);
+		Runtime.getRuntime().exec("rm -rf " + INPUT);
+		Runtime.getRuntime().exec("rm -rf " + OUTPUT);
 	}
 	
 	public void testDefault(long splitSize) throws TupleSamplerException, IOException, InterruptedException {
-		initHadoop();
-		trash(INPUT, OUTPUT);
-
+		Runtime.getRuntime().exec("rm -rf " + INPUT);
+		Runtime.getRuntime().exec("rm -rf " + OUTPUT);
+		
 		Configuration conf = new Configuration();
 
-    TupleFile.Writer writer = new TupleFile.Writer(fS,  getConf(), new Path(INPUT), schema);
+    TupleFile.Writer writer = new TupleFile.Writer(FileSystem.get(conf), conf, new Path(INPUT), schema);
 		for(int i = 0; i < 1000; i++) {
 			writer.append(randomTuple());
 		}
 		writer.close();
 
     // Requesting as many samples as splits so one sample is needed from each split.
-    FileStatus status = fS.getFileStatus(new Path(INPUT));
+    FileStatus status = FileSystem.get(conf).getFileStatus(new Path(INPUT));
     long expectedSplits = Math.max(1, (long) Math.ceil(((double) status.getLen()) / splitSize));
 
 		TupleSampler.DefaultSamplingOptions options = new TupleSampler.DefaultSamplingOptions();
@@ -143,7 +146,7 @@ public class TestTupleSampler extends AbstractHadoopTestLibrary {
 		TupleSampler sampler = new TupleSampler(SamplingType.DEFAULT, options);
 		sampler.sample(Arrays.asList(new TableInput[] { new TableInput(new TupleInputFormat(), schema, new IdentityRecordProcessor(), new Path(INPUT)) }), schema, conf, expectedSplits, new Path(OUTPUT));
 		int nTuples = 0;
-    TupleFile.Reader reader = new TupleFile.Reader(fS,  conf, new Path(OUTPUT));
+    TupleFile.Reader reader = new TupleFile.Reader(FileSystem.get(conf), conf, new Path(OUTPUT));
     Tuple tuple = new Tuple(reader.getSchema());
     while(reader.next(tuple)) {
 			nTuples++;
@@ -154,7 +157,9 @@ public class TestTupleSampler extends AbstractHadoopTestLibrary {
 		a.split("foo");
 		
 		assertEquals(expectedSplits, nTuples);
-		trash(INPUT, OUTPUT);
+		
+		Runtime.getRuntime().exec("rm -rf " + INPUT);
+		Runtime.getRuntime().exec("rm -rf " + OUTPUT);
 	}
 
 	final Schema schema = new Schema("schema", Fields.parse("id:string, foo:string"));

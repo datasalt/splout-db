@@ -25,6 +25,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.junit.Test;
 
@@ -34,12 +36,11 @@ import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.io.Tuple;
 import com.datasalt.pangool.io.TupleFile;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat;
-import com.datasalt.pangool.utils.test.AbstractHadoopTestLibrary;
 import com.splout.db.common.PartitionEntry;
 import com.splout.db.common.SQLiteJDBCManager;
 import com.splout.db.hadoop.TupleSampler.SamplingType;
 
-public class TestTablespaceGenerator extends AbstractHadoopTestLibrary {
+public class TestTablespaceGenerator {
 
 	public final static String INPUT  = "in-"  + TestTablespaceGenerator.class.getName();
 	public final static String OUTPUT = "out-" + TestTablespaceGenerator.class.getName();
@@ -48,10 +49,11 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary {
 
   @Test
 	public void simpleTest() throws Exception {
-		initHadoop();
-		trash(INPUT, OUTPUT);
+		Runtime.getRuntime().exec("rm -rf " + INPUT);
+		Runtime.getRuntime().exec("rm -rf " + OUTPUT);
 		
-		TupleFile.Writer writer = new TupleFile.Writer(fS,  getConf(), new Path(INPUT), theSchema1);
+		Configuration conf = new Configuration();
+		TupleFile.Writer writer = new TupleFile.Writer(FileSystem.get(conf), conf, new Path(INPUT), theSchema1);
 
     writer.append(getTuple("id1", "value12"));
     writer.append(getTuple("id1", "value11"));
@@ -77,7 +79,7 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary {
 		
 		TablespaceSpec tablespace = TablespaceSpec.of(theSchema1, "id", new Path(INPUT), new TupleInputFormat(),  4);
 		TablespaceGenerator viewGenerator = new TablespaceGenerator(tablespace, new Path(OUTPUT));
-		viewGenerator.generateView(getConf(), SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions());
+		viewGenerator.generateView(conf, SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions());
 		
 		List<PartitionEntry> partitionMap = viewGenerator.getPartitionMap().getPartitionEntries();
 		assertEquals(4, partitionMap.size());
@@ -98,16 +100,17 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary {
 		assertEquals(null, partitionMap.get(3).getMax());
 		assertEquals(3, (int) partitionMap.get(3).getShard());
 		
-		trash(INPUT, OUTPUT);
+		Runtime.getRuntime().exec("rm -rf " + INPUT);
+		Runtime.getRuntime().exec("rm -rf " + OUTPUT);
 	}
 	
   @Test
   public void testAcceptNullValues() throws Exception {
-  	initHadoop();
-  	
-		trash(INPUT, OUTPUT);
+		Runtime.getRuntime().exec("rm -rf " + INPUT);
+		Runtime.getRuntime().exec("rm -rf " + OUTPUT);
 		
-    TupleFile.Writer writer = new TupleFile.Writer(fS,  getConf(), new Path(INPUT), new NullableSchema(theSchema2));
+		Configuration conf = new Configuration();
+    TupleFile.Writer writer = new TupleFile.Writer(FileSystem.get(conf), conf, new Path(INPUT), new NullableSchema(theSchema2));
 
 		writer.append(new NullableTuple(getTupleWithNulls("id1", "value11", null, -1.0, null)));
 		writer.append(new NullableTuple(getTupleWithNulls("id1", "value12", null, null, "Hello")));
@@ -119,12 +122,13 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary {
 		
 		TablespaceSpec tablespace = TablespaceSpec.of(theSchema2, "id", new Path(INPUT), new TupleInputFormat(), 1);
 		TablespaceGenerator viewGenerator = new TablespaceGenerator(tablespace, new Path(OUTPUT));
-		viewGenerator.generateView(getConf(), SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions());
+		viewGenerator.generateView(conf, SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions());
 		
 		SQLiteJDBCManager manager = new SQLiteJDBCManager(OUTPUT + "/store/0.db", 10);
 		assertTrue(manager.query("SELECT * FROM schema2;", 100).contains("null"));
 		
-		trash(INPUT, OUTPUT);
+		Runtime.getRuntime().exec("rm -rf " + INPUT);
+		Runtime.getRuntime().exec("rm -rf " + OUTPUT);
   }
   
   public static ITuple getTupleWithNulls(String id, String value, Integer intValue, Double doubleValue, String strValue) {

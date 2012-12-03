@@ -163,18 +163,18 @@
 
 	<!-- Maven Environment -->
 
-	<repositories>
-		<repository>
-			<id>datasalt-snapshots</id>
-			<name>Datasalt Snapshot Repository</name>
-			<url>http://clinker.datasalt.com/nexus/content/groups/public-snapshots</url>
-			<releases>
-				<enabled>false</enabled>
-			</releases>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-		</repository>
+	<repositories> 
+		<repository> 
+			<id>datasalt-snapshots</id> 
+			<name>Datasalt Snapshot Repository</name> 
+			<url>http://clinker.datasalt.com/nexus/content/groups/public-snapshots</url> 
+			<releases> 
+				<enabled>false</enabled> 
+			</releases> 
+			<snapshots> 
+				<enabled>true</enabled> 
+			</snapshots> 
+		</repository> 
 	</repositories>
 
 	<pluginRepositories />

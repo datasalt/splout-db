@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.sql.SQLException;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
@@ -42,12 +43,11 @@ import com.datasalt.pangool.tuplemr.TupleMRBuilder;
 import com.datasalt.pangool.tuplemr.TupleMRException;
 import com.datasalt.pangool.tuplemr.TupleMapper;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.HadoopInputFormat;
-import com.datasalt.pangool.utils.test.AbstractHadoopTestLibrary;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
 import com.splout.db.common.SQLiteJDBCManager;
 
 @SuppressWarnings("serial")
-public class TestSQLiteOutputFormat extends AbstractHadoopTestLibrary implements Serializable {
+public class TestSQLiteOutputFormat implements Serializable {
 
 	public final static String INPUT = "in-" + TestSQLiteOutputFormat.class.getName();
 	public final static String OUTPUT = "out-" + TestSQLiteOutputFormat.class.getName();
@@ -55,8 +55,8 @@ public class TestSQLiteOutputFormat extends AbstractHadoopTestLibrary implements
 	@Test
 	public void test() throws IOException, TupleMRException, InterruptedException, ClassNotFoundException, SQLException,
 	    JSONSerDeException {
-		initHadoop();
-		trash(INPUT, OUTPUT);
+		Runtime.getRuntime().exec("rm -rf " + INPUT);
+		Runtime.getRuntime().exec("rm -rf " + OUTPUT);
 
 		// Prepare input
 		BufferedWriter writer = new BufferedWriter(new FileWriter(INPUT));
@@ -66,7 +66,7 @@ public class TestSQLiteOutputFormat extends AbstractHadoopTestLibrary implements
 		writer.write("INSERT INTO foo (foobar1, foobar2) VALUES (\"foo4\", 40);");
 		writer.close();
 
-		TupleMRBuilder builder = new TupleMRBuilder(getConf());
+		TupleMRBuilder builder = new TupleMRBuilder(new Configuration());
 		builder.addIntermediateSchema(SQLiteOutputFormat.SCHEMA);
 		builder.addInput(new Path(INPUT), new HadoopInputFormat(TextInputFormat.class),
 		    new TupleMapper<LongWritable, Text>() {
@@ -98,6 +98,7 @@ public class TestSQLiteOutputFormat extends AbstractHadoopTestLibrary implements
 		assertTrue(manager.query("SELECT COUNT(*) FROM foo;", 100).contains("COUNT(*)\":4"));
 		manager.close();
 
-		trash(INPUT, OUTPUT);
+		Runtime.getRuntime().exec("rm -rf " + INPUT);
+		Runtime.getRuntime().exec("rm -rf " + OUTPUT);
 	}
 }
