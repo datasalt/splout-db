@@ -20,28 +20,7 @@ package com.splout.db.hadoop;
  * #L%
  */
 
-import com.datasalt.pangool.io.Fields;
-import com.datasalt.pangool.io.ITuple;
-import com.datasalt.pangool.io.Schema;
-import com.datasalt.pangool.io.Schema.Field;
-import com.datasalt.pangool.tuplemr.IdentityTupleReducer;
-import com.datasalt.pangool.tuplemr.TupleMRBuilder;
-import com.datasalt.pangool.tuplemr.TupleMRException;
-import com.datasalt.pangool.tuplemr.TupleMapper;
-import com.datasalt.pangool.tuplemr.mapred.lib.input.HadoopInputFormat;
-import com.datasalt.pangool.utils.test.AbstractHadoopTestLibrary;
-import com.splout.db.common.JSONSerDe;
-import com.splout.db.common.JSONSerDe.JSONSerDeException;
-import com.splout.db.common.SQLiteJDBCManager;
-import com.splout.db.hadoop.TableSpec.FieldIndex;
-import com.splout.db.hadoop.TupleSQLite4JavaOutputFormat.TupleSQLiteOutputFormatException;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -51,19 +30,35 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.junit.Test;
+
+import com.datasalt.pangool.io.Fields;
+import com.datasalt.pangool.io.ITuple;
+import com.datasalt.pangool.io.Schema;
+import com.datasalt.pangool.io.Schema.Field;
+import com.datasalt.pangool.tuplemr.IdentityTupleReducer;
+import com.datasalt.pangool.tuplemr.TupleMRBuilder;
+import com.datasalt.pangool.tuplemr.TupleMRException;
+import com.datasalt.pangool.tuplemr.TupleMapper;
+import com.datasalt.pangool.tuplemr.mapred.lib.input.HadoopInputFormat;
+import com.splout.db.common.JSONSerDe;
+import com.splout.db.common.JSONSerDe.JSONSerDeException;
+import com.splout.db.common.SQLiteJDBCManager;
+import com.splout.db.hadoop.TableSpec.FieldIndex;
+import com.splout.db.hadoop.TupleSQLite4JavaOutputFormat.TupleSQLiteOutputFormatException;
 
 @SuppressWarnings("serial")
-public class TestTupleSQLiteOutputFormat extends AbstractHadoopTestLibrary implements Serializable {
+public class TestTupleSQLiteOutputFormat implements Serializable {
 
 	public final static String INPUT1 = "in1-" + TestSQLiteOutputFormat.class.getName();
 	public final static String INPUT2 = "in2-" + TestSQLiteOutputFormat.class.getName();
 	public final static String OUTPUT = "out-" + TestSQLiteOutputFormat.class.getName();
-
-	@Before
-	public void jLibraryPath() {
-//		SploutConfiguration.setDevelopmentJavaLibraryPath();
-	}
 	
 	@Test
 	public void testPreSQL() throws Exception {
@@ -109,8 +104,9 @@ public class TestTupleSQLiteOutputFormat extends AbstractHadoopTestLibrary imple
   @Test
 	public void test() throws IOException, TupleMRException, InterruptedException, ClassNotFoundException, SQLException,
 	    JSONSerDeException, TupleSQLiteOutputFormatException {
-		initHadoop();
-		trash(INPUT1, OUTPUT);
+
+		Runtime.getRuntime().exec("rm -rf " + INPUT1);
+		Runtime.getRuntime().exec("rm -rf " + OUTPUT);
 
 		// Prepare input
 		BufferedWriter writer;
@@ -142,7 +138,7 @@ public class TestTupleSQLiteOutputFormat extends AbstractHadoopTestLibrary imple
 		fields.add(Field.create(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD, Schema.Field.Type.INT));
 		final Schema metaSchema2  = new Schema("schema2", fields);
 		
-		TupleMRBuilder builder = new TupleMRBuilder(getConf());
+		TupleMRBuilder builder = new TupleMRBuilder(new Configuration());
 		builder.addIntermediateSchema(new NullableSchema(metaSchema1));
 		builder.addIntermediateSchema(new NullableSchema(metaSchema2));
 		builder.addInput(new Path(INPUT1), new HadoopInputFormat(TextInputFormat.class),
@@ -193,6 +189,9 @@ public class TestTupleSQLiteOutputFormat extends AbstractHadoopTestLibrary imple
 		assertEquals(2, list.size());
 		manager.close();
 
-		trash(INPUT1, INPUT2, OUTPUT);
+		Runtime.getRuntime().exec("rm -rf " + INPUT1);
+		Runtime.getRuntime().exec("rm -rf " + INPUT2);
+		Runtime.getRuntime().exec("rm -rf " + OUTPUT);
+
 	}
 }

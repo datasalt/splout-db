@@ -22,6 +22,7 @@ package com.splout.db.hadoop;
 
 import static org.junit.Assert.assertEquals;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.junit.Before;
@@ -32,12 +33,11 @@ import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.io.TupleFile;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat;
 import com.datasalt.pangool.utils.HadoopUtils;
-import com.datasalt.pangool.utils.test.AbstractHadoopTestLibrary;
 import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.PartitionMap;
 import com.splout.db.hadoop.TupleSampler.SamplingType;
 
-public class TestTablespaceGeneratorJavaScript extends AbstractHadoopTestLibrary {
+public class TestTablespaceGeneratorJavaScript {
 
 	public final static String INPUT = "in-" + TestTablespaceGeneratorJavaScript.class.getName();
 	public final static String OUTPUT = "out-" + TestTablespaceGeneratorJavaScript.class.getName();
@@ -50,10 +50,11 @@ public class TestTablespaceGeneratorJavaScript extends AbstractHadoopTestLibrary
 	
 	@Test
 	public void simpleTest() throws Exception {
-		initHadoop();
-		trash(INPUT, OUTPUT);
-
-    TupleFile.Writer writer = new TupleFile.Writer(fS,  getConf(), new Path(INPUT), theSchema1);
+		Runtime.getRuntime().exec("rm -rf " + INPUT);
+		Runtime.getRuntime().exec("rm -rf " + OUTPUT);
+		
+		Configuration conf = new Configuration();
+    TupleFile.Writer writer = new TupleFile.Writer(FileSystem.get(conf), conf, new Path(INPUT), theSchema1);
 
 		writer.append(TestTablespaceGenerator.getTuple("aa1", "value1"));
 		writer.append(TestTablespaceGenerator.getTuple("aa2", "value2"));
@@ -76,10 +77,10 @@ public class TestTablespaceGeneratorJavaScript extends AbstractHadoopTestLibrary
 		builder.add(tableBuilder.build());
 
 		TablespaceGenerator viewGenerator = new TablespaceGenerator(builder.build(), new Path(OUTPUT));
-		viewGenerator.generateView(getConf(), SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions());
+		viewGenerator.generateView(conf, SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions());
 		
 		PartitionMap partitionMap = JSONSerDe.deSer(
-		    HadoopUtils.fileToString(FileSystem.getLocal(getConf()), new Path(OUTPUT, "partition-map")), PartitionMap.class);
+		    HadoopUtils.fileToString(FileSystem.getLocal(conf), new Path(OUTPUT, "partition-map")), PartitionMap.class);
 		
 		assertEquals(null, partitionMap.getPartitionEntries().get(0).getMin());
 		assertEquals("ab", partitionMap.getPartitionEntries().get(0).getMax());
@@ -90,6 +91,7 @@ public class TestTablespaceGeneratorJavaScript extends AbstractHadoopTestLibrary
 		assertEquals("bb", partitionMap.getPartitionEntries().get(2).getMin());
 		assertEquals(null, partitionMap.getPartitionEntries().get(2).getMax());
 
-		trash(INPUT, OUTPUT);
+		Runtime.getRuntime().exec("rm -rf " + INPUT);
+		Runtime.getRuntime().exec("rm -rf " + OUTPUT);
 	}
 }
