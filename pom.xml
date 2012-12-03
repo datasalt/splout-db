@@ -182,7 +182,7 @@
         <distributionManagement>
             <snapshotRepository>
                 <id>datasalt-snapshots</id>
-                <url>http://clinker.datasalt.com/nexus/content/groups/public-snapshots</url>
+                <url>http://clinker.datasalt.com/nexus/content/repositories/snapshots</url>
             </snapshotRepository>
         </distributionManagement>
 </project>
