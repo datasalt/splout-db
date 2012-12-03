@@ -34,7 +34,6 @@ import junit.framework.AssertionFailedError;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.splout.db.common.JSONSerDe;
@@ -136,6 +135,8 @@ public class TestDNode {
 			deploy.setVersion(1l);
 			deploy.setMetadata(new PartitionMetadata());
 			client.deploy(Arrays.asList(new DeployAction[] { deploy }), 1l);
+			
+			Thread.sleep(1000);
 			waitForDeployToFinish(client);
 
 			Thread.sleep(200);
@@ -153,6 +154,8 @@ public class TestDNode {
 			deploy.setVersion(2l);
 			deploy.setMetadata(new PartitionMetadata());
 			client.deploy(Arrays.asList(new DeployAction[] { deploy }), 2l);
+			
+			Thread.sleep(1000);
 			waitForDeployToFinish(client);
 
 			Assert.assertEquals(false, dHandler.lastDeployTimedout.get());

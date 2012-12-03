@@ -75,7 +75,7 @@ public class HadoopIntegrationTest implements Tool, Configurable {
 			jComm.usage();
 			System.exit(-1);
 		}
-
+		
 		Path tmpHdfsPath = new Path("tmp-" + HadoopIntegrationTest.class.getName() + "-"
 		    + System.currentTimeMillis());
 		FileSystem fS = tmpHdfsPath.getFileSystem(getConf());

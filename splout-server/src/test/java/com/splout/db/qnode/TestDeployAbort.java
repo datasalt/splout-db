@@ -122,13 +122,8 @@ public class TestDeployAbort {
 
 			handler.deploy(l);
 
-			new TestUtils.NotWaitingForeverCondition() {
-				@Override
-				public boolean endCondition() {
-					return CoordinationStructures.DEPLOY_IN_PROGRESS.get() > 0;
-				}
-			}.waitAtMost(5000);
-
+			Thread.sleep(1000);
+			
 			new TestUtils.NotWaitingForeverCondition() {
 				@Override
 				public boolean endCondition() {
