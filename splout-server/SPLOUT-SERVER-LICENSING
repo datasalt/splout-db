@@ -46,6 +46,10 @@ Under the CDDL/GPL with Classpath Exception
 jersey-bundle - https://jersey.java.net/jersey-bundle
 jersey-server - https://jersey.java.net/jersey-server
 
+Under Public Domain:
+
+SQLite - (C) Hipp, Wyrick & Company, Inc - http://www.sqlite.org
+
 All licenses are in the legal license
 
 This software includes software of the Apache Software Foundation. Other notices are below

@@ -15,7 +15,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 B) This product uses certain third party software code.
 See THIRTY-PARTY.txt file to see the list of third party software used.
 
-Under the Apache Software License 2.0
+Under the Apache Software License 2.0:
 
 commons-beanutils - © The Apache Software Foundation - http://commons.apache.org
 commons-collections - © The Apache Software Foundation - http://commons.apache.org
@@ -34,14 +34,18 @@ pangool-core - © Datasalt Systems, SL - http://pangool.net
 splout-commons - © Datasalt Systems, SL - http://sploutsql.com
 splout-javaclient - © Datasalt Systems, SL - http://sploutsql.com
 
-Under the MIT license
+Under the MIT license:
 
 slf4j-api - Copyright (c) 2004-2008 QOS.ch -http://www.slf4j.org
 mockito-core:jar - Copyright (c) 2007 Mockito contributors http://code.google.com/p/mockito/
 
-Under the Mozilla Public License v2
+Under the Mozilla Public License v2:
 
 Rhino 1.7R4 – © Mozilla Foundation and contributors - https://developer.mozilla.org/en-US/docs/Rhino
+
+Under Public Domain:
+
+SQLite - (C) Hipp, Wyrick & Company, Inc - http://www.sqlite.org
 
 All licenses are in the legal folder
 
