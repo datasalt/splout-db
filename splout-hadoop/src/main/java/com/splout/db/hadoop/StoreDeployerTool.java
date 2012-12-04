@@ -101,7 +101,7 @@ public class StoreDeployerTool {
         initStatements.addAll(tablespace.getInitStatements());
       }
       // Finally set
-      deployRequests[tIndex].setInitStatements(new ArrayList<String>());
+      deployRequests[tIndex].setInitStatements(initStatements);
 
       deployRequests[tIndex].setTablespace(tablespace.getTablespace());
       deployRequests[tIndex].setData_uri(new Path(absoluteOutPath, "store").toUri().toString());
