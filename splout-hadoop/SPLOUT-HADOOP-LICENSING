@@ -12,8 +12,36 @@ Unless required by applicable law or agreed to in writing, software distributed 
 
 
 
-B) This product uses certain third party software code, found in lib folder.
-See THIRTY-PARTY.txt file to see the list of third party sofware used.
+B) This product uses certain third party software code.
+See THIRTY-PARTY.txt file to see the list of third party software used.
+
+Under the Apache Software License 2.0
+
+commons-beanutils:1.8.3 - © The Apache Software Foundation - http://commons.apache.org
+commons-collections:3.2.1- © The Apache Software Foundation - http://commons.apache.org
+commons-io:2.2- © The Apache Software Foundation - http://commons.apache.org
+guava:13.0 - Copyright (C) 2007 Google Inc - http://code.google.com/p/guava-libraries/guava
+hadoop-core:0.20.2 - © The Apache Software Foundation - http://hadoop.apache.org/
+jackson-mapper-asl1.7.9 - Copyright (c) 2007- Tatu Saloranta http://jackson.codehaus.org
+jackson-core-asl:1.7.9 - Copyright (c) 2007- Tatu Saloranta- http://jackson.codehaus.org
+jackson-jaxrs:1.7.9 - Copyright (c) 2007- Tatu Saloranta http://jackson.codehaus.org (also dual licensed
+under LGPL 2.1)
+jcommander 1.27 - Copyright 2010 Cedric Beust - http://beust.com/jcommander
+jets3t-0.9.0.jar - Copyright 2008 James Murty - http://www.jets3t.org/
+joda-time:2.1 - Copyright 2001-2005 Stephen Colebourne - http://joda-time.sourceforge.net
+log4j-1.2.16.jar – © The Apache Software Foundation - http://logging.apache.org/log4j/1.2/download.html
+pangool-core:0.43.3 -© Datasalt Systems, SL - http://pangool.net
+splout-commons 0.1 - © Datasalt Systems, SL - http://sploutsql.com
+splout-javaclient 0.1- © Datasalt Systems, SL - http://sploutsql.com
+
+Under the MIT license
+
+slf4j-api:1.6.4 - Copyright (c) 2004-2008 QOS.ch -http://www.slf4j.org
+mockito-core:jar:1.9.0 - Copyright (c) 2007 Mockito contributors http://code.google.com/p/mockito/
+
+Under the Mozilla Public License v2
+
+Rhino 1.7R4 – © Mozilla Foundation and contributors - https://developer.mozilla.org/en-US/docs/Rhino
 
 All licenses are in the legal folder
 

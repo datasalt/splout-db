@@ -11,8 +11,40 @@ Splout is distributed in the hope that it will be useful, but WITHOUT  ANY WARRA
 You should have received a copy of the GNU Affero General Public License v3 long with Splout.  If not, see <http://www.gnu.org/licenses/>.
 
 
-B) This product uses certain third party software code, found in lib folder.
+B) This product uses certain third party software code.
 See THIRTY-PARTY.txt file to see the list of third party sofware used.
+
+Under the Apache Software License 2.0
+
+commons-collections:3.2.1 - http://commons.apache.org
+commons-configuration:1.8 - http://commons.apache.org
+commons-io:2.2 - http://commons.apache.org
+ehcache-core:2.5.1 - http://ehcache.org
+guava:13.0 - Copyright (C) 2007 Google Inc - http://code.google.com/p/guava-libraries/guava
+hadoop-core:0.20.2 - http://hadoop.apache.org/
+hazelcast:2.3 - http://www.hazelcast.com
+hazelcast-cloud:2.3.1 - http://www.hazelcast.com
+jcommander 1.27 - http://beust.com/jcommander
+jets3t-0.9.0.jar - Copyright 2008 James Murty - http://www.jets3t.org/
+jetty:6.1.26 - http://www.eclipse.org/jetty/jetty-parent/project/modules/jetty
+libthrift:0.7.0 - http://thrift.apache.org
+log4j-1.2.16.jar – © The Apache Software Foundation - http://logging.apache.org/log4j/1.2/download.html
+metrics-core:2.1.2 - http://metrics.codahale.com
+metrics-servlet:2.1.2 - http://metrics.codahale.com
+tomcat-servlet-api-7.0.32.jar - © The Apache Software Foundation - http://tomcat.apache.org/
+
+splout-commons 0.1 - © Datasalt Systems, SL
+splout-javaclient 0.1- © Datasalt Systems, SL
+splout-resources.jar 0.1 - © Datasalt Systems, SL
+
+Under the MIT license
+
+slf4j-api:1.6.4 - Copyright (c) 2004-2008 QOS.ch -http://www.slf4j.org
+
+Under the CDDL/GPL with Classpath Exception
+
+jersey-bundle:1.14 - https://jersey.java.net/jersey-bundle
+jersey-server:1.14 - https://jersey.java.net/jersey-server
 
 All licenses are in the legal license
 

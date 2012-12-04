@@ -14,6 +14,12 @@ Unless required by applicable law or agreed to in writing, software distributed 
 B) This product uses certain third party software code.
 See THIRTY-PARTY.txt file to see the list of third party sofware used.
 
+Under the Apache Software License 2.0
+
+commons-io:2.2 –© Apache Software Foundation - http://commons.apache.org
+google-api-client 1.4.1- Copyright (C) 2010-11 Google Inc. - http://code.google.com/p/google-api-java-client/
+splout-commons 0.1 - © Datasalt Systems, SL
+
 All licenses are in the legal folder
 
 This software includes software of the Apache Software Foundation. 
