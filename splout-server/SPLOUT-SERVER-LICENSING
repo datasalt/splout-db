@@ -11,8 +11,44 @@ Splout is distributed in the hope that it will be useful, but WITHOUT  ANY WARRA
 You should have received a copy of the GNU Affero General Public License v3 long with Splout.  If not, see <http://www.gnu.org/licenses/>.
 
 
-B) This product uses certain third party software code, found in lib folder.
+B) This product uses certain third party software code.
 See THIRTY-PARTY.txt file to see the list of third party sofware used.
+
+Under the Apache Software License 2.0
+
+commons-collections - http://commons.apache.org
+commons-configuration - http://commons.apache.org
+commons-io - http://commons.apache.org
+ehcache-core - http://ehcache.org
+guava - Copyright (C) 2007 Google Inc - http://code.google.com/p/guava-libraries/guava
+hadoop-core - http://hadoop.apache.org/
+hazelcast - http://www.hazelcast.com
+hazelcast-cloud - http://www.hazelcast.com
+jcommander - http://beust.com/jcommander
+jets3t.jar - Copyright 2008 James Murty - http://www.jets3t.org/
+jetty - http://www.eclipse.org/jetty/jetty-parent/project/modules/jetty
+libthrift - http://thrift.apache.org
+log4j.jar – © The Apache Software Foundation - http://logging.apache.org/log4j/1.2/download.html
+metrics-core - http://metrics.codahale.com
+metrics-servlet - http://metrics.codahale.com
+tomcat-servlet-api.jar - © The Apache Software Foundation - http://tomcat.apache.org/
+
+splout-commons - © Datasalt Systems, SL
+splout-javaclient - © Datasalt Systems, SL
+splout-resources.jar - © Datasalt Systems, SL
+
+Under the MIT license
+
+slf4j-api - Copyright (c) 2004-2008 QOS.ch -http://www.slf4j.org
+
+Under the CDDL/GPL with Classpath Exception
+
+jersey-bundle - https://jersey.java.net/jersey-bundle
+jersey-server - https://jersey.java.net/jersey-server
+
+Under Public Domain:
+
+SQLite - (C) Hipp, Wyrick & Company, Inc - http://www.sqlite.org
 
 All licenses are in the legal license
 

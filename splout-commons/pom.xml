@@ -155,7 +155,36 @@
 				</executions>
 			</plugin>
 
-		</plugins>
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>2.6</version>
+                <executions>
+                    <execution>
+                        <id>copy-license-thirty-party</id>
+                        <!-- here the phase you need -->
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <includes>
+                                        <include>
+                                            THIRD-PARTY.txt
+                                        </include>
+                                    </includes>
+                                    <directory>${basedir}/target/generated-sources/license</directory>
+                                    <filtering>false</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
 	</build>
 
 	<dependencies>

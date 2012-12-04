@@ -12,8 +12,40 @@ Unless required by applicable law or agreed to in writing, software distributed 
 
 
 
-B) This product uses certain third party software code, found in lib folder.
-See THIRTY-PARTY.txt file to see the list of third party sofware used.
+B) This product uses certain third party software code.
+See THIRTY-PARTY.txt file to see the list of third party software used.
+
+Under the Apache Software License 2.0:
+
+commons-beanutils - © The Apache Software Foundation - http://commons.apache.org
+commons-collections - © The Apache Software Foundation - http://commons.apache.org
+commons-io - © The Apache Software Foundation - http://commons.apache.org
+guava - Copyright (C) 2007 Google Inc - http://code.google.com/p/guava-libraries/guava
+hadoop-core - © The Apache Software Foundation - http://hadoop.apache.org/
+jackson-mapper - Copyright (c) 2007- Tatu Saloranta http://jackson.codehaus.org
+jackson-core-asl - Copyright (c) 2007- Tatu Saloranta- http://jackson.codehaus.org
+jackson-jaxrs - Copyright (c) 2007- Tatu Saloranta http://jackson.codehaus.org (also dual licensed
+under LGPL 2.1)
+jcommander - Copyright 2010 Cedric Beust - http://beust.com/jcommander
+jets3t.jar - Copyright 2008 James Murty - http://www.jets3t.org/
+joda-time - Copyright 2001-2005 Stephen Colebourne - http://joda-time.sourceforge.net
+log4j.jar - © The Apache Software Foundation - http://logging.apache.org/log4j/1.2/download.html
+pangool-core - © Datasalt Systems, SL - http://pangool.net
+splout-commons - © Datasalt Systems, SL - http://sploutsql.com
+splout-javaclient - © Datasalt Systems, SL - http://sploutsql.com
+
+Under the MIT license:
+
+slf4j-api - Copyright (c) 2004-2008 QOS.ch -http://www.slf4j.org
+mockito-core:jar - Copyright (c) 2007 Mockito contributors http://code.google.com/p/mockito/
+
+Under the Mozilla Public License v2:
+
+Rhino 1.7R4 – © Mozilla Foundation and contributors - https://developer.mozilla.org/en-US/docs/Rhino
+
+Under Public Domain:
+
+SQLite - (C) Hipp, Wyrick & Company, Inc - http://www.sqlite.org
 
 All licenses are in the legal folder
 

@@ -13,6 +13,24 @@ Unless required by applicable law or agreed to in writing, software distributed 
 B) This product uses certain third party software code. See THIRTY-PARTY.txt
 file to see the list of third party sofware used.
 
+Under the Apache Software License 2.0
+
+bonecp - Copyright 2010 Wallace Wadge - http://jolbox.com/bonecp
+commons-beanutils - © The Apache Software Foundation - http://commons.apache.org
+commons-logging - © The Apache Software Foundation - http://commons.apache.org
+guava - Copyright (C) 2007 Google Inc. - http://code.google.com/p/guava-libraries/
+jackson-core-asl - Copyright (c) 2007- Tatu Saloranta - http://jackson.codehaus.org
+sqlite4java - Copyright 2010 ALM Works Ltd - http://code.google.com/p/sqlite4java/
+
+Under the LGPL 2.1 license
+
+jackson-core-lgpl - Copyright (c) 2007- Tatu Saloranta - http://jackson.codehaus.org
+jackson-mapper-lgpl - Copyright (c) 2007- Tatu Saloranta - http://jackson.codehaus.org
+
+Under the MIT license
+
+slf4j-api -Copyright (c) 2004-2008 QOS.ch - http://www.slf4j.org
+
 All licenses are in the legal folder
 
 This software includes software of the Apache Software Foundation. 
