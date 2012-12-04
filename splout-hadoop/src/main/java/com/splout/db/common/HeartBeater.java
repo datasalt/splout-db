@@ -20,8 +20,6 @@ package com.splout.db.common;
  * #L%
  */
 
-import java.util.concurrent.TimeUnit;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
@@ -41,10 +39,11 @@ public class HeartBeater extends Thread {
 
 	Progressable progress;
 
+	public final static String WAIT_TIME_CONF = "com.splout.hearbeater.wait.time";
 	/**
 	 * The amount of time to wait between checks for the need to issue a heart beat. In milliseconds.
 	 */
-	long waitTimeMs = TimeUnit.MILLISECONDS.convert(5, TimeUnit.SECONDS);
+	long waitTimeMs;
 
 	public Progressable getProgress() {
 		return progress;
@@ -54,9 +53,10 @@ public class HeartBeater extends Thread {
 	 * Create the heart beat object thread set it to daemon priority and start the thread. When the count in
 	 * {@link #threadsNeedingHeartBeat} is positive, the heart beat will be issued on the progress object ever 5 seconds.
 	 */
-	public HeartBeater(Progressable progress) {
+	public HeartBeater(Progressable progress, long waitTimeMs) {
 		setDaemon(true);
 		this.progress = progress;
+		this.waitTimeMs = waitTimeMs;
 		LOG.info("Heart beat reporting class is " + progress.getClass().getName());
 		start();
 	}

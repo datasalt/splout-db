@@ -110,7 +110,8 @@ public class SQLiteOutputFormat extends FileOutputFormat<ITuple, NullWritable> i
 
 		public SQLRecordWriter(TaskAttemptContext context) throws IOException {
 			this.context = context;
-			heartBeater = new HeartBeater(context);
+			long waitTimeHeartBeater = context.getConfiguration().getLong(HeartBeater.WAIT_TIME_CONF, 5000);
+			heartBeater = new HeartBeater(context, waitTimeHeartBeater);
 			heartBeater.needHeartBeat();
 			conf = context.getConfiguration();
 		}
