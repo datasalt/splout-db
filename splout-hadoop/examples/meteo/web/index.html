@@ -51,9 +51,7 @@ function periodsSection() {
 innerHTML = '';
 $.each(Period, function(i,period) {
 selected = (period == currentPeriod) ? ' class="active"' : '';
-innerHTML += '
-<li
-' + selected + '></i><a href="javascript:void(0);" onclick="selectPeriod(\'' + i + '\');"> ' +
+innerHTML += '<li' + selected + '></i><a href="javascript:void(0);" onclick="selectPeriod(\'' + i + '\');"> ' +
   period.name + '</a></li>';
 });
 $('#periods').html(innerHTML);
@@ -108,9 +106,7 @@ selectedSection = sections.length-1;
 var innerHTML = "";
 $.each(sections, function(i,range) {
 selected = (i == selectedSection) ? ' class="active"' : '';
-innerHTML += '
-<li
-' + selected + '></i><a href="javascript:void(0);" onclick="selectSection(' + i + ');"> ' +
+innerHTML += '<li' + selected + '></i><a href="javascript:void(0);" onclick="selectSection(' + i + ');"> ' +
   sectionToStr(i) + '</a></li>';
 });
 $('#sections').html(innerHTML);
@@ -217,8 +213,7 @@ wban = data.result[0].wban;
 
 switch(currentPeriod) {
 case Period.DAY:
-query = 'select year,month,day,min,max from meteo where stn=' + stn + ' and wban = ' + wban + ' order by
-year,month,day;';
+query = 'select year,month,day,min,max from meteo where stn=' + stn + ' and wban = ' + wban + ' order by year,month,day;';
 break;
 case Period.MONTH:
 query = 'select year,month,min(min) as min,max(max) as max from meteo where stn=' + stn + ' and wban = '
@@ -255,8 +250,7 @@ drawMeteoSerie(slice());
 
 // Autosuggest function
 function suggestStation(query, callback) {
-$.getJSON(sploutURL + '/api/query/meteo-pby-stn-wban?key=any&sql=' + 'select name from stations where
-name like "' + query + '%" limit 20;' + '&callback=?',
+$.getJSON(sploutURL + '/api/query/meteo-pby-stn-wban?key=any&sql=' + 'select name from stations where name like "' + query + '%" limit 20;' + '&callback=?',
 function(data) {
 var suggestions = [];
 $.each(data.result, function(i, data) {

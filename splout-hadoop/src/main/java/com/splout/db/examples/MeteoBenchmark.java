@@ -104,7 +104,7 @@ public class MeteoBenchmark {
         int stn = stations.get(rndIdx).get("stn");
         int wban = stations.get(rndIdx).get("wban");
         String query;
-        if (context.get("month").equals(false)) {
+        if (context.get("month").equals("false")) {
           query = "select year,month,day,min,max from meteo where stn=" + stn + " and wban = " + wban + " order by year,month,day";
         } else {
           query = "select year,month,min(min) as min,max(max) as max from meteo where stn=" + stn + " and wban=" + wban + " group by year,month order by year,month";
