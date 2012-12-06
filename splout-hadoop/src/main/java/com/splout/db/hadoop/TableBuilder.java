@@ -59,7 +59,7 @@ public class TableBuilder {
 	private boolean isReplicated = false;
 	private Set<String> fieldsToIndex = new HashSet<String>();
 	private List<List<String>> compoundIndexes = new ArrayList<List<String>>();
-  private String[] initialSQL;
+  private String[] initialSQL = null;
   private String[] preInsertsSQL = null;
   private String[] postInsertsSQL;
   private String[] finalSQL = null;

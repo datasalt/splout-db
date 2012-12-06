@@ -20,6 +20,7 @@ package com.splout.db.examples;
  * #L%
  */
 
+import java.io.File;
 import java.util.ArrayList;
 
 import org.apache.hadoop.conf.Configuration;
@@ -37,6 +38,7 @@ import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.tuplemr.OrderBy;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleTextInputFormat;
 import com.datasalt.pangool.utils.HadoopUtils;
+import com.splout.db.common.SploutHadoopConfiguration;
 import com.splout.db.hadoop.StoreDeployerTool;
 import com.splout.db.hadoop.TableBuilder;
 import com.splout.db.hadoop.TablespaceBuilder;
@@ -101,6 +103,13 @@ public class PageCountsExample implements Tool {
 		Path outPath = new Path(outputPath);
 		FileSystem outFs = outPath.getFileSystem(getConf());
 
+		if(!FileSystem.getLocal(conf).equals(FileSystem.get(conf))) {
+			File nativeLibs = new File("native");
+			if(nativeLibs.exists()) {
+				SploutHadoopConfiguration.addSQLite4JavaNativeLibsToDC(conf);
+			}
+		}
+		
 		if(generate) {
 			Path inputPath = new Path(this.inputPath);
 			FileSystem inputFileSystem = inputPath.getFileSystem(conf);
@@ -137,6 +146,7 @@ public class PageCountsExample implements Tool {
 			    .partitionByJavaScript("function partition(record) { var str = record.get('pagename').toString(); if(str.length() > 2) { return str.substring(0, 2); } else { return str; } }");
 			// create a compound index on pagename, date so that typical queries for the dataset will be fast
 			tableBuilder.createIndex("pagename", "date");			
+			tableBuilder.initialSQL("pragma page_size=65536");
 			// insertion order is very important for optimizing query speed because it makes data be co-located in disk
 			tableBuilder.insertionSortOrder(OrderBy.parse("pagename:asc, date:asc"));
 
