@@ -230,7 +230,6 @@ public class TableBuilder {
 						throw new TableBuilderException("Invalid partition field: " + partitionByField + " not present in its Schema: "
 						    + schema + ".");
 					}
-					fieldsToIndex.add(partitionByField); // the partition field is always indexed
 					partitionBySchemaFields[i] = partitionField;
 					i++;
 				}

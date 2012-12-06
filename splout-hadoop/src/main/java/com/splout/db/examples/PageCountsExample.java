@@ -168,7 +168,7 @@ public class PageCountsExample implements Tool {
 		}
 
 		if(deploy) {
-       		        // use StoreDeployerTool for deploying the already generated dataset
+			// use StoreDeployerTool for deploying the already generated dataset
 			StoreDeployerTool deployer = new StoreDeployerTool(qnode, getConf());
 			ArrayList<TablespaceDepSpec> deployments = new ArrayList<TablespaceDepSpec>();
 			deployments.add(new TablespaceDepSpec("pagecounts", outPath.toString(), repFactor, null));
