@@ -36,10 +36,10 @@ var sections = [];
 var sectionsSize = 200;
 var selectedSection = -1;
 var Period = {
-DAY: {value:0, name:"Daily"},
-MONTH: {value:1, name:"Monthly"}
+MONTH: {value:0, name:"Monthly"},
+DAY: {value:1, name:"Daily"},
 };
-var currentPeriod = Period.DAY;
+var currentPeriod = Period.MONTH;
 
 function selectPeriod(period) {
 currentPeriod = Period[period];
