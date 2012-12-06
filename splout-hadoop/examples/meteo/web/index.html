@@ -1,326 +1,342 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>Meteo Demo - Splout SQL</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Splout SQL demo with meteorological data arround the world">
-    <meta name="author" content="Datasalt Systems S.L.">
+<meta charset="utf-8">
+<title>Meteo Demo - Splout SQL</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Splout SQL demo with meteorological data arround the world">
+<meta name="author" content="Datasalt Systems S.L.">
 
-    <!-- Le styles -->
-    <link href="css/bootstrap.css" rel="stylesheet">
-    <style>
-        body {
-        padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
-        }
-    </style>
-    <link href="css/bootstrap-responsive.css" rel="stylesheet">
+<!-- Le styles -->
+<link href="css/bootstrap.css" rel="stylesheet">
+<style>
+  body {
+  padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+  }
+</style>
+<link href="css/bootstrap-responsive.css" rel="stylesheet">
 
-    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
-    <!--[if lt IE 9]>
-    <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
+<!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+<!--[if lt IE 9]>
+<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
 
-    <script src="js/jquery.js"></script>
-    <script src="js/bootstrap.min.js"></script>
+<script src="js/jquery.js"></script>
+<script src="js/bootstrap.min.js"></script>
 
 
-    <script type="text/javascript" src="http://www.google.com/jsapi"></script>
-    <script type="text/javascript">
-        google.load('visualization', '1.1', {packages: ['corechart', 'controls']});
-    </script>
-    <script type="text/javascript">
-        // Global variables
-        var meteoSerie = [];
-        var sections = [];
-        var sectionsSize = 200;
-        var selectedSection = -1;
-        var Period = {
-            DAY: {value:0, name:"Daily"},
-            MONTH: {value:1, name:"Monthly"}
-        };
-        var currentPeriod = Period.DAY;
+<script type="text/javascript" src="http://www.google.com/jsapi"></script>
+<script type="text/javascript">
+  google.load('visualization', '1.1', {packages: ['corechart', 'controls']});
+</script>
+<script type="text/javascript">
+// Global variables
+var meteoSerie = [];
+var sections = [];
+var sectionsSize = 200;
+var selectedSection = -1;
+var Period = {
+MONTH: {value:0, name:"Monthly"},
+DAY: {value:1, name:"Daily"},
+};
+var currentPeriod = Period.MONTH;
 
-        function selectPeriod(period) {
-          currentPeriod = Period[period];
-          periodsSection();
-          loadMeteoSerie();
-        }
+function selectPeriod(period) {
+currentPeriod = Period[period];
+periodsSection();
+loadMeteoSerie();
+}
 
-        function periodsSection() {
-            innerHTML = '';
-            $.each(Period, function(i,period) {
-              selected = (period == currentPeriod) ? ' class="active"' : '';
-              innerHTML += '<li' + selected + '></i><a href="javascript:void(0);" onclick="selectPeriod(\'' + i + '\');"> ' +
-                 period.name + '</a></li>';
-            });
-            $('#periods').html(innerHTML);
-        }
+function periodsSection() {
+innerHTML = '';
+$.each(Period, function(i,period) {
+selected = (period == currentPeriod) ? ' class="active"' : '';
+innerHTML += '<li' + selected + '></i><a href="javascript:void(0);" onclick="selectPeriod(\'' + i + '\');"> ' +
+  period.name + '</a></li>';
+});
+$('#periods').html(innerHTML);
+}
 
-        // Perform queries to Splout asynchronously
-        function sploutIt(keys, query, callback) {
-            keyParams = "";
-            $.each(keys, function (i, key) {
-                keyParams += 'key=' + key + '&';
-            });
-            sploutURL = $('#sploutURL').val();
-            $.getJSON(sploutURL + '/api/query/meteo-pby-stn-wban?' + keyParams + 'sql=' + encodeURIComponent(query) + '&callback=?', callback);
-        }
+// Perform queries to Splout asynchronously
+function sploutIt(keys, query, callback) {
+keyParams = "";
+$.each(keys, function (i, key) {
+keyParams += 'key=' + key + '&';
+});
+sploutURL = $('#sploutURL').val();
+$.getJSON(sploutURL + '/api/query/meteo-pby-stn-wban?' + keyParams + 'sql=' + encodeURIComponent(query) +
+'&callback=?', callback);
+}
 
-        function selectSection(i) {
-          selectedSection = i;
-          calculateSections();
-          drawMeteoSerie(slice());
-        }
+function selectSection(i) {
+selectedSection = i;
+calculateSections();
+drawMeteoSerie(slice());
+}
 
-        function slice() {
-          if (selectedSection == -1 || sections.length ==0) {
-            return [];
-          } else {
-            return meteoSerie.slice(sections[selectedSection][0], sections[selectedSection][1] + 1);
-          }
-        }
+function slice() {
+if (selectedSection == -1 || sections.length ==0) {
+return [];
+} else {
+return meteoSerie.slice(sections[selectedSection][0], sections[selectedSection][1] + 1);
+}
+}
 
-        function sectionToStr(section) {
-          var row1 = meteoSerie[sections[section][0]];
-          var row2 = meteoSerie[sections[section][1]];
-          return dateToStr(row1) + ' to ' + dateToStr(row2);
-        }
+function sectionToStr(section) {
+var row1 = meteoSerie[sections[section][0]];
+var row2 = meteoSerie[sections[section][1]];
+return dateToStr(row1) + ' to ' + dateToStr(row2);
+}
 
-        function dateToStr(serieRow) {
-          return serieRow.year + '-' + serieRow.month +  ((currentPeriod == Period.DAY) ? ('-' + serieRow.day) : '');
-        }
+function dateToStr(serieRow) {
+return serieRow.year + '-' + serieRow.month + ((currentPeriod == Period.DAY) ? ('-' + serieRow.day) :
+'');
+}
 
-        // Calculate the number of sections in which the serie will be divided
-        function calculateSections() {
-          sections = [];
-          for (var i=meteoSerie.length-1; i>=0; i-=sectionsSize) {
-            sections.push([Math.max(0,i-sectionsSize), i]);
-          }
-          if (selectedSection == -1) {
-            selectedSection = sections.length-1;
-          }
-          var innerHTML = "";
-          $.each(sections, function(i,range) {
-            selected = (i == selectedSection) ? ' class="active"' : '';
-            innerHTML += '<li' + selected + '></i><a href="javascript:void(0);" onclick="selectSection(' + i + ');"> ' +
-                sectionToStr(i) + '</a></li>';
-          });
-          $('#sections').html(innerHTML);
-          if (sections.length > 1) {
-            $('#sections-div').show();
-          } else {
-            $('#sections-div').hide();
-          }
-        }
+// Calculate the number of sections in which the serie will be divided
+function calculateSections() {
+sections = [];
+for (var i=meteoSerie.length-1; i>=0; i-=sectionsSize) {
+sections.push([Math.max(0,i-sectionsSize), i]);
+}
+sections.reverse();
+if (selectedSection == -1) {
+selectedSection = sections.length-1;
+}
+var innerHTML = "";
+$.each(sections, function(i,range) {
+selected = (i == selectedSection) ? ' class="active"' : '';
+innerHTML += '<li' + selected + '></i><a href="javascript:void(0);" onclick="selectSection(' + i + ');"> ' +
+  sectionToStr(i) + '</a></li>';
+});
+$('#sections').html(innerHTML);
+if (sections.length > 1) {
+$('#sections-div').show();
+} else {
+$('#sections-div').hide();
+}
+}
 
-        // Draws the chart from data in meteoSerie
-        function drawMeteoSerie(meteoSerie) {
+// Draws the chart from data in meteoSerie
+function drawMeteoSerie(meteoSerie) {
 
-        var dashboard = new google.visualization.Dashboard(
-                document.getElementById('dashboard'));
+var dashboard = new google.visualization.Dashboard(
+document.getElementById('dashboard'));
 
-            var control = new google.visualization.ControlWrapper({
-                'controlType': 'ChartRangeFilter',
-                'containerId': 'control',
-                'options': {
-                    // Filter by the date axis.
-                    'filterColumnIndex': 0,
-                    'ui': {
-                        'chartType': 'LineChart',
-                            'chartOptions': {
-                                'chartArea': {'width': '90%'},
-                                'hAxis': {'baselineColor': 'none'}
-                        },
-                        // Display a single series that shows the closing value of the stock.
-                        // Thus, this view has two columns: the date (axis) and the stock value (line series).
-                        'chartView': {
-                            'columns': [0, 3]
-                        },
-                        // 1 day in milliseconds = 24 * 60 * 60 * 1000 = 86,400,000
-                        'minRangeSize': 86400000
-                    }
-                },
-                // Initial range: 2012-02-09 to 2012-03-20.
-                'state': {'range': {'start': new Date(1900,01,01), 'end': new Date(2100,01,01)}}
-            });
+var control = new google.visualization.ControlWrapper({
+'controlType': 'ChartRangeFilter',
+'containerId': 'control',
+'options': {
+// Filter by the date axis.
+'filterColumnIndex': 0,
+'ui': {
+'chartType': 'LineChart',
+'chartOptions': {
+'chartArea': {'width': '90%'},
+'hAxis': {'baselineColor': 'none'}
+},
+// Display a single series that shows the closing value of the stock.
+// Thus, this view has two columns: the date (axis) and the stock value (line series).
+'chartView': {
+'columns': [0, 3]
+},
+// 1 day in milliseconds = 24 * 60 * 60 * 1000 = 86,400,000
+'minRangeSize': 86400000
+}
+},
+// Initial range: 2012-02-09 to 2012-03-20.
+'state': {'range': {'start': new Date(1900,01,01), 'end': new Date(2100,01,01)}}
+});
 
-            maxTemp = 51;
-            minTemp = 50;
+maxTemp = 51;
+minTemp = 50;
 
-            $.each(meteoSerie, function(i, row) {
-                maxTemp = Math.max(maxTemp, row.max);
-                minTemp = Math.min(minTemp, row.min);
-            });
+$.each(meteoSerie, function(i, row) {
+maxTemp = Math.max(maxTemp, row.max);
+minTemp = Math.min(minTemp, row.min);
+});
 
-            var chart = new google.visualization.ChartWrapper({
-                'chartType': 'CandlestickChart',
-                'containerId': 'chart',
-                'options': {
-                    // Use the same chart area width as the control for axis alignment.
-                    'chartArea': {'height': '80%', 'width': '90%'},
-                    'hAxis': {'slantedText': false},
-                    'vAxis': {'viewWindow': {'min': minTemp, 'max': maxTemp}},
-                    'legend': {'position': 'top'}
-                },
-                // Convert the first column from 'date' to 'string'.
-                'view': {
-                    'columns': [
-                        {
-                        'calc': function(dataTable, rowIndex) {
-                            var date = new Date(dataTable.getValue(rowIndex, 0));
-                            return date.getFullYear() + '-' + (date.getMonth()+1) +  ((currentPeriod == Period.DAY) ? ('-' + date.getDate()) : '');
-                            },
-                        'type': 'string'
-                        }, 1, 2, 3, 4]
-                }
-            });
+var chart = new google.visualization.ChartWrapper({
+'chartType': 'CandlestickChart',
+'containerId': 'chart',
+'options': {
+// Use the same chart area width as the control for axis alignment.
+'chartArea': {'height': '80%', 'width': '90%'},
+'hAxis': {'slantedText': false},
+'vAxis': {'viewWindow': {'min': minTemp, 'max': maxTemp}},
+'legend': {'position': 'top'}
+},
+// Convert the first column from 'date' to 'string'.
+'view': {
+'columns': [
+{
+'calc': function(dataTable, rowIndex) {
+var date = new Date(dataTable.getValue(rowIndex, 0));
+return date.getFullYear() + '-' + (date.getMonth()+1) + ((currentPeriod == Period.DAY) ? ('-' +
+date.getDate()) : '');
+},
+'type': 'string'
+}, 1, 2, 3, 4]
+}
+});
 
-            var data = new google.visualization.DataTable();
-            data.addColumn('date', 'Date');
-            data.addColumn('number', 'Min & max temperatures range');
-            data.addColumn('number', 'Min & max temperatures range');
-            data.addColumn('number', 'Min & max temperatures range');
-            data.addColumn('number', 'Min & max temperatures range');
+var data = new google.visualization.DataTable();
+data.addColumn('date', 'Date');
+data.addColumn('number', 'Min & max temperatures range');
+data.addColumn('number', 'Min & max temperatures range');
+data.addColumn('number', 'Min & max temperatures range');
+data.addColumn('number', 'Min & max temperatures range');
 
-            $.each(meteoSerie, function(i, row) {
-                 data.addRow([new Date(row.year, row.month-1, (currentPeriod == Period.DAY) ? row.day : 15), row.min, row.min, row.max, row.max]);
-            });
+$.each(meteoSerie, function(i, row) {
+data.addRow([new Date(row.year, row.month-1, (currentPeriod == Period.DAY) ? row.day : 15), row.min,
+row.min, row.max, row.max]);
+});
 
-            dashboard.bind(control, chart);
-            dashboard.draw(data);
-        }
+dashboard.bind(control, chart);
+dashboard.draw(data);
+}
 
-        // Loads the meteo serie, and draw it
-        function loadMeteoSerie() {
-            // Clean up Chart
-            meteoSerie = [];
-            drawMeteoSerie(slice());
+// Loads the meteo serie, and draw it
+function loadMeteoSerie() {
+// Clean up Chart
+meteoSerie = [];
+drawMeteoSerie(slice());
 
-            query = 'select stn,wban from stations where name = "' + $("#station").val() + '"';
+query = 'select stn,wban from stations where name = "' + $("#station").val() + '"';
 
-            sploutIt(["any"], query,
-                function(data) {
-                    if (data.result == null || data.length == 0)
-                        return;
-                    stn = data.result[0].stn;
-                    wban = data.result[0].wban;
+sploutIt(["any"], query,
+function(data) {
+if (data.result == null || data.length == 0)
+return;
+stn = data.result[0].stn;
+wban = data.result[0].wban;
 
-                    switch(currentPeriod) {
-                    case Period.DAY:
-                        query = 'select year,month,day,min,max from meteo where stn=' + stn + ' and wban = ' + wban + ' order by year,month,day;';
-                        break;
-                    case Period.MONTH:
-                        query = 'select year,month,min(min) as min,max(max) as max from meteo where stn=' + stn + ' and wban = ' + wban + ' group by year,month order by year,month;';
-                        break;
-                    }
+switch(currentPeriod) {
+case Period.DAY:
+query = 'select year,month,day,min,max from meteo where stn=' + stn + ' and wban = ' + wban + ' order by year,month,day;';
+break;
+case Period.MONTH:
+query = 'select year,month,min(min) as min,max(max) as max from meteo where stn=' + stn + ' and wban = '
++ wban + ' group by year,month order by year,month;';
+break;
+}
 
-                    sploutIt([stn,wban], query,
-                        function(data) {
-                            if(data.error != null) {
-                                $('#queryerror').html("<p><strong>Error: </strong>" + data.error + "</p>");
-                                $('#queryerror').show();
-                                return;
-                            }
+sploutIt([stn,wban], query,
+function(data) {
+if(data.error != null) {
+$('#queryerror').html("<p><strong>Error: </strong>" + data.error + "</p>");
+$('#queryerror').show();
+return;
+}
 
-                            $.each(data.result, function(i, data) {
-                                meteoSerie.push(data);
-                            });
+$.each(data.result, function(i, data) {
+var min = data.min;
+var max = data.max;
+// Skipping null values represented by 9999.9
+if (min != 9999.9 && max != 9999.9) {
+meteoSerie.push(data);
+}
+});
 
-                            selectedSection = -1;
-                            periodsSection();
-                            calculateSections();
-                            drawMeteoSerie(slice());
-                        }
-                    );
-                }
-            );
-        }
+selectedSection = -1;
+periodsSection();
+calculateSections();
+drawMeteoSerie(slice());
+}
+);
+}
+);
+}
 
-        // Autosuggest function
-        function suggestStation(query, callback) {
-            $.getJSON(sploutURL + '/api/query/meteo-pby-stn-wban?key=any&sql=' + 'select name from stations where name like "' + query + '%" limit 20;' + '&callback=?',
-                function(data) {
-                    var suggestions = [];
-                    $.each(data.result, function(i, data) {
-                        suggestions.push(data.name);
-                    });
-                    callback(suggestions);
-                }
-            );
+// Autosuggest function
+function suggestStation(query, callback) {
+$.getJSON(sploutURL + '/api/query/meteo-pby-stn-wban?key=any&sql=' + 'select name from stations where name like "' + query + '%" limit 20;' + '&callback=?',
+function(data) {
+var suggestions = [];
+$.each(data.result, function(i, data) {
+suggestions.push(data.name);
+});
+callback(suggestions);
+}
+);
 
-        }
+}
 
-        google.setOnLoadCallback(loadMeteoSerie);
-    </script>
+google.setOnLoadCallback(loadMeteoSerie);
+</script>
 
 </head>
 
 <body>
 
 <div class="navbar navbar-inverse navbar-fixed-top">
-    <div class="navbar-inner">
-        <div class="container">
-            <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </a>
-            <a class="brand" href="#">Meteo Demo</a>
-            <!-- <div class="nav-collapse collapse">
-                <ul class="nav">
-                    <li class="active"><a href="#">Home</a></li>
-                    <li><a href="#about">About</a></li>
-                    <li><a href="#contact">Contact</a></li>
-                </ul>
-            </div> --><!--/.nav-collapse -->
-        </div>
+  <div class="navbar-inner">
+    <div class="container">
+      <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </a>
+      <a class="brand" href="#">Meteo Demo</a>
+      <!-- <div class="nav-collapse collapse">
+         <ul class="nav">
+             <li class="active"><a href="#">Home</a></li>
+             <li><a href="#about">About</a></li>
+             <li><a href="#contact">Contact</a></li>
+         </ul>
+     </div> --><!--/.nav-collapse -->
     </div>
+  </div>
 </div>
 
 <div class="container">
 
-    <h1>Meteo Demo</h1>
-    <p>Shows the temperature historic for stations monitoring the weather arround the world</p>
+  <h1>Meteo Demo</h1>
 
-    <form class="form-inline" action="javascript:loadMeteoSerie();">
-        <label>Select station: </label>
-        <div class="input-append">
-            <input id="station" class="span6" type="text" data-provide="typeahead" data-minLength="2" autocomplete="off" value="PODOR">
-            <button class="btn" type="submit">Show temperatures</button>
-        </div>
-    </form>
-    <div id="queryerror" class="alert alert-error" style="display:none"></div>
-    <div id="aggregation-div">
-        <h5><i class="icon-filter"></i> Period filter</h5>
-        <ul id="periods" class="nav nav-pills">
-        </ul>
-    </div>
-    <div id="sections-div">
-        <h5><i class="icon-calendar"></i> Dates filter</h5>
-        <ul id="sections"  class="nav nav-pills">
-        </ul>
-    </div>
-    <div id="dashboard">
-        <div id="chart" style='width: 915px; height: 300px;'></div>
-        <div id="control" style='width: 915px; height: 50px;'></div>
-    </div>
-    <hr/>
-    <form class="form-inline" action="javascript:loadMeteoSerie();">
-        <label>Splout QNode Address: </label>
-        <div class="input-append">
-            <input class="span6" id="sploutURL" type="text" value="http://localhost:4412">
-            <button class="btn" type="submit">Change</button>
-        </div>
-    </form>
+  <p>Shows the temperature historic for stations monitoring the weather arround the world</p>
 
-</div> <!-- /container -->
+  <form class="form-inline" action="javascript:loadMeteoSerie();">
+    <label>Select station: </label>
+
+    <div class="input-append">
+      <input id="station" class="span6" type="text" data-provide="typeahead" data-minLength="2"
+             autocomplete="off" value="PODOR">
+      <button class="btn" type="submit">Show temperatures</button>
+    </div>
+  </form>
+  <div id="queryerror" class="alert alert-error" style="display:none"></div>
+  <div id="aggregation-div">
+    <h5><i class="icon-filter"></i> Period filter</h5>
+    <ul id="periods" class="nav nav-pills">
+    </ul>
+  </div>
+  <div id="sections-div">
+    <h5><i class="icon-calendar"></i> Dates filter</h5>
+    <ul id="sections" class="nav nav-pills">
+    </ul>
+  </div>
+  <div id="dashboard">
+    <div id="chart" style='width: 915px; height: 300px;'></div>
+    <div id="control" style='width: 915px; height: 50px;'></div>
+  </div>
+  <hr/>
+  <form class="form-inline" action="javascript:loadMeteoSerie();">
+    <label>Splout QNode Address: </label>
+
+    <div class="input-append">
+      <input class="span6" id="sploutURL" type="text" value="http://localhost:4412">
+      <button class="btn" type="submit">Change</button>
+    </div>
+  </form>
+
+</div>
+<!-- /container -->
 
 <script>
-    // Enabling typeahead suggestions
-    $("#station").typeahead({
-        source: suggestStation
-    });
+  // Enabling typeahead suggestions
+  $("#station").typeahead({
+  source: suggestStation
+  });
 </script>
 
 </body>

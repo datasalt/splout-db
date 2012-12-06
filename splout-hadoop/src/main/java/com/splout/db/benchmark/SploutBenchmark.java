@@ -55,6 +55,7 @@ public class SploutBenchmark {
 	    final Class<? extends StressThreadImpl> stressThreadClass, final Map<String, String> context)
 	    throws InterruptedException {
 		ExecutorService service = Executors.newFixedThreadPool(nThreads);
+
 		final HistogramWithStats histo = new HistogramWithStats();
 		final AtomicLong totalRows = new AtomicLong(0);
 		long startTime = System.currentTimeMillis();

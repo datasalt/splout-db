@@ -20,6 +20,13 @@ package com.splout.db.common;
  * #L%
  */
 
+import com.almworks.sqlite4java.SQLiteConnection;
+import com.almworks.sqlite4java.SQLiteException;
+import com.almworks.sqlite4java.SQLiteStatement;
+import com.splout.db.common.JSONSerDe.JSONSerDeException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import java.io.File;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -27,14 +34,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import com.almworks.sqlite4java.SQLiteConnection;
-import com.almworks.sqlite4java.SQLiteException;
-import com.almworks.sqlite4java.SQLiteStatement;
-import com.splout.db.common.JSONSerDe.JSONSerDeException;
 
 /**
  * SQL Wrapper for querying SQLite by using sqlite4java (http://code.google.com/p/sqlite4java).
@@ -56,6 +55,9 @@ public class SQLite4JavaManager implements ISQLiteManager {
 			SQLiteConnection conn = new SQLiteConnection(dbFile);
 			try {
 				conn.open(true);
+        // Executing some defaults
+        conn.exec("PRAGMA cache_size=20");
+        // User provided initStatements
 				if(initStatements != null) {
 					for(String initStatement: initStatements) {
 						conn.exec(initStatement);

@@ -49,7 +49,7 @@ import com.splout.db.hadoop.TupleSampler.SamplingType;
 
 /**
  * An advanced Splout example with the Wikipedia pagecounts dataset:
- *  http://dom.as/2007/12/10/wikipedia-page-counters/
+ * http://dom.as/2007/12/10/wikipedia-page-counters/
  */
 public class PageCountsExample implements Tool {
 
@@ -146,7 +146,7 @@ public class PageCountsExample implements Tool {
 			    .partitionByJavaScript("function partition(record) { var str = record.get('pagename').toString(); if(str.length() > 2) { return str.substring(0, 2); } else { return str; } }");
 			// create a compound index on pagename, date so that typical queries for the dataset will be fast
 			tableBuilder.createIndex("pagename", "date");			
-			tableBuilder.initialSQL("pragma page_size=65536");
+			// tableBuilder.initialSQL("pragma page_size=65536");
 			// insertion order is very important for optimizing query speed because it makes data be co-located in disk
 			tableBuilder.insertionSortOrder(OrderBy.parse("pagename:asc, date:asc"));
 
@@ -168,10 +168,10 @@ public class PageCountsExample implements Tool {
 		}
 
 		if(deploy) {
-			// use StoreDeployerTool for deploying the already generated dataset
+       		        // use StoreDeployerTool for deploying the already generated dataset
 			StoreDeployerTool deployer = new StoreDeployerTool(qnode, getConf());
 			ArrayList<TablespaceDepSpec> deployments = new ArrayList<TablespaceDepSpec>();
-			deployments.add(new TablespaceDepSpec("pagecounts", outPath.toString(), repFactor));
+			deployments.add(new TablespaceDepSpec("pagecounts", outPath.toString(), repFactor, null));
 			deployer.deploy(deployments);
 		}
 		return 1;

@@ -20,39 +20,59 @@ package com.splout.db.hadoop;
  * #L%
  */
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Convenience bean used in tools such as {@link DeployerCMD}
  */
 public class TablespaceDepSpec {
-	
-	private String tablespace;
-	private String sourcePath;
-	private int replication;
-			
-	public TablespaceDepSpec() {}
-	public TablespaceDepSpec(String tablespace, String sourcePath, int replication) {
-	  super();
-	  this.tablespace = tablespace;
-	  this.sourcePath = sourcePath;
-	  this.replication = replication;
+
+  private String tablespace;
+  private String sourcePath;
+  private int replication;
+  private List<String> initStatements = new ArrayList<String>();
+
+  public TablespaceDepSpec() {
   }
-	public String getTablespace() {
-  	return tablespace;
+
+  public TablespaceDepSpec(String tablespace, String sourcePath, int replication, List<String> initStatements) {
+    super();
+    this.tablespace = tablespace;
+    this.sourcePath = sourcePath;
+    this.replication = replication;
+    this.initStatements = initStatements;
   }
-	public void setTablespace(String tablespace) {
-  	this.tablespace = tablespace;
+
+  public String getTablespace() {
+    return tablespace;
   }
-	public String getSourcePath() {
-  	return sourcePath;
+
+  public void setTablespace(String tablespace) {
+    this.tablespace = tablespace;
   }
-	public void setSourcePath(String sourceData) {
-  	this.sourcePath = sourceData;
+
+  public String getSourcePath() {
+    return sourcePath;
   }
-	public int getReplication() {
-  	return replication;
+
+  public void setSourcePath(String sourceData) {
+    this.sourcePath = sourceData;
   }
-	public void setReplication(int replication) {
-  	this.replication = replication;
-  }	
-	
+
+  public int getReplication() {
+    return replication;
+  }
+
+  public void setReplication(int replication) {
+    this.replication = replication;
+  }
+
+  public List<String> getInitStatements() {
+    return initStatements;
+  }
+
+  public void setInitStatements(List<String> initStatements) {
+    this.initStatements = initStatements;
+  }
 }
