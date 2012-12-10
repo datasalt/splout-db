@@ -21,23 +21,12 @@ package com.splout.db.dnode;
  * #L%
  */
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.channels.FileChannel;
-
+import com.splout.db.common.SploutConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.*;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.jets3t.service.S3Service;
 import org.jets3t.service.S3ServiceException;
 import org.jets3t.service.impl.rest.httpclient.RestS3Service;
@@ -45,7 +34,10 @@ import org.jets3t.service.model.S3Bucket;
 import org.jets3t.service.model.S3Object;
 import org.jets3t.service.security.AWSCredentials;
 
-import com.splout.db.common.SploutConfiguration;
+import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.channels.FileChannel;
 
 /**
  * This Fetcher is used by {@link DNodeHandler} to fetch data to deploy. It handles: file, HDFS and S3 URIs. For the S3
@@ -78,8 +70,7 @@ public class Fetcher {
 		if(fsName != null) {
 			hadoopConf.set("fs.default.name", fsName);
 		}
-		log.info("Created " + Fetcher.class + " with tempDir = " + tempDir + " and S3 access key = "
-		    + accessKey + " and S3 secret key = " + secretKey);
+		log.info("Created " + Fetcher.class + " with tempDir = " + tempDir );
 		if(bytesPerSecThrottle > 0) {
 			log.info("Throttling at: " + bytesPerSecThrottle + " bytes per sec.");
 		} else {
@@ -88,7 +79,6 @@ public class Fetcher {
 	}
 
 	private AWSCredentials getCredentials() {
-		log.info("AWS Credentials: " + accessKey + " " + secretKey);
 		AWSCredentials credentials = new AWSCredentials(accessKey, secretKey);
 		return credentials;
 	}
