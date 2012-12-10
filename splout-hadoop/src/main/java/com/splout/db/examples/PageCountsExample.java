@@ -29,6 +29,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.mortbay.log.Log;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -74,6 +75,9 @@ public class PageCountsExample implements Tool {
 	@Parameter(names = { "-r", "--repfactor" }, description = "The replication factor to use when deploying.")
 	private Integer repFactor = 1;
 
+	@Parameter(names = { "-m", "--memoryForIndexing" }, description = "The amount of memory to use in each Reducer for indexing, in bytes.")
+	private Long memoryForIndexing = 268435456l; // 256 MB
+	
 	private Configuration conf;
 
 	@Override
@@ -145,8 +149,13 @@ public class PageCountsExample implements Tool {
 			tableBuilder
 			    .partitionByJavaScript("function partition(record) { var str = record.get('pagename').toString(); if(str.length() > 2) { return str.substring(0, 2); } else { return str; } }");
 			// create a compound index on pagename, date so that typical queries for the dataset will be fast
-			tableBuilder.createIndex("pagename", "date");			
-			// tableBuilder.initialSQL("pragma page_size=65536");
+			tableBuilder.createIndex("pagename", "date");
+			
+			long nonExactPageSize = memoryForIndexing / 32000; // number of pages
+			int pageSize = (int) Math.pow(2, (int) Math.round(Math.log(nonExactPageSize)/Math.log(2)));
+			Log.info("Pagesize = " + pageSize + " as memory for indexing was [" + memoryForIndexing + "] and there are 32000 pages.");
+			
+ 		  tableBuilder.initialSQL("pragma page_size=" + pageSize);
 			// insertion order is very important for optimizing query speed because it makes data be co-located in disk
 			tableBuilder.insertionSortOrder(OrderBy.parse("pagename:asc, date:asc"));
 
