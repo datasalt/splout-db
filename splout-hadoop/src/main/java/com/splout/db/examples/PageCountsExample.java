@@ -146,8 +146,9 @@ public class PageCountsExample implements Tool {
 			}
 
 			// partition by the first two characters of the page so we can easily implement auto suggest
-			tableBuilder
-			    .partitionByJavaScript("function partition(record) { var str = record.get('pagename').toString(); if(str.length() > 2) { return str.substring(0, 2); } else { return str; } }");
+//			tableBuilder
+//			    .partitionByJavaScript("function partition(record) { var str = record.get('pagename').toString(); if(str.length() > 2) { return str.substring(0, 2); } else { return str; } }");
+			tableBuilder.partitionBy("pagename");
 			// create a compound index on pagename, date so that typical queries for the dataset will be fast
 			tableBuilder.createIndex("pagename", "date");
 			
