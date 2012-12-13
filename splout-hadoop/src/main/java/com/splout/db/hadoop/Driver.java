@@ -23,6 +23,7 @@ package com.splout.db.hadoop;
 import org.apache.hadoop.util.ProgramDriver;
 
 import com.splout.db.benchmark.BenchmarkStoreTool;
+import com.splout.db.benchmark.IdentityJob;
 import com.splout.db.examples.PageCountsExample;
 import com.splout.db.integration.HadoopIntegrationTest;
 import com.splout.db.integration.TestDemo;
@@ -42,6 +43,7 @@ public class Driver extends ProgramDriver {
 		addClass("deploy", DeployerCMD.class, "A tool for deploying tablespaces generated with tools like <generate> or <simple-generate> into an existing Splout cluster");
 		addClass("pagecounts", PageCountsExample.class, "The Wikipedia Page Counts Example");
 		addClass("integrationtest", HadoopIntegrationTest.class, "A Hadoop-compatibility integrationt test");
+		addClass("identityjob", IdentityJob.class, "The identity Job which can be used to do a comparative benchmark of Splout");
 	}
 	
 	public static void main(String[] args) throws Throwable {
