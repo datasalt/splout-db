@@ -21,12 +21,15 @@ package com.splout.db.examples;
  */
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.ArrayList;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.mortbay.log.Log;
@@ -35,10 +38,14 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.datasalt.pangool.io.Fields;
+import com.datasalt.pangool.io.ITuple;
 import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.tuplemr.OrderBy;
+import com.datasalt.pangool.tuplemr.TupleMRBuilder;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleTextInputFormat;
+import com.datasalt.pangool.tuplemr.mapred.lib.output.TupleOutputFormat;
 import com.datasalt.pangool.utils.HadoopUtils;
+import com.splout.db.common.PartitionMap;
 import com.splout.db.common.SploutHadoopConfiguration;
 import com.splout.db.hadoop.StoreDeployerTool;
 import com.splout.db.hadoop.TableBuilder;
@@ -46,13 +53,14 @@ import com.splout.db.hadoop.TablespaceBuilder;
 import com.splout.db.hadoop.TablespaceDepSpec;
 import com.splout.db.hadoop.TablespaceGenerator;
 import com.splout.db.hadoop.TupleSampler;
+import com.splout.db.hadoop.TupleSampler.SamplingOptions;
 import com.splout.db.hadoop.TupleSampler.SamplingType;
 
 /**
- * An advanced Splout example with the Wikipedia pagecounts dataset:
- * http://dom.as/2007/12/10/wikipedia-page-counters/
+ * An advanced Splout example with the Wikipedia pagecounts dataset: http://dom.as/2007/12/10/wikipedia-page-counters/
  */
-public class PageCountsExample implements Tool {
+@SuppressWarnings("serial")
+public class PageCountsExample implements Tool, Serializable {
 
 	@Parameter(required = true, names = { "-i", "--inputpath" }, description = "The input path that contains the pagecounts file tree.")
 	private String inputPath;
@@ -77,8 +85,11 @@ public class PageCountsExample implements Tool {
 
 	@Parameter(names = { "-m", "--memoryForIndexing" }, description = "The amount of memory to use in each Reducer for indexing, in bytes.")
 	private Long memoryForIndexing = 268435456l; // 256 MB
-	
-	private Configuration conf;
+
+	@Parameter(names = { "-gtf", "--generateTupleFiles" }, description = "This boolean parameter is made for benchmarking purposes. When enabled, no SQLite files will be generated, just plain binary TupleFiles. This allows us to compare the performance of the SQLite output format compared to a plain binary output format. This option is incompatible with -d (deploy).")
+	private boolean generateTupleFiles = false;
+
+	private transient Configuration conf;
 
 	@Override
 	public Configuration getConf() {
@@ -104,6 +115,13 @@ public class PageCountsExample implements Tool {
 		}
 
 		boolean generate = !noGenerate; // just for clarifying
+
+		if(generateTupleFiles && deploy) {
+			System.err.println("Can't run a 'dry' TupleFile generation and deploy it.");
+			jComm.usage();
+			System.exit(-1);
+		}
+		
 		Path outPath = new Path(outputPath);
 		FileSystem outFs = outPath.getFileSystem(getConf());
 
@@ -113,7 +131,7 @@ public class PageCountsExample implements Tool {
 				SploutHadoopConfiguration.addSQLite4JavaNativeLibsToDC(conf);
 			}
 		}
-		
+
 		if(generate) {
 			Path inputPath = new Path(this.inputPath);
 			FileSystem inputFileSystem = inputPath.getFileSystem(conf);
@@ -121,7 +139,7 @@ public class PageCountsExample implements Tool {
 			FileStatus[] fileStatuses = inputFileSystem.listStatus(inputPath);
 
 			// define the schema that the resultant table will have: date, hour, pagename, pageviews
-			Schema tableSchema = new Schema("pagecounts",
+			final Schema tableSchema = new Schema("pagecounts",
 			    Fields.parse("date:string, hour:string, pagename:string, pageviews:int"));
 			// define the schema of the input files: projectcode, pagename, pageviews, bytes
 			Schema fileSchema = new Schema("pagecountsfile",
@@ -145,25 +163,24 @@ public class PageCountsExample implements Tool {
 				    fileSchema, recordProcessor);
 			}
 
-			// partition by the first two characters of the page so we can easily implement auto suggest
-//			tableBuilder
-//			    .partitionByJavaScript("function partition(record) { var str = record.get('pagename').toString(); if(str.length() > 2) { return str.substring(0, 2); } else { return str; } }");
+			// partition the dataset by pagename - which should give a fair even distribution.
 			tableBuilder.partitionBy("pagename");
 			// create a compound index on pagename, date so that typical queries for the dataset will be fast
 			tableBuilder.createIndex("pagename", "date");
-			
+
 			long nonExactPageSize = memoryForIndexing / 32000; // number of pages
-			int pageSize = (int) Math.pow(2, (int) Math.round(Math.log(nonExactPageSize)/Math.log(2)));
-			Log.info("Pagesize = " + pageSize + " as memory for indexing was [" + memoryForIndexing + "] and there are 32000 pages.");
-			
- 		  tableBuilder.initialSQL("pragma page_size=" + pageSize);
+			int pageSize = (int) Math.pow(2, (int) Math.round(Math.log(nonExactPageSize) / Math.log(2)));
+			Log.info("Pagesize = " + pageSize + " as memory for indexing was [" + memoryForIndexing
+			    + "] and there are 32000 pages.");
+
+			tableBuilder.initialSQL("pragma page_size=" + pageSize);
 			// insertion order is very important for optimizing query speed because it makes data be co-located in disk
 			tableBuilder.insertionSortOrder(OrderBy.parse("pagename:asc, date:asc"));
 
 			// instantiate a TablespaceBuilder
 			TablespaceBuilder tablespaceBuilder = new TablespaceBuilder();
 
-			// we will partition this dataset in as many partitions as: 
+			// we will partition this dataset in as many partitions as:
 			tablespaceBuilder.setNPartitions(nPartitions);
 			tablespaceBuilder.add(tableBuilder.build());
 			// we turn a specific SQLite pragma on for making autocomplete queries fast
@@ -172,9 +189,42 @@ public class PageCountsExample implements Tool {
 			HadoopUtils.deleteIfExists(outFs, outPath);
 
 			// finally, instantiate a TablespaceGenerator and execute it
-			TablespaceGenerator tablespaceViewBuilder = new TablespaceGenerator(tablespaceBuilder.build(),
-			    outPath);
-			tablespaceViewBuilder.generateView(getConf(), SamplingType.RESERVOIR, new TupleSampler.DefaultSamplingOptions());
+			TablespaceGenerator tablespaceViewBuilder;
+
+			if(generateTupleFiles) {
+				// we subclass TablespaceGenerator to be able to run the generation without outputting the SQLite stores, for
+				// benchmark comparisons.
+				// In the future this feature may be useful in general for debugging store creation.
+				tablespaceViewBuilder = new TablespaceGenerator(tablespaceBuilder.build(), outPath) {
+
+					@Override
+					public void generateView(Configuration conf, SamplingType samplingType,
+					    SamplingOptions samplingOptions) throws Exception {
+
+						prepareOutput(conf);
+						final int nPartitions = tablespace.getnPartitions();
+						if(nPartitions > 1) {
+							partitionMap = sample(nPartitions, conf, samplingType, samplingOptions);
+						} else {
+							partitionMap = PartitionMap.oneShardOpenedMap();
+						}
+						writeOutputMetadata(conf);
+
+						TupleMRBuilder builder = createMRBuilder(nPartitions, conf);
+						// Set a TupleOutput here instead of SQLiteOutput
+						builder.setOutput(new Path(outputPath, OUT_STORE), new TupleOutputFormat(tableSchema),
+						    ITuple.class, NullWritable.class);
+						Job job = builder.createJob();
+						executeViewGeneration(job);
+					}
+				};
+			} else {
+				// ... otherwise a standard TablespaceGenerator is used.
+				tablespaceViewBuilder = new TablespaceGenerator(tablespaceBuilder.build(), outPath);
+			}
+
+			tablespaceViewBuilder.generateView(getConf(), SamplingType.RESERVOIR,
+			    new TupleSampler.DefaultSamplingOptions());
 		}
 
 		if(deploy) {

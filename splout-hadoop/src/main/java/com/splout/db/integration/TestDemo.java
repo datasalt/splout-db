@@ -20,21 +20,20 @@ package com.splout.db.integration;
  * #L%
  */
 
-import com.datasalt.pangool.io.TupleFile;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.NullWritable;
 import org.mortbay.log.Log;
 
+import com.datasalt.pangool.io.TupleFile;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat;
 import com.datasalt.pangool.utils.HadoopUtils;
 import com.splout.db.common.PartitionMap;
 import com.splout.db.common.ReplicationMap;
 import com.splout.db.common.SploutClient;
 import com.splout.db.common.SploutHadoopTestUtils;
-import com.splout.db.hadoop.TablespaceSpec;
 import com.splout.db.hadoop.TablespaceGenerator;
+import com.splout.db.hadoop.TablespaceSpec;
 import com.splout.db.hadoop.TupleSampler;
 import com.splout.db.hadoop.TupleSampler.SamplingType;
 
@@ -42,6 +41,7 @@ import com.splout.db.hadoop.TupleSampler.SamplingType;
  * Generates random test Tuples (one string, one int) and deploys them to Splout. This is the "minimum-viable" demo for
  * Splout. Use the main() method for running it.
  */
+@Deprecated // To be removed
 public class TestDemo {
 
 	public void generate(int nPartitions, long nRegs, String dnodes, String qnode, Path inputPath, Path outputPath)
@@ -52,7 +52,6 @@ public class TestDemo {
 		HadoopUtils.deleteIfExists(fS, inputPath);
 		HadoopUtils.deleteIfExists(fS, outputPath);
 
-		NullWritable nullValue = NullWritable.get();
 		TupleFile.Writer writer = new TupleFile.Writer(fS,  conf, inputPath, SploutHadoopTestUtils.SCHEMA);
 		
 		// Writes nRegs Tuples to HDFS

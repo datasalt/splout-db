@@ -26,7 +26,6 @@ import com.splout.db.benchmark.BenchmarkStoreTool;
 import com.splout.db.benchmark.IdentityJob;
 import com.splout.db.examples.PageCountsExample;
 import com.splout.db.integration.HadoopIntegrationTest;
-import com.splout.db.integration.TestDemo;
 
 /**
  * Hadoop's Driver - add here any Hadoop programs that could be run by default with the Splout JAR.
@@ -35,7 +34,6 @@ public class Driver extends ProgramDriver {
 
 	public Driver() throws Throwable {
 		super();
-		addClass("datagenerator", TestDemo.class, "A simple data generator that creates a Splout view and deploys it to localhost. For preliminar testing.");
 		addClass("benchmarkstoretool", BenchmarkStoreTool.class, "A tool for creating a tablespace for benchmarking Splout.");
 		addClass("benchmarkdeploytool", DeployerCMD.class, "A tool for deploying a tablespace created with Benchmark store tool.");
 		addClass("generate", GeneratorCMD.class, "A tool for generating tablespaces from existing files (CSV).");

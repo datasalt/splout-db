@@ -20,28 +20,32 @@ package com.splout.db.integration;
  * #L%
  */
 
-import com.datasalt.pangool.io.*;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.NullWritable;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.mortbay.log.Log;
 
+import com.datasalt.pangool.io.Fields;
+import com.datasalt.pangool.io.ITuple;
+import com.datasalt.pangool.io.Schema;
+import com.datasalt.pangool.io.Tuple;
+import com.datasalt.pangool.io.TupleFile;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat;
 import com.datasalt.pangool.utils.HadoopUtils;
 import com.splout.db.common.PartitionMap;
 import com.splout.db.common.ReplicationMap;
 import com.splout.db.common.SploutClient;
-import com.splout.db.hadoop.TablespaceSpec;
 import com.splout.db.hadoop.TablespaceGenerator;
+import com.splout.db.hadoop.TablespaceSpec;
 import com.splout.db.hadoop.TupleSampler;
 import com.splout.db.hadoop.TupleSampler.SamplingType;
 
 /**
  * Demo based on hypothetical retail data (payments, etc). Use the main() method for running it.
  */
+@Deprecated // To be removed
 public class RetailDemo {
 
 	final static int N_TIENDAS = 100;
@@ -59,7 +63,6 @@ public class RetailDemo {
 		HadoopUtils.deleteIfExists(fS, inputPath);
 		HadoopUtils.deleteIfExists(fS, outputPath);
 
-		NullWritable nullValue = NullWritable.get();
 		Schema retailSchema = new Schema("retail",
 		    Fields.parse("tienda:string, cliente:int, ticket:double, producto:int, precio:double, fecha:string"));
 		ITuple tuple = new Tuple(retailSchema);
