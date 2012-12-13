@@ -28,8 +28,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import javax.script.ScriptException;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -50,12 +48,16 @@ import com.datasalt.pangool.tuplemr.Criteria.SortElement;
 import com.datasalt.pangool.tuplemr.IdentityTupleReducer;
 import com.datasalt.pangool.tuplemr.OrderBy;
 import com.datasalt.pangool.tuplemr.TupleMRBuilder;
+import com.datasalt.pangool.tuplemr.TupleMRException;
 import com.datasalt.pangool.tuplemr.TupleMapper;
 import com.datasalt.pangool.tuplemr.TupleReducer;
 import com.splout.db.common.JSONSerDe;
+import com.splout.db.common.JSONSerDe.JSONSerDeException;
 import com.splout.db.common.PartitionEntry;
 import com.splout.db.common.PartitionMap;
 import com.splout.db.common.Tablespace;
+import com.splout.db.hadoop.TupleSQLite4JavaOutputFormat.TupleSQLiteOutputFormatException;
+import com.splout.db.hadoop.TupleSampler.TupleSamplerException;
 
 /**
  * A process that generates the SQL data stores needed for deploying a tablespace in Splout, giving a file set table
@@ -98,16 +100,16 @@ public class TablespaceGenerator implements Serializable {
 
 	// --- Input parameters --- //
 	private transient final Path outputPath;
-	private transient final TablespaceSpec tablespace;
+	protected transient final TablespaceSpec tablespace;
 
 	// Number of keys that will be sampled for partitioning
 	private int recordsToSample = 100000;
 	// Number of SQL statements to execute before a COMMIT
 	private int batchSize = 1000000;
-	private PartitionMap partitionMap;
+	protected PartitionMap partitionMap;
 
 	private TupleReducer<ITuple, NullWritable> customReducer = null;
-	
+
 	public TablespaceGenerator(TablespaceSpec tablespace, Path outputPath) {
 		this.tablespace = tablespace;
 		this.outputPath = outputPath;
@@ -119,14 +121,64 @@ public class TablespaceGenerator implements Serializable {
 	public final static String OUT_STORE = "store";
 
 	/**
-	 * Return the partition key either by using partition-by-fields or partition-by-javascript as configured in the Table
+	 * This is the public method which has to be called when using this class as an API.
+	 * Business logic has been split in various protected functions to ease understading of it and also to be able
+	 * to subclass this easily to extend its functionality.
+	 */
+	public void generateView(Configuration conf, TupleSampler.SamplingType samplingType,
+	    TupleSampler.SamplingOptions samplingOptions) throws Exception {
+
+		prepareOutput(conf);
+
+		final int nPartitions = tablespace.getnPartitions();
+
+		if(nPartitions > 1) {
+			partitionMap = sample(nPartitions, conf, samplingType, samplingOptions);
+		} else {
+			partitionMap = PartitionMap.oneShardOpenedMap();
+		}
+
+		writeOutputMetadata(conf);
+
+		Job job = createMRBuilder(nPartitions, conf).createJob();
+		executeViewGeneration(job);
+	}
+
+	// ------------------------------- //
+	
+	protected void prepareOutput(Configuration conf) throws IOException {
+		FileSystem fileSystem = outputPath.getFileSystem(conf);
+		fileSystem.mkdirs(outputPath);
+	}
+	
+	/**
+	 * Write the partition map and other metadata to the output folder. They will be needed for deploying the dataset to Splout.
+	 */
+	protected void writeOutputMetadata(Configuration conf) throws IOException, JSONSerDeException {
+		FileSystem fileSystem = outputPath.getFileSystem(conf);
+		
+		Path partitionMapPath = new Path(outputPath, OUT_PARTITION_MAP);
+		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fileSystem.create(
+		    partitionMapPath, true)));
+		writer.write(JSONSerDe.ser(partitionMap));
+		writer.close();
+		
+		// Write init statements, if applicable
+		if(tablespace.getInitStatements() != null) {
+			Path initStatementsPath = new Path(outputPath, OUT_INIT_STATEMENTS);
+			writer = new BufferedWriter(new OutputStreamWriter(fileSystem.create(initStatementsPath, true)));
+			writer.write(JSONSerDe.ser(tablespace.getInitStatements()));
+			writer.close();
+		}
+	}
+	
+	/**
+	 * Returns the partition key either by using partition-by-fields or partition-by-javascript as configured in the Table
 	 * Spec.
-	 * 
-	 * @throws NoSuchMethodException
-	 * @throws ScriptException
 	 */
 	protected static String getPartitionByKey(ITuple tuple, TableSpec tableSpec, JavascriptEngine jsEngine)
 	    throws Throwable {
+		
 		String strKey = "";
 		if(tableSpec.getPartitionFields() != null) {
 			for(Field partitionField : tableSpec.getPartitionFields()) {
@@ -147,100 +199,80 @@ public class TablespaceGenerator implements Serializable {
 		return strKey;
 	}
 
-	public void generateView(Configuration conf, TupleSampler.SamplingType samplingType,
-	    TupleSampler.SamplingOptions samplingOptions) throws Exception {
+	/**
+	 * Samples the input, if needed.
+	 */
+	protected PartitionMap sample(int nPartitions, Configuration conf, TupleSampler.SamplingType samplingType,
+	    TupleSampler.SamplingOptions samplingOptions) throws TupleSamplerException, IOException {
+		
 		FileSystem fileSystem = outputPath.getFileSystem(conf);
-		fileSystem.mkdirs(outputPath);
+		List<String> keys = new ArrayList<String>();
 
-		final int nPartitions = tablespace.getnPartitions();
-
-		if(nPartitions > 1) {
-			/*
-			 * 1: Sample input
-			 */
-			List<String> keys = new ArrayList<String>();
-
-			// We must sample as many tables as there are for the tablespace
-			for(Table table : tablespace.getPartitionedTables()) {
-				JavascriptEngine jsEngine = null;
-				if(table.getTableSpec().getPartitionByJavaScript() != null) {
-					try {
-						jsEngine = new JavascriptEngine(table.getTableSpec().getPartitionByJavaScript());
-					} catch(Throwable e) {
-						throw new RuntimeException(e);
-					}
+		// We must sample as many tables as there are for the tablespace
+		for(Table table : tablespace.getPartitionedTables()) {
+			JavascriptEngine jsEngine = null;
+			if(table.getTableSpec().getPartitionByJavaScript() != null) {
+				try {
+					jsEngine = new JavascriptEngine(table.getTableSpec().getPartitionByJavaScript());
+				} catch(Throwable e) {
+					throw new RuntimeException(e);
 				}
-
-				Path sampledInput = new Path(outputPath, OUT_SAMPLED_INPUT);
-				TupleSampler sampler = new TupleSampler(samplingType, samplingOptions);
-				sampler.sample(table.getFiles(), table.getTableSpec().getSchema(), conf, recordsToSample,
-				    sampledInput);
-
-				// 1.1 Read sampled keys
-        TupleFile.Reader reader = new TupleFile.Reader(fileSystem, conf, sampledInput);
-        Tuple tuple = new Tuple(reader.getSchema());
-
-				while(reader.next(tuple)) {
-					String key;
-					try {
-						key = getPartitionByKey(tuple, table.getTableSpec(), jsEngine);
-					} catch(Throwable e) {
-						throw new RuntimeException(e);
-					}
-					keys.add(key);
-				}
-				reader.close();
 			}
 
-			// 1.2 Sort them using default comparators
-			Collections.sort(keys);
+			Path sampledInput = new Path(outputPath, OUT_SAMPLED_INPUT);
+			TupleSampler sampler = new TupleSampler(samplingType, samplingOptions);
+			sampler.sample(table.getFiles(), table.getTableSpec().getSchema(), conf, recordsToSample,
+			    sampledInput);
 
-			/*
-			 * 2: Calculate partition map
-			 */
-			// 2.1 Select "n" keys evenly distributed
-			List<PartitionEntry> partitionEntries = new ArrayList<PartitionEntry>();
-			int offset = keys.size() / nPartitions;
-			String min = null;
-			for(int i = 0; i < nPartitions; i++) {
-				PartitionEntry entry = new PartitionEntry();
-				if(min != null) {
-					entry.setMin(min);
+			// 1.1 Read sampled keys
+			TupleFile.Reader reader = new TupleFile.Reader(fileSystem, conf, sampledInput);
+			Tuple tuple = new Tuple(reader.getSchema());
+
+			while(reader.next(tuple)) {
+				String key;
+				try {
+					key = getPartitionByKey(tuple, table.getTableSpec(), jsEngine);
+				} catch(Throwable e) {
+					throw new RuntimeException(e);
 				}
-				int keyIndex = (i + 1) * offset;
-				if(keyIndex < keys.size()) {
-					entry.setMax(keys.get(keyIndex));
-				}
-				min = entry.getMax();
-				entry.setShard(i);
-				partitionEntries.add(entry);
+				keys.add(key);
 			}
-			// Leave the last entry opened for having a complete map
-			partitionEntries.get(partitionEntries.size() - 1).setMax(null);
-			// 2.2 Create the partition map
-			partitionMap = new PartitionMap(PartitionMap.adjustEmptyPartitions(partitionEntries));
-		} else {
-			partitionMap = PartitionMap.oneShardOpenedMap();
+			reader.close();
 		}
 
-		// 2.3 Write partition map to the HDFS
-		Path partitionMapPath = new Path(outputPath, OUT_PARTITION_MAP);
-		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fileSystem.create(
-		    partitionMapPath, true)));
-		writer.write(JSONSerDe.ser(partitionMap));
-		writer.close();
-
-		// Write init statements, if applicable
-		if(tablespace.getInitStatements() != null) {
-			Path initStatementsPath = new Path(outputPath, OUT_INIT_STATEMENTS);
-			writer = new BufferedWriter(new OutputStreamWriter(fileSystem.create(initStatementsPath, true)));
-			writer.write(JSONSerDe.ser(tablespace.getInitStatements()));
-			writer.close();
-		}
+		// 1.2 Sort them using default comparators
+		Collections.sort(keys);
 
 		/*
-		 * 3: Generate view
+		 * 2: Calculate partition map
 		 */
+		// 2.1 Select "n" keys evenly distributed
+		List<PartitionEntry> partitionEntries = new ArrayList<PartitionEntry>();
+		int offset = keys.size() / nPartitions;
+		String min = null;
+		for(int i = 0; i < nPartitions; i++) {
+			PartitionEntry entry = new PartitionEntry();
+			if(min != null) {
+				entry.setMin(min);
+			}
+			int keyIndex = (i + 1) * offset;
+			if(keyIndex < keys.size()) {
+				entry.setMax(keys.get(keyIndex));
+			}
+			min = entry.getMax();
+			entry.setShard(i);
+			partitionEntries.add(entry);
+		}
+		// Leave the last entry opened for having a complete map
+		partitionEntries.get(partitionEntries.size() - 1).setMax(null);
+		// 2.2 Create the partition map
+		return new PartitionMap(PartitionMap.adjustEmptyPartitions(partitionEntries));
+	}
+	
+	/**
+	 * Create TupleMRBuilder for launching generation Job.
+	 */
+	protected TupleMRBuilder createMRBuilder(final int nPartitions, Configuration conf) throws TupleMRException, TupleSQLiteOutputFormatException {
 		TupleMRBuilder builder = new TupleMRBuilder(conf, "Splout View Builder");
 
 		List<TableSpec> tableSpecs = new ArrayList<TableSpec>();
@@ -379,7 +411,8 @@ public class TablespaceGenerator implements Serializable {
 			builder.setOrderBy(orderBy);
 		} else { // > 1
 			// More than one schema: set common order by
-			builder.setOrderBy(OrderBy.parse(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD + ":asc").addSchemaOrder(Order.ASC));
+			builder.setOrderBy(OrderBy.parse(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD + ":asc")
+			    .addSchemaOrder(Order.ASC));
 			// And then as many particular order bys as needed - ....
 			for(Table partitionedTable : tablespace.getPartitionedTables()) {
 				if(partitionedTable.getTableSpec().getInsertionOrderBy() != null) {
@@ -390,8 +423,8 @@ public class TablespaceGenerator implements Serializable {
 			for(Table replicatedTable : tablespace.getReplicateAllTables()) {
 				if(replicatedTable.getTableSpec().getInsertionOrderBy() != null) {
 					builder.setSpecificOrderBy(replicatedTable.getTableSpec().getSchema().getName(),
-							replicatedTable.getTableSpec().getInsertionOrderBy());
-				}				
+					    replicatedTable.getTableSpec().getInsertionOrderBy());
+				}
 			}
 		}
 
@@ -408,10 +441,16 @@ public class TablespaceGenerator implements Serializable {
 		builder.setOutput(new Path(outputPath, OUT_STORE), outputFormat, ITuple.class, NullWritable.class);
 		// #reducers = #partitions by default
 		builder.getConf().setInt("mapred.reduce.tasks", nPartitions);
+
+		return builder;
+	}
+
+	protected void executeViewGeneration(Job generationJob) throws IOException, InterruptedException,
+	    ClassNotFoundException, TablespaceGeneratorException {
+
 		long start = System.currentTimeMillis();
-		Job job = builder.createJob();
-		job.waitForCompletion(true);
-		if(!job.isSuccessful()) {
+		generationJob.waitForCompletion(true);
+		if(!generationJob.isSuccessful()) {
 			throw new TablespaceGeneratorException("Error executing generation Job");
 		}
 		long end = System.currentTimeMillis();
@@ -422,7 +461,7 @@ public class TablespaceGenerator implements Serializable {
 	void setCustomReducer(TupleReducer<ITuple, NullWritable> customReducer) {
 		this.customReducer = customReducer;
 	}
-	
+
 	/**
 	 * Returns the generated {@link PartitionMap}. It is also written to the HDFS. This is mainly used for testing.
 	 */
