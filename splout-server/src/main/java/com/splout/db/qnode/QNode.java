@@ -21,6 +21,9 @@ package com.splout.db.qnode;
  * #L%
  */
 
+import com.splout.db.common.SploutConfiguration;
+import com.splout.db.qnode.rest.RESTAPI;
+import com.yammer.metrics.reporting.AdminServlet;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.mortbay.jetty.Handler;
@@ -30,9 +33,6 @@ import org.mortbay.jetty.servlet.ServletHolder;
 import org.mortbay.jetty.webapp.WebAppContext;
 import org.mortbay.resource.Resource;
 import org.mortbay.resource.ResourceCollection;
-
-import com.splout.db.common.SploutConfiguration;
-import com.splout.db.qnode.rest.RESTAPI;
 
 /**
  * Like the {@link com.splout.db.dnode.DNode}, this class is only the skeleton of the QNode service. It handles the HTTP
@@ -69,6 +69,7 @@ public class QNode {
 				
 				context.addServlet(new ServletHolder(sC), "/api/*");
 				context.addServlet(new ServletHolder(defaultServlet), "/panel/*");
+        context.addServlet(new ServletHolder(new AdminServlet()), "/metrics/*");
 				
 				// No cache header in all responses... otherwise some browsers
 				// can decide to cache some requests and they shouldn't

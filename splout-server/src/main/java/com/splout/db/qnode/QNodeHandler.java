@@ -21,53 +21,32 @@ package com.splout.db.qnode;
  * #L%
  */
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.thrift.transport.TTransportException;
-import org.codehaus.jackson.type.TypeReference;
-
 import com.google.common.base.Joiner;
-import com.hazelcast.core.EntryEvent;
-import com.hazelcast.core.EntryListener;
-import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.IMap;
+import com.hazelcast.core.*;
 import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
 import com.splout.db.common.SploutConfiguration;
 import com.splout.db.common.Tablespace;
 import com.splout.db.dnode.beans.DNodeSystemStatus;
-import com.splout.db.hazelcast.CoordinationStructures;
-import com.splout.db.hazelcast.DNodeInfo;
-import com.splout.db.hazelcast.HazelcastConfigBuilder;
-import com.splout.db.hazelcast.HazelcastProperties;
-import com.splout.db.hazelcast.TablespaceVersion;
-import com.splout.db.hazelcast.TablespaceVersionStore;
+import com.splout.db.hazelcast.*;
 import com.splout.db.qnode.Deployer.UnexistingVersion;
 import com.splout.db.qnode.QNodeHandlerContext.DNodeEvent;
 import com.splout.db.qnode.QNodeHandlerContext.TablespaceVersionInfoException;
-import com.splout.db.qnode.beans.DeployInfo;
-import com.splout.db.qnode.beans.DeployRequest;
-import com.splout.db.qnode.beans.ErrorQueryStatus;
-import com.splout.db.qnode.beans.QNodeStatus;
-import com.splout.db.qnode.beans.QueryStatus;
-import com.splout.db.qnode.beans.StatusMessage;
-import com.splout.db.qnode.beans.SwitchVersionRequest;
+import com.splout.db.qnode.beans.*;
 import com.splout.db.thrift.DNodeService;
 import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.Counter;
+import com.yammer.metrics.core.Histogram;
 import com.yammer.metrics.core.Meter;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.thrift.transport.TTransportException;
+import org.codehaus.jackson.type.TypeReference;
+
+import java.io.IOException;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Implements the business logic for the {@link QNode}.
@@ -109,11 +88,12 @@ public class QNodeHandler implements IQNodeHandler {
 	private SploutConfiguration config;
 	CoordinationStructures coord;
 
-	private final Counter queriesServed = Metrics.newCounter(QNodeHandler.class, "queries-served");
-	private final Meter requestsPerSecond = Metrics.newMeter(QNodeHandler.class, "queries-second",
+	private final Counter meterQueriesServed = Metrics.newCounter(QNodeHandler.class, "queries-served");
+	private final Meter meterRequestsPerSecond = Metrics.newMeter(QNodeHandler.class, "queries-second",
 	    "queries-second", TimeUnit.SECONDS);
+  private final Histogram meterResultSize = Metrics.newHistogram(QNodeHandler.class, "response-size");
 
-	/**
+  /**
 	 * Keep track of die/alive DNodes events.
 	 */
 	public class DNodesListener implements EntryListener<String, DNodeInfo> {
@@ -302,12 +282,16 @@ public class QNodeHandler implements IQNodeHandler {
 		if(key == null) {
 			return new ErrorQueryStatus("Null key provided, can't query.");
 		}
-		queriesServed.inc();
-		requestsPerSecond.mark();
+		meterQueriesServed.inc();
+		meterRequestsPerSecond.mark();
 		/*
 		 * The queries are handled by the specialized module {@link Querier}
 		 */
-		return querier.query(tablespace, key, sql);
+    QueryStatus result = querier.query(tablespace, key, sql);
+    if (result.getResult() != null) {
+		  meterResultSize.update(result.getResult().size());
+    }
+    return result;
 	}
 
 	/**
@@ -357,8 +341,8 @@ public class QNodeHandler implements IQNodeHandler {
 		for(Integer shardKey : impactedKeys) {
 			toReturn.add(querier.query(tablespaceName, sql, shardKey));
 		}
-		queriesServed.inc();
-		requestsPerSecond.mark();
+		meterQueriesServed.inc();
+		meterRequestsPerSecond.mark();
 		return toReturn;
 	}
 
