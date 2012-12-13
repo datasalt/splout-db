@@ -118,6 +118,7 @@ public class IdentityJob implements Tool {
 			builder.setGroupByFields(groupBy);
 			builder.setOutput(outP, outputFormat, ITuple.class, NullWritable.class);
 			builder.setTupleReducer(new IdentityTupleReducer());
+			builder.setJarByClass(this.getClass());
 			
 			builder.createJob().waitForCompletion(true);
 		}
