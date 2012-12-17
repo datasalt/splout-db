@@ -80,6 +80,10 @@ public class TupleSampler implements Serializable {
 
 	public static class TupleSamplerException extends Exception {
 
+		public TupleSamplerException(String reason) {
+			super(reason);
+		}
+		
 		public TupleSamplerException(Exception e) {
 			super(e);
 		}
@@ -173,7 +177,7 @@ public class TupleSampler implements Serializable {
 	 */
 	private void reservoirSampling(Schema tableSchema, final long sampleSize, Configuration hadoopConf,
 	    Path outputPath, final int nSplits, List<TableInput> inputFiles) throws IOException,
-	    InterruptedException, ClassNotFoundException, TupleMRException, URISyntaxException {
+	    InterruptedException, ClassNotFoundException, TupleMRException, URISyntaxException, TupleSamplerException {
 
 		MapOnlyJobBuilder builder = new MapOnlyJobBuilder(hadoopConf, "Reservoir Sampling");
 		for(TableInput inputFile : inputFiles) {
@@ -235,7 +239,10 @@ public class TupleSampler implements Serializable {
 		// Set output path
 		Path outReservoirPath = new Path(outputPath + "-reservoir");
 		builder.setTupleOutput(outReservoirPath, new NullableSchema(tableSchema));
-		builder.createJob().waitForCompletion(true);
+		Job job = builder.createJob();
+		if(!job.waitForCompletion(true)) {
+			throw new TupleSamplerException("Reservoir Sampling failed!");
+		}
 
 		FileSystem outFs = outReservoirPath.getFileSystem(hadoopConf);
 		// Instantiate the writer we will write samples to

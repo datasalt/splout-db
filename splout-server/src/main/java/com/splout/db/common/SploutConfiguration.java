@@ -24,7 +24,10 @@ package com.splout.db.common;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.net.InetAddress;
 import java.net.URL;
+import java.util.Collection;
+import java.util.Iterator;
 
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.configuration.ConfigurationException;
@@ -86,11 +89,20 @@ public class SploutConfiguration extends CompositeConfiguration implements Seria
 		properties.addConfiguration(config);
 
 		// The following lines replaces the default "localhost" by the local IP for convenience:
-
 		String myIp = "localhost";
 
 		try {
-			myIp = GetIPAddresses.getAllLocalIPs().iterator().next().getHostAddress();
+			Collection<InetAddress> iNetAddresses = GetIPAddresses.getAllLocalIPs();
+			// but only if there is Internet connectivity!
+			if(iNetAddresses != null) {
+				Iterator<InetAddress> it = iNetAddresses.iterator();
+				if(it.hasNext()) {
+					InetAddress address = it.next();
+					if(address.getHostAddress() != null) {
+						myIp = address.getHostAddress();
+					}
+				}
+			}
 		} catch(IOException e) {
 			throw new RuntimeException(e);
 		}
