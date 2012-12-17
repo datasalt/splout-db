@@ -39,8 +39,7 @@ import com.splout.db.qnode.beans.QNodeStatus;
 import com.splout.db.qnode.beans.QueryStatus;
 
 /**
- * This program runs an integration test to assert that different versions of Hadoop work well with Splout. A modified
- * version of this can be used in a CI server to integrate-test Hadoop, downloads from S3, etc.
+ * This program runs an integration test to assert that different versions of Hadoop work well with Splout.
  * <p>
  * Versions tested successfully so far: Apache 0.20.X, CDH3 and Apache 1.0.4
  */
@@ -51,15 +50,6 @@ public class HadoopIntegrationTest implements Tool, Configurable {
 
 	@Parameter(names = { "-i", "--input" }, description = "The page counts sample file to use as input, otherwise the one in src/main/resources is used. Override if needed.")
 	private String input = "pagecounts-sample/pagecounts-20090430-230000-sample";
-
-	@Parameter(required = true, names = { "-k", "--awskey" }, description = "AWS key. It will be used to assert that deploy from S3 works.")
-	private String awsKey = null;
-
-	@Parameter(required = true, names = { "-s", "--awssecret" }, description = "AWS secret key. It will be used to assert that deploy from S3 works.")
-	private String awsSecretKey = null;
-
-	@Parameter(required = true, names = { "-b", "--pagecountsbucket" }, description = "The name of an S3 bucket that contains a generated Pagecounts dataset. The bucket must contain a folder named 'pagecountsintegration'. It will be used to assert that deployment from S3 works.")
-	private String awsPagecountsBucket = null;
 
 	Configuration conf;
 
@@ -137,26 +127,6 @@ public class HadoopIntegrationTest implements Tool, Configurable {
 
 		if(qStatus.getResult() == null) {
 			throw new RuntimeException("Something failed as query() is returning null!");
-		}
-
-		// Deploy from S3
-		deployer.setConf(getConf());
-		if(deployer.run(new String[] { "-r", "2", "-q", qnode, "-root",
-		    "s3n://" + awsKey + ":" + awsSecretKey + "@" + awsPagecountsBucket + "/", "-ts",
-		    "pagecountsintegration" }) < 0) {
-			throw new RuntimeException("Deployer from S3 failed!");
-		}
-
-		status = client.overview();
-		while(status.getTablespaceMap().get("pagecountsintegration") == null
-		    || previousVersion == status.getTablespaceMap().get("pagecountsintegration").getVersion()) {
-			Thread.sleep(2000);
-			waitedSoFar += 2000;
-			status = client.overview();
-			if(waitedSoFar > 15000) {
-				throw new RuntimeException(
-				    "Deploy must have failed in Splout's server. Waiting too much for it to complete.");
-			}
 		}
 
 		System.out.println("Everything fine.");
