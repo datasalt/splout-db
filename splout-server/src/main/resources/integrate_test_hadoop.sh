@@ -61,7 +61,7 @@ bin/splout-service.sh dnode start
 
 echo "Running integration test..."
 cd $SPLOUT_HOME
-hadoop jar splout-hadoop-*-SNAPSHOT-hadoop.jar integrationtest -i examples/pagecounts/pagecounts-sample/pagecounts-20090430-230000-sample
+$HADOOP_HOME/bin/hadoop jar splout-hadoop-*-SNAPSHOT-hadoop.jar integrationtest -i examples/pagecounts/pagecounts-sample/pagecounts-20090430-230000-sample
 
 # Stop Splout
 
