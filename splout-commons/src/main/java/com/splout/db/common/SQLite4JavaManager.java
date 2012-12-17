@@ -103,7 +103,9 @@ public class SQLite4JavaManager implements ISQLiteManager {
 			if(timeoutThread != null) {
 				timeoutThread.startQuery(conn, query);
 			}
-			st = conn.prepare(query);
+			// We don't want to cache the statements here so we use "false"
+			// Don't use the method without boolean because it will use cached = true!!!
+			st = conn.prepare(query, false);
 			if(timeoutThread != null) {
 				timeoutThread.endQuery(conn);
 			}
