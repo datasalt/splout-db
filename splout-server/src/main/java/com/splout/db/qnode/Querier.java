@@ -176,7 +176,7 @@ public class Querier extends QNodeHandlerModule {
 				}
 			} finally {
 				if(client != null) {
-					client.getOutputProtocol().getTransport().close();
+					QNodeHandlerContext.closeClient(client);
 				}
 			}
 		}

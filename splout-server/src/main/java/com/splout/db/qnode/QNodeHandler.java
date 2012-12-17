@@ -394,7 +394,7 @@ public class QNodeHandler implements IQNodeHandler {
 				throw e;
 			} finally {
 				if(client != null) {
-					client.getOutputProtocol().getTransport().close();
+					QNodeHandlerContext.closeClient(client);
 				}
 			}
 		}
@@ -447,7 +447,7 @@ public class QNodeHandler implements IQNodeHandler {
 			throw e;
 		} finally {
 			if(client != null) {
-				client.getOutputProtocol().getTransport().close();
+				QNodeHandlerContext.closeClient(client);
 			}
 		}
 	}

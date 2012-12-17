@@ -286,6 +286,14 @@ public class QNodeHandlerContext {
 	}
 
 	/**
+	 * Convenience method for properly closing a Thrift client to a DNode.
+	 */
+	public static void closeClient(DNodeService.Client client) {
+		client.getOutputProtocol().getTransport().close();
+		client.getInputProtocol().getTransport().close();
+	}
+	
+	/**
 	 * Rotates the versions (deletes versions that are old or useless). To be executed at startup and after a deployment.
 	 */
 	public List<com.splout.db.thrift.TablespaceVersion> synchronizeTablespaceVersions()
@@ -379,7 +387,7 @@ public class QNodeHandlerContext {
 						    + "). Not critical as they will be removed after other deployments.", e);
 					} finally {
 						if(client != null) {
-							client.getOutputProtocol().getTransport().close();
+							QNodeHandlerContext.closeClient(client);
 						}
 					}
 				}

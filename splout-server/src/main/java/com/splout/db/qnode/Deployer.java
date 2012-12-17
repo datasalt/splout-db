@@ -229,7 +229,7 @@ public class Deployer extends QNodeHandlerModule {
 				errDeployInfo.setError("Error connecting to DNode " + actionPerDNode.getKey());
 				return errDeployInfo;
 			} finally {
-				client.getOutputProtocol().getTransport().close();
+				QNodeHandlerContext.closeClient(client);
 			}
 		}
 
@@ -256,7 +256,7 @@ public class Deployer extends QNodeHandlerModule {
 				log.error("Error sending abort deploy flag to DNode [" + dnode + "]", e);
 			} finally {
 				if(client != null) {
-					client.getOutputProtocol().getTransport().close();
+					QNodeHandlerContext.closeClient(client);
 				}
 			}
 		}
