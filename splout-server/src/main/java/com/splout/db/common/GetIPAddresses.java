@@ -22,7 +22,6 @@ package com.splout.db.common;
  */
 
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Collection;
@@ -31,8 +30,6 @@ import java.util.LinkedList;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import com.splout.db.dnode.DNode;
 
 /**
  * From: http://pastebin.com/5X073pUc

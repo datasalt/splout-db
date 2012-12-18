@@ -117,8 +117,11 @@ public class SploutClient {
 	public QueryStatus query(String tablespace, String key, String query) throws IOException {
 		URI uri;
 		try {
-			uri = new URI("http", qNodesNoProtocol[(int) (Math.random() * qNodes.length)], "/api/query/"
-			    + tablespace, "key=" + key + "&sql=" + query, null);
+			// uri = new URI("http", qNodesNoProtocol[(int) (Math.random() * qNodes.length)], "/api/query/"
+			// + tablespace, "key=" + key + "&sql=" + query, null);
+			uri = new URI("http", qNodesNoProtocol[(int) (Math.random() * qNodes.length)], "/api/query",
+			    "tablespace=" + tablespace + "&key=" + key + "&sql=" + query, null);
+
 			HttpRequest request = requestFactory.buildGetRequest(new GenericUrl(uri.toASCIIString()));
 			HttpResponse resp = request.execute();
 			try {

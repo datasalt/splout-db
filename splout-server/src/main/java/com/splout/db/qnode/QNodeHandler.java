@@ -282,14 +282,14 @@ public class QNodeHandler implements IQNodeHandler {
 		if(key == null) {
 			return new ErrorQueryStatus("Null key provided, can't query.");
 		}
-//		meterQueriesServed.inc();
-//		meterRequestsPerSecond.mark();
+		meterQueriesServed.inc();
+		meterRequestsPerSecond.mark();
 		/*
 		 * The queries are handled by the specialized module {@link Querier}
 		 */
     QueryStatus result = querier.query(tablespace, key, sql);
     if (result.getResult() != null) {
-//		  meterResultSize.update(result.getResult().size());
+		  meterResultSize.update(result.getResult().size());
     }
     return result;
 	}

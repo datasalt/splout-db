@@ -21,11 +21,6 @@ package com.splout.db.qnode;
  * #L%
  */
 
-import com.splout.db.common.SploutConfiguration;
-import com.splout.db.qnode.rest.RESTAPI;
-import com.yammer.metrics.reporting.AdminServlet;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.servlet.ServletContainer;
 import org.mortbay.jetty.Handler;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.servlet.DefaultServlet;
@@ -33,6 +28,12 @@ import org.mortbay.jetty.servlet.ServletHolder;
 import org.mortbay.jetty.webapp.WebAppContext;
 import org.mortbay.resource.Resource;
 import org.mortbay.resource.ResourceCollection;
+
+import com.splout.db.common.SploutConfiguration;
+import com.splout.db.qnode.rest.AdminServlet;
+import com.splout.db.qnode.rest.DeployRollbackServlet;
+import com.splout.db.qnode.rest.QueryServlet;
+import com.splout.db.qnode.rest.RewriteRuleHandler;
 
 /**
  * Like the {@link com.splout.db.dnode.DNode}, this class is only the skeleton of the QNode service. It handles the HTTP
@@ -58,18 +59,19 @@ public class QNode {
 		do {
 			try {
 				server = new Server(config.getInt(QNodeProperties.PORT));
-				ResourceConfig rc = new ResourceConfig().packages("com.splout.db.qnode.rest");
-				rc.setProperty("handler", handler);
 
+				RewriteRuleHandler rewrite = new RewriteRuleHandler();
+				
 				WebAppContext context = new WebAppContext();
 				context.setContextPath("/");
 				DefaultServlet defaultServlet = new DefaultServlet();
 				
-				ServletContainer sC = new ServletContainer(rc);
+				context.addServlet(new ServletHolder(new QueryServlet(handler)), "/api/query");
+				context.addServlet(new ServletHolder(new AdminServlet(handler)), "/api/admin");
+				context.addServlet(new ServletHolder(new DeployRollbackServlet(handler)), "/api/deploy");
 				
-				context.addServlet(new ServletHolder(sC), "/api/*");
 				context.addServlet(new ServletHolder(defaultServlet), "/panel/*");
-        context.addServlet(new ServletHolder(new AdminServlet()), "/metrics/*");
+        context.addServlet(new ServletHolder(new com.yammer.metrics.reporting.AdminServlet()), "/metrics/*");
 				
 				// No cache header in all responses... otherwise some browsers
 				// can decide to cache some requests and they shouldn't
@@ -80,7 +82,8 @@ public class QNode {
 
 				context.setBaseResource(resources);
 
-				server.setHandler(context);
+				rewrite.setHandler(context);
+				server.setHandler(rewrite);
 				server.start();
 
 				address = "http://" + config.getString(QNodeProperties.HOST) + ":"
