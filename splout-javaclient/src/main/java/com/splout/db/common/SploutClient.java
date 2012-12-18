@@ -94,7 +94,9 @@ public class SploutClient {
 		} catch(JSONSerDeException e) {
 			throw new IOException(e);
 		} finally {
-			resp.disconnect();
+			if(resp != null) {
+				resp.disconnect();
+			}
 		}
 	}
 
@@ -111,7 +113,9 @@ public class SploutClient {
 		} catch(JSONSerDeException e) {
 			throw new IOException(e);
 		} finally {
-			resp.disconnect();
+			if(resp != null) {
+				resp.disconnect();
+			}
 		}
 	}
 
@@ -130,7 +134,9 @@ public class SploutClient {
 			} catch(JSONSerDeException e) {
 				throw new IOException(e);
 			} finally {
-				resp.disconnect();
+				if(resp != null) {
+					resp.disconnect();
+				}
 			}
 		} catch(URISyntaxException e) {
 			throw new IllegalArgumentException(e);
@@ -188,7 +194,9 @@ public class SploutClient {
 			try {
 				return JSONSerDe.deSer(asString(resp.getContent()), DeployInfo.class);
 			} finally {
-				resp.disconnect();
+				if(resp != null) {
+					resp.disconnect();
+				}
 			}
 		} catch(JSONSerDeException e) {
 			throw new IOException(e);
