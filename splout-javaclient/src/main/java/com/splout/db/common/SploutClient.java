@@ -93,10 +93,6 @@ public class SploutClient {
 			return JSONSerDe.deSer(asString(resp.getContent()), QNodeStatus.class);
 		} catch(JSONSerDeException e) {
 			throw new IOException(e);
-		} finally {
-			if(resp != null) {
-				resp.disconnect();
-			}
 		}
 	}
 
@@ -112,10 +108,6 @@ public class SploutClient {
 			return JSONSerDe.deSer(asString(resp.getContent()), ArrayList.class);
 		} catch(JSONSerDeException e) {
 			throw new IOException(e);
-		} finally {
-			if(resp != null) {
-				resp.disconnect();
-			}
 		}
 	}
 
@@ -133,10 +125,6 @@ public class SploutClient {
 				return JSONSerDe.deSer(asString(resp.getContent()), QueryStatus.class);
 			} catch(JSONSerDeException e) {
 				throw new IOException(e);
-			} finally {
-				if(resp != null) {
-					resp.disconnect();
-				}
 			}
 		} catch(URISyntaxException e) {
 			throw new IllegalArgumentException(e);
@@ -191,13 +179,7 @@ public class SploutClient {
 			HttpRequest request = requestFactory.buildPostRequest(new GenericUrl(
 			    qNodes[(int) (Math.random() * qNodes.length)] + "/api/deploy"), content);
 			HttpResponse resp = request.execute();
-			try {
-				return JSONSerDe.deSer(asString(resp.getContent()), DeployInfo.class);
-			} finally {
-				if(resp != null) {
-					resp.disconnect();
-				}
-			}
+			return JSONSerDe.deSer(asString(resp.getContent()), DeployInfo.class);
 		} catch(JSONSerDeException e) {
 			throw new IOException(e);
 		}
