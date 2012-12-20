@@ -10,7 +10,7 @@ qnode.port	4412
 # Number of Thrift connections allocated as a connection pool in each QNode.
 #
 
-qnode.dnode.pool.size	3
+qnode.dnode.pool.size	64
 
 # Whether this QNode should find the next available port 
 # in case "dnode.port" is busy or fail otherwise.
