@@ -52,6 +52,7 @@ public class QueryServlet extends BaseServlet {
 
 		String key = null;
 		if(keys != null) {
+			key = "";
 			for(String strKey : keys) {
 				key += strKey;
 			}

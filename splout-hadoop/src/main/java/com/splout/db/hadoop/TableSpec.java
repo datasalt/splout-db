@@ -44,6 +44,10 @@ public class TableSpec implements Serializable {
   private final String[] finalSQL;
 	private transient final OrderBy insertionOrderBy;
 	
+	/**
+	 * Simple TableSpec constructor that creates one TableSpec for a schema with a single partition field that is also indexed.
+	 * Warning: an index is created automatically for the partition field.
+	 */
 	public TableSpec(Schema schema, Field partitionField) {
 		this(schema, new Field[] { partitionField }, new FieldIndex[] { new FieldIndex(partitionField) }, null, null, null, null, null);
 	}

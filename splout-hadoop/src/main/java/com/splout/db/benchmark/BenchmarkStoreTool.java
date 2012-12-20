@@ -43,7 +43,6 @@ import com.datasalt.pangool.io.ITuple;
 import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.io.Schema.Field;
 import com.datasalt.pangool.io.Schema.Field.Type;
-import com.datasalt.pangool.io.Tuple;
 import com.datasalt.pangool.tuplemr.MapOnlyJobBuilder;
 import com.datasalt.pangool.tuplemr.mapred.MapOnlyMapper;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.HadoopInputFormat;
@@ -51,7 +50,6 @@ import com.datasalt.pangool.utils.HadoopUtils;
 import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.PartitionEntry;
 import com.splout.db.common.PartitionMap;
-import com.splout.db.hadoop.NullableSchema;
 import com.splout.db.hadoop.NullableTuple;
 import com.splout.db.hadoop.TableSpec;
 import com.splout.db.hadoop.TupleSQLite4JavaOutputFormat;
@@ -156,12 +154,10 @@ public class BenchmarkStoreTool implements Tool, Serializable {
 		PartitionMap partitionMap = new PartitionMap(partitionEntries);
 		HadoopUtils.stringToFile(outFs, new Path(out, "partition-map"), JSONSerDe.ser(partitionMap));
 
-		final Schema schema = new Schema(tablename, Fields.parse("key:int, value:string"));
-
 		List<Field> fields = new ArrayList<Field>();
-		fields.add(Field.create("partition", Type.INT));
-		fields.add(Fields.createTupleField("tuple", new NullableSchema(schema)));
-		final Schema metaSchema = new Schema("metaSchema", fields);
+		fields.add(Field.create(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD, Type.INT));
+		fields.addAll(Fields.parse("key:int, value:string"));
+		final Schema schema = new Schema(tablename, fields);
 
 		byte[] valueArray = new byte[valueSize];
 		for(int i = 0; i < valueSize; i++) {
@@ -170,26 +166,26 @@ public class BenchmarkStoreTool implements Tool, Serializable {
 		final String theValue = new String(valueArray);
 
 		MapOnlyJobBuilder job = new MapOnlyJobBuilder(conf);
-		TableSpec tableSpec = new TableSpec(schema, schema.getFields().get(0));
+		TableSpec tableSpec = new TableSpec(schema, schema.getFields().get(1));
+		
 		job.setOutput(new Path(out, "store"), new TupleSQLite4JavaOutputFormat(1000000, tableSpec), ITuple.class,
 		    NullWritable.class);
 		job.addInput(input, new HadoopInputFormat(TextInputFormat.class), new MapOnlyMapper<LongWritable, Text, ITuple, NullWritable>() {
 
-			ITuple tuple = new NullableTuple(schema);
-			ITuple metaTuple = new Tuple(metaSchema);
+			ITuple metaTuple = new NullableTuple(schema);
 
 			protected void map(LongWritable key, Text value, Context context) throws IOException,
 			    InterruptedException {
-				metaTuple.set("tuple", tuple);
+
 				String[] partitionRange = value.toString().split("\t");
 				Integer partition = Integer.parseInt(partitionRange[0]);
-				metaTuple.set("partition", partition);
+				metaTuple.set(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD, partition);
 				String[] minMax = partitionRange[1].split(":");
 				Integer min = Integer.parseInt(minMax[0]);
 				Integer max = Integer.parseInt(minMax[1]);
 				for(int i = min; i < max; i++) {
-					tuple.set("key", i);
-					tuple.set("value", theValue);
+					metaTuple.set("key", i);
+					metaTuple.set("value", theValue);
 					context.write(metaTuple, NullWritable.get());
 				}
 			}
