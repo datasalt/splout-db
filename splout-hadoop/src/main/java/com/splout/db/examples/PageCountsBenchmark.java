@@ -75,7 +75,6 @@ public class PageCountsBenchmark {
 			    .query(TABLESPACE, null, query, partition + "").getResult().get(0);
 			rowIdsPerPartition.put(partition, Long.parseLong(obj.get("MAX(rowid)").toString()));
 		}
-		System.out.println("Row ids per partition: " + rowIdsPerPartition);
 
 		SploutBenchmark benchmark = new SploutBenchmark();
 		for(int i = 0; i < nIterations; i++) {
