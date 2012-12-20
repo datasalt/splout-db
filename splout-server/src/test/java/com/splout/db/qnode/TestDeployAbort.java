@@ -33,15 +33,12 @@ import org.junit.After;
 import org.junit.Test;
 
 import com.hazelcast.core.Hazelcast;
-import com.splout.db.common.SploutConfiguration;
 import com.splout.db.common.PartitionMap;
 import com.splout.db.common.ReplicationEntry;
+import com.splout.db.common.SploutConfiguration;
 import com.splout.db.common.TestUtils;
 import com.splout.db.dnode.DNode;
 import com.splout.db.dnode.DNodeHandler;
-import com.splout.db.hazelcast.CoordinationStructures;
-import com.splout.db.qnode.QNodeHandler;
-import com.splout.db.qnode.QNodeProperties;
 import com.splout.db.qnode.beans.DeployRequest;
 import com.splout.db.thrift.DNodeException;
 import com.splout.db.thrift.DeployAction;
@@ -122,14 +119,7 @@ public class TestDeployAbort {
 
 			handler.deploy(l);
 
-			Thread.sleep(1000);
-			
-			new TestUtils.NotWaitingForeverCondition() {
-				@Override
-				public boolean endCondition() {
-					return CoordinationStructures.DEPLOY_IN_PROGRESS.get() == 0;
-				}
-			}.waitAtMost(5000);
+			Thread.sleep(3000);
 
 			assertEquals(0, handler.getContext().getTablespaceVersionsMap().size());
 
