@@ -33,7 +33,7 @@ import com.splout.db.qnode.beans.QueryStatus;
 
 @SuppressWarnings("serial")
 public class QueryServlet extends BaseServlet {
-
+	
 	public QueryServlet(IQNodeHandler qNodeHandler) {
 	  super(qNodeHandler);
   }
@@ -46,15 +46,19 @@ public class QueryServlet extends BaseServlet {
 		String tablespace = req.getParameter("tablespace");
 		String sql = req.getParameter("sql");
 		String callback = req.getParameter("callback");
-
+		String partition = req.getParameter("partition");
+		
 		resp.setHeader("content-type", "application/json;charset=UTF-8");
 
-		String key = "";
-		for(String strKey : keys) {
-			key += strKey;
+		String key = null;
+		if(keys != null) {
+			for(String strKey : keys) {
+				key += strKey;
+			}
 		}
+		
 		try {
-			QueryStatus st = qNodeHandler.query(tablespace, key, sql);
+			QueryStatus st = qNodeHandler.query(tablespace, key, sql, partition);
 			log.info(Thread.currentThread().getName() + ": Query request received, tablespace[" + tablespace
 			    + "], key[" + key + "], sql[" + sql + "] time [" + st.getMillis() + "]");
 			String response;

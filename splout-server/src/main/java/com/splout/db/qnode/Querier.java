@@ -49,7 +49,17 @@ import com.splout.db.thrift.DNodeService;
 @SuppressWarnings({ "rawtypes" })
 public class Querier extends QNodeHandlerModule {
 
+	public final static String PARTITION_RANDOM = "random";
+	
 	private final static Log log = LogFactory.getLog(Querier.class);
+	
+	@SuppressWarnings("serial")
+  public static final class QuerierException extends Exception {
+		
+		public QuerierException(String msg) {
+			super(msg);
+    }
+	}
 
 	public Querier(QNodeHandlerContext context) {
 		super(context);
@@ -59,25 +69,40 @@ public class Querier extends QNodeHandlerModule {
 	 * Proxy method for QNodeHandler's query() method. Returns a {@link QueryStatus} with the status of the query.
 	 * 
 	 * @throws JSONSerDeException
+	 * @throws QuerierException 
 	 */
-	public QueryStatus query(String tablespaceName, String key, String sql) throws JSONSerDeException {
-		// TODO This logic is repeated in Handler
+	public QueryStatus query(String tablespaceName, String key, String sql, String partition) throws JSONSerDeException, QuerierException {
 		Long version = context.getCurrentVersionsMap().get(tablespaceName);
 		if(version == null) {
 			return new ErrorQueryStatus("Unknown tablespace or no version ready to be served! (" + tablespaceName + ")");
 		}
-		// TODO Not very efficient object creation etc
 		Tablespace tablespace = context.getTablespaceVersionsMap().get(
 		    new TablespaceVersion(tablespaceName, version));
 		if(tablespace == null) {
 			return new ErrorQueryStatus("Unknown tablespace version:(" + version +") tablespace:(" + tablespaceName + ")");
 		}
 		PartitionMap partitionMap = tablespace.getPartitionMap();
-		// Find the partition
-		int partitionId = partitionMap.findPartition(key);
-		if(partitionId == PartitionMap.NO_PARTITION) {
-			return new ErrorQueryStatus("Key out of partition ranges: " + key + " for tablespace "
-			    + tablespaceName);
+		
+		// find the partition
+		int partitionId;
+		// use a key to find the appropriated partition
+		if(key != null) {
+			partitionId = partitionMap.findPartition(key);
+			if(partitionId == PartitionMap.NO_PARTITION) {
+				return new ErrorQueryStatus("Key out of partition ranges: " + key + " for tablespace "
+				    + tablespaceName);
+			}
+		} else { // use provided partition
+			// partition shouldn't be null here -> we check it before at QNodeHandler
+			if(partition.toLowerCase().equals(PARTITION_RANDOM)) {
+				partitionId = (int)(Math.random() * partitionMap.getPartitionEntries().size());
+			} else {
+				try {
+					partitionId = Integer.parseInt(partition);
+				} catch(Exception e) {
+					throw new QuerierException("partition must be either a valid partition number or '" + PARTITION_RANDOM + "' string.");
+				}
+			}
 		}
 		return query(tablespaceName, sql, partitionId);
 	}
@@ -95,16 +120,12 @@ public class Querier extends QNodeHandlerModule {
 
 	/**
 	 * API method for querying a tablespace when you already know the partition Id. Can be used for multi-querying.
-	 * 
-	 * @throws JSONSerDeException
 	 */
 	public QueryStatus query(String tablespaceName, String sql, int partitionId) throws JSONSerDeException {
-		// TODO This logic is repeated in Handler
 		Long version = context.getCurrentVersionsMap().get(tablespaceName);
 		if(version == null) {
 			return new ErrorQueryStatus("Unknown tablespace! (" + tablespaceName + ")");
 		}
-		// TODO Not very efficient object creation etc
 		Tablespace tablespace = context.getTablespaceVersionsMap().get(
 		    new TablespaceVersion(tablespaceName, version));
 		if(tablespace == null) {
@@ -112,14 +133,13 @@ public class Querier extends QNodeHandlerModule {
 		}
 		ReplicationMap replicationMap = tablespace.getReplicationMap();
 		ReplicationEntry repEntry = null;
-		// TODO This is not the most efficient, it could be binary search at least
-		// Before it was O(1) because ReplicationMap.size should be equals to PartitionMap.size
-		// Now we don't know... Maybe yes, maybe not.
+
 		for(ReplicationEntry rEntry : replicationMap.getReplicationEntries()) {
 			if(rEntry.getShard() == partitionId) {
 				repEntry = rEntry;
 			}
 		}
+		
 		if(repEntry == null) {
 			return new ErrorQueryStatus("Incomplete Tablespace information for tablespace (" + tablespaceName
 			    + ") Maybe let the Splout warmup a little bit and try later?");
@@ -127,7 +147,7 @@ public class Querier extends QNodeHandlerModule {
 		if(repEntry.getNodes().size() == 0) { // No one alive for serving the query!
 			return new ErrorQueryStatus("No alive DNodes for " + tablespace);
 		}
-		// This is not very efficient, but it is the only way of being able to remove() elements for fail-over
+
 		String electedNode;
 		int tried = 0;
 		for(;;) { // Fail-over loop

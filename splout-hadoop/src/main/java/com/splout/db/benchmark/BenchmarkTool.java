@@ -49,9 +49,6 @@ public class BenchmarkTool {
 
 	@Parameter(required = true, names = { "-k", "--keyspace" }, description = "A representation of a key space used for querying. Format is minKey:maxKey where both are considered integers. A spec of 0:10 means keys range from 0 (minimum value) to 10 (maximum value).")
   private String keySpace;
-	
-	@Parameter(names = { "-sm", "--selectionmodel" }, description = "The way keys will be chosen for queries. It can be either RANDOM or ZIPFIAN. The first is just a random between the key space range. The second will use a zipfian for the probabilty of choosing the keys (lower first, higher less likely).")
-	private String keySelectionModel = KEY_SELECTION_RANDOM;
 
 	@Parameter(names = { "-n", "--niterations" }, description = "The number of iterations for running the benchmark more than once.")
   private Integer nIterations = 1;
@@ -77,13 +74,13 @@ public class BenchmarkTool {
 		}
 		String paddingExp = "%0" + (padding != null ? padding : maxKeyDigits) + "d";
 		
-		Map<String, String> context = new HashMap<String, String>();
+		Map<String, Object> context = new HashMap<String, Object>();
 		context.put("qnodes", qNodes);
-		context.put("minKey", minKey + "");
-		context.put("maxKey", maxKey + "");
-		context.put("tablespace", tablespace + "");
+		context.put("minKey", minKey);
+		context.put("maxKey", maxKey);
+		context.put("tablespace", tablespace);
 		context.put("paddingExp", paddingExp);
-		context.put("keySelectionModel", keySelectionModel);
+
 		SploutBenchmark benchmark = new SploutBenchmark();
 		for(int i = 0; i < nIterations; i++) {
 			benchmark.stressTest(nThreads, nQueries, BenchmarkToolStressThreadImpl.class, context);
@@ -100,27 +97,22 @@ public class BenchmarkTool {
 		SploutClient client;
 		int minKey, maxKey;
 		String paddingExp;
-		String keySelectionModel;
 		
 		@Override
-		public void init(Map<String, String> context) throws Exception {
-			client = new SploutClient(context.get("qnodes").split(","));
-			minKey = Integer.parseInt(context.get("minKey"));
-			maxKey = Integer.parseInt(context.get("maxKey"));
-			paddingExp = context.get("paddingExp");
-			tablespace = context.get("tablespace");
-			keySelectionModel = context.get("keySelectionModel").toUpperCase();
+		public void init(Map<String, Object> context) throws Exception {
+			client = new SploutClient(((String)context.get("qnodes")).split(","));
+			minKey = (Integer) context.get("minKey");
+			maxKey = (Integer) context.get("maxKey");
+			paddingExp = (String) context.get("paddingExp");
+			tablespace = (String) context.get("tablespace");
 		}
 
 		@Override
 		public int nextQuery() throws Exception {
 			int key = ((int) (Math.random() * (maxKey - minKey))) + minKey;
-//			if(keySelectionModel.equals(KEY_SELECTION_ZIPFIAN)) {
-// TODO
-//			}
 			String strKey = String.format(paddingExp, key);
 			return client
-				.query(tablespace, strKey + "", "SELECT * FROM " + tablespace + " WHERE key = '" + strKey + "';")
+				.query(tablespace, strKey + "", "SELECT * FROM " + tablespace + " WHERE key = '" + strKey + "';", null)
 			  .getResult().size();
 		}
 	}

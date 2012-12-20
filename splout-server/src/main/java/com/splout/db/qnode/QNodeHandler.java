@@ -32,6 +32,7 @@ import com.splout.db.hazelcast.*;
 import com.splout.db.qnode.Deployer.UnexistingVersion;
 import com.splout.db.qnode.QNodeHandlerContext.DNodeEvent;
 import com.splout.db.qnode.QNodeHandlerContext.TablespaceVersionInfoException;
+import com.splout.db.qnode.Querier.QuerierException;
 import com.splout.db.qnode.beans.*;
 import com.splout.db.thrift.DNodeService;
 import com.yammer.metrics.Metrics;
@@ -271,23 +272,27 @@ public class QNodeHandler implements IQNodeHandler {
 	 * Given a key, a tablespace and a SQL, query it to the appropriated DNode and return the result.
 	 * <p>
 	 * Returns a {@link QueryStatus}.
+	 * @throws QuerierException 
 	 */
-	public QueryStatus query(String tablespace, String key, String sql) throws JSONSerDeException {
+	public QueryStatus query(String tablespace, String key, String sql, String partition) throws JSONSerDeException, QuerierException {
 		if(sql == null) {
 			return new ErrorQueryStatus("Null sql provided, can't query.");
 		}
 		if(sql.length() < 1) {
 			return new ErrorQueryStatus("Empty sql provided, can't query.");
 		}
-		if(key == null) {
-			return new ErrorQueryStatus("Null key provided, can't query.");
+		if(key == null && partition == null) {
+			return new ErrorQueryStatus("Null key / partition provided, can't query. Either partition or key must not be null.");
+		}
+		if(key != null && partition != null) {
+			return new ErrorQueryStatus("(partition, key) parameters are mutually exclusive. Please use one or other, not both at the same time.");
 		}
 		meterQueriesServed.inc();
 		meterRequestsPerSecond.mark();
 		/*
 		 * The queries are handled by the specialized module {@link Querier}
 		 */
-    QueryStatus result = querier.query(tablespace, key, sql);
+    QueryStatus result = querier.query(tablespace, key, sql, partition);
     if (result.getResult() != null) {
 		  meterResultSize.update(result.getResult().size());
     }

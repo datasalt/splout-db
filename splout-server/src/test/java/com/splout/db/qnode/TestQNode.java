@@ -42,7 +42,7 @@ public class TestQNode {
 		final SploutConfiguration config = SploutConfiguration.getTestConfig();
 		QNode qnode = TestUtils.getTestQNode(config, new QNodeMockHandler() {
 			@Override
-			public QueryStatus query(String tablespace, String key, String sql) throws Exception {
+			public QueryStatus query(String tablespace, String key, String sql, String partition) throws Exception {
 				return new QueryStatus();
 			}
 			@Override

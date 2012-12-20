@@ -57,7 +57,7 @@ public class PageCountsServlet extends HttpServlet {
 
 		log.info("query, key[" + key + "] sql[" + sql + "]");
 		try {
-			resp.getWriter().write(JSONSerDe.ser(client.query("pagecounts", key, sql)));
+			resp.getWriter().write(JSONSerDe.ser(client.query("pagecounts", key, sql, null)));
 		} catch(JSONSerDeException e) {
 			throw new IOException(e);
 		}

@@ -49,7 +49,7 @@ public class QNodeMockHandler implements IQNodeHandler {
   public void close() throws Exception {
   }
 	@Override
-  public QueryStatus query(String tablespace, String key, String sql) throws Exception {
+  public QueryStatus query(String tablespace, String key, String sql, String partition) throws Exception {
 	  return null;
   }
 	@Override

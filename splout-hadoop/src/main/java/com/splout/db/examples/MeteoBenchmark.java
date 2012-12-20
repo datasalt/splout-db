@@ -56,7 +56,7 @@ public class MeteoBenchmark {
 	private boolean monthQueries = false;
 
 	public void start() throws InterruptedException {
-		Map<String, String> context = new HashMap<String, String>();
+		Map<String, Object> context = new HashMap<String, Object>();
 		context.put("qnodes", qNodes);
 		context.put("month", monthQueries + "");
 		SploutBenchmark benchmark = new SploutBenchmark();
@@ -77,17 +77,17 @@ public class MeteoBenchmark {
 		ArrayList<Map<String, Integer>> stations;
 		Random rand = new Random();
 
-		Map<String, String> context;
+		Map<String, Object> context;
 
 		@SuppressWarnings("unchecked")
 		@Override
-		public void init(Map<String, String> context) throws Exception {
+		public void init(Map<String, Object> context) throws Exception {
 			this.context = context;
-			client = new SploutClient(context.get("qnodes").split(","));
+			client = new SploutClient(((String)context.get("qnodes")).split(","));
 			String query = "SELECT stn, wban FROM stations";
 			System.out.println("Retrieving stations list");
 			long statTime = System.currentTimeMillis();
-			QueryStatus st = client.query(tablespace, "any", query);
+			QueryStatus st = client.query(tablespace, "any", query, null);
 			if(st.getResult() == null) {
 				throw new RuntimeException("Impossible to retrieve stations list. " + st);
 			}
@@ -112,7 +112,7 @@ public class MeteoBenchmark {
 					    + " and wban=" + wban + " group by year,month order by year,month";
 				}
 
-				QueryStatus st = client.query(tablespace, stn + "" + wban, query);
+				QueryStatus st = client.query(tablespace, stn + "" + wban, query, null);
 				if(st.getResult() != null) {
 					return st.getResult().size();
 				} else {

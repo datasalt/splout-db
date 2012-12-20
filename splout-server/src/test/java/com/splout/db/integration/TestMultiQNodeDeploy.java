@@ -107,7 +107,7 @@ public class TestMultiQNodeDeploy extends BaseIntegrationTest {
 		// Perform N queries, one to each DNode and validate the resultant data
 		for(int i = 0; i < N_DNODES; i++) {
 			client = getRandomQNodeClient(random, config);
-			QueryStatus qStatus = client.query("p1", i * 10 + "", "SELECT * FROM foo;");
+			QueryStatus qStatus = client.query("p1", i * 10 + "", "SELECT * FROM foo;", null);
 			assertEquals((Integer) i, qStatus.getShard());
 			assertEquals(10, qStatus.getResult().size());
 			for(Object obj : qStatus.getResult()) {

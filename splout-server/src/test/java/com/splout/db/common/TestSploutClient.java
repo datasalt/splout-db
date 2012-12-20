@@ -42,7 +42,7 @@ public class TestSploutClient {
 	public static IQNodeHandler QNODE_HANDLER = new QNodeMockHandler() {
 
 		@Override
-	  public QueryStatus query(String tablespace, String key, String sql) throws Exception {
+	  public QueryStatus query(String tablespace, String key, String sql, String partition) throws Exception {
 		  QueryStatus queryStatus = new QueryStatus();
 		  queryStatus.setError(tablespace + " " + key + " " + sql);
 		  return queryStatus;
@@ -65,7 +65,7 @@ public class TestSploutClient {
 			
 			SploutClient client = new SploutClient(qnode.getAddress());
 			
-			QueryStatus queryStatus = client.query("t1", "k1", "SELECT * FROM foo;");
+			QueryStatus queryStatus = client.query("t1", "k1", "SELECT * FROM foo;", null);
 			assertEquals("t1 k1 SELECT * FROM foo;", queryStatus.getError());
 			
 			List<String> dnodes = client.dNodeList();

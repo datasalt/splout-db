@@ -81,6 +81,20 @@ public class SploutClient {
 			writer.close();
 		}
 	}
+	
+	/*
+	 * 
+	 */
+	public Tablespace tablespace(String tablespace) throws IOException {
+		HttpRequest request = requestFactory.buildGetRequest(new GenericUrl(
+		    qNodes[(int) (Math.random() * qNodes.length)] + "/api/tablespace/" +  tablespace));
+		HttpResponse resp = request.execute();
+		try {
+			return JSONSerDe.deSer(asString(resp.getContent()), Tablespace.class);
+		} catch(JSONSerDeException e) {
+			throw new IOException(e);
+		}		
+	}
 
 	/*
 	 * 
@@ -114,13 +128,13 @@ public class SploutClient {
 	/*
 	 * 
 	 */
-	public QueryStatus query(String tablespace, String key, String query) throws IOException {
+	public QueryStatus query(String tablespace, String key, String query, String partition)
+	    throws IOException {
 		URI uri;
 		try {
-			// uri = new URI("http", qNodesNoProtocol[(int) (Math.random() * qNodes.length)], "/api/query/"
-			// + tablespace, "key=" + key + "&sql=" + query, null);
-			uri = new URI("http", qNodesNoProtocol[(int) (Math.random() * qNodes.length)], "/api/query",
-			    "tablespace=" + tablespace + "&key=" + key + "&sql=" + query, null);
+			uri = new URI("http", qNodesNoProtocol[(int) (Math.random() * qNodes.length)], "/api/query/"
+			    + tablespace, "&sql=" + query + (key != null ? "&key=" + key : "")
+			    + (partition != null ? "&partition=" + partition : ""), null);
 
 			HttpRequest request = requestFactory.buildGetRequest(new GenericUrl(uri.toASCIIString()));
 			HttpResponse resp = request.execute();

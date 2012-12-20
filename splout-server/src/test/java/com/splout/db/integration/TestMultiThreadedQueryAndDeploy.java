@@ -104,7 +104,7 @@ public class TestMultiThreadedQueryAndDeploy extends BaseIntegrationTest {
 			QueryStatus status = null;
 			SploutClient perQNodeClient = new SploutClient(qnode.getAddress());
 			do {
-				status = perQNodeClient.query(TABLESPACE, "0", "SELECT * FROM " + TABLE + ";");
+				status = perQNodeClient.query(TABLESPACE, "0", "SELECT * FROM " + TABLE + ";", null);
 				Thread.sleep(100);
 				waitedSoFar += 100;
 				if(waitedSoFar > 5000) {
@@ -128,7 +128,7 @@ public class TestMultiThreadedQueryAndDeploy extends BaseIntegrationTest {
 							while(true) {
 								int randomDNode = Math.abs(random.nextInt()) % N_DNODES;
 								QueryStatus status = client.query(TABLESPACE, (randomDNode * 10) + "", "SELECT * FROM "
-								    + TABLE + ";");
+								    + TABLE + ";", null);
 								log.info("Query status -> " + status);
 								assertEquals(1, status.getResult().size());
 								Map<String, Object> jsonResult = (Map<String, Object>) status.getResult().get(0);

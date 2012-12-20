@@ -195,7 +195,7 @@ public class TestQNodeHandler {
 			handler.getContext().getCurrentVersionsMap().put("tablespace1", 0l);
 
 			// Query key 2 (> 1 < 10)
-			QueryStatus qStatus = handler.query("tablespace1", "2", "SELECT 1;");
+			QueryStatus qStatus = handler.query("tablespace1", "2", "SELECT 1;", null);
 			Assert.assertEquals(new Integer(0), qStatus.getShard());
 			Assert.assertEquals("[1]", qStatus.getResult().toString());
 		} finally {
@@ -205,6 +205,37 @@ public class TestQNodeHandler {
 		}
 	}
 
+	@Test
+	public void testQueryManualPartition() throws Throwable {
+		// same as testQuery but using manual partition instead of "key"
+		QNodeHandler handler = new QNodeHandler();
+		handler.init(SploutConfiguration.getTestConfig());
+
+		SploutConfiguration config = SploutConfiguration.getTestConfig();
+		DNode dnode = TestUtils.getTestDNode(config, dHandler, "dnode-" + this.getClass().getName() + "-2b");
+		try {
+			ReplicationEntry repEntry = new ReplicationEntry(0, dnode.getAddress());
+			Tablespace tablespace1 = new Tablespace(PartitionMap.oneShardOpenedMap(), new ReplicationMap(Arrays.asList(repEntry)), 0l, 0l);
+			handler.getContext().getTablespaceVersionsMap().put(new TablespaceVersion("tablespace1", 0l), tablespace1);
+			handler.getContext().getCurrentVersionsMap().put("tablespace1", 0l);
+
+			// Query shard 0
+			QueryStatus qStatus = handler.query("tablespace1", null, "SELECT 1;", "0");
+			Assert.assertEquals(new Integer(0), qStatus.getShard());
+			Assert.assertEquals("[1]", qStatus.getResult().toString());
+			
+			// Query random partition
+		  qStatus = handler.query("tablespace1", null, "SELECT 1;", Querier.PARTITION_RANDOM);
+			Assert.assertEquals(new Integer(0), qStatus.getShard());
+			Assert.assertEquals("[1]", qStatus.getResult().toString());
+			
+		} finally {
+			handler.close();
+			dnode.stop();
+			Hazelcast.shutdownAll();
+		}
+	}
+	
 	@Test
 	public void testMultiDeployFiring() throws Throwable {
 		// Same as test deploy firing, but with more than one DNode and different deploy actions

@@ -46,13 +46,13 @@ public class SploutBenchmark {
 	 */
 	public static abstract class StressThreadImpl {
 
-		public abstract void init(Map<String, String> context) throws Exception;
+		public abstract void init(Map<String, Object> context) throws Exception;
 
 		public abstract int nextQuery() throws Exception; // Performs the query and returns the number of rows processed
 	}
 
 	public void stressTest(final int nThreads, final int nQueries, 
-	    final Class<? extends StressThreadImpl> stressThreadClass, final Map<String, String> context)
+	    final Class<? extends StressThreadImpl> stressThreadClass, final Map<String, Object> context)
 	    throws InterruptedException {
 		ExecutorService service = Executors.newFixedThreadPool(nThreads);
 

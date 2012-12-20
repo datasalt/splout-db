@@ -117,7 +117,7 @@ public class TestFailOver {
 			handler.getContext().getTablespaceVersionsMap().put(new TablespaceVersion("tablespace1", 1l), tablespace1);
 			handler.getContext().getCurrentVersionsMap().put("tablespace1", 1l);
 
-			QueryStatus qStatus = handler.query("tablespace1", "2", "SELECT 1;");
+			QueryStatus qStatus = handler.query("tablespace1", "2", "SELECT 1;", null);
 			Assert.assertEquals(new Integer(0), qStatus.getShard());
 			Assert.assertEquals("[1]", qStatus.getResult().toString());
 		} finally {

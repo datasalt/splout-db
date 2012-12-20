@@ -44,7 +44,7 @@ public interface IQNodeHandler {
 	public void init(SploutConfiguration config) throws Exception;
 	public void close() throws Exception;
 	
-	public QueryStatus query(String tablespace, String key, String sql) throws Exception;
+	public QueryStatus query(String tablespace, String key, String sql, String partition) throws Exception;
 	public ArrayList<QueryStatus> multiQuery(String tablespace, List<String> keyMins, List<String> keyMaxs, String sql) throws Exception;
 	public DeployInfo deploy(List<DeployRequest> deployReq) throws Exception;
 	public StatusMessage rollback(List<SwitchVersionRequest> rollbackRequest) throws Exception;

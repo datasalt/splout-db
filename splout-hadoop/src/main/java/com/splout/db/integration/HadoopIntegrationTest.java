@@ -122,7 +122,7 @@ public class HadoopIntegrationTest implements Tool, Configurable {
 
 		previousVersion = status.getTablespaceMap().get("pagecountsintegration").getVersion();
 
-		QueryStatus qStatus = client.query("pagecountsintegration", "*", "SELECT * FROM pagecounts;");
+		QueryStatus qStatus = client.query("pagecountsintegration", "*", "SELECT * FROM pagecounts;", null);
 		System.out.println(qStatus.getResult());
 
 		if(qStatus.getResult() == null) {
