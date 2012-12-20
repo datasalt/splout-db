@@ -167,13 +167,16 @@ public class Querier extends QNodeHandlerModule {
 			long start = System.currentTimeMillis();
 
 			DNodeService.Client client = null;
+			boolean renew = false;
+			
 			try {
-				client = context.getDNodeClient(electedNode, false);
+				client = context.getDNodeClientFromPool(electedNode);
 
 				String r;
 				try {
 					r = client.sqlQuery(tablespaceName, version, partitionId, sql);
 				} catch(TTransportException e) {
+					renew = true;
 					throw e;
 				}
 				
@@ -196,7 +199,7 @@ public class Querier extends QNodeHandlerModule {
 				}
 			} finally {
 				if(client != null) {
-					QNodeHandlerContext.closeClient(client);
+					context.returnDNodeClientToPool(electedNode, client, renew);
 				}
 			}
 		}

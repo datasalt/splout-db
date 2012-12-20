@@ -391,15 +391,17 @@ public class QNodeHandler implements IQNodeHandler {
 		Map<String, DNodeSystemStatus> aliveDNodes = new HashMap<String, DNodeSystemStatus>();
 		for(DNodeInfo dnode : context.getCoordinationStructures().getDNodes().values()) {
 			DNodeService.Client client = null;
+			boolean renew = false;
 			try {
-				client = getContext().getDNodeClient(dnode.getAddress(), false); 
+				client = getContext().getDNodeClientFromPool(dnode.getAddress()); 
 				aliveDNodes.put(dnode.getAddress(), JSONSerDe.deSer(client
 				    .status(), DNodeSystemStatus.class));
 			} catch(TTransportException e) {
+				renew = true;
 				throw e;
 			} finally {
 				if(client != null) {
-					QNodeHandlerContext.closeClient(client);
+					context.returnDNodeClientToPool(dnode.getAddress(), client, renew);
 				}
 			}
 		}
@@ -444,15 +446,17 @@ public class QNodeHandler implements IQNodeHandler {
 	@Override
 	public DNodeSystemStatus dnodeStatus(String dnode) throws Exception {
 		DNodeService.Client client = null;
+		boolean renew = false;
 		try {
-			client = getContext().getDNodeClient(dnode, false);
+			client = getContext().getDNodeClientFromPool(dnode);
 			return JSONSerDe
 			    .deSer(client.status(), DNodeSystemStatus.class);
 		} catch(TTransportException e) {
+			renew = true;
 			throw e;
 		} finally {
 			if(client != null) {
-				QNodeHandlerContext.closeClient(client);
+				context.returnDNodeClientToPool(dnode, client, renew);
 			}
 		}
 	}
@@ -484,6 +488,7 @@ public class QNodeHandler implements IQNodeHandler {
 	 */
 	@Override
 	public void close() throws Exception {
+		context.close();
 	}
 
 	/**

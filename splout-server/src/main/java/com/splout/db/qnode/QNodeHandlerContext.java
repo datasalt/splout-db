@@ -30,7 +30,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.SortedSet;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
@@ -71,6 +75,9 @@ public class QNodeHandlerContext {
 	private CoordinationStructures coordinationStructures;
 	// Local map with all versions for a tablespace with the PartitionMap, ReplicationMap for each of them
 	private final Map<TablespaceVersion, Tablespace> tablespaceVersionsMap = new ConcurrentHashMap<TablespaceVersion, Tablespace>();
+
+	// The per-DNode Thrift client pools
+	private ConcurrentMap<String, BlockingQueue<DNodeService.Client>> thriftClientCache = new ConcurrentHashMap<String, BlockingQueue<DNodeService.Client>>();
 
 	public QNodeHandlerContext(SploutConfiguration config, CoordinationStructures coordinationStructures) {
 		this.config = config;
@@ -276,23 +283,58 @@ public class QNodeHandlerContext {
 	}
 
 	/**
-	 * Get the Thrift client for this DNode - it might be cached in (clientCache). Otherwise create a new Thrift client
-	 * and save it in the cache. This is a bit of a mess since Thrift clients are not thread safe and there must be one
-	 * cache per each Thread.
+	 * Get the Thrift client for this DNode.
 	 */
-	public DNodeService.Client getDNodeClient(String dnode, boolean renew) throws TTransportException {
-		// We used to cache Thrift clients but we don't do it now so that's why this method is here
-		return DNodeClient.get(dnode);
+	public DNodeService.Client getDNodeClientFromPool(String dnode) throws TTransportException {
+		try {
+			BlockingQueue<DNodeService.Client> dnodeQueue = thriftClientCache.get(dnode);
+			if(dnodeQueue == null) {
+				// initialize queue for this DNode
+				int poolSize = config.getInt(QNodeProperties.DNODE_POOL_SIZE);
+				dnodeQueue = new LinkedBlockingDeque<DNodeService.Client>(poolSize);
+				for(int i = 0; i < poolSize; i++) {
+					dnodeQueue.put(DNodeClient.get(dnode));
+				}
+				thriftClientCache.put(dnode, dnodeQueue);
+			}
+			System.err.println("Got a client from pool: " + dnode);
+			return dnodeQueue.take();
+		} catch(InterruptedException e) {
+			log.error("Interrupted", e);
+			return null;
+		}
 	}
 
 	/**
-	 * Convenience method for properly closing a Thrift client to a DNode.
+	 * Return a Thrift client to the pool.
 	 */
-	public static void closeClient(DNodeService.Client client) {
-		client.getOutputProtocol().getTransport().close();
-		client.getInputProtocol().getTransport().close();
+	public void returnDNodeClientToPool(String dnode, DNodeService.Client client, boolean renew) {
+		if(closing.get()) { // don't return to the pool if the system is already closing! we must close everything!
+			client.getOutputProtocol().getTransport().close();
+			return;
+		}
+		if(renew) {
+			// renew -> try to close if not properly close and set to null
+			client.getOutputProtocol().getTransport().close();
+			client = null;
+		}
+		while(client == null) {
+			// endless loop, we need to get a new client otherwise the queue will not have the same size!
+			try {
+				client = DNodeClient.get(dnode);
+			} catch(TTransportException e) {
+				log.error(
+				    "TTransportException while creating client to renew. Trying again, we can't exit here!", e);
+			}
+		}
+		BlockingQueue<DNodeService.Client> dnodeQueue = thriftClientCache.get(dnode);
+		try {
+			dnodeQueue.put(client);
+		} catch(InterruptedException e) {
+			log.error("Interrupted", e);
+		}
 	}
-	
+
 	/**
 	 * Rotates the versions (deletes versions that are old or useless). To be executed at startup and after a deployment.
 	 */
@@ -373,10 +415,12 @@ public class QNodeHandlerContext {
 				log.info("Sending [" + tablespacesToRemove + "] to all alive DNodes.");
 				for(DNodeInfo dnode : coordinationStructures.getDNodes().values()) {
 					DNodeService.Client client = null;
+					boolean renew = false;
 					try {
-						client = getDNodeClient(dnode.getAddress(), false);
+						client = getDNodeClientFromPool(dnode.getAddress());
 						client.deleteOldVersions(tablespacesToRemove);
 					} catch(TTransportException e) {
+						renew = true;
 						log.warn("Failed sending delete TablespaceVersions order to (" + dnode
 						    + "). Not critical as they will be removed after other deployments.", e);
 					} catch(DNodeException e) {
@@ -387,7 +431,7 @@ public class QNodeHandlerContext {
 						    + "). Not critical as they will be removed after other deployments.", e);
 					} finally {
 						if(client != null) {
-							QNodeHandlerContext.closeClient(client);
+							returnDNodeClientToPool(dnode.getAddress(), client, renew);
 						}
 					}
 				}
@@ -396,6 +440,22 @@ public class QNodeHandlerContext {
 		}
 
 		return tablespacesToRemove; // Return for unit test
+	}
+
+	private AtomicBoolean closing = new AtomicBoolean(false);
+
+	public void close() {
+		closing.set(true); // will indicate other parts of this code that things have to be closed!
+		for(Map.Entry<String, BlockingQueue<DNodeService.Client>> entry : thriftClientCache.entrySet()) {
+			while(entry.getValue().size() > 0) {
+				try {
+					entry.getValue().take().getOutputProtocol().getTransport().close();
+					System.err.println("Closing a client from pool: " + entry.getKey());
+				} catch(InterruptedException e) {
+					log.error("Interrupted!", e);
+				}
+			}
+		}
 	}
 
 	// ---- Getters ---- //

@@ -35,6 +35,10 @@ public class QNodeProperties {
 	 */
 	public final static String HOST = "qnode.host";
 	/**
+	 * Number of Thrift connections allocated as a connection pool in each QNode.
+	 */
+	public final static String DNODE_POOL_SIZE = "qnode.dnode.pool.size";
+	/**
 	 * Whether this QNode should find the next available port in case "dnode.port" is busy or fail otherwise.
 	 */
 	public final static String PORT_AUTOINCREMENT = "qnode.port.autoincrement";

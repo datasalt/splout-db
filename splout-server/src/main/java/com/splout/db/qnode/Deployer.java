@@ -36,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.thrift.transport.TTransportException;
 
 import com.hazelcast.core.ICountDownLatch;
 import com.hazelcast.core.IMap;
@@ -104,6 +105,7 @@ public class Deployer extends QNodeHandlerModule {
 		public void run() {
 			log.info(context.getConfig().getProperty(QNodeProperties.PORT) + " Executing deploy for version [" + version + "]");
 			CoordinationStructures.DEPLOY_IN_PROGRESS.incrementAndGet();
+			
 			try {
 				long waitSeconds = 0;
 				ICountDownLatch countDownLatchForDeploy = context.getCoordinationStructures().getCountDownLatchForDeploy(version);
@@ -202,8 +204,9 @@ public class Deployer extends QNodeHandlerModule {
 	/**
 	 * Call this method for starting an asynchronous deployment given a proper deploy request - proxy method for
 	 * {@link QNodeHandler}. Returns a {@link QueryStatus} with the status of the request.
+	 * @throws InterruptedException 
 	 */
-	public DeployInfo deploy(List<DeployRequest> deployRequests) {
+	public DeployInfo deploy(List<DeployRequest> deployRequests) throws InterruptedException {
 
 		// A new unique version number is generated.
 		long version = context.getCoordinationStructures().uniqueVersionId();
@@ -219,8 +222,14 @@ public class Deployer extends QNodeHandlerModule {
 		// Sending deploy signals to each DNode
 		for(Map.Entry<String, List<DeployAction>> actionPerDNode : actionsPerDNode.entrySet()) {
 			DNodeService.Client client = null;
+			boolean renew = false;
 			try {
-				client = context.getDNodeClient(actionPerDNode.getKey(), false);
+				try {
+					client = context.getDNodeClientFromPool(actionPerDNode.getKey());
+				} catch(TTransportException e) {
+					renew = true;
+					throw e;
+				}
 				client.deploy(actionPerDNode.getValue(), version);
 			} catch(Exception e) {
 				log.error("Error sending deploy actions to DNode [" + actionPerDNode.getKey() + "]", e);
@@ -229,7 +238,7 @@ public class Deployer extends QNodeHandlerModule {
 				errDeployInfo.setError("Error connecting to DNode " + actionPerDNode.getKey());
 				return errDeployInfo;
 			} finally {
-				QNodeHandlerContext.closeClient(client);
+				context.returnDNodeClientToPool(actionPerDNode.getKey(), client, renew);
 			}
 		}
 
@@ -245,18 +254,25 @@ public class Deployer extends QNodeHandlerModule {
 
 	/**
 	 * DNodes are informed to stop the deployment, as something failed.
+	 * @throws InterruptedException 
 	 */
 	public void abortDeploy(List<String> dnodes, long version) {
 		for(String dnode: dnodes) {
 			DNodeService.Client client = null;
+			boolean renew = false;
 			try {
-				client = context.getDNodeClient(dnode, false);
+				try {
+				client = context.getDNodeClientFromPool(dnode);
+				} catch(TTransportException e) {
+					renew = true;
+					throw e;
+				}
 				client.abortDeploy(version);
 			} catch(Exception e) {
 				log.error("Error sending abort deploy flag to DNode [" + dnode + "]", e);
 			} finally {
 				if(client != null) {
-					QNodeHandlerContext.closeClient(client);
+					context.returnDNodeClientToPool(dnode, client, renew);
 				}
 			}
 		}
