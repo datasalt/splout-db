@@ -41,11 +41,6 @@ Under the MIT license
 
 slf4j-api - Copyright (c) 2004-2008 QOS.ch -http://www.slf4j.org
 
-Under the CDDL/GPL with Classpath Exception
-
-jersey-bundle - https://jersey.java.net/jersey-bundle
-jersey-server - https://jersey.java.net/jersey-server
-
 Under Public Domain:
 
 SQLite - (C) Hipp, Wyrick & Company, Inc - http://www.sqlite.org
