@@ -36,9 +36,7 @@ import com.splout.db.common.Tablespace;
 import com.splout.db.qnode.beans.QueryStatus;
 
 /**
- * A benchmark designed ot stress-test Splout with the Wikipedia Page Counts dataset. Each thread will do an
- * auto-complete query (WHERE pagename LIKE 'Aa%'), select a random result from it and in the next query perform an
- * aggregation with GROUP BY just like a normal user of the demo.
+ * A benchmark designed ot stress-test Splout with the Wikipedia Page Counts dataset.
  */
 @SuppressWarnings("unchecked")
 public class PageCountsBenchmark {
@@ -85,9 +83,6 @@ public class PageCountsBenchmark {
 
 	/**
 	 * Stress thread implementation following convention from {@link SploutBenchmark}.
-	 * <p>
-	 * Each thread will do an auto-complete query (WHERE pagename LIKE 'Aa%'), select a random result from it and in the
-	 * next query perform an aggregation with GROUP BY just like a normal user of the demo.
 	 */
 	public static class PageCountsStressThreadImpl extends StressThreadImpl {
 

@@ -33,6 +33,10 @@ public class HazelcastProperties {
 	 */
 	public static final String PORT = "hz.port";
 	/**
+	 * Sets the network interfaces to be used by Hazelcast e.g. 10.10.1.* . Comma separated if more than one. 
+	 */
+	public static final String INTERFACES = "hz.interfaces";
+	/**
 	 * Modifies the standard backup count. Affects the replication factor of distributed maps.
 	 */
 	public static final String BACKUP_COUNT = "hz.backup.count"; 

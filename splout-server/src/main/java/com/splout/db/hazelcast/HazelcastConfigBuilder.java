@@ -27,6 +27,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.hazelcast.config.Config;
+import com.hazelcast.config.Interfaces;
 import com.hazelcast.config.Join;
 import com.hazelcast.config.MapConfig;
 import com.hazelcast.config.NetworkConfig;
@@ -60,7 +61,17 @@ public class HazelcastConfigBuilder {
 
 		// Or we can configure it through our facade
 		Config hzConfig = new Config();
-
+		
+		String strIFaces = buConf.getString(HazelcastProperties.INTERFACES);
+		if(strIFaces != null) {
+			log.info("-- Using Hazelcast network interfaces: " + strIFaces);
+			Interfaces iFaces = new Interfaces();
+			for(String strIFace : strIFaces.split(",")) {
+				iFaces.addInterface(strIFace.trim());
+			}
+			hzConfig.getNetworkConfig().setInterfaces(iFaces);
+		}
+		
 		Integer prop = buConf.getInteger(HazelcastProperties.PORT, -1);
 		if(prop != -1) {
 			log.info("-- Using Hazelcast port: " + prop);
