@@ -21,26 +21,21 @@ package com.splout.db.qnode;
  * #L%
  */
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.thrift.TException;
-import org.apache.thrift.transport.TTransportException;
-
-import com.splout.db.common.JSONSerDe;
+import com.splout.db.common.*;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
-import com.splout.db.common.PartitionMap;
-import com.splout.db.common.ReplicationEntry;
-import com.splout.db.common.ReplicationMap;
-import com.splout.db.common.Tablespace;
 import com.splout.db.hazelcast.TablespaceVersion;
 import com.splout.db.qnode.beans.ErrorQueryStatus;
 import com.splout.db.qnode.beans.QueryStatus;
 import com.splout.db.thrift.DNodeException;
 import com.splout.db.thrift.DNodeService;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.thrift.TException;
+import org.apache.thrift.transport.TTransportException;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The Querier is a specialized module ({@link com.splout.db.qnode.QNodeHandlerModule}) of the
@@ -176,7 +171,7 @@ public class Querier extends QNodeHandlerModule {
 				} catch(TTransportException e) {
 					throw e;
 				}
-				
+
 				qStatus.setResult(JSONSerDe.deSer(r, ArrayList.class));
 				long end = System.currentTimeMillis();
 				// Report the time of the query
