@@ -70,7 +70,7 @@ public class PageCountsBenchmark {
 
 		SploutClient client;
 		final String tablespace = "pagecounts";
-		final int nCharsPrefix = 3;
+		final int nCharsPrefix = 2;
 
 		String pageToQuery = null;
 
@@ -81,7 +81,7 @@ public class PageCountsBenchmark {
 			client = new SploutClient(context.get("qnodes").split(","));
 		}
 
-		// Return a random three-character prefix for auto-suggest
+		// Return a random x-character prefix for auto-suggest
 		char[] randomPrefix() {
 			char[] pref = new char[nCharsPrefix];
 			for(int i = 0; i < nCharsPrefix; i++) {
@@ -101,7 +101,7 @@ public class PageCountsBenchmark {
 				if(pageToQuery == null) {
 					// State Automata: If pageToQuery is null, get a random one from an auto-suggest query...
 					String pref = new String(randomPrefix());
-					String query = "SELECT * FROM pagecounts WHERE pagename LIKE '" + pref + "%' LIMIT 10";
+					String query = "SELECT * FROM DISTINCT(pagecounts) WHERE pagename LIKE '" + pref + "%' LIMIT 100";
 					QueryStatus st = client
 					    .query(tablespace, pref.substring(0, Math.min(pref.length(), 2)), query);
 					if(st.getResult() != null && st.getResult().size() > 0) {

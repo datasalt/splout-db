@@ -51,7 +51,7 @@ public class SploutBenchmark {
 		public abstract int nextQuery() throws Exception; // Performs the query and returns the number of rows processed
 	}
 
-	public void stressTest(final int nThreads, final int nQueries, final boolean skipZeroResultQueries,
+	public void stressTest(final int nThreads, final int nQueries, 
 	    final Class<? extends StressThreadImpl> stressThreadClass, final Map<String, String> context)
 	    throws InterruptedException {
 		ExecutorService service = Executors.newFixedThreadPool(nThreads);
