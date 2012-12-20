@@ -131,6 +131,10 @@ public class PositiveHistogram {
 		// As much as if data inside buckets would be evenly distributed.
 		double doubleBucket = (value / upperLimit) * buckets.length;
 		double ceilBucket = Math.ceil(doubleBucket);
+    // Strange case where ceil(doubleBucket) == doubleBucket, because doubleBucket is a pure integer
+    if (ceilBucket == doubleBucket) {
+      ceilBucket += 1;
+    }
 		bucketRedistribution = ceilBucket - doubleBucket;
 
 		accum += bucketRedistribution * buckets[bucket];
