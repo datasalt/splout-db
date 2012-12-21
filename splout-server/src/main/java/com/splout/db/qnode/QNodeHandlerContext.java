@@ -21,34 +21,9 @@ package com.splout.db.qnode;
  * #L%
  */
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.SortedSet;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.thrift.TException;
-import org.apache.thrift.transport.TTransportException;
-
 import com.google.common.collect.Ordering;
 import com.google.common.collect.TreeMultimap;
-import com.splout.db.common.PartitionEntry;
-import com.splout.db.common.PartitionMap;
-import com.splout.db.common.ReplicationEntry;
-import com.splout.db.common.ReplicationMap;
-import com.splout.db.common.SploutConfiguration;
-import com.splout.db.common.Tablespace;
+import com.splout.db.common.*;
 import com.splout.db.dnode.DNodeClient;
 import com.splout.db.hazelcast.CoordinationStructures;
 import com.splout.db.hazelcast.DNodeInfo;
@@ -56,6 +31,20 @@ import com.splout.db.hazelcast.TablespaceVersion;
 import com.splout.db.thrift.DNodeException;
 import com.splout.db.thrift.DNodeService;
 import com.splout.db.thrift.PartitionMetadata;
+import com.yammer.metrics.Metrics;
+import com.yammer.metrics.core.Gauge;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.thrift.TException;
+import org.apache.thrift.transport.TTransportException;
+
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This class contains the basic context of {@link QNodeHandler}. This context involves in-memory information of the
@@ -78,17 +67,50 @@ public class QNodeHandlerContext {
 
 	// The per-DNode Thrift client pools
 	private ConcurrentMap<String, BlockingQueue<DNodeService.Client>> thriftClientCache = new ConcurrentHashMap<String, BlockingQueue<DNodeService.Client>>();
-
-	public QNodeHandlerContext(SploutConfiguration config, CoordinationStructures coordinationStructures) {
-		this.config = config;
-		this.coordinationStructures = coordinationStructures;
-	}
+  private int thriftPoolSize;
 
 	public static enum DNodeEvent {
 		LEAVE, ENTRY, UPDATE
 	}
 
-	@SuppressWarnings("serial")
+  public QNodeHandlerContext(SploutConfiguration config, CoordinationStructures coordinationStructures) {
+    this.config = config;
+    this.coordinationStructures = coordinationStructures;
+    thriftPoolSize = config.getInt(QNodeProperties.DNODE_POOL_SIZE);
+  }
+
+  private void initMetrics() {
+    Metrics.newGauge(QNodeHandlerContext.class, "thrift-total-connections-iddle", new Gauge<Integer>() {
+      @Override
+      public Integer value() {
+        int count = 0;
+        for (Entry<String, BlockingQueue<DNodeService.Client>> queue : thriftClientCache.entrySet()) {
+          count += queue.getValue().size();
+        }
+        return count;
+      }
+    });
+    Metrics.newGauge(QNodeHandlerContext.class, "thrift-pools", new Gauge<Integer>() {
+      @Override
+      public Integer value() {
+        return thriftClientCache.size();
+      }
+    });
+    Metrics.newGauge(QNodeHandlerContext.class, "thrift-oversized-pools", new Gauge<Integer>() {
+      @Override
+      public Integer value() {
+        int count = 0;
+        for (Entry<String, BlockingQueue<DNodeService.Client>> queue : thriftClientCache.entrySet()) {
+          if (queue.getValue().size() > thriftPoolSize) {
+            count ++;
+          }
+        }
+        return count;
+      }
+    });
+  }
+
+  @SuppressWarnings("serial")
 	public final static class TablespaceVersionInfoException extends Exception {
 
 		public TablespaceVersionInfoException(String msg) {
@@ -293,9 +315,8 @@ public class QNodeHandlerContext {
 				if(dnodeQueue == null) {
 					// initialize queue for this DNode
 					log.info(Thread.currentThread().getName() + " : populating client queue for [" + dnode + "] for the first time");
-					int poolSize = config.getInt(QNodeProperties.DNODE_POOL_SIZE);
-					dnodeQueue = new LinkedBlockingDeque<DNodeService.Client>(poolSize);
-					for(int i = 0; i < poolSize; i++) {
+					dnodeQueue = new LinkedBlockingDeque<DNodeService.Client>();
+					for(int i = 0; i < thriftPoolSize; i++) {
 						dnodeQueue.put(DNodeClient.get(dnode));
 					}
 					thriftClientCache.put(dnode, dnodeQueue);
@@ -321,6 +342,7 @@ public class QNodeHandlerContext {
 			// renew -> try to close if not properly close and set to null
 			client.getOutputProtocol().getTransport().close();
 			client = null;
+      log.info("Client renewal requested for " + dnode);
 		}
 		while(client == null) {
 			// endless loop, we need to get a new client otherwise the queue will not have the same size!
@@ -334,6 +356,10 @@ public class QNodeHandlerContext {
 		BlockingQueue<DNodeService.Client> dnodeQueue = thriftClientCache.get(dnode);
 		try {
 			dnodeQueue.put(client);
+      int currentQSize = dnodeQueue.size();
+      if (currentQSize > thriftPoolSize) {
+        log.error("Thrift clients pool size too big: " + currentQSize +". That means there is a bug in the pool");
+      }
 		} catch(InterruptedException e) {
 			log.error("Interrupted", e);
 			if(closing.get()) { // don't return to the pool if the system is already closing! we must close everything!
