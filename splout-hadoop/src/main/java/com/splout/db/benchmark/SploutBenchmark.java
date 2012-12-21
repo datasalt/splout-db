@@ -36,6 +36,7 @@ public class SploutBenchmark {
 	private long reqPerSecond;
 	private long totalRows;
 	private int averageRows;
+  private int timeOuts = 0;
 	private double average;
 	private double max, min;
 	private double stdev, median, percen90;
@@ -78,7 +79,12 @@ public class SploutBenchmark {
 						for(int i = 0; i < nQueries; i++) {
 							if(i % nThreads == threadId) { // distribute work
 								long start = System.currentTimeMillis();
-								int rowCount = thisThread.nextQuery();
+                int rowCount = 0;
+                try {
+								  rowCount = thisThread.nextQuery();
+                } catch(java.net.SocketTimeoutException e) {
+                  timeOuts ++;
+                }
 								long end = System.currentTimeMillis();
 								histo.add((end - start)); // add stat to histogram
 								totalRows.addAndGet(rowCount); // add total number of rows processed
@@ -139,6 +145,7 @@ public class SploutBenchmark {
 		outStream.println("p > 500ms\t" + gt500);
 		outStream.println("p > 1000ms\t" + gt1000);
 		outStream.println("p > 2500ms\t" + gt2500);
+    outStream.println("Timeouts\t" + timeOuts);
 		outStream.println("Requests per second\t" + reqPerSecond);
 		outStream.println("Total rows\t" + totalRows);
 		outStream.println("Average rows\t" + averageRows);

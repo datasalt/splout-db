@@ -67,6 +67,7 @@ public class SQLite4JavaManager implements ISQLiteManager {
 				e.printStackTrace();
 				return null;
 			}
+      log.info("New SQLite connection open with " + dbFile);
 			return conn;
 		}
 	};

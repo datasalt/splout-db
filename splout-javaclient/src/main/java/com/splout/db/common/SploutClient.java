@@ -20,6 +20,15 @@ package com.splout.db.common;
  * #L%
  */
 
+import com.google.api.client.http.*;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.splout.db.common.JSONSerDe.JSONSerDeException;
+import com.splout.db.qnode.beans.DeployInfo;
+import com.splout.db.qnode.beans.DeployRequest;
+import com.splout.db.qnode.beans.QNodeStatus;
+import com.splout.db.qnode.beans.QueryStatus;
+import org.apache.commons.io.IOUtils;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -29,21 +38,6 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import org.apache.commons.io.IOUtils;
-
-import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.HttpContent;
-import com.google.api.client.http.HttpRequest;
-import com.google.api.client.http.HttpRequestFactory;
-import com.google.api.client.http.HttpResponse;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.splout.db.common.JSONSerDe.JSONSerDeException;
-import com.splout.db.qnode.beans.DeployInfo;
-import com.splout.db.qnode.beans.DeployRequest;
-import com.splout.db.qnode.beans.QNodeStatus;
-import com.splout.db.qnode.beans.QueryStatus;
 
 /**
  * Java HTTP Interface to Splout that uses Google Http Client (https://code.google.com/p/google-http-java-client/). We
@@ -55,9 +49,18 @@ public class SploutClient {
 	String[] qNodes;
 	String[] qNodesNoProtocol;
 
-	public SploutClient(String... qnodes) {
+  public SploutClient(String... qnodes) {
+    this(20 * 1000, qnodes);
+  }
+
+	public SploutClient(final int timeoutMillis, String... qnodes) {
 		HttpTransport transport = new NetHttpTransport();
-		requestFactory = transport.createRequestFactory();
+		requestFactory = transport.createRequestFactory(new HttpRequestInitializer() {
+      @Override
+      public void initialize(HttpRequest request) throws IOException {
+        request.readTimeout = timeoutMillis;
+      }
+    });
 		this.qNodes = qnodes;
 		// strip last "/" if present
 		for(int i = 0; i < qNodes.length; i++) {
