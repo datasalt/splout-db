@@ -36,10 +36,10 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Ordering;
 import com.google.common.collect.TreeMultimap;
@@ -65,7 +65,7 @@ import com.splout.db.thrift.PartitionMetadata;
  */
 public class QNodeHandlerContext {
 
-	private final static Logger log = LoggerFactory.getLogger(QNodeHandlerContext.class);
+	protected final static Log log = LogFactory.getLog(QNodeHandlerContext.class);
 
 	// This map indicates which is the current version being served. It has to be updated atomically.
 	private final Map<String, Long> currentVersionsMap = new ConcurrentHashMap<String, Long>();
@@ -287,18 +287,25 @@ public class QNodeHandlerContext {
 	 */
 	public DNodeService.Client getDNodeClientFromPool(String dnode) throws TTransportException {
 		try {
-			BlockingQueue<DNodeService.Client> dnodeQueue = thriftClientCache.get(dnode);
-			if(dnodeQueue == null) {
-				// initialize queue for this DNode
-				int poolSize = config.getInt(QNodeProperties.DNODE_POOL_SIZE);
-				dnodeQueue = new LinkedBlockingDeque<DNodeService.Client>(poolSize);
-				for(int i = 0; i < poolSize; i++) {
-					dnodeQueue.put(DNodeClient.get(dnode));
+			log.info(Thread.currentThread().getName() + " : want a client for [" + dnode + "]");
+			BlockingQueue<DNodeService.Client> dnodeQueue;
+			synchronized(thriftClientCache) {
+				dnodeQueue = thriftClientCache.get(dnode);
+				log.info(Thread.currentThread().getName() + " : populating client queue for [" + dnode + "] for the first time");
+			
+				if(dnodeQueue == null) {
+					// initialize queue for this DNode
+					int poolSize = config.getInt(QNodeProperties.DNODE_POOL_SIZE);
+					dnodeQueue = new LinkedBlockingDeque<DNodeService.Client>(poolSize);
+					for(int i = 0; i < poolSize; i++) {
+						dnodeQueue.put(DNodeClient.get(dnode));
+					}
+					thriftClientCache.put(dnode, dnodeQueue);
 				}
-				thriftClientCache.put(dnode, dnodeQueue);
 			}
-			System.err.println("Got a client from pool: " + dnode);
-			return dnodeQueue.take();
+			DNodeService.Client client = dnodeQueue.take();
+			log.info(Thread.currentThread().getName() + " : successfully picked up a client for [" + dnode + "]");
+			return client;
 		} catch(InterruptedException e) {
 			log.error("Interrupted", e);
 			return null;
@@ -309,11 +316,14 @@ public class QNodeHandlerContext {
 	 * Return a Thrift client to the pool.
 	 */
 	public void returnDNodeClientToPool(String dnode, DNodeService.Client client, boolean renew) {
+		log.info(Thread.currentThread().getName() + " : returning client to pool for [" + dnode + "]");
 		if(closing.get()) { // don't return to the pool if the system is already closing! we must close everything!
+			log.info(Thread.currentThread().getName() + " : closing client to return as we are closing the system [" + dnode + "]");
 			client.getOutputProtocol().getTransport().close();
 			return;
 		}
 		if(renew) {
+			log.info(Thread.currentThread().getName() + " : client must be renewed [" + dnode + "]");
 			// renew -> try to close if not properly close and set to null
 			client.getOutputProtocol().getTransport().close();
 			client = null;
@@ -322,6 +332,7 @@ public class QNodeHandlerContext {
 			// endless loop, we need to get a new client otherwise the queue will not have the same size!
 			try {
 				client = DNodeClient.get(dnode);
+				log.info(Thread.currentThread().getName() + " : got a brand new client for [" + dnode + "]");
 			} catch(TTransportException e) {
 				log.error(
 				    "TTransportException while creating client to renew. Trying again, we can't exit here!", e);
@@ -330,8 +341,13 @@ public class QNodeHandlerContext {
 		BlockingQueue<DNodeService.Client> dnodeQueue = thriftClientCache.get(dnode);
 		try {
 			dnodeQueue.put(client);
+			log.info(Thread.currentThread().getName() + " : client successfully returned to pool for [" + dnode + "]");
 		} catch(InterruptedException e) {
 			log.error("Interrupted", e);
+			if(closing.get()) { // don't return to the pool if the system is already closing! we must close everything!
+				client.getOutputProtocol().getTransport().close();
+				return;
+			}
 		}
 	}
 
