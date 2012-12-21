@@ -74,7 +74,7 @@ public class QNodeHandlerContext {
 	private final Map<TablespaceVersion, Tablespace> tablespaceVersionsMap = new ConcurrentHashMap<TablespaceVersion, Tablespace>();
 
 	// The per-DNode Thrift client pools
-	// This is work-in-progress, commented by now
+	// Commented by now, pending issue #5
 //	private ConcurrentMap<String, BlockingQueue<DNodeService.Client>> thriftClientCache = new ConcurrentHashMap<String, BlockingQueue<DNodeService.Client>>();
 
 	public QNodeHandlerContext(SploutConfiguration config, CoordinationStructures coordinationStructures) {

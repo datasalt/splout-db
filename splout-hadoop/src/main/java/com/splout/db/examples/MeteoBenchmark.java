@@ -20,11 +20,6 @@ package com.splout.db.examples;
  * #L%
  */
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
@@ -32,6 +27,11 @@ import com.splout.db.benchmark.SploutBenchmark;
 import com.splout.db.benchmark.SploutBenchmark.StressThreadImpl;
 import com.splout.db.common.SploutClient;
 import com.splout.db.qnode.beans.QueryStatus;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
 
 /**
  * A benchmark designed ot stress-test Splout with the meteorogical dataset you can find on examples/meteo. Each thread
@@ -83,7 +83,7 @@ public class MeteoBenchmark {
 		@Override
 		public void init(Map<String, Object> context) throws Exception {
 			this.context = context;
-			client = new SploutClient(((String)context.get("qnodes")).split(","));
+			client = new SploutClient(20*1000, ((String)context.get("qnodes")).split(","));
 			String query = "SELECT stn, wban FROM stations";
 			System.out.println("Retrieving stations list");
 			long statTime = System.currentTimeMillis();
@@ -98,8 +98,6 @@ public class MeteoBenchmark {
 
 		@Override
 		public int nextQuery() throws Exception {
-			try {
-
 				int rndIdx = rand.nextInt(stations.size());
 				int stn = stations.get(rndIdx).get("stn");
 				int wban = stations.get(rndIdx).get("wban");
@@ -118,10 +116,6 @@ public class MeteoBenchmark {
 				} else {
 					return 0;
 				}
-			} catch(java.net.SocketTimeoutException e) {
-				System.err.println("More than 20 seconds... ");
-				return 0;
-			}
 		}
 	}
 
