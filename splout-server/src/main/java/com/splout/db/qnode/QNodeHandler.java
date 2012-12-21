@@ -239,18 +239,25 @@ public class QNodeHandler implements IQNodeHandler {
 		// versions or new tablespaces.
 		VersionListener listener = new VersionListener();
 		versions.addEntryListener(listener, true);
-		Map<String, Long> vBeingServed = context.getCoordinationStructures().getCopyVersionsBeingServed();
 		String persistenceFolder = config.getString(HazelcastProperties.HZ_PERSISTENCE_FOLDER);
 		if(persistenceFolder != null && !persistenceFolder.equals("")) {
 			TablespaceVersionStore vStore = new TablespaceVersionStore(persistenceFolder);
-			Map<String, Long> versionsBeingServed = vStore.load(CoordinationStructures.KEY_FOR_VERSIONS_BEING_SERVED);
-			if(versionsBeingServed != null) {
-				vBeingServed = versionsBeingServed;
-				context.getCoordinationStructures().updateVersionsBeingServed(vBeingServed, versionsBeingServed);
+			Map<String, Long> vBeingServedFromDisk = vStore.load(CoordinationStructures.KEY_FOR_VERSIONS_BEING_SERVED);
+			if(vBeingServedFromDisk != null) {
+				Map<String, Long> vBeingServed = null;
+				do {
+					vBeingServed = context.getCoordinationStructures().getCopyVersionsBeingServed();
+					if(vBeingServed != null) {
+						// We assume info in memory (Hazelcast) is fresher than info in disk
+						for(Map.Entry<String, Long> entry: vBeingServed.entrySet()) {
+							vBeingServedFromDisk.put(entry.getKey(), entry.getValue());
+						}
+					}
+				} while(!context.getCoordinationStructures().updateVersionsBeingServed(vBeingServed, vBeingServedFromDisk));
+				log.info("Loading tablespace versions to be served: " + vBeingServedFromDisk);
+				updateLocalTablespace(vBeingServedFromDisk);
 			}
 		}
-		log.info("Loading tablespace versions to be served: " + vBeingServed);
-		updateLocalTablespace(vBeingServed);
 	}
 
 	private void updateLocalTablespace(Map<String, Long> tablespacesAndVersions) throws IOException {
