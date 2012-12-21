@@ -112,7 +112,7 @@ public class BenchmarkTool {
 			int key = ((int) (Math.random() * (maxKey - minKey))) + minKey;
 			String strKey = String.format(paddingExp, key);
 			return client
-				.query(tablespace, strKey + "", "SELECT * FROM " + tablespace + " WHERE key = '" + strKey + "';", null)
+				.query(tablespace, strKey + "", "SELECT * FROM " + tablespace + " WHERE key = " + key + ";", null)
 			  .getResult().size();
 		}
 	}
