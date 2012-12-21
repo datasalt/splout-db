@@ -354,21 +354,23 @@ public class TupleSQLite4JavaOutputFormat extends FileOutputFormat<ITuple, NullW
 					stMap.put(tuple.getSchema().getName(), pS);
 				}
 
-				int count = 1;
+				int count = 1, tupleCount = 0;
 				for(Field field : tuple.getSchema().getFields()) {
 					if(field.getName().equals(NullableSchema.NULLS_FIELD)) {
+						tupleCount++;
 						continue;
 					}
 					if(field.getName().equals(PARTITION_TUPLE_FIELD)) {
+						tupleCount++;
 						continue;
 					}
 
 					boolean isNull = false;
 					if(nulls instanceof ByteBuffer) {
 						ByteBuffer bB = ((ByteBuffer) nulls);
-						isNull = NullableTuple.isNull(count - 1, bB.array(), bB.position());
+						isNull = NullableTuple.isNull(tupleCount, bB.array(), bB.position());
 					} else if(nulls instanceof byte[]) {
-						isNull = NullableTuple.isNull(count - 1, (byte[]) nulls, 0);
+						isNull = NullableTuple.isNull(tupleCount, (byte[]) nulls, 0);
 					}
 
 					if(isNull) {
@@ -377,27 +379,27 @@ public class TupleSQLite4JavaOutputFormat extends FileOutputFormat<ITuple, NullW
 						switch(field.getType()) {
 
 						case INT:
-							pS.bind(count, (Integer) tuple.get(count - 1));
+							pS.bind(count, (Integer) tuple.get(tupleCount));
 							break;
 						case LONG:
-							pS.bind(count, (Long) tuple.get(count - 1));
+							pS.bind(count, (Long) tuple.get(tupleCount));
 							break;
 						case DOUBLE:
-							pS.bind(count, (Double) tuple.get(count - 1));
+							pS.bind(count, (Double) tuple.get(tupleCount));
 							break;
 						case FLOAT:
-							pS.bind(count, (Float) tuple.get(count - 1));
+							pS.bind(count, (Float) tuple.get(tupleCount));
 							break;
 						case STRING:
-							pS.bind(count, tuple.get(count - 1).toString());
+							pS.bind(count, tuple.get(tupleCount).toString());
 							break;
 						case BOOLEAN: // Remember: In SQLite there are no booleans
-							pS.bind(count, ((Boolean) tuple.get(count - 1)) == true ? 1 : 0);
+							pS.bind(count, ((Boolean) tuple.get(tupleCount)) == true ? 1 : 0);
 						default:
 							break;
 						}
 					}
-					count++;
+					count++; tupleCount++;
 				}
 				pS.step();
 				pS.reset();
