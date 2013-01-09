@@ -23,6 +23,7 @@ package com.splout.db.dnode;
 
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
@@ -48,7 +49,7 @@ public class DNodeClient {
 	 * Get a Thrift client given a host and a port
 	 */
 	public static DNodeService.Client get(String host, int port) throws TTransportException {
-		TTransport transport = new TSocket(host, port);
+		TTransport transport = new TFramedTransport(new TSocket(host, port));
 		TProtocol protocol = new TBinaryProtocol(transport);
 		DNodeService.Client client = new DNodeService.Client(protocol);
 		transport.open();

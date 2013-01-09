@@ -7,10 +7,11 @@
 qnode.port	4412
 
 #
-# Number of Thrift connections allocated as a connection pool in each QNode.
+# Number of Thrift connections to each DNode allocated as a connection pool, in each QNode.
+# This is the expected maximum number of parallel requests to each QNode.
 #
 
-qnode.dnode.pool.size	64
+qnode.dnode.pool.size	40
 
 # Whether this QNode should find the next available port 
 # in case "dnode.port" is busy or fail otherwise.
@@ -44,14 +45,15 @@ dnode.port	4422
 
 dnode.port.autoincrement	true
 
+# How many threads will be allocated for serving requests in Thrift's THsHaServer.
+# Usually this will be a factor of the number of cores in the machine.
+
+dnode.serving.threads	10
+
 # This DNode's host name.
 # Localhost will be substituted by the first valid private IP address.
 
 dnode.host	localhost
-
-# How many threads will be allocated for serving requests in Thrift's ThreadPool Server.
-
-dnode.serving.threads	64
 
 # The data folder that will be used for storing deployed SQL data stores
 

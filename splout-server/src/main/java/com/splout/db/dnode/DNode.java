@@ -22,13 +22,15 @@ package com.splout.db.dnode;
  */
 
 import java.util.List;
+import java.util.concurrent.Executors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.thrift.TException;
+import org.apache.thrift.server.THsHaServer;
 import org.apache.thrift.server.TServer;
-import org.apache.thrift.transport.TServerSocket;
-import org.apache.thrift.transport.TServerTransport;
+import org.apache.thrift.transport.TNonblockingServerSocket;
+import org.apache.thrift.transport.TNonblockingServerTransport;
 
 import com.splout.db.common.SploutConfiguration;
 import com.splout.db.thrift.DNodeException;
@@ -72,7 +74,7 @@ public class DNode implements DNodeService.Iface {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public void init() throws Exception {
 		DNodeService.Processor processor = new DNodeService.Processor(this);
-		TServerTransport serverTransport = null;
+		TNonblockingServerTransport serverTransport = null;
 
 		boolean init = false;
 		int retries = 0;
@@ -81,7 +83,7 @@ public class DNode implements DNodeService.Iface {
 		do {
 			thriftPort = config.getInt(DNodeProperties.PORT);
 			try {
-				serverTransport = new TServerSocket(thriftPort);
+				serverTransport = new TNonblockingServerSocket(thriftPort);
 				init = true;
 			} catch(org.apache.thrift.transport.TTransportException e) {
 				if(!config.getBoolean(DNodeProperties.PORT_AUTOINCREMENT)) {
@@ -93,14 +95,12 @@ public class DNode implements DNodeService.Iface {
 		} while(!init && retries < 100);
 		
 		handler.init(config);
-		// Use this for a multi-threaded Thrift server
-		CustomTThreadPoolServer.Args args = new CustomTThreadPoolServer.Args(serverTransport);
+
+		THsHaServer.Args args = new THsHaServer.Args(serverTransport);
+		args.executorService(Executors.newFixedThreadPool(config.getInt(DNodeProperties.SERVING_THREADS)));
 		args.processor(processor);
 		
-		args.maxWorkerThreads(config.getInt(DNodeProperties.SERVING_THREADS));
-		args.minWorkerThreads(config.getInt(DNodeProperties.SERVING_THREADS));
-		
-		server = new CustomTThreadPoolServer(args);
+		server = new THsHaServer(args);
 		// We instantiate a long-living serving thread that will use the Thrift server.
 		servingThread = new Thread("Serving Thread") {
 			public void run() {
