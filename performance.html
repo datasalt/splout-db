@@ -45,7 +45,7 @@ while (!benchmark_ends) {
 </pre>
 
 <p>
-For a 2-machine cluster, each of them holding approximately 175GB, we obtained a throughput of <strong>868 queries / second</strong>, returning an average of 15 rows of result each - <i>rows of about 50 bytes, so around 750 bytes / query in average</i>. The average response times for 40 simultaneous threads were around <strong>80 milliseconds</strong>. 
+For a 2-machine cluster, each of them holding approximately 175GB, we obtained a throughput of <strong>868 queries / second</strong>, returning an average of 15 rows of result each - <i>rows of about 50 bytes, so around 750 bytes / query in average</i>. The average response times for 80 simultaneous threads were around <strong>80 milliseconds</strong>. 
 </p>
    
 <div class="row">
@@ -54,7 +54,7 @@ For a 2-machine cluster, each of them holding approximately 175GB, we obtained a
 </div>
 
 <p>
-When we doubled the cluster to a 4-machine cluster, each of them holding approximately 87GB, the <strong>throughput increased by a factor of 4</strong>, delivering a peak of <strong>3156 operations per second</strong>. Response times for 40 threads were around <strong>46 milliseconds</strong>.
+When we doubled the cluster to a 4-machine cluster, each of them holding approximately 87GB, the <strong>throughput increased by a factor of 4</strong>, delivering a peak of <strong>3156 operations per second</strong>. Response times for 160 threads were around <strong>46 milliseconds</strong>.
 Because the amount of data each node holds is divided by two, a bigger portion of the dataset can be cached in RAM and therefore average response times are almost divided by 2. But because we also added two more machines, the throughput scaled to 4. 
 </p>
 
@@ -84,7 +84,7 @@ since it must create B-Trees for each partition).
 <h4>Deploy time</h4>
 
 <p>
-After data generation, deployment was performed by the benchmark machines, which resided into the same rack and were connected trough the same network interface. Each machine could download from HDFS at <strong>82 MB/sec</strong> which made the deploy last for <strong>36 minutes</strong> in the case of the 2-machine cluster and <strong>18 minutes</strong> for the 4-machine cluster. 
+After data generation, deployment was performed by the benchmark machines, which resided into the same rack and were connected through the same network switch. Each machine could download from HDFS at <strong>82 MB/sec</strong> which made the deploy last for <strong>36 minutes</strong> in the case of the 2-machine cluster and <strong>18 minutes</strong> for the 4-machine cluster. 
 </p>
 
 <h4>Considerations</h4>
@@ -100,7 +100,7 @@ If you want to know more details about this benchmark you can see <a href='https
 We designed a benchmark for testing Splout's efficiency as a key / value store. 
 The idea that Splout is an extension to a key / value must be validated by assuring an expected level of performance as a key / value store.
 We loaded 470GB key-value pairs worth of data, with 1024 byte values, into a 4-machine cluster with the same characteristics than above.
-We achieved a peak throughput of <strong>2180 queries / second</strong> with average response times of <strong>69 ms for 40 threads</strong>. 
+We achieved a peak throughput of <strong>2180 queries / second</strong> with average response times of <strong>69 ms for 160 threads</strong>. 
 </p>
 
 <div class="row">
