@@ -5,7 +5,119 @@ title: Splout SQL's performance
 <div class="page-header">
   <h2 style="align:center;">Splout's performance</h2>
 </div>
-<p>Splout has been designed keeping performance and efficiency in mind.</p>
+<p>Splout has been designed keeping performance and efficiency in mind. We are continuously benchmarking it in order to make sure that it delivers the performance we designed it for.</p>
+
+<h3>Throughput &amp; scalability benchmark</h3>
+
+<p>
+With this benchmark we wanted to showcase several things:
+</p>
+
+<ol>
+	<li><strong>Splout's SQL serving throughput:</strong> That Splout delivers a good performance for arbitrary real-time SQL aggregations.</li>
+	<li><strong>Splout's scalability:</strong> That Splout's performance scales linearly - by doubling the number of machines we should see an increase in a factor of, at least 2 (and up to 4, depending on the dataset size versus the amount of RAM).</li>
+	<li><strong>Splout's indexing & data generation time:</strong> The time needed for generating a Splout database in Hadoop should be reasonable. This includes indexing and data generation as well as deployment time.</li>
+</ol>
+
+<p>
+This benchmark was done on an Intel cluster of machines that were kindly provided to us by <a href='http://www.flytech.es/'>Flytech S.A. (http://www.flytech.es/)</a>. The specs:
+</p>
+
+<ul>
+	<li>Dual Sandy Bridge-EP E5-2680 2.70 GHz C2 step, 20M Cache, 8.00 GT/s Intel® QPI, 130W processors</li>
+	<li>16 x Samsung M393B170GB0-CK0 4G 1600 DDR DIMS (64GB).</li>
+	<li>1 X Seagate 9SW066 SAS 2.5 300G 15k hard drive.</li>
+	<li>RedHat Enterprise Linux 6 update 2 with IBM Platform Computing HPC 3.2</li>
+</ul>
+
+<p>
+We loaded 350GB worth of data from the <a href='http://dumps.wikimedia.org/other/pagecounts-raw/' target='_blank'>"Wikipedia pagecounts dataset"</a>, corresponding to 3 months of pageviews. This dataset is interesting because it is real, it follows a real distribution and it allows us to perform real-time "GROUP BY" queries for arbitrary page names. The pseudo-code of the benchmark can be summarized as follows:
+</p>
+
+<pre>
+while (!benchmark_ends) {
+	Choose a random "rowid" and obtain a pagename for it: 
+		SELECT * FROM pagecounts WHERE rowid = ?;
+	Perform aggregate queries:
+		SELECT SUM(pageviews) AS totalpageviews, date FROM pagecounts WHERE pagename = ? GROUP BY date;
+		SELECT SUM(pageviews) AS totalpageviews, hour FROM pagecounts WHERE pagename = ? GROUP BY hour;
+}
+</pre>
+
+<p>
+For a 2-machine cluster, each of them holding approximately 175GB, we obtained a throughput of <strong>868 queries / second</strong>, returning an average of 15 rows of result each - <i>rows of about 50 bytes, so around 750 bytes / query in average</i>. The average response times for 40 simultaneous threads were around <strong>80 milliseconds</strong>. 
+</p>
+   
+<div class="row">
+	<div class="span6"><center><img src='img/bench_2_time.png'/></center></div>
+	<div class="span6"><center><img src='img/bench_2_throughput.png'/></center></div>
+</div>
+
+<p>
+When we doubled the cluster to a 4-machine cluster, each of them holding approximately 87GB, the <strong>throughput increased by a factor of 4</strong>, delivering a peak of <strong>3156 operations per second</strong>. Response times for 40 threads were around <strong>46 milliseconds</strong>.
+Because the amount of data each node holds is divided by two, a bigger portion of the dataset can be cached in RAM and therefore average response times are almost divided by 2. But because we also added two more machines, the throughput scaled to 4. 
+</p>
+
+<div class="row">
+	<div class="span6"><center><img src='img/bench_4_time.png'/></center></div>
+	<div class="span6"><center><img src='img/bench_4_throughput.png'/></center></div>
+</div>
+
+<h4>Indexing / Generation time</h4>
+
+<p>
+For generating the data structures needed to be deployed to the Splout cluster, we used a 11-machine Hadoop cluster (1 master, 10 slaves) with the 
+same kind of machines. We first ran an "identity job" over the whole dataset that just outputs raw binary data for each record. 
+This job is useless, but it is relevant to the benchmark as it allows us to compare it to the "Tablespace Builder". 
+The identity job executed in <strong>23 minutes</strong>. 
+</p>
+
+<p>
+On the other hand, Splout's "Tablespace Builder" ran for 
+<strong>44 minutes</strong>. <i>So we can say that the overhead of generating a Splout database in a Hadoop cluster is 
+about doubling the time it would take to perform a simple identity job that just writes the data back to the HDFS</i>. 
+We used <strong>80 partitions</strong> for parallelizing the process better, as there were exactly 80 reduce slots in 
+the cluster. (Generally speaking, the higher the number of partitions, the quicker the "Tablespace Builder" will complete 
+since it must create B-Trees for each partition). 
+</p>
+
+<h4>Deploy time</h4>
+
+<p>
+After data generation, deployment was performed by the benchmark machines, which resided into the same rack and were connected trough the same network interface. Each machine could download from HDFS at <strong>82 MB/sec</strong> which made the deploy last for <strong>36 minutes</strong> in the case of the 2-machine cluster and <strong>18 minutes</strong> for the 4-machine cluster. 
+</p>
+
+<h4>Considerations</h4>
+
+<p>
+This benchmark was designed to test Splout under a real usage pattern: one quick lookup and two real-time "GROUP BY"'s. Because the data is real and follows a kind of "zipfian" distribution, some pages have a lot of rows whereas other pages have few rows. The maximum number of rows that a page impacted was around 2000. All together, the average 15 rows per query can be explained by these two things. 
+If you want to know more details about this benchmark you can see <a href='https://github.com/datasalt/splout-db/blob/master/splout-hadoop/src/main/java/com/splout/db/examples/PageCountsBenchmark.java' target='_blank'>the source code</a> and <a href='https://github.com/datasalt/splout-db/blob/master/splout-hadoop/src/main/java/com/splout/db/examples/PageCountsExample.java' target='_blank'>the tool</a> that generates the data structures needed to run it.
+</p>
+
+<h3>Key / Value benchmark</h3>
+
+<p>
+We designed a benchmark for testing Splout's efficiency as a key / value store. 
+The idea that Splout is an extension to a key / value must be validated by assuring an expected level of performance as a key / value store.
+We loaded 470GB key-value pairs worth of data, with 1024 byte values, into a 4-machine cluster with the same characteristics than above.
+We achieved a peak throughput of <strong>2180 queries / second</strong> with average response times of <strong>69 ms for 40 threads</strong>. 
+</p>
+
+<div class="row">
+	<div class="span6"><center><img src='img/bench_keyvalue_time.png'/></center></div>
+	<div class="span6"><center><img src='img/bench_keyvalue_throughput.png'/></center></div>
+</div>
+
+<h4>Considerations</h4>
+
+<p>
+Note how the aggregate throughput of the key / value test is worse than that of the "Wikipedia" test, which may seem counter-intuitive. This is so because of two things: on one side, the dataset is bigger and therefore each machine can cache less data in RAM. On the other side, each query returns more bytes in this test (1024 bytes compared to 750 bytes for the previous test). If you calculate the bytes / second for both, you'll get similar figures.
+</p>
+<p>
+This key / value benchmark can be reproduced by first generating the data with <a href='https://github.com/datasalt/splout-db/blob/master/splout-hadoop/src/main/java/com/splout/db/benchmark/BenchmarkStoreTool.java'>BenchmarkStoreTool</a> and then running <a href='https://github.com/datasalt/splout-db/blob/master/splout-hadoop/src/main/java/com/splout/db/benchmark/BenchmarkTool.java' target='_blank'>BenchmarkTool</a>.
+</p>
+
+<h3>SQLite v.s. MySQL</h3>
 
 <p>Splout uses <a href='http://www.sqlite.org/'>SQLite</a>, which we have measured to be quite fast with
   big database files.</p>
@@ -16,6 +128,8 @@ title: Splout SQL's performance
   threads:</p>
 
 <center><img src='img/mysqlperf1.png'/></center>
+
+<h3>Splout SQL v.s. Voldemort</h3>
 
 <p>We have also compared Splout to Voldemort in order to demonstrate that Splout can also behave well as
   a Key/Value store in addition to provide full SQL richness. We did so in a physical machine with the

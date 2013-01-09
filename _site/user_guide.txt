@@ -237,8 +237,10 @@ This is the spec of the JSONTableDefinition object:
 | schema | string | The in-line Pangool schema that defines the structure of this table.
 | partitionFields | array of string | If used, the table will be partitioned by one or more columns, otherwise it will be replicated to all partitions.
 | indexes | array of string | List of columns that need to be indexed after the data is added to the table. You can also specify compound indexes here, comma-separated. 
-| preInsertStatements | array of string | Raw SQL commands that will be performed before inserting all the data to the table.
-| finalStatements | array of string | Raw SQL commands that will be performed after inserting all the data to the table.
+| initialStatements | array of string | Raw SQL commands that will be performed before the CREATE TABLE, but just after some defaults. Rigth place to put your PRAGMA statements.
+| preInsertStatements | array of string | Raw SQL commands that will be performed before inserting all the data to the table, just after the CREATE TABLE statements. For example, that is a good place to alter the table schema at your own.
+| postInsertStatements | array of string | Raw SQL commands that will be performed just after inserting all the data, but just before the CREATE INDEX statements
+| finalStatements | array of string | Raw SQL commands that will be performed just after all the other statements, at the end of the process.
 | insertionOrderBy | string | In-line Pangool Order By clause (in the form "field1:asc, field2:desc,...,fieldn:asc") that will be used for sorting the data before inserting it in a SQLite table.
 |==============
 
@@ -616,6 +618,7 @@ Perform a SQL query and get a JSON result back. Returns a QueryStatus object wit
  	"shard": 1
  }
  
+.TIP: It is also possible to use the parameter "partition" for querying a certain partition id. And if we use "partition=random" then a random partition will be hit.
 .TIP: You can use the optional "callback" parameter for doing cross-domain requests with javascript.
  
 .QueryStatus object
@@ -744,8 +747,9 @@ and in addition check things like:
 - PRAGMA index_list(table) - to check if we have created the appropriated indexes or not.
 - EXPLAIN QUERY PLAN (query) - to show if SQLite is using the expected indexes or not.
 - PRAGMA case_sensitive_like - when doing LIKE queries, SQLite will use an index only if this pragma is set to true and the index was created using standard collation, or if this pragma is set to false and the index was created using COLLATE NOCASE.
+- ANALYZE - You can run ANALYZE as finalStatement on partitions generation. It could help when planning query execution.
 
-Remember that you can fine-tune your data indexing process with preInsertStatements, finalStatements 
+Remember that you can fine-tune your data indexing process with initialStatements, preInsertStatements, postInsertStatements and finalStatements
 (see <<JSONTableDefinition>>) and initStatements (see <<DeployRequest>>). All these features are available as part of 
 the standard Java API of link:apidocs/splout-hadoop/com/splout/db/hadoop/TableBuilder.html[TableBuilder] and 
 link:apidocs/splout-hadoop/com/splout/db/hadoop/TablespaceBuilder.html[TablespaceBuilder]. 
@@ -766,4 +770,9 @@ A deploy may fail if some of the DNodes fail, if a timeout is reached (see <<spl
 The cluster is inconsistent: there are less DNodes than expected 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In big networks in can take some time for Hazelcast to negotiate the membership. It can be a matter of minutes.  
+In big networks in can take some time for Hazelcast to negotiate the membership. It can be a matter of minutes.
+
+DNode fails all queries with "Too many open files" exceptions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You might have to tune your open files limit as Splout is opening one connection to each partition file it has for every serving thread. So if you have 64 serving threads and 20 partitions to serve, this means up to 1280 opened files which is more than the default in some machines (1024). You can check and change your limits: http://www.cyberciti.biz/faq/linux-increase-the-maximum-number-of-open-files/ 

@@ -196,18 +196,23 @@
                   class="caret"></b></a>
               <ul class="dropdown-menu">
                 <li><a href="https://github.com/datasalt/splout-db/">Source code</a></li>
-                <li><a href="#">Continuous integration</a></li>
-                <li><a href="#">Code quality</a></li>
+                <li><a href="http://clinker.datasalt.com/jenkins/view/Splout-db/">Continuous
+                  integration</a></li>
+                <li><a
+                    href="http://clinker.pangool.net/sonar/dashboard/index/com.splout.db:splout-top-level">Code
+                  quality</a></li>
                 <li><a href="https://groups.google.com/forum/#!forum/sploutdb-dev">Developers group</a>
+                </li>
+                <li><a href="https://github.com/datasalt/splout-db/issues">Issues system</a>
                 </li>
               </ul>
             </li>
             <li class="dropdown">
-              <a href="about.html" class="dropdown-toggle" data-toggle="dropdown">About <b
+              <a href="about.html" class="dropdown-toggle" data-toggle="dropdown">More ... <b
                   class="caret"></b></a>
               <ul class="dropdown-menu">
-                <li><a href="#">License</a></li>
-                <li><a href="#">Team</a></li>
+                <li><a href="license.html">License</a></li>
+                <li><a href="team.html">Team</a></li>
                 <li><a href="https://groups.google.com/forum/?fromgroups#!forum/sploutdb-users">Users
                   group</a></li>
               </ul>
@@ -221,58 +226,70 @@
   <!-- /navbar -->
 
   <div class="carousel slide">
-    <div class="carousel-inner">
-      <div class="item active">
-        <img src="http://twitter.github.com/bootstrap/assets/img/examples/slide-01.jpg" alt="">
+  <div class="carousel-inner">
+    <div class="item active">
+      <img src="http://twitter.github.com/bootstrap/assets/img/examples/slide-01.jpg" alt="">
 
-        <div class="container">
-          <div class="carousel-caption">
-            <h1 style="font-size: 54px;">Splout SQL</h1>
+      <div class="container">
+        <div class="carousel-caption">
+          <h1 style="font-size: 54px;">Splout SQL</h1>
 
-            <p class="lead">A web-latency SQL spout for Hadoop.</p>
-          </div>
+          <p class="lead">A web-latency SQL spout for Hadoop.</p>
         </div>
       </div>
     </div>
   </div>
+</div>
 
-  <div class="row">
+<div class="row">
 
-    <div class="span4">
-      <h3>Ready for the web</h3>
+  <div class="span4">
+    <h3>Ready for the web</h3>
 
-      <p>
-        Splout allows serving an <strong>arbitrarily big dataset</strong> with <strong>high QPS
-        rates</strong> and at the same time provides <strong>full SQL</strong> query syntax.
-        Splout is appropriated for web page serving, many <strong>low latency lookups</strong>, scenarios
-        such as mobile or web applications with demanding performance.</p>
+    <p>
+      Splout allows serving an <strong>arbitrarily big dataset</strong> with <strong>high QPS
+      rates</strong> and at the same time provides <strong>full SQL</strong> query syntax.
+      Splout is appropriated for web page serving, many <strong>low latency lookups</strong>, scenarios
+      such as mobile or web applications with demanding performance.</p>
 
-      <p>
+    <p>
 
-      </p>
-    </div>
-
-    <div class="span4">
-      <h3>Plays well with Hadoop</h3>
-      Splout uses <a href='http://pangool.net'>Pangool</a> for <strong>decoupling database
-      creation</strong> from database serving. The data is always <strong>optimally indexed</strong> and
-      evenly distributed among partitions, plus updating all the data at once doesn’t affect the serving
-      of the datasets.
-    </div>
-
-    <div class="span4">
-      <h3>Scalable</h3>
-      Splout is <strong>horizontally scalable</strong>. You can increase throughput linearly by just
-      adding more machines.
-      Splout is <strong>replicated for failover</strong>. Splout transparently replicates your dataset
-      for properly handling failover scenarios such as network splits or hardware corruption.
-    </div>
-
+    </p>
   </div>
+
+  <div class="span4">
+    <h3>Plays well with Hadoop</h3>
+    Splout uses <a href='http://pangool.net'>Pangool</a> for <strong>decoupling database
+    creation</strong> from database serving. The data is always <strong>optimally indexed</strong> and
+    evenly distributed among partitions, plus updating all the data at once doesn’t affect the serving of
+    the datasets.
+  </div>
+
+  <div class="span4">
+    <h3>Scalable</h3>
+    Splout is <strong>horizontally scalable</strong>. You can increase throughput linearly by just adding
+    more machines.
+    Splout is <strong>replicated for failover</strong>. Splout transparently replicates your dataset for
+    properly handling failover scenarios such as network splits or hardware corruption.
+  </div>
+
+
+</div>
+
+<div class="row">
+  <div class="span4"></div>
+  <div class="span4">
+    <a class="btn btn-large btn-block btn-primary"
+       href="gettingstarted.html">Getting started</a>
+  </div>
+  <div class="span4"></div>
+
+</div>
 
   <br><br><br><br>
   <!-- Footer -->
   <footer class="footer">
+    <hr/>
     <p class="pull-right"><a href="http://datasalt.com">Splout is maintained by Datasalt</a></p>
   </footer>
 </div>
@@ -280,5 +297,19 @@
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
 <script src="js/bootstrap.min.js"></script>
 <script src="js/bootswatch.js"></script>
+<!-- Google Analytics -->
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-36807154-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+  var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+  ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+  var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
 </body>
 </html>

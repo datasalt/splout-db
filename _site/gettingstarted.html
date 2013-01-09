@@ -155,72 +155,77 @@
 
 <div class="container">
 
-<div class="navbar navbar-fixed-top navbar-static">
-  <div class="navbar-inner">
-    <div class="container">
-      <a class="brand" href="index.html">Splout SQL</a>
+  <div class="navbar navbar-fixed-top navbar-static">
+    <div class="navbar-inner">
+      <div class="container">
+        <a class="brand" href="index.html">Splout SQL</a>
 
-      <div class="nav-collapse">
-        <ul class="nav">
-          <li><a href="features.html">Features</a></li>
-          <li><a href="philosophy.html">Philosophy</a></li>
-          <li class="dropdown">
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Technical details <b
-                class="caret"></b></a>
-            <ul class="dropdown-menu">
-              <li><a href="architecture.html">Architecture</a></li>
-              <li><a href="performance.html">Performance</a></li>
-            </ul>
-          </li>
-          <li class="dropdown">
-            <a href="gettingstarted.html" class="dropdown-toggle" data-toggle="dropdown">Getting started
-              <b class="caret"></b></a>
-            <ul class="dropdown-menu">
-              <li><a href="gettingstarted.html">Installing & running Splout</a></li>
-              <li><a href="gettingstarted.html#loading">Loading an example dataset</a></li>
-            </ul>
-          </li>
-          <li class="dropdown">
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown">User guide <b
-                class="caret"></b></a>
-            <ul class="dropdown-menu">
-              <li><a href="user_guide.html">HTML</a></li>
-              <li><a href="user_guide.pdf">Download as PDF</a></li>
-            </ul>
-          </li>
-          <li><a href="faq.html">F.A.Q.</a></li>
-        </ul>
-        <ul class="nav pull-right">
-          <li class="divider-vertical"></li>
-          <li class="dropdown">
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Contributing <b class="caret"></b></a>
-            <ul class="dropdown-menu">
-              <li><a href="https://github.com/datasalt/splout-db/">Source code</a></li>
-              <li><a href="#">Continuous integration</a></li>
-              <li><a href="#">Code quality</a></li>
-              <li><a href="https://groups.google.com/forum/#!forum/sploutdb-dev">Developers group</a>
-              </li>
-            </ul>
-          </li>
-          <li class="dropdown">
-            <a href="about.html" class="dropdown-toggle" data-toggle="dropdown">About <b
-                class="caret"></b></a>
-            <ul class="dropdown-menu">
-              <li><a href="#">License</a></li>
-              <li><a href="#">Team</a></li>
-              <li><a href="https://groups.google.com/forum/?fromgroups#!forum/sploutdb-users">Users
-                group</a></li>
-            </ul>
-          </li>
-        </ul>
+        <div class="nav-collapse">
+          <ul class="nav">
+            <li><a href="features.html">Features</a></li>
+            <li><a href="philosophy.html">Philosophy</a></li>
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Technical details <b
+                  class="caret"></b></a>
+              <ul class="dropdown-menu">
+                <li><a href="architecture.html">Architecture</a></li>
+                <li><a href="performance.html">Performance</a></li>
+              </ul>
+            </li>
+            <li class="dropdown">
+              <a href="gettingstarted.html" class="dropdown-toggle" data-toggle="dropdown">Getting
+                started <b class="caret"></b></a>
+              <ul class="dropdown-menu">
+                <li><a href="gettingstarted.html">Installing & running Splout</a></li>
+                <li><a href="gettingstarted.html#loading">Loading an example dataset</a></li>
+              </ul>
+            </li>
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">User guide <b class="caret"></b></a>
+              <ul class="dropdown-menu">
+                <li><a href="user_guide.html">HTML</a></li>
+                <li><a href="user_guide.pdf">Download as PDF</a></li>
+              </ul>
+            </li>
+            <li><a href="faq.html">F.A.Q.</a></li>
+          </ul>
+          <ul class="nav pull-right">
+            <li class="divider-vertical"></li>
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Contributing <b
+                  class="caret"></b></a>
+              <ul class="dropdown-menu">
+                <li><a href="https://github.com/datasalt/splout-db/">Source code</a></li>
+                <li><a href="http://clinker.datasalt.com/jenkins/view/Splout-db/">Continuous
+                  integration</a></li>
+                <li><a
+                    href="http://clinker.pangool.net/sonar/dashboard/index/com.splout.db:splout-top-level">Code
+                  quality</a></li>
+                <li><a href="https://groups.google.com/forum/#!forum/sploutdb-dev">Developers group</a>
+                </li>
+                <li><a href="https://github.com/datasalt/splout-db/issues">Issues system</a>
+                </li>
+              </ul>
+            </li>
+            <li class="dropdown">
+              <a href="about.html" class="dropdown-toggle" data-toggle="dropdown">More ... <b
+                  class="caret"></b></a>
+              <ul class="dropdown-menu">
+                <li><a href="license.html">License</a></li>
+                <li><a href="team.html">Team</a></li>
+                <li><a href="https://groups.google.com/forum/?fromgroups#!forum/sploutdb-users">Users
+                  group</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+        <!-- /.nav-collapse -->
       </div>
-      <!-- /.nav-collapse -->
     </div>
   </div>
-</div>
-<!-- /navbar -->
+  <!-- /navbar -->
 
-<div class="page-header">
+  <div class="page-header">
   <h2 style="align:center;">Getting started with Splout SQL</h2>
 </div>
 
@@ -243,7 +248,7 @@
 <p>The best thing for getting started with Splout is launching a local server in your machine:</p>
 
 <pre><tt>bin/splout-service.sh qnode start
-  bin/splout-service.sh dnode start
+bin/splout-service.sh dnode start
 </tt></pre>
 
 <p>Now, if everything went fine, and assuming you had nothing running on port 4412 before, you will see a
@@ -256,7 +261,7 @@
   the services anytime with:</p>
 
 <pre><tt>bin/splout-service.sh qnode stop
-  bin/splout-service.sh dnode stop
+bin/splout-service.sh dnode stop
 </tt></pre>
 
 <div class="page-header" id="loading">
@@ -265,7 +270,6 @@
 
 <p>Splout comes with a few examples, one of which consists of miscellaneous world facts. We will load it
   and play with it to get used to the system and its behavior.</p>
-
 <p>First, upload to HDFS the examples folder, as it contains the input files for all examples.</p>
 
 <pre><tt>hadoop fs -put examples examples
@@ -340,7 +344,6 @@
   Otherwise, a wrong partition would have been hit, and no results would have been presented. Perform a
   test. Repeat the query, but keep the partition key empty. You'll see no results and partition 0 being
   hit.</p>
-
 <p>The former query can be performed just using the REST Splout SQL interface. For the former query the
   URL would be the following:</p>
 
@@ -392,7 +395,6 @@
 
 <p>The structure of these tablespaces, and the the specification of the input data are in the files:
   <strong>world-pby-country.json</strong> and <strong>world-pby-continent-region.json</strong></p>
-
 <p>Launch the following command to create both tablespaces:</p>
 
 <pre><tt>hadoop jar splout-*-hadoop.jar generate --output database-files --tablespacefile
@@ -482,15 +484,30 @@
   needed indexes in order to answer queries fast.</p>
 
 
-<br><br><br><br>
-<!-- Footer -->
-<footer class="footer">
-  <p class="pull-right"><a href="http://datasalt.com">Splout is maintained by Datasalt</a></p>
-</footer>
+  <br><br><br><br>
+  <!-- Footer -->
+  <footer class="footer">
+    <hr/>
+    <p class="pull-right"><a href="http://datasalt.com">Splout is maintained by Datasalt</a></p>
+  </footer>
 </div>
 <!-- /container -->
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
 <script src="js/bootstrap.min.js"></script>
 <script src="js/bootswatch.js"></script>
+<!-- Google Analytics -->
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-36807154-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+  var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+  ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+  var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
 </body>
 </html>

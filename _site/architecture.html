@@ -196,18 +196,23 @@
                   class="caret"></b></a>
               <ul class="dropdown-menu">
                 <li><a href="https://github.com/datasalt/splout-db/">Source code</a></li>
-                <li><a href="#">Continuous integration</a></li>
-                <li><a href="#">Code quality</a></li>
+                <li><a href="http://clinker.datasalt.com/jenkins/view/Splout-db/">Continuous
+                  integration</a></li>
+                <li><a
+                    href="http://clinker.pangool.net/sonar/dashboard/index/com.splout.db:splout-top-level">Code
+                  quality</a></li>
                 <li><a href="https://groups.google.com/forum/#!forum/sploutdb-dev">Developers group</a>
+                </li>
+                <li><a href="https://github.com/datasalt/splout-db/issues">Issues system</a>
                 </li>
               </ul>
             </li>
             <li class="dropdown">
-              <a href="about.html" class="dropdown-toggle" data-toggle="dropdown">About <b
+              <a href="about.html" class="dropdown-toggle" data-toggle="dropdown">More ... <b
                   class="caret"></b></a>
               <ul class="dropdown-menu">
-                <li><a href="#">License</a></li>
-                <li><a href="#">Team</a></li>
+                <li><a href="license.html">License</a></li>
+                <li><a href="team.html">Team</a></li>
                 <li><a href="https://groups.google.com/forum/?fromgroups#!forum/sploutdb-users">Users
                   group</a></li>
               </ul>
@@ -221,81 +226,81 @@
   <!-- /navbar -->
 
   <div class="page-header">
-    <h2 style="align:center;">Splout SQL's architecture</h2>
-  </div>
+  <h2 style="align:center;">Splout SQL's architecture</h2>
+</div>
 
-  <p>Splout SQL is a read-only DB. Because of this, the overall architecture is quite simple.</p>
+<p>Splout SQL is a read-only DB. Because of this, the overall architecture is quite simple.</p>
 
-  <ul>
-    <li>Splout SQL is installed on a cluster of commodity hardware machines. Each of the machines runs a
-      <strong>DNode</strong> service and optionally a <strong>QNode</strong> service (<em>but there must
-        be at least one QNode service among the cluster</em>).
-    </li>
-    <li>QNodes implement a <strong>REST API</strong> for serving users' queries or receiving deploy /
-      rollback requests.
-    </li>
-    <li>Because <strong>data is partitioned</strong>, QNodes talk to the appropriate DNode for serving a
-      query and the DNode responds back with the query’s result.
-    </li>
-    <li>A <strong>Hadoop cluster</strong> is used for indexing and balancing the data. The resultant SQL
-      files are fetched by the DNodes by handling a data deploy request.
-    </li>
-  </ul>
+<ul>
+  <li>Splout SQL is installed on a cluster of commodity hardware machines. Each of the machines runs a
+    <strong>DNode</strong> service and optionally a <strong>QNode</strong> service (<em>but there must be
+      at least one QNode service among the cluster</em>).
+  </li>
+  <li>QNodes implement a <strong>REST API</strong> for serving users' queries or receiving deploy /
+    rollback requests.
+  </li>
+  <li>Because <strong>data is partitioned</strong>, QNodes talk to the appropriate DNode for serving a
+    query and the DNode responds back with the query’s result.
+  </li>
+  <li>A <strong>Hadoop cluster</strong> is used for indexing and balancing the data. The resultant SQL
+    files are fetched by the DNodes by handling a data deploy request.
+  </li>
+</ul>
 
-  <center><img src='img/Splout_SQL.jpg'></center>
+<center><img src='img/Splout_SQL.jpg'></center>
 
-  <h2>Data balancing & indexing</h2>
+<h2>Data balancing & indexing</h2>
 
-  <p>Arbitrarily big datasets are handled by Splout by using a Hadoop batch process that partitions and
-    indexes the data according to a users' partitioning policy.</p>
+<p>Arbitrarily big datasets are handled by Splout by using a Hadoop batch process that partitions and
+  indexes the data according to a users' partitioning policy.</p>
 
-  <ul>
-    <li>Usually this involves partitioning by one or more columns in a columnar dataset, for example
-      <strong>customer_id</strong>. But you can also partition by an arbitrary Java or JavaScript
-      function, for instance.
-    </li>
-    <li>Splout uses <strong>sampling methods</strong> for deciding how to split the dataset after
-      applying users’ partitioning function.
-    </li>
-    <li>A simple method (a-la-<a
-        href='http://hadoop.apache.org/docs/current/api/org/apache/hadoop/examples/terasort/package-summary.html'
-        target='_blank'>Hadoop's TeraSort</a>) is the default one, but a more sophisticated one -
-      althought more computationally expensive - (<a
-          href='http://en.wikipedia.org/wiki/Reservoir_sampling'>Reservoir Sampling</a>) can be used in
-      datasets where the default one is not enough.
-    </li>
-    <li>The DNodes fetch new data on a deploy request. The data is downloaded, <strong>atomically
-      replaced and versioned</strong>. The cluster coordinates itself for assuring version consistency
-      and no downtime while deploying. The user can choose to <strong>rollback</strong> to previous
-      versions anytime, and the operation will be as quick as a "mv" between folders.
-    </li>
-  </ul>
+<ul>
+  <li>Usually this involves partitioning by one or more columns in a columnar dataset, for example
+    <strong>customer_id</strong>. But you can also partition by an arbitrary Java or JavaScript function,
+    for instance.
+  </li>
+  <li>Splout uses <strong>sampling methods</strong> for deciding how to split the dataset after applying
+    users’ partitioning function.
+  </li>
+  <li>A simple method (a-la-<a
+      href='http://hadoop.apache.org/docs/current/api/org/apache/hadoop/examples/terasort/package-summary.html'
+      target='_blank'>Hadoop's TeraSort</a>) is the default one, but a more sophisticated one - althought
+    more computationally expensive - (<a href='http://en.wikipedia.org/wiki/Reservoir_sampling'>Reservoir
+      Sampling</a>) can be used in datasets where the default one is not enough.
+  </li>
+  <li>The DNodes fetch new data on a deploy request. The data is downloaded, <strong>atomically replaced
+    and versioned</strong>. The cluster coordinates itself for assuring version consistency and no
+    downtime while deploying. The user can choose to <strong>rollback</strong> to previous versions
+    anytime, and the operation will be as quick as a "mv" between folders.
+  </li>
+</ul>
 
-  <h2>Technology choices</h2>
+<h2>Technology choices</h2>
 
-  <ul>
+<ul>
 
-    <li>QNodes, DNodes are implemented as <strong>Java</strong> services serving queries through a <a
-        href='http://jersey.java.net/' target='_blank'>Jersey</a> REST interface.
-    </li>
-    <li>QNodes and DNodes communicate between them using <a href='http://thrift.apache.org/'>Thrift</a>.
-    </li>
-    <li>Splout SQL cluster handles membership and coordinates deployments and rollbacks through <a
-        href='http://jersey.java.net/' target='_blank'>Hazelcast</a>.
-    </li>
-    <li>Splout uses <a href='http://pangool.net' target='_blank'>Pangool</a> for low-level Java Hadoop
-      development. In this way, the code for data store generation is pretty simple and performant at the
-      same time.
-    </li>
-    <li>Splout generates <a href='http://www.sqlite.org/' target='_blank'>SQLite</a> files that are used
-      by DNodes for serving data.
-    </li>
+  <li>QNodes, DNodes are implemented as <strong>Java</strong> services serving queries through a <a
+      href='http://jersey.java.net/' target='_blank'>Jersey</a> REST interface.
+  </li>
+  <li>QNodes and DNodes communicate between them using <a href='http://thrift.apache.org/'>Thrift</a>.
+  </li>
+  <li>Splout SQL cluster handles membership and coordinates deployments and rollbacks through <a
+      href='http://www.hazelcast.com/' target='_blank'>Hazelcast</a>.
+  </li>
+  <li>Splout uses <a href='http://pangool.net' target='_blank'>Pangool</a> for low-level Java Hadoop
+    development. In this way, the code for data store generation is pretty simple and performant at the
+    same time.
+  </li>
+  <li>Splout generates <a href='http://www.sqlite.org/' target='_blank'>SQLite</a> files that are used by
+    DNodes for serving data.
+  </li>
 
-  </ul>
+</ul>
 
   <br><br><br><br>
   <!-- Footer -->
   <footer class="footer">
+    <hr/>
     <p class="pull-right"><a href="http://datasalt.com">Splout is maintained by Datasalt</a></p>
   </footer>
 </div>
@@ -303,5 +308,19 @@
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
 <script src="js/bootstrap.min.js"></script>
 <script src="js/bootswatch.js"></script>
+<!-- Google Analytics -->
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-36807154-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+  var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+  ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+  var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
 </body>
 </html>
