@@ -57,6 +57,9 @@ cd $SPLOUT_HOME
 bin/splout-service.sh qnode start
 bin/splout-service.sh dnode start
 
+echo "Sleeping 10 seconds to make sure Hadoop starts properly..."
+sleep 10
+
 # Run integration test
 
 echo "Running integration test..."

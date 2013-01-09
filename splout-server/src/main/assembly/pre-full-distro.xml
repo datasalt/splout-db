@@ -31,6 +31,10 @@
   		<outputDirectory>native</outputDirectory>  	
   	</fileSet>
   	<fileSet>
+  		<directory>src/main/resources/integration</directory>
+  		<outputDirectory>.</outputDirectory>
+  	</fileSet>
+  	<fileSet>
   		<directory>src/main/scripts</directory>
   		<outputDirectory>bin</outputDirectory>
   	</fileSet>
