@@ -100,15 +100,15 @@ public class TestQNodeHandler {
 			HazelcastInstance hz = Hazelcast.newHazelcastInstance(HazelcastConfigBuilder.build(config));
 			CoordinationStructures coord = new CoordinationStructures(hz);
 
+			handler.init(config);
+
 			Map<String, Long> versionsBeingServed = new HashMap<String, Long>();
 			versionsBeingServed.put("t1", 0l);
 			coord.getVersionsBeingServed().put(CoordinationStructures.KEY_FOR_VERSIONS_BEING_SERVED, versionsBeingServed);
 
 			versionsBeingServed.put("t2", 1l);
 			coord.getVersionsBeingServed().put(CoordinationStructures.KEY_FOR_VERSIONS_BEING_SERVED, versionsBeingServed);
-
-			handler.init(config);
-
+			
 			Assert.assertEquals(0l, (long) handler.getContext().getCurrentVersionsMap().get("t1"));
 			Assert.assertEquals(1l, (long) handler.getContext().getCurrentVersionsMap().get("t2"));
 
