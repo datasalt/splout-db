@@ -78,12 +78,14 @@ public class DistributedRegistry {
 
 		@Override
 		public void memberAdded(MembershipEvent membershipEvent) {
+			System.out.println("Member added: " + membershipEvent);
 			// Nothing to do. I should be registered. Just in case...
 			scheduleCheck();
 		}
 
 		@Override
 		public void memberRemoved(MembershipEvent membershipEvent) {
+			System.out.println("Member removed: " + membershipEvent);
 			synchronized(DistributedRegistry.this) {
 				/*
 				 * When a node leaves, somebody in the cluster must remove its info from the distributed map. We

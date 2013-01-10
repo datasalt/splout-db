@@ -104,10 +104,15 @@ public class QNodeHandler implements IQNodeHandler {
 			log.info("DNode [" + event.getValue() + "] joins the cluster as ready to server requests.");
 			// Update TablespaceVersions
 			try {
+				context.initializeThriftClientCacheFor(event.getValue().getAddress());
 				context.updateTablespaceVersions(event.getValue(), QNodeHandlerContext.DNodeEvent.ENTRY);
 			} catch(TablespaceVersionInfoException e) {
 				throw new RuntimeException(e);
-			}
+			} catch(TTransportException e) {
+				throw new RuntimeException(e);
+      } catch(InterruptedException e) {
+      	throw new RuntimeException(e);
+      }
 		}
 
 		@Override
@@ -115,10 +120,13 @@ public class QNodeHandler implements IQNodeHandler {
 			log.info("DNode [" + event.getValue() + "] left.");
 			// Update TablespaceVersions
 			try {
+				context.discardThriftClientCacheFor(event.getValue().getAddress());
 				context.updateTablespaceVersions(event.getValue(), QNodeHandlerContext.DNodeEvent.LEAVE);
 			} catch(TablespaceVersionInfoException e) {
 				throw new RuntimeException(e);
-			}
+      } catch(InterruptedException e) {
+      	throw new RuntimeException(e);
+      }
 		}
 
 		@Override

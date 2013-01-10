@@ -283,6 +283,30 @@ public class QNodeHandlerContext {
 		}
 	}
 
+	public void initializeThriftClientCacheFor(String dnode) throws TTransportException, InterruptedException {
+		synchronized(thriftClientCache) {
+			// initialize queue for this DNode
+			log.info(Thread.currentThread().getName() + " : populating client queue for [" + dnode + "] as it connected.");
+			int poolSize = config.getInt(QNodeProperties.DNODE_POOL_SIZE);
+			BlockingQueue<DNodeService.Client> dnodeQueue = new LinkedBlockingDeque<DNodeService.Client>(poolSize);
+			for(int i = 0; i < poolSize; i++) {
+				dnodeQueue.put(DNodeClient.get(dnode));
+			}
+			thriftClientCache.put(dnode, dnodeQueue);
+		}
+	}
+	
+	public void discardThriftClientCacheFor(String dnode) throws InterruptedException {
+		synchronized(thriftClientCache) {
+			// discarding all connections to a DNode who leaved
+			log.info(Thread.currentThread().getName() + " : trashing queue for [" + dnode + "] as it leaved.");
+			BlockingQueue<DNodeService.Client> dnodeQueue = thriftClientCache.get(dnode);
+			while(!dnodeQueue.isEmpty()) {
+				dnodeQueue.take().getOutputProtocol().getTransport().close();
+			}
+		}
+	}
+	
 	/**
 	 * Get the Thrift client for this DNode.
 	 */
@@ -292,16 +316,6 @@ public class QNodeHandlerContext {
 			BlockingQueue<DNodeService.Client> dnodeQueue;
 			synchronized(thriftClientCache) {
 				dnodeQueue = thriftClientCache.get(dnode);
-				if(dnodeQueue == null) {
-					// initialize queue for this DNode
-					log.info(Thread.currentThread().getName() + " : populating client queue for [" + dnode + "] for the first time");
-					int poolSize = config.getInt(QNodeProperties.DNODE_POOL_SIZE);
-					dnodeQueue = new LinkedBlockingDeque<DNodeService.Client>(poolSize);
-					for(int i = 0; i < poolSize; i++) {
-						dnodeQueue.put(DNodeClient.get(dnode));
-					}
-					thriftClientCache.put(dnode, dnodeQueue);
-				}
 			}
 			DNodeService.Client client = dnodeQueue.take();
 			return client;
@@ -324,6 +338,10 @@ public class QNodeHandlerContext {
 			client.getOutputProtocol().getTransport().close();
 			client = null;
 		}
+		BlockingQueue<DNodeService.Client> dnodeQueue = thriftClientCache.get(dnode);
+		if(dnodeQueue == null) {
+			return; // The DNode has disconnected
+		}
 		while(client == null) {
 			// endless loop, we need to get a new client otherwise the queue will not have the same size!
 			try {
@@ -333,7 +351,6 @@ public class QNodeHandlerContext {
 				    "TTransportException while creating client to renew. Trying again, we can't exit here!", e);
 			}
 		}
-		BlockingQueue<DNodeService.Client> dnodeQueue = thriftClientCache.get(dnode);
 		try {
 			dnodeQueue.put(client);
 		} catch(InterruptedException e) {
