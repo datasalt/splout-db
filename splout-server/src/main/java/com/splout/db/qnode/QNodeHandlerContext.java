@@ -501,4 +501,8 @@ public class QNodeHandlerContext {
 	public SploutConfiguration getConfig() {
 		return config;
 	}
+
+	public ConcurrentMap<String, BlockingQueue<DNodeService.Client>> getThriftClientCache() {
+  	return thriftClientCache;
+  }
 }

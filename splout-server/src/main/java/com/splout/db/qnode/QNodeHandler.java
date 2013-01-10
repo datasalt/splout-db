@@ -200,6 +200,11 @@ public class QNodeHandler implements IQNodeHandler {
 		log.info(this + " - Initializing QNode...");
 		// Connect with the cluster.
 		HazelcastInstance hz = Hazelcast.newHazelcastInstance(HazelcastConfigBuilder.build(config));
+		int minutesToCheckRegister = config.getInt(HazelcastProperties.MAX_TIME_TO_CHECK_REGISTRATION, 5);
+		int oldestMembersLeading = config.getInt(HazelcastProperties.OLDEST_MEMBERS_LEADING_COUNT, 3);
+		// we must instantiate the DistributedRegistry even if we're not a DNode to be able to receive memembership leaving 
+		// in race conditions such as all DNodes leaving.
+		new DistributedRegistry(CoordinationStructures.DNODES, null, hz, minutesToCheckRegister, oldestMembersLeading);
 		coord = new CoordinationStructures(hz);
 		context = new QNodeHandlerContext(config, coord);
 		// Initialialize DNodes tracking
