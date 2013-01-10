@@ -618,6 +618,7 @@ Perform a SQL query and get a JSON result back. Returns a QueryStatus object wit
  	"shard": 1
  }
  
+.TIP: It is also possible to use the parameter "partition" for querying a certain partition id. And if we use "partition=random" then a random partition will be hit.
 .TIP: You can use the optional "callback" parameter for doing cross-domain requests with javascript.
  
 .QueryStatus object
@@ -769,4 +770,9 @@ A deploy may fail if some of the DNodes fail, if a timeout is reached (see <<spl
 The cluster is inconsistent: there are less DNodes than expected 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In big networks in can take some time for Hazelcast to negotiate the membership. It can be a matter of minutes.  
+In big networks in can take some time for Hazelcast to negotiate the membership. It can be a matter of minutes.
+
+DNode fails all queries with "Too many open files" exceptions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You might have to tune your open files limit as Splout is opening one connection to each partition file it has for every serving thread. So if you have 64 serving threads and 20 partitions to serve, this means up to 1280 opened files which is more than the default in some machines (1024). You can check and change your limits: http://www.cyberciti.biz/faq/linux-increase-the-maximum-number-of-open-files/ 
