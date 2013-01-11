@@ -598,4 +598,8 @@ public class DNodeHandler implements IDNodeHandler {
 			throw new DNodeException(EXCEPTION_UNEXPECTED, e.getMessage());
 		}
 	}
+
+	public CoordinationStructures getCoord() {
+  	return coord;
+  }
 }

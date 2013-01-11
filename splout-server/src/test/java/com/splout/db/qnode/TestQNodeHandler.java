@@ -72,19 +72,23 @@ public class TestQNodeHandler {
 	}
 
 	DNodeMockHandler dHandler = new DNodeMockHandler() {
-		
+
 		@Override
-		public String sqlQuery(String tablespace, long version, int partition, String query) throws DNodeException {
+		public String sqlQuery(String tablespace, long version, int partition, String query)
+		    throws DNodeException {
 			return "[1]";
 		}
+
 		@Override
 		public String deploy(List<DeployAction> deployActions, long version) throws DNodeException {
 			return "FOO";
 		}
+
 		@Override
 		public String rollback(List<RollbackAction> rollbackActions, String ignoreMe) throws DNodeException {
 			return "FOO";
 		}
+
 		@Override
 		public String status() throws DNodeException {
 			return "FOO";
@@ -100,21 +104,24 @@ public class TestQNodeHandler {
 			HazelcastInstance hz = Hazelcast.newHazelcastInstance(HazelcastConfigBuilder.build(config));
 			CoordinationStructures coord = new CoordinationStructures(hz);
 
+			handler.init(config);
+
 			Map<String, Long> versionsBeingServed = new HashMap<String, Long>();
 			versionsBeingServed.put("t1", 0l);
-			coord.getVersionsBeingServed().put(CoordinationStructures.KEY_FOR_VERSIONS_BEING_SERVED, versionsBeingServed);
+			coord.getVersionsBeingServed().put(CoordinationStructures.KEY_FOR_VERSIONS_BEING_SERVED,
+			    versionsBeingServed);
 
 			versionsBeingServed.put("t2", 1l);
-			coord.getVersionsBeingServed().put(CoordinationStructures.KEY_FOR_VERSIONS_BEING_SERVED, versionsBeingServed);
-
-			handler.init(config);
+			coord.getVersionsBeingServed().put(CoordinationStructures.KEY_FOR_VERSIONS_BEING_SERVED,
+			    versionsBeingServed);
 
 			Assert.assertEquals(0l, (long) handler.getContext().getCurrentVersionsMap().get("t1"));
 			Assert.assertEquals(1l, (long) handler.getContext().getCurrentVersionsMap().get("t2"));
 
 			versionsBeingServed.put("t2", 0l);
 			versionsBeingServed.put("t1", 1l);
-			coord.getVersionsBeingServed().put(CoordinationStructures.KEY_FOR_VERSIONS_BEING_SERVED, versionsBeingServed);
+			coord.getVersionsBeingServed().put(CoordinationStructures.KEY_FOR_VERSIONS_BEING_SERVED,
+			    versionsBeingServed);
 
 			Thread.sleep(100);
 
@@ -123,7 +130,8 @@ public class TestQNodeHandler {
 
 			versionsBeingServed.put("t2", 1l);
 			versionsBeingServed.put("t1", 0l);
-			coord.getVersionsBeingServed().put(CoordinationStructures.KEY_FOR_VERSIONS_BEING_SERVED, versionsBeingServed);
+			coord.getVersionsBeingServed().put(CoordinationStructures.KEY_FOR_VERSIONS_BEING_SERVED,
+			    versionsBeingServed);
 
 			Thread.sleep(100);
 
@@ -149,7 +157,8 @@ public class TestQNodeHandler {
 			DeployRequest deployRequest1 = new DeployRequest();
 			deployRequest1.setTablespace("partition1");
 			deployRequest1.setPartitionMap(PartitionMap.oneShardOpenedMap().getPartitionEntries());
-			deployRequest1.setReplicationMap(ReplicationMap.oneToOneMap(dnode.getAddress()).getReplicationEntries());
+			deployRequest1.setReplicationMap(ReplicationMap.oneToOneMap(dnode.getAddress())
+			    .getReplicationEntries());
 
 			File fakeDeployFolder = new File(FAKE_DEPLOY_FOLDER);
 			fakeDeployFolder.mkdir();
@@ -166,13 +175,13 @@ public class TestQNodeHandler {
 				@Override
 				public boolean endCondition() {
 					boolean cond1 = handler.getContext().getTablespaceVersionsMap().values().size() == 1;
-					boolean cond2 = handler.getContext().getCurrentVersionsMap().get("partition1") != null; 
+					boolean cond2 = handler.getContext().getCurrentVersionsMap().get("partition1") != null;
 					return cond1 && cond2;
 				}
 			}.waitAtMost(5000);
 
-			assertEquals((long) handler.getContext().getTablespaceVersionsMap().keySet().iterator().next().getVersion(),
-			    (long) handler.getContext().getCurrentVersionsMap().values().iterator().next());
+			assertEquals((long) handler.getContext().getTablespaceVersionsMap().keySet().iterator().next()
+			    .getVersion(), (long) handler.getContext().getCurrentVersionsMap().values().iterator().next());
 			// everything OK
 		} finally {
 			handler.close();
@@ -190,8 +199,10 @@ public class TestQNodeHandler {
 		DNode dnode = TestUtils.getTestDNode(config, dHandler, "dnode-" + this.getClass().getName() + "-2");
 		try {
 			ReplicationEntry repEntry = new ReplicationEntry(0, dnode.getAddress());
-			Tablespace tablespace1 = new Tablespace(PartitionMap.oneShardOpenedMap(), new ReplicationMap(Arrays.asList(repEntry)), 0l, 0l);
-			handler.getContext().getTablespaceVersionsMap().put(new TablespaceVersion("tablespace1", 0l), tablespace1);
+			Tablespace tablespace1 = new Tablespace(PartitionMap.oneShardOpenedMap(), new ReplicationMap(
+			    Arrays.asList(repEntry)), 0l, 0l);
+			handler.getContext().getTablespaceVersionsMap()
+			    .put(new TablespaceVersion("tablespace1", 0l), tablespace1);
 			handler.getContext().getCurrentVersionsMap().put("tablespace1", 0l);
 
 			// Query key 2 (> 1 < 10)
@@ -215,27 +226,29 @@ public class TestQNodeHandler {
 		DNode dnode = TestUtils.getTestDNode(config, dHandler, "dnode-" + this.getClass().getName() + "-2b");
 		try {
 			ReplicationEntry repEntry = new ReplicationEntry(0, dnode.getAddress());
-			Tablespace tablespace1 = new Tablespace(PartitionMap.oneShardOpenedMap(), new ReplicationMap(Arrays.asList(repEntry)), 0l, 0l);
-			handler.getContext().getTablespaceVersionsMap().put(new TablespaceVersion("tablespace1", 0l), tablespace1);
+			Tablespace tablespace1 = new Tablespace(PartitionMap.oneShardOpenedMap(), new ReplicationMap(
+			    Arrays.asList(repEntry)), 0l, 0l);
+			handler.getContext().getTablespaceVersionsMap()
+			    .put(new TablespaceVersion("tablespace1", 0l), tablespace1);
 			handler.getContext().getCurrentVersionsMap().put("tablespace1", 0l);
 
 			// Query shard 0
 			QueryStatus qStatus = handler.query("tablespace1", null, "SELECT 1;", "0");
 			Assert.assertEquals(new Integer(0), qStatus.getShard());
 			Assert.assertEquals("[1]", qStatus.getResult().toString());
-			
+
 			// Query random partition
-		  qStatus = handler.query("tablespace1", null, "SELECT 1;", Querier.PARTITION_RANDOM);
+			qStatus = handler.query("tablespace1", null, "SELECT 1;", Querier.PARTITION_RANDOM);
 			Assert.assertEquals(new Integer(0), qStatus.getShard());
 			Assert.assertEquals("[1]", qStatus.getResult().toString());
-			
+
 		} finally {
 			handler.close();
 			dnode.stop();
 			Hazelcast.shutdownAll();
 		}
 	}
-	
+
 	@Test
 	public void testMultiDeployFiring() throws Throwable {
 		// Same as test deploy firing, but with more than one DNode and different deploy actions
@@ -247,12 +260,14 @@ public class TestQNodeHandler {
 			}
 
 			@Override
-			public String sqlQuery(String tablespace, long version, int partition, String query) throws DNodeException {
+			public String sqlQuery(String tablespace, long version, int partition, String query)
+			    throws DNodeException {
 				return null;
 			}
 
 			@Override
-			public String deploy(List<DeployAction> deployActions, long distributedBarrier) throws DNodeException {
+			public String deploy(List<DeployAction> deployActions, long distributedBarrier)
+			    throws DNodeException {
 				/*
 				 * DNode1 asserts
 				 */
@@ -265,7 +280,8 @@ public class TestQNodeHandler {
 			}
 
 			@Override
-			public String rollback(List<RollbackAction> rollbackActions, String ignoreMe) throws DNodeException {
+			public String rollback(List<RollbackAction> rollbackActions, String ignoreMe)
+			    throws DNodeException {
 				return null;
 			}
 
@@ -288,15 +304,16 @@ public class TestQNodeHandler {
 			}
 
 			@Override
-			public String deleteOldVersions(List<com.splout.db.thrift.TablespaceVersion> versions) throws DNodeException {
+			public String deleteOldVersions(List<com.splout.db.thrift.TablespaceVersion> versions)
+			    throws DNodeException {
 				return null;
 			}
 
 			@Override
-      public String testCommand(String command) throws DNodeException {
-	      // TODO Auto-generated method stub
-	      return null;
-      }
+			public String testCommand(String command) throws DNodeException {
+				// TODO Auto-generated method stub
+				return null;
+			}
 		}, "dnode-" + this.getClass().getName() + "-3");
 
 		SploutConfiguration config2 = SploutConfiguration.getTestConfig();
@@ -306,12 +323,14 @@ public class TestQNodeHandler {
 			}
 
 			@Override
-			public String sqlQuery(String tablespace, long version, int partition, String query) throws DNodeException {
+			public String sqlQuery(String tablespace, long version, int partition, String query)
+			    throws DNodeException {
 				return null;
 			}
 
 			@Override
-			public String deploy(List<DeployAction> deployActions, long distributedBarrier) throws DNodeException {
+			public String deploy(List<DeployAction> deployActions, long distributedBarrier)
+			    throws DNodeException {
 				/*
 				 * DNode2 asserts
 				 */
@@ -322,7 +341,8 @@ public class TestQNodeHandler {
 			}
 
 			@Override
-			public String rollback(List<RollbackAction> rollbackActions, String ignoreMe) throws DNodeException {
+			public String rollback(List<RollbackAction> rollbackActions, String ignoreMe)
+			    throws DNodeException {
 				return null;
 			}
 
@@ -345,15 +365,16 @@ public class TestQNodeHandler {
 			}
 
 			@Override
-			public String deleteOldVersions(List<com.splout.db.thrift.TablespaceVersion> versions) throws DNodeException {
+			public String deleteOldVersions(List<com.splout.db.thrift.TablespaceVersion> versions)
+			    throws DNodeException {
 				return null;
 			}
 
 			@Override
-      public String testCommand(String command) throws DNodeException {
-	      // TODO Auto-generated method stub
-	      return null;
-      }
+			public String testCommand(String command) throws DNodeException {
+				// TODO Auto-generated method stub
+				return null;
+			}
 		}, "dnode-" + this.getClass().getName() + "-4");
 
 		QNodeHandler handler = new QNodeHandler();
@@ -400,7 +421,8 @@ public class TestQNodeHandler {
 			}
 
 			@Override
-			public String sqlQuery(String tablespace, long version, int partition, String query) throws DNodeException {
+			public String sqlQuery(String tablespace, long version, int partition, String query)
+			    throws DNodeException {
 				return null;
 			}
 
@@ -414,7 +436,8 @@ public class TestQNodeHandler {
 			}
 
 			@Override
-			public String rollback(List<RollbackAction> rollbackActions, String ignoreMe) throws DNodeException {
+			public String rollback(List<RollbackAction> rollbackActions, String ignoreMe)
+			    throws DNodeException {
 				return null;
 			}
 
@@ -437,15 +460,16 @@ public class TestQNodeHandler {
 			}
 
 			@Override
-			public String deleteOldVersions(List<com.splout.db.thrift.TablespaceVersion> versions) throws DNodeException {
+			public String deleteOldVersions(List<com.splout.db.thrift.TablespaceVersion> versions)
+			    throws DNodeException {
 				return null;
 			}
 
 			@Override
-      public String testCommand(String command) throws DNodeException {
-	      // TODO Auto-generated method stub
-	      return null;
-      }
+			public String testCommand(String command) throws DNodeException {
+				// TODO Auto-generated method stub
+				return null;
+			}
 		}, "dnode-" + this.getClass().getName() + "-5");
 
 		try {
@@ -487,8 +511,14 @@ public class TestQNodeHandler {
 
 			coord.getDNodes().put("/localhost:1001", new DNodeInfo(dNodeConfig));
 
-			handler.init(config);
-			Assert.assertEquals(handler.getContext().getCoordinationStructures().getDNodes().values().size(), 2);
+			try {
+				handler.init(config);
+			} catch(Exception e) {
+				// since the handler will try to connect to "localhost:1000" we skip the Exception and continue
+				// the things we want to assert should be present anyway.
+			}
+			Assert.assertEquals(handler.getContext().getCoordinationStructures().getDNodes().values().size(),
+			    2);
 		} finally {
 			handler.close();
 			Hazelcast.shutdownAll();
@@ -506,33 +536,43 @@ public class TestQNodeHandler {
 			dNodeConfig.setProperty(DNodeProperties.PORT, 1000);
 			coord.getDNodes().put("/localhost:1000", new DNodeInfo(dNodeConfig));
 
-			handler.init(config);
-			Assert.assertEquals(handler.getContext().getCoordinationStructures().getDNodes().values().size(), 1);
+			try {
+				handler.init(config);
+			} catch(Exception e) {
+				// since the handler will try to connect to "localhost:1000" we skip the Exception and continue
+				// the things we want to assert should be present anyway.
+			}
+			Assert.assertEquals(handler.getContext().getCoordinationStructures().getDNodes().values().size(),
+			    1);
 
 			coord.getDNodes().remove(coord.getDNodes().entrySet().iterator().next().getKey());
 
 			Thread.sleep(100);
-			Assert.assertEquals(handler.getContext().getCoordinationStructures().getDNodes().values().size(), 0);
+			Assert.assertEquals(handler.getContext().getCoordinationStructures().getDNodes().values().size(),
+			    0);
 
 			dNodeConfig = SploutConfiguration.getTestConfig();
 			dNodeConfig.setProperty(DNodeProperties.PORT, 1001);
 			coord.getDNodes().put("/localhost:1001", new DNodeInfo(dNodeConfig));
 			Thread.sleep(100);
 
-			Assert.assertEquals(handler.getContext().getCoordinationStructures().getDNodes().values().size(), 1);
+			Assert.assertEquals(handler.getContext().getCoordinationStructures().getDNodes().values().size(),
+			    1);
 
 			dNodeConfig = SploutConfiguration.getTestConfig();
 			dNodeConfig.setProperty(DNodeProperties.PORT, 1000);
 			coord.getDNodes().put("/localhost:1000", new DNodeInfo(dNodeConfig));
 			Thread.sleep(100);
 
-			Assert.assertEquals(handler.getContext().getCoordinationStructures().getDNodes().values().size(), 2);
+			Assert.assertEquals(handler.getContext().getCoordinationStructures().getDNodes().values().size(),
+			    2);
 
 			coord.getDNodes().remove(coord.getDNodes().entrySet().iterator().next().getKey());
 			coord.getDNodes().remove(coord.getDNodes().entrySet().iterator().next().getKey());
 
 			Thread.sleep(100);
-			Assert.assertEquals(handler.getContext().getCoordinationStructures().getDNodes().values().size(), 0);
+			Assert.assertEquals(handler.getContext().getCoordinationStructures().getDNodes().values().size(),
+			    0);
 		} finally {
 			handler.close();
 			Hazelcast.shutdownAll();

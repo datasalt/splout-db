@@ -104,10 +104,18 @@ public class QNodeHandler implements IQNodeHandler {
 			log.info("DNode [" + event.getValue() + "] joins the cluster as ready to server requests.");
 			// Update TablespaceVersions
 			try {
+				String dnode = event.getValue().getAddress();
+				log.info(Thread.currentThread().getName() + " : populating client queue for [" + dnode
+				    + "] as it connected.");
+				context.initializeThriftClientCacheFor(dnode);
 				context.updateTablespaceVersions(event.getValue(), QNodeHandlerContext.DNodeEvent.ENTRY);
 			} catch(TablespaceVersionInfoException e) {
 				throw new RuntimeException(e);
-			}
+			} catch(TTransportException e) {
+				throw new RuntimeException(e);
+      } catch(InterruptedException e) {
+      	throw new RuntimeException(e);
+      }
 		}
 
 		@Override
@@ -115,10 +123,13 @@ public class QNodeHandler implements IQNodeHandler {
 			log.info("DNode [" + event.getValue() + "] left.");
 			// Update TablespaceVersions
 			try {
+				context.discardThriftClientCacheFor(event.getValue().getAddress());
 				context.updateTablespaceVersions(event.getValue(), QNodeHandlerContext.DNodeEvent.LEAVE);
 			} catch(TablespaceVersionInfoException e) {
 				throw new RuntimeException(e);
-			}
+      } catch(InterruptedException e) {
+      	throw new RuntimeException(e);
+      }
 		}
 
 		@Override
@@ -192,6 +203,11 @@ public class QNodeHandler implements IQNodeHandler {
 		log.info(this + " - Initializing QNode...");
 		// Connect with the cluster.
 		HazelcastInstance hz = Hazelcast.newHazelcastInstance(HazelcastConfigBuilder.build(config));
+		int minutesToCheckRegister = config.getInt(HazelcastProperties.MAX_TIME_TO_CHECK_REGISTRATION, 5);
+		int oldestMembersLeading = config.getInt(HazelcastProperties.OLDEST_MEMBERS_LEADING_COUNT, 3);
+		// we must instantiate the DistributedRegistry even if we're not a DNode to be able to receive memembership leaving 
+		// in race conditions such as all DNodes leaving.
+		new DistributedRegistry(CoordinationStructures.DNODES, null, hz, minutesToCheckRegister, oldestMembersLeading);
 		coord = new CoordinationStructures(hz);
 		context = new QNodeHandlerContext(config, coord);
 		// Initialialize DNodes tracking
@@ -218,10 +234,15 @@ public class QNodeHandler implements IQNodeHandler {
 		for(DNodeInfo dnodeInfo : dnodes.values()) {
 			dNodes.add(dnodeInfo.getAddress());
 			try {
+				context.initializeThriftClientCacheFor(dnodeInfo.getAddress());
 				context.updateTablespaceVersions(dnodeInfo, DNodeEvent.ENTRY);
 			} catch(TablespaceVersionInfoException e) {
 				throw new RuntimeException(e);
-			}
+			} catch(TTransportException e) {
+				throw new RuntimeException(e);
+      } catch(InterruptedException e) {
+				throw new RuntimeException(e);
+      }
 		}
 		log.info("Alive DNodes at QNode startup [" + Joiner.on(", ").skipNulls().join(dNodes) + "]");
 		log.info("TablespaceVersion map at QNode startup [" + context.getTablespaceVersionsMap() + "]");

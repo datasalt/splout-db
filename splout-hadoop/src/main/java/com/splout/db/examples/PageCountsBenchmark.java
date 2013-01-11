@@ -140,8 +140,9 @@ public class PageCountsBenchmark {
 					if(st.getResult() != null) {
 						return st.getResult().size();
 					} else {
-						System.err.println("Query with no results (" + query + ") - that's impossible!");
-						throw new RuntimeException("Query with no results - that's impossible!");
+						System.err.println("Query with no results (" + query + ") - please fix this error.");
+						return 0;
+//						throw new RuntimeException("Query with no results - that's impossible!");
 					}
 				}
 			} catch(java.net.SocketTimeoutException e) {

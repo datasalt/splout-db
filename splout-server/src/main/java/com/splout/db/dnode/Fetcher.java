@@ -115,6 +115,7 @@ public class Fetcher {
 			}
 
 			oS.close();
+			iS.close();
 		}
 		return toDir;
 	}
