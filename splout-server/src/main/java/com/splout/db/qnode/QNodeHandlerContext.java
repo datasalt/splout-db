@@ -289,10 +289,7 @@ public class QNodeHandlerContext {
 
 	/**
 	 * This method can be called to initialize a pool of connections to a dnode. This method may be called from multiple
-	 * threads so it should be safe to call it concurrently. The pool must always have 0 connections (DNode disconnects)
-	 * or X connections (exactly the number of connections we disire to cache). Because some failures may happen, this
-	 * method can be called several times to complete the queue. So this method must perform the appropriate checkings to
-	 * not overflow the queue, to not create two queues, etc, etc.
+	 * threads so it should be safe to call it concurrently.
 	 */
 	public void initializeThriftClientCacheFor(String dnode) throws TTransportException,
 	    InterruptedException {
