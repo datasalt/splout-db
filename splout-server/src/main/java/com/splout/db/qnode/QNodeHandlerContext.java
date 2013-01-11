@@ -288,11 +288,11 @@ public class QNodeHandlerContext {
 	}
 
 	/**
-	 * This method can be called to initialize a pool of connections to a dnode.
-	 * This method may be called from multiple threads so it should be safe to call it concurrently.
-	 * The pool must always have 0 connections (DNode disconnects) or X connections (exactly the number of connections
-	 * we disire to cache). Because some failures may happen, this method can be called several times to complete the queue.
-	 * So this method must perform the appropriate checkings to not overflow the queue, to not create two queues, etc, etc.
+	 * This method can be called to initialize a pool of connections to a dnode. This method may be called from multiple
+	 * threads so it should be safe to call it concurrently. The pool must always have 0 connections (DNode disconnects)
+	 * or X connections (exactly the number of connections we disire to cache). Because some failures may happen, this
+	 * method can be called several times to complete the queue. So this method must perform the appropriate checkings to
+	 * not overflow the queue, to not create two queues, etc, etc.
 	 */
 	public void initializeThriftClientCacheFor(String dnode) throws TTransportException,
 	    InterruptedException {
@@ -300,22 +300,26 @@ public class QNodeHandlerContext {
 		// there's only one lock for simplicity.
 		thriftClientCacheLock.lock();
 		try {
-			// initialize (or re-initialize) queue for this DNode
+			// initialize queue for this DNode
 			BlockingQueue<DNodeService.Client> dnodeQueue = thriftClientCache.get(dnode);
 			if(dnodeQueue == null) {
 				// this assures that the per-DNode queue is only created once and then reused.
 				dnodeQueue = new LinkedBlockingDeque<DNodeService.Client>(thriftClientPoolSize);
-				thriftClientCache.put(dnode, dnodeQueue);
 			}
-			if(dnodeQueue.size() < thriftClientPoolSize) {
-				// queue may actually be incomplete (DNode failing int he middle of population) so we can finish populating it
-				// here
-				if(dnodeQueue.size() > 0) {
-					log.warn(Thread.currentThread().getName() + " : queue for [" + dnode
-					    + "] failed while populating it before - finishing populating it now.");
-				}
-				for(int i = dnodeQueue.size(); i < thriftClientPoolSize; i++) {
-					dnodeQueue.put(DNodeClient.get(dnode));
+			if(dnodeQueue.isEmpty()) {
+				try {
+					for(int i = dnodeQueue.size(); i < thriftClientPoolSize; i++) {
+						dnodeQueue.put(DNodeClient.get(dnode));
+					}
+					// we only put the queue if all connections have been populated
+					thriftClientCache.put(dnode, dnodeQueue);
+				} catch(TTransportException e) {
+					log.error("Error while trying to populate queue for " + dnode
+					    + ", will discard created connections.", e);
+					while(!dnodeQueue.isEmpty()) {
+						dnodeQueue.poll().getOutputProtocol().getTransport().close();
+					}
+					throw e;
 				}
 			} else {
 				// it should be safe to call this method from different places concurrently
@@ -343,6 +347,7 @@ public class QNodeHandlerContext {
 			while(!dnodeQueue.isEmpty()) {
 				dnodeQueue.take().getOutputProtocol().getTransport().close();
 			}
+			thriftClientCache.put(dnode, null); // to indicate that the DNode is not present
 		} finally {
 			thriftClientCacheLock.unlock();
 		}
@@ -357,10 +362,9 @@ public class QNodeHandlerContext {
 			thriftClientCacheLock.lock();
 			try {
 				dnodeQueue = thriftClientCache.get(dnode);
-				if(dnodeQueue == null || dnodeQueue.size() < thriftClientPoolSize) {
-					// This shouldn't happen in real life because it is initialized by the QNode, but it is useful for unit testing.
-					// However, there are some race conditions that may lead to this in real life : for example, a queue which wasn't
-					// completely populated. So we have to contemplate it anyway.
+				if(dnodeQueue == null) {
+					// This shouldn't happen in real life because it is initialized by the QNode, but it is useful for unit
+					// testing.
 					initializeThriftClientCacheFor(dnode);
 					dnodeQueue = thriftClientCache.get(dnode);
 				}
@@ -377,38 +381,57 @@ public class QNodeHandlerContext {
 	}
 
 	/**
-	 * Return a Thrift client to the pool.
+	 * Return a Thrift client to the pool. This method is a bit tricky since we may want to return a connection when a
+	 * DNode already disconnected. Also, if the QNode is closing, we don't want to leave opened sockets around. To do it
+	 * safely, we check in a loop whether 1) we are closing / cleaning the QNode or 2) the DNode has disconnected.
 	 */
 	public void returnDNodeClientToPool(String dnode, DNodeService.Client client, boolean renew) {
-		if(closing.get()) { // don't return to the pool if the system is already closing! we must close everything!
-			client.getOutputProtocol().getTransport().close();
-			return;
-		}
 		if(renew) {
 			// renew -> try to close if not properly close and set to null
 			client.getOutputProtocol().getTransport().close();
 			client = null;
 		}
-		BlockingQueue<DNodeService.Client> dnodeQueue = thriftClientCache.get(dnode);
-		if(dnodeQueue == null) {
-			return; // The DNode has disconnected
-		}
-		while(client == null) {
-			// endless loop, we need to get a new client otherwise the queue will not have the same size!
-			try {
-				client = DNodeClient.get(dnode);
-			} catch(TTransportException e) {
-				log.error(
-				    "TTransportException while creating client to renew. Trying again, we can't exit here!", e);
-			}
-		}
-		try {
-			dnodeQueue.put(client);
-		} catch(InterruptedException e) {
-			log.error("Interrupted", e);
+		do {
 			if(closing.get()) { // don't return to the pool if the system is already closing! we must close everything!
-				client.getOutputProtocol().getTransport().close();
+				if(client != null) {
+					client.getOutputProtocol().getTransport().close();
+				}
 				return;
+			}
+			BlockingQueue<DNodeService.Client> dnodeQueue = thriftClientCache.get(dnode);
+			if(dnodeQueue == null) {
+				// dnode is not connected, so we exit.
+				if(client != null) {
+					client.getOutputProtocol().getTransport().close();
+				}
+				return;
+			}
+			if(client == null) { // we have to renew the connection
+				// endless loop, we need to get a new client otherwise the queue will not have the same size!
+				try {
+					client = DNodeClient.get(dnode);
+				} catch(TTransportException e) {
+					log.error(
+					    "TTransportException while creating client to renew. Trying again, we can't exit here!", e);
+				}
+			} else { // we have a valid client so let's put it into the queue
+				try {
+					dnodeQueue.add(client);
+				} catch(IllegalStateException e) {
+					client.getOutputProtocol().getTransport().close();
+					log.error("Trying to return a connection for dnode ["
+					    + dnode
+					    + "] but the pool already has the maximum number of connections. This is likely a software bug!.");
+					throw new RuntimeException(
+					    "Trying to return a connection for dnode ["
+					        + dnode
+					        + "] but the pool already has the maximum number of connections. This is likely a software bug!.");
+				}
+			}
+		} while(client == null);
+		if(closing.get()) { // one last check to avoid not closing every socket.
+			if(client != null) {
+				client.getOutputProtocol().getTransport().close();
 			}
 		}
 	}
