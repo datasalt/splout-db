@@ -77,6 +77,7 @@ public class QNodeHandlerContext {
     this.config = config;
     this.coordinationStructures = coordinationStructures;
     thriftPoolSize = config.getInt(QNodeProperties.DNODE_POOL_SIZE);
+    initMetrics();
   }
 
   private void initMetrics() {
