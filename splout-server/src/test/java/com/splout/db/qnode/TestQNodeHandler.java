@@ -97,7 +97,7 @@ public class TestQNodeHandler {
 
 	@Test
 	public void testInitVersionListAndVersionChange() throws Throwable {
-		QNodeHandler handler = new QNodeHandler();
+		final QNodeHandler handler = new QNodeHandler();
 		SploutConfiguration config = SploutConfiguration.getTestConfig();
 		try {
 
@@ -115,18 +115,28 @@ public class TestQNodeHandler {
 			coord.getVersionsBeingServed().put(CoordinationStructures.KEY_FOR_VERSIONS_BEING_SERVED,
 			    versionsBeingServed);
 
-			Assert.assertEquals(0l, (long) handler.getContext().getCurrentVersionsMap().get("t1"));
-			Assert.assertEquals(1l, (long) handler.getContext().getCurrentVersionsMap().get("t2"));
+			new TestUtils.NotWaitingForeverCondition() {
+				
+				@Override
+				public boolean endCondition() {
+					return handler.getContext().getCurrentVersionsMap().get("t1") != null && handler.getContext().getCurrentVersionsMap().get("t1") == 0l
+					&& handler.getContext().getCurrentVersionsMap().get("t2") != null && handler.getContext().getCurrentVersionsMap().get("t2") == 1l;
+				}
+			}.waitAtMost(5000);
 
 			versionsBeingServed.put("t2", 0l);
 			versionsBeingServed.put("t1", 1l);
 			coord.getVersionsBeingServed().put(CoordinationStructures.KEY_FOR_VERSIONS_BEING_SERVED,
 			    versionsBeingServed);
 
-			Thread.sleep(100);
-
-			Assert.assertEquals(1l, (long) handler.getContext().getCurrentVersionsMap().get("t1"));
-			Assert.assertEquals(0l, (long) handler.getContext().getCurrentVersionsMap().get("t2"));
+			new TestUtils.NotWaitingForeverCondition() {
+				
+				@Override
+				public boolean endCondition() {
+					return handler.getContext().getCurrentVersionsMap().get("t1") != null && handler.getContext().getCurrentVersionsMap().get("t1") == 1l
+					&& handler.getContext().getCurrentVersionsMap().get("t2") != null && handler.getContext().getCurrentVersionsMap().get("t2") == 0l;
+				}
+			}.waitAtMost(5000);
 
 			versionsBeingServed.put("t2", 1l);
 			versionsBeingServed.put("t1", 0l);
