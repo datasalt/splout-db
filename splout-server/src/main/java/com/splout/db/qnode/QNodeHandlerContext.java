@@ -344,7 +344,7 @@ public class QNodeHandlerContext {
 			while(!dnodeQueue.isEmpty()) {
 				dnodeQueue.take().getOutputProtocol().getTransport().close();
 			}
-			thriftClientCache.put(dnode, null); // to indicate that the DNode is not present
+			thriftClientCache.remove(dnode); // to indicate that the DNode is not present
 		} finally {
 			thriftClientCacheLock.unlock();
 		}

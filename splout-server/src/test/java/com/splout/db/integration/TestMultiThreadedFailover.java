@@ -32,7 +32,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.thrift.TException;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,7 +62,6 @@ public class TestMultiThreadedFailover extends BaseIntegrationTest {
 	public final static String TMP_FOLDER = "tmp-" + TestMultiThreadedFailover.class.getName();
 
 	@Test
-	@Ignore // Causes some non-deterministic problems, to be analyzed
 	public void test() throws Throwable {
 		FileUtils.deleteDirectory(new File(TMP_FOLDER));
 		new File(TMP_FOLDER).mkdirs();
@@ -135,7 +133,7 @@ public class TestMultiThreadedFailover extends BaseIntegrationTest {
 
 			});
 
-			// These threads will continuously perform queries and check that the results is consistent.
+			// These threads will continuously perform queries and check that the results are consistent.
 			for(int i = 0; i < N_THREADS; i++) {
 				service.submit(new Runnable() {
 					@SuppressWarnings("unchecked")
