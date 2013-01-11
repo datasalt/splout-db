@@ -37,6 +37,8 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.yammer.metrics.Metrics;
+import com.yammer.metrics.core.Gauge;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.thrift.TException;
@@ -87,13 +89,33 @@ public class QNodeHandlerContext {
 		this.config = config;
 		this.coordinationStructures = coordinationStructures;
 		this.thriftClientPoolSize = config.getInt(QNodeProperties.DNODE_POOL_SIZE);
+    initMetrics();
 	}
 
 	public static enum DNodeEvent {
 		LEAVE, ENTRY, UPDATE
 	}
 
-	@SuppressWarnings("serial")
+  private void initMetrics() {
+    Metrics.newGauge(QNodeHandlerContext.class, "thrift-total-connections-iddle", new Gauge<Integer>() {
+      @Override
+      public Integer value() {
+        int count = 0;
+        for (Entry<String, BlockingQueue<DNodeService.Client>> queue : thriftClientCache.entrySet()) {
+          count += queue.getValue().size();
+        }
+        return count;
+      }
+    });
+    Metrics.newGauge(QNodeHandlerContext.class, "thrift-pools", new Gauge<Integer>() {
+      @Override
+      public Integer value() {
+        return thriftClientCache.size();
+      }
+    });
+  }
+
+  @SuppressWarnings("serial")
 	public final static class TablespaceVersionInfoException extends Exception {
 
 		public TablespaceVersionInfoException(String msg) {
