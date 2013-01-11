@@ -40,7 +40,7 @@ public class RewriteRuleHandler extends HandlerWrapper {
 
 	Pattern tablespaceInfo = Pattern.compile("/api/tablespace/([^/]*)(/)?");
 	Pattern tablespaceVersions = Pattern.compile("/api/tablespace/([^/]*)/versions(/)?");
-	Pattern dnodeInfo = Pattern.compile("/api/dnode/([^/]*)(/)?");
+	Pattern dnodeInfo = Pattern.compile("/api/dnode/([^/]*)(/|/status)?");
 	Pattern query = Pattern.compile("/api/query/([^/]*)(/)?");
 
 	/**
