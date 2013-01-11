@@ -22,7 +22,7 @@ package com.splout.db.qnode;
  */
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNull;
 
 import java.io.IOException;
 
@@ -77,7 +77,7 @@ public class TestQNodeDNodeDisconnects {
 			dnode1.stop();
 
 			assertEquals(handler.getDNodeList().size(), 0);
-			assertTrue(handler.getContext().getThriftClientCache().get(dnode1.getAddress()).isEmpty());
+			assertNull(handler.getContext().getThriftClientCache().get(dnode1.getAddress()));
 
 			dnode1 = TestUtils.getTestDNode(config, dNodeHandler1, "test-dnode-" + this.getClass().getName());
 
@@ -88,7 +88,8 @@ public class TestQNodeDNodeDisconnects {
 
 				@Override
 				public boolean endCondition() {
-					return handler.getContext().getThriftClientCache().get(dnode1Address).size() == 40;
+					return handler.getContext().getThriftClientCache().get(dnode1Address) != null
+					    && handler.getContext().getThriftClientCache().get(dnode1Address).size() == 40;
 				}
 			}.waitAtMost(5000);
 

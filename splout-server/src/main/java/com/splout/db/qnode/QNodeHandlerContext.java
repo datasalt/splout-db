@@ -89,33 +89,33 @@ public class QNodeHandlerContext {
 		this.config = config;
 		this.coordinationStructures = coordinationStructures;
 		this.thriftClientPoolSize = config.getInt(QNodeProperties.DNODE_POOL_SIZE);
-    initMetrics();
+		initMetrics();
 	}
 
 	public static enum DNodeEvent {
 		LEAVE, ENTRY, UPDATE
 	}
 
-  private void initMetrics() {
-    Metrics.newGauge(QNodeHandlerContext.class, "thrift-total-connections-iddle", new Gauge<Integer>() {
-      @Override
-      public Integer value() {
-        int count = 0;
-        for (Entry<String, BlockingQueue<DNodeService.Client>> queue : thriftClientCache.entrySet()) {
-          count += queue.getValue().size();
-        }
-        return count;
-      }
-    });
-    Metrics.newGauge(QNodeHandlerContext.class, "thrift-pools", new Gauge<Integer>() {
-      @Override
-      public Integer value() {
-        return thriftClientCache.size();
-      }
-    });
-  }
+	private void initMetrics() {
+		Metrics.newGauge(QNodeHandlerContext.class, "thrift-total-connections-iddle", new Gauge<Integer>() {
+			@Override
+			public Integer value() {
+				int count = 0;
+				for(Entry<String, BlockingQueue<DNodeService.Client>> queue : thriftClientCache.entrySet()) {
+					count += queue.getValue().size();
+				}
+				return count;
+			}
+		});
+		Metrics.newGauge(QNodeHandlerContext.class, "thrift-pools", new Gauge<Integer>() {
+			@Override
+			public Integer value() {
+				return thriftClientCache.size();
+			}
+		});
+	}
 
-  @SuppressWarnings("serial")
+	@SuppressWarnings("serial")
 	public final static class TablespaceVersionInfoException extends Exception {
 
 		public TablespaceVersionInfoException(String msg) {
@@ -377,18 +377,12 @@ public class QNodeHandlerContext {
 	 */
 	public DNodeService.Client getDNodeClientFromPool(String dnode) throws TTransportException {
 		try {
-			BlockingQueue<DNodeService.Client> dnodeQueue;
-			thriftClientCacheLock.lock();
-			try {
+			BlockingQueue<DNodeService.Client> dnodeQueue = thriftClientCache.get(dnode);
+			if(dnodeQueue == null) {
+				// This shouldn't happen in real life because it is initialized by the QNode, but it is useful for unit
+				// testing.
+				initializeThriftClientCacheFor(dnode);
 				dnodeQueue = thriftClientCache.get(dnode);
-				if(dnodeQueue == null) {
-					// This shouldn't happen in real life because it is initialized by the QNode, but it is useful for unit
-					// testing.
-					initializeThriftClientCacheFor(dnode);
-					dnodeQueue = thriftClientCache.get(dnode);
-				}
-			} finally {
-				thriftClientCacheLock.unlock();
 			}
 
 			DNodeService.Client client = dnodeQueue.take();
@@ -448,7 +442,10 @@ public class QNodeHandlerContext {
 				}
 			}
 		} while(client == null);
-		if(closing.get()) { // one last check to avoid not closing every socket.
+		// one last check to avoid not closing every socket.
+		// here we avoid leaking a socket in case a close has happened in parallel or a DNode disconnected right in the
+		// middle
+		if(closing.get() || thriftClientCache.get(dnode) == null) {
 			if(client != null) {
 				client.getOutputProtocol().getTransport().close();
 			}
