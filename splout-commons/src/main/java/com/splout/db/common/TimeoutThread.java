@@ -20,10 +20,9 @@ package com.splout.db.common;
  * #L%
  */
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -39,7 +38,7 @@ public class TimeoutThread extends Thread {
 	private final static Log log = LogFactory.getLog(TimeoutThread.class);
 
 	private ConcurrentHashMap<SQLiteConnection, QueryAndTime> currentQueries = new ConcurrentHashMap<SQLiteConnection, QueryAndTime>();
-	private Set<SQLiteConnection> connections = Collections.synchronizedSet(new HashSet<SQLiteConnection>());
+	private CopyOnWriteArrayList<SQLiteConnection> connections = new CopyOnWriteArrayList<SQLiteConnection>();
 	
 	private long timeout;
 
@@ -68,7 +67,9 @@ public class TimeoutThread extends Thread {
 		try {
 			while(true) {
 				long now = System.currentTimeMillis();
-				for(SQLiteConnection conn : connections) {
+				Iterator<SQLiteConnection> it = connections.iterator();
+				while(it.hasNext()) {
+					SQLiteConnection conn = it.next();
 					QueryAndTime queryAndTime = currentQueries.get(conn);
 					long time = queryAndTime.time;
 					if(time < 0) { // means this connection is not active
@@ -153,7 +154,7 @@ public class TimeoutThread extends Thread {
 	ConcurrentHashMap<SQLiteConnection, QueryAndTime> getCurrentQueries() {
   	return currentQueries;
   }
-	Set<SQLiteConnection> getConnections() {
+	CopyOnWriteArrayList<SQLiteConnection> getConnections() {
   	return connections;
   }
 }
