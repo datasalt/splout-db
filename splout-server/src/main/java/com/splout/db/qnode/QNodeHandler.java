@@ -231,10 +231,15 @@ public class QNodeHandler implements IQNodeHandler {
 		for(DNodeInfo dnodeInfo : dnodes.values()) {
 			dNodes.add(dnodeInfo.getAddress());
 			try {
+				context.initializeThriftClientCacheFor(dnodeInfo.getAddress());
 				context.updateTablespaceVersions(dnodeInfo, DNodeEvent.ENTRY);
 			} catch(TablespaceVersionInfoException e) {
 				throw new RuntimeException(e);
-			}
+			} catch(TTransportException e) {
+				throw new RuntimeException(e);
+      } catch(InterruptedException e) {
+				throw new RuntimeException(e);
+      }
 		}
 		log.info("Alive DNodes at QNode startup [" + Joiner.on(", ").skipNulls().join(dNodes) + "]");
 		log.info("TablespaceVersion map at QNode startup [" + context.getTablespaceVersionsMap() + "]");

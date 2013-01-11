@@ -288,11 +288,14 @@ public class QNodeHandlerContext {
 			// initialize queue for this DNode
 			log.info(Thread.currentThread().getName() + " : populating client queue for [" + dnode + "] as it connected.");
 			int poolSize = config.getInt(QNodeProperties.DNODE_POOL_SIZE);
-			BlockingQueue<DNodeService.Client> dnodeQueue = new LinkedBlockingDeque<DNodeService.Client>(poolSize);
+			BlockingQueue<DNodeService.Client> dnodeQueue = thriftClientCache.get(dnode);
+			if(dnodeQueue == null) {
+				dnodeQueue = new LinkedBlockingDeque<DNodeService.Client>(poolSize);
+				thriftClientCache.put(dnode, dnodeQueue);
+			}
 			for(int i = 0; i < poolSize; i++) {
 				dnodeQueue.put(DNodeClient.get(dnode));
 			}
-			thriftClientCache.put(dnode, dnodeQueue);
 		}
 	}
 	
