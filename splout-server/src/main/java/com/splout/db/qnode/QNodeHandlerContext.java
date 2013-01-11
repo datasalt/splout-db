@@ -35,6 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -77,12 +78,15 @@ public class QNodeHandlerContext {
 	private final Map<TablespaceVersion, Tablespace> tablespaceVersionsMap = new ConcurrentHashMap<TablespaceVersion, Tablespace>();
 
 	// The per-DNode Thrift client pools
-	// Pending issue #5
 	private ConcurrentMap<String, BlockingQueue<DNodeService.Client>> thriftClientCache = new ConcurrentHashMap<String, BlockingQueue<DNodeService.Client>>();
+	private ReentrantLock thriftClientCacheLock = new ReentrantLock();
+
+	private int thriftClientPoolSize;
 
 	public QNodeHandlerContext(SploutConfiguration config, CoordinationStructures coordinationStructures) {
 		this.config = config;
 		this.coordinationStructures = coordinationStructures;
+		this.thriftClientPoolSize = config.getInt(QNodeProperties.DNODE_POOL_SIZE);
 	}
 
 	public static enum DNodeEvent {
@@ -283,43 +287,87 @@ public class QNodeHandlerContext {
 		}
 	}
 
-	public void initializeThriftClientCacheFor(String dnode) throws TTransportException, InterruptedException {
-		synchronized(thriftClientCache) {
-			// initialize queue for this DNode
-			log.info(Thread.currentThread().getName() + " : populating client queue for [" + dnode + "] as it connected.");
-			int poolSize = config.getInt(QNodeProperties.DNODE_POOL_SIZE);
+	/**
+	 * This method can be called to initialize a pool of connections to a dnode.
+	 * This method may be called from multiple threads so it should be safe to call it concurrently.
+	 * The pool must always have 0 connections (DNode disconnects) or X connections (exactly the number of connections
+	 * we disire to cache). Because some failures may happen, this method can be called several times to complete the queue.
+	 * So this method must perform the appropriate checkings to not overflow the queue, to not create two queues, etc, etc.
+	 */
+	public void initializeThriftClientCacheFor(String dnode) throws TTransportException,
+	    InterruptedException {
+		// this lock is on the whole cache but we would actually be interested in a per-DNode lock...
+		// there's only one lock for simplicity.
+		thriftClientCacheLock.lock();
+		try {
+			// initialize (or re-initialize) queue for this DNode
 			BlockingQueue<DNodeService.Client> dnodeQueue = thriftClientCache.get(dnode);
 			if(dnodeQueue == null) {
-				dnodeQueue = new LinkedBlockingDeque<DNodeService.Client>(poolSize);
+				// this assures that the per-DNode queue is only created once and then reused.
+				dnodeQueue = new LinkedBlockingDeque<DNodeService.Client>(thriftClientPoolSize);
 				thriftClientCache.put(dnode, dnodeQueue);
 			}
-			for(int i = 0; i < poolSize; i++) {
-				dnodeQueue.put(DNodeClient.get(dnode));
+			if(dnodeQueue.size() < thriftClientPoolSize) {
+				// queue may actually be incomplete (DNode failing int he middle of population) so we can finish populating it
+				// here
+				if(dnodeQueue.size() > 0) {
+					log.warn(Thread.currentThread().getName() + " : queue for [" + dnode
+					    + "] failed while populating it before - finishing populating it now.");
+				}
+				for(int i = dnodeQueue.size(); i < thriftClientPoolSize; i++) {
+					dnodeQueue.put(DNodeClient.get(dnode));
+				}
+			} else {
+				// it should be safe to call this method from different places concurrently
+				// so we contemplate the case where another Thread already populated the queue
+				// and only populate it if it's really empty.
+				log.warn(Thread.currentThread().getName() + " : queue for [" + dnode
+				    + "] is not empty - it was populated before.");
 			}
+		} finally {
+			thriftClientCacheLock.unlock();
 		}
 	}
-	
+
+	/**
+	 * This method can be called by {@link QNodeHandler} to cancel the Thrift client cache when a DNode disconnects.
+	 * Usually this happens when Hazelcast notifies it.
+	 */
 	public void discardThriftClientCacheFor(String dnode) throws InterruptedException {
-		synchronized(thriftClientCache) {
+		thriftClientCacheLock.lock();
+		try {
 			// discarding all connections to a DNode who leaved
 			log.info(Thread.currentThread().getName() + " : trashing queue for [" + dnode + "] as it leaved.");
 			BlockingQueue<DNodeService.Client> dnodeQueue = thriftClientCache.get(dnode);
+			// release connections until empty
 			while(!dnodeQueue.isEmpty()) {
 				dnodeQueue.take().getOutputProtocol().getTransport().close();
 			}
+		} finally {
+			thriftClientCacheLock.unlock();
 		}
 	}
-	
+
 	/**
 	 * Get the Thrift client for this DNode.
 	 */
 	public DNodeService.Client getDNodeClientFromPool(String dnode) throws TTransportException {
-//		return DNodeClient.get(dnode);
 		try {
 			BlockingQueue<DNodeService.Client> dnodeQueue;
-			synchronized(thriftClientCache) {
+			thriftClientCacheLock.lock();
+			try {
 				dnodeQueue = thriftClientCache.get(dnode);
+				if(dnodeQueue == null || dnodeQueue.size() < thriftClientPoolSize) {
+					// This shouldn't happen in real life because it is initialized by the QNode, but it is useful for unit testing.
+					// However, there are some race conditions that may lead to this in real life : for example, a queue which wasn't
+					// completely populated. So we have to contemplate it anyway.
+					initializeThriftClientCacheFor(dnode);
+					dnodeQueue = thriftClientCache.get(dnode);
+				}
+			} finally {
+				thriftClientCacheLock.unlock();
 			}
+
 			DNodeService.Client client = dnodeQueue.take();
 			return client;
 		} catch(InterruptedException e) {
@@ -506,6 +554,6 @@ public class QNodeHandlerContext {
 	}
 
 	public ConcurrentMap<String, BlockingQueue<DNodeService.Client>> getThriftClientCache() {
-  	return thriftClientCache;
-  }
+		return thriftClientCache;
+	}
 }

@@ -104,7 +104,10 @@ public class QNodeHandler implements IQNodeHandler {
 			log.info("DNode [" + event.getValue() + "] joins the cluster as ready to server requests.");
 			// Update TablespaceVersions
 			try {
-				context.initializeThriftClientCacheFor(event.getValue().getAddress());
+				String dnode = event.getValue().getAddress();
+				log.info(Thread.currentThread().getName() + " : populating client queue for [" + dnode
+				    + "] as it connected.");
+				context.initializeThriftClientCacheFor(dnode);
 				context.updateTablespaceVersions(event.getValue(), QNodeHandlerContext.DNodeEvent.ENTRY);
 			} catch(TablespaceVersionInfoException e) {
 				throw new RuntimeException(e);
