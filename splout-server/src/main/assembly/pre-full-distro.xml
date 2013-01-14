@@ -32,7 +32,7 @@
   	</fileSet>
   	<fileSet>
   		<directory>src/main/resources/integration</directory>
-  		<outputDirectory>.</outputDirectory>
+  		<outputDirectory>integration</outputDirectory>
   	</fileSet>
   	<fileSet>
   		<directory>src/main/scripts</directory>
