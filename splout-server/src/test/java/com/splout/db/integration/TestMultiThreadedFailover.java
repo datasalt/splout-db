@@ -52,8 +52,8 @@ public class TestMultiThreadedFailover extends BaseIntegrationTest {
 
 	private final static Logger log = LoggerFactory.getLogger(TestMultiThreadedFailover.class);
 
-	public final static int N_QNODES = 3;
-	public final static int N_DNODES = 4;
+	public final static int N_QNODES = 1;
+	public final static int N_DNODES = 2;
 	public final static int N_THREADS = 10;
 	public final static String TABLESPACE = "t1";
 	public final static String TABLE = "foo";
