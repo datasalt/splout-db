@@ -5,14 +5,14 @@ Splout SQL 0.2
 
  IMPROVEMENTS
  - 2013-01-09 - Changed Thrift's DNode server to be a THsHaServer and added a connection pool to QNodes for solving issues #5 and #6 as well.
- - 2012-12-13 - New SQLite libs recompiled with older debian. Previous wants didn't work under some environments.
+ - 2012-12-13 - New SQLite libs recompiled with older debian. Previous ones didn't work under some environments.
  - 2012-12-18 - Removed dependency on Jersey which was the responsible for a memory leak.
- - 2012-12-20 - Add the possibility of specifying the network interfaces in the Hazelcast facade.
+ - 2012-12-20 - Added the possibility of specifying the network interfaces in the Hazelcast facade.
 
  BUG FIXES
- - 2012-12-17- Solved small issue #1 TablespaceGenerator doesn't exit if Reservoir Sampling fails.
- - 2012-12-17- Solved small issue #2 Automatic IP discovery makes the service crash when there is no Internet connection at all.
- - 2012-12-20- Solved issue #4 Hazelcast persistence may be saving only one tablespace version at a time.
+ - 2012-12-17 - Solved small issue #1 TablespaceGenerator doesn't exit if Reservoir Sampling fails.
+ - 2012-12-17 - Solved small issue #2 Automatic IP discovery makes the service crash when there is no Internet connection at all.
+ - 2012-12-20 - Solved issue #4 Hazelcast persistence may be saving only one tablespace version at a time.
 
 Splout SQL 0.1
 
