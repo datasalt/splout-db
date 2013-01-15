@@ -381,6 +381,9 @@ public class QNodeHandlerContext {
 			if(dnodeQueue == null) {
 				// This shouldn't happen in real life because it is initialized by the QNode, but it is useful for unit
 				// testing.
+				// Under some rare race conditions the pool may be required before the QNode creates it, but this method
+				// assures that the queue will only be created once and, if it's not possible to create it, an exception
+				// will be thrown and nothing bad will happen.
 				initializeThriftClientCacheFor(dnode);
 				dnodeQueue = thriftClientCache.get(dnode);
 			}
@@ -435,10 +438,6 @@ public class QNodeHandlerContext {
 					log.error("Trying to return a connection for dnode ["
 					    + dnode
 					    + "] but the pool already has the maximum number of connections. This is likely a software bug!.");
-					throw new RuntimeException(
-					    "Trying to return a connection for dnode ["
-					        + dnode
-					        + "] but the pool already has the maximum number of connections. This is likely a software bug!.");
 				}
 			}
 		} while(client == null);

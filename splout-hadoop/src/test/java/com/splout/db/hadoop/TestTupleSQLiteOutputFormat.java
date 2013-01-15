@@ -105,7 +105,6 @@ public class TestTupleSQLiteOutputFormat implements Serializable {
 	public void test() throws IOException, TupleMRException, InterruptedException, ClassNotFoundException, SQLException,
 	    JSONSerDeException, TupleSQLiteOutputFormatException {
 
-		Runtime.getRuntime().exec("rm -rf " + INPUT1);
 		Runtime.getRuntime().exec("rm -rf " + OUTPUT);
 
 		// Prepare input
