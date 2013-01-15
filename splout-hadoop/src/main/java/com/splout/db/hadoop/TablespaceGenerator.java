@@ -20,14 +20,19 @@ package com.splout.db.hadoop;
  * #L%
  */
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
+import com.datasalt.pangool.io.*;
+import com.datasalt.pangool.io.Schema.Field;
+import com.datasalt.pangool.io.Schema.Field.Type;
+import com.datasalt.pangool.tuplemr.Criteria.Order;
+import com.datasalt.pangool.tuplemr.Criteria.SortElement;
+import com.datasalt.pangool.tuplemr.*;
+import com.splout.db.common.JSONSerDe;
+import com.splout.db.common.JSONSerDe.JSONSerDeException;
+import com.splout.db.common.PartitionEntry;
+import com.splout.db.common.PartitionMap;
+import com.splout.db.common.Tablespace;
+import com.splout.db.hadoop.TupleSQLite4JavaOutputFormat.TupleSQLiteOutputFormatException;
+import com.splout.db.hadoop.TupleSampler.TupleSamplerException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -36,28 +41,13 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.mortbay.log.Log;
 
-import com.datasalt.pangool.io.Fields;
-import com.datasalt.pangool.io.ITuple;
-import com.datasalt.pangool.io.Schema;
-import com.datasalt.pangool.io.Schema.Field;
-import com.datasalt.pangool.io.Schema.Field.Type;
-import com.datasalt.pangool.io.Tuple;
-import com.datasalt.pangool.io.TupleFile;
-import com.datasalt.pangool.tuplemr.Criteria.Order;
-import com.datasalt.pangool.tuplemr.Criteria.SortElement;
-import com.datasalt.pangool.tuplemr.IdentityTupleReducer;
-import com.datasalt.pangool.tuplemr.OrderBy;
-import com.datasalt.pangool.tuplemr.TupleMRBuilder;
-import com.datasalt.pangool.tuplemr.TupleMRException;
-import com.datasalt.pangool.tuplemr.TupleMapper;
-import com.datasalt.pangool.tuplemr.TupleReducer;
-import com.splout.db.common.JSONSerDe;
-import com.splout.db.common.JSONSerDe.JSONSerDeException;
-import com.splout.db.common.PartitionEntry;
-import com.splout.db.common.PartitionMap;
-import com.splout.db.common.Tablespace;
-import com.splout.db.hadoop.TupleSQLite4JavaOutputFormat.TupleSQLiteOutputFormatException;
-import com.splout.db.hadoop.TupleSampler.TupleSamplerException;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * A process that generates the SQL data stores needed for deploying a tablespace in Splout, giving a file set table
@@ -369,18 +359,40 @@ public class TablespaceGenerator implements Serializable {
 			builder.addIntermediateSchema(new NullableSchema(tableSchema));
 			// For each input file for the Table we add an input and a TupleMapper
 			for(TableInput inputFile : table.getFiles()) {
+
+        final RecordProcessor recordProcessor = inputFile.getRecordProcessor();
+
 				for(Path path : inputFile.getPaths()) {
 					builder.addInput(path, inputFile.getFormat(), new TupleMapper<ITuple, NullWritable>() {
 
 						NullableTuple tableTuple = new NullableTuple(tableSchema);
+            CounterInterface counterInterface = null;
 
 						@Override
 						public void map(ITuple key, NullWritable value, TupleMRContext context, Collector collector)
 						    throws IOException, InterruptedException {
 
-							for(int i = 0; i < key.getSchema().getFields().size(); i++) {
-								tableTuple.set(i, key.get(i));
-							}
+              if(counterInterface == null) {
+                counterInterface = new CounterInterface(context.getHadoopContext());
+              }
+
+              // For each input Tuple from this File execute the RecordProcessor
+              // The Default IdentityRecordProcessor just bypasses the same Tuple
+              ITuple processedTuple = null;
+              try {
+                processedTuple = recordProcessor.process(key, counterInterface);
+              } catch(Throwable e1) {
+                throw new RuntimeException(e1);
+              }
+              if(processedTuple == null) {
+                // The tuple has been filtered out by the user
+                return;
+              }
+
+              // Finally write it to the Hadoop output
+              for(Field field : processedTuple.getSchema().getFields()) {
+                tableTuple.set(field.getName(), processedTuple.get(field.getName()));
+              }
 
 							// Send the data of the replicated table to all partitions!
 							for(int i = 0; i < nPartitions; i++) {
