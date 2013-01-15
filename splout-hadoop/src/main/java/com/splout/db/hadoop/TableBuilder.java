@@ -108,9 +108,15 @@ public class TableBuilder {
 	}
 
 	public TableBuilder addTupleFile(Path path) {
-		addFile(new TableInput(new TupleInputFormat(), schema, null, path));
+		addTupleFile(path, null);
 		return this;
 	}
+
+  public TableBuilder addTupleFile(Path path, RecordProcessor recordProcessor) {
+    addFile(new TableInput(new TupleInputFormat(), schema, (recordProcessor == null) ? new IdentityRecordProcessor() : recordProcessor, path));
+    return this;
+  }
+
 
   /**
    * @param initialSQLStatements SQL statements that will be executed at the start of the process, just after
@@ -147,10 +153,6 @@ public class TableBuilder {
     this.finalSQL = finalSQLStatements;
     return this;
   }
-
-  public TableBuilder tupleFile(String path) {
-		return addTupleFile(new Path(path));
-	}
 
 	public TableBuilder createIndex(String... indexFields) {
 		if(indexFields.length == 1) {

@@ -20,32 +20,31 @@ package com.splout.db.hadoop;
  * #L%
  */
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.util.List;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.junit.Test;
-
-import com.datasalt.pangool.io.Fields;
-import com.datasalt.pangool.io.ITuple;
-import com.datasalt.pangool.io.Schema;
-import com.datasalt.pangool.io.Tuple;
-import com.datasalt.pangool.io.TupleFile;
+import com.datasalt.pangool.io.*;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat;
 import com.splout.db.common.PartitionEntry;
 import com.splout.db.common.SQLiteJDBCManager;
 import com.splout.db.hadoop.TupleSampler.SamplingType;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.junit.Test;
 
-public class TestTablespaceGenerator {
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.Assert.*;
+
+public class TestTablespaceGenerator implements Serializable {
 
 	public final static String INPUT  = "in-"  + TestTablespaceGenerator.class.getName();
 	public final static String OUTPUT = "out-" + TestTablespaceGenerator.class.getName();
 	static Schema theSchema1 = new Schema("schema1", Fields.parse("id:string, value:string"));
 	static Schema theSchema2 = new Schema("schema2", Fields.parse("id:string, value:string, intValue:int, doubleValue:double, strValue:string"));
+
 
   @Test
 	public void simpleTest() throws Exception {
@@ -113,10 +112,10 @@ public class TestTablespaceGenerator {
     TupleFile.Writer writer = new TupleFile.Writer(FileSystem.get(conf), conf, new Path(INPUT), new NullableSchema(theSchema2));
 
 		writer.append(new NullableTuple(getTupleWithNulls("id1", "value11", null, -1.0, null)));
-		writer.append(new NullableTuple(getTupleWithNulls("id1", "value12", null, null, "Hello")));
-		writer.append(new NullableTuple(getTupleWithNulls("id1", "value13", 100, null, "Hello")));
-		writer.append(new NullableTuple(getTupleWithNulls("id1", "value14", 100, 2.0, "")));
-		writer.append(new NullableTuple(getTupleWithNulls("id1", "value15", 100, 2.0, null)));
+		writer.append(new NullableTuple(getTupleWithNulls("id2", "value12", null, null, "Hello")));
+		writer.append(new NullableTuple(getTupleWithNulls("id3", "value13", 100, null, "Hello")));
+		writer.append(new NullableTuple(getTupleWithNulls("id4", "value14", 100, 2.0, "")));
+		writer.append(new NullableTuple(getTupleWithNulls("id5", "value15", 100, 2.0, null)));
 		
 		writer.close();
 		
@@ -125,12 +124,120 @@ public class TestTablespaceGenerator {
 		viewGenerator.generateView(conf, SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions());
 		
 		SQLiteJDBCManager manager = new SQLiteJDBCManager(OUTPUT + "/store/0.db", 10);
-		assertTrue(manager.query("SELECT * FROM schema2;", 100).contains("null"));
-		
+    String results = manager.query("SELECT * FROM schema2;", 100);
+		assertTrue(results.contains("null"));
+
+    assertNull(searchRow(results, "id", "id1").get("intValue"));
+    assertEquals(-1.0, searchRow(results, "id", "id1").get("doubleValue"));
+    assertNull(searchRow(results, "id", "id1").get("strValue"));
+
+    assertNull(searchRow(results, "id", "id2").get("intValue"));
+    assertNull(searchRow(results, "id", "id2").get("doubleValue"));
+    assertEquals("Hello", searchRow(results, "id", "id2").get("strValue"));
+
+    assertEquals(100, searchRow(results, "id", "id3").get("intValue"));
+    assertNull(searchRow(results, "id", "id3").get("doubleValue"));
+    assertEquals("Hello", searchRow(results, "id", "id3").get("strValue"));
+
+    assertEquals(100, searchRow(results, "id", "id4").get("intValue"));
+    assertEquals(2.0, searchRow(results, "id", "id4").get("doubleValue"));
+    assertEquals("", searchRow(results, "id", "id4").get("strValue"));
+
+    assertEquals(100, searchRow(results, "id", "id5").get("intValue"));
+    assertEquals(2.0, searchRow(results, "id", "id5").get("doubleValue"));
+    assertNull(searchRow(results, "id", "id5").get("strValue"));
+
 		Runtime.getRuntime().exec("rm -rf " + INPUT);
 		Runtime.getRuntime().exec("rm -rf " + OUTPUT);
   }
-  
+
+  @Test
+  public void testRecordProcessor() throws Exception {
+    testRecordProcessor(false);
+  }
+
+  @Test
+  public void testRecordProcessorReplicateAll() throws Exception {
+    testRecordProcessor(true);
+  }
+
+  public void testRecordProcessor(boolean replicateAll) throws Exception {
+    int TUPLES_TO_GENERATE = 10;
+
+    Runtime.getRuntime().exec("rm -rf " + INPUT);
+    Runtime.getRuntime().exec("rm -rf " + OUTPUT);
+
+    Configuration conf = new Configuration();
+    TupleFile.Writer writer = new TupleFile.Writer(FileSystem.get(conf), conf, new Path(INPUT), new NullableSchema(theSchema1));
+
+    for(int i=0; i<TUPLES_TO_GENERATE; i++) {
+      writer.append(new NullableTuple(getTuple("id" + i, "str" + i)));
+    }
+
+    writer.close();
+
+    TablespaceBuilder builder = new TablespaceBuilder();
+    TableBuilder tBuilder = new TableBuilder(theSchema1);
+    tBuilder.addTupleFile(new Path(INPUT), new RecordProcessor() {
+      @Override
+      public ITuple process(ITuple record, CounterInterface context) throws Throwable {
+        context.getCounter("counter", "counter").increment(1);
+        ((Utf8) record.get("id")).set(record.get("id") + "mod");
+        ((Utf8) record.get("value")).set(record.get("value")+"mod");
+        return record;
+      }
+    });
+    if (replicateAll) {
+      tBuilder.replicateToAll();
+    } else {
+      tBuilder.partitionBy("id");
+    }
+    builder.add(tBuilder.build());
+    builder.setNPartitions(1);
+
+    // Dummy tabled added only because at least one table with partition must be present
+    // in the tablespace.
+    tBuilder = new TableBuilder(new Schema("dummy", theSchema1.getFields()));
+    tBuilder.addTupleFile(new Path(INPUT));
+    tBuilder.partitionBy("id");
+    builder.add(tBuilder.build());
+
+    TablespaceGenerator viewGenerator = new TablespaceGenerator(builder.build(), new Path(OUTPUT));
+    viewGenerator.generateView(conf, SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions());
+
+    SQLiteJDBCManager manager = new SQLiteJDBCManager(OUTPUT + "/store/0.db", 10);
+    String results = manager.query("SELECT * FROM schema1;", TUPLES_TO_GENERATE+1);
+
+    for(int i=0; i<TUPLES_TO_GENERATE; i++) {
+      assertEquals("id" + i + "mod", getVal(results, i, "id"));
+      assertEquals("str" + i + "mod", getVal(results, i, "value"));
+    }
+
+    Runtime.getRuntime().exec("rm -rf " + INPUT);
+    Runtime.getRuntime().exec("rm -rf " + OUTPUT);
+  }
+
+  public static Object resultSize(String result) throws IOException {
+    ObjectMapper mapper = new ObjectMapper();
+    return mapper.readValue(result, List.class).size();
+  }
+
+  public static Object getVal(String result, int row, String field) throws IOException {
+    ObjectMapper mapper = new ObjectMapper();
+    return ((Map)mapper.readValue(result, List.class).get(row)).get(field);
+  }
+
+  public static Map searchRow(String result, String field, Object value) throws IOException {
+    ObjectMapper mapper = new ObjectMapper();
+    for (Object o : mapper.readValue(result, List.class)) {
+      Map m = (Map) o;
+      if (value.equals(m.get(field))) {
+        return m;
+      }
+    }
+    return null;
+  }
+
   public static ITuple getTupleWithNulls(String id, String value, Integer intValue, Double doubleValue, String strValue) {
   	ITuple tuple = new Tuple(theSchema2);
   	tuple.set("id", id);
