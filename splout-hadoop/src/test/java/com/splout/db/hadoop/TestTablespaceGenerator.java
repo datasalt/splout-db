@@ -165,6 +165,7 @@ public class TestTablespaceGenerator implements Serializable {
     int TUPLES_TO_GENERATE = 10;
 
     Runtime.getRuntime().exec("rm -rf " + INPUT);
+    Runtime.getRuntime().exec("rm -rf " + INPUT + 2);
     Runtime.getRuntime().exec("rm -rf " + OUTPUT);
 
     Configuration conf = new Configuration();
@@ -174,6 +175,11 @@ public class TestTablespaceGenerator implements Serializable {
       writer.append(new NullableTuple(getTuple("id" + i, "str" + i)));
     }
 
+    writer.close();
+
+    // Dummy table.
+    writer = new TupleFile.Writer(FileSystem.get(conf), conf, new Path(INPUT+2), new NullableSchema(theSchema1));
+    writer.append(new NullableTuple(getTuple("dummy", "dummy")));
     writer.close();
 
     TablespaceBuilder builder = new TablespaceBuilder();
@@ -198,7 +204,7 @@ public class TestTablespaceGenerator implements Serializable {
     // Dummy tabled added only because at least one table with partition must be present
     // in the tablespace.
     tBuilder = new TableBuilder(new Schema("dummy", theSchema1.getFields()));
-    tBuilder.addTupleFile(new Path(INPUT));
+    tBuilder.addTupleFile(new Path(INPUT + 2));
     tBuilder.partitionBy("id");
     builder.add(tBuilder.build());
 
@@ -208,12 +214,14 @@ public class TestTablespaceGenerator implements Serializable {
     SQLiteJDBCManager manager = new SQLiteJDBCManager(OUTPUT + "/store/0.db", 10);
     String results = manager.query("SELECT * FROM schema1;", TUPLES_TO_GENERATE+1);
 
+    System.out.println(results);
     for(int i=0; i<TUPLES_TO_GENERATE; i++) {
       assertEquals("id" + i + "mod", getVal(results, i, "id"));
       assertEquals("str" + i + "mod", getVal(results, i, "value"));
     }
 
     Runtime.getRuntime().exec("rm -rf " + INPUT);
+    Runtime.getRuntime().exec("rm -rf " + INPUT + 2);
     Runtime.getRuntime().exec("rm -rf " + OUTPUT);
   }
 
