@@ -11,7 +11,6 @@ title: Splout SQL User Guide
 </div>
 </div>
 <div id="content">
-<div class="sect1">
 <h2 id="main">Splout SQL installation</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>For running Splout SQL, the underlying system must have the following:</p></div>
@@ -57,8 +56,6 @@ bin/splout-service.sh dnode start</tt></pre>
 <div class="paragraph"><div class="title">Splout SQL has been tested to perform correctly under both AMD64 and i386 default Amazon AMIs. Splout is compatible with the latest Elastic Map Reduce AMI.</div><p>Splout SQL is still beta, so if you find any strange problem or issue please contact us or <a href="https://github.com/datasalt/splout-db/issues">raise a bug in Github</a>.</p></div>
 <div class="paragraph"><p><a href="user_guide.html"> &gt; Back to table of contents</a></p></div>
 </div>
-</div>
-<div class="sect1">
 <h2 id="_the_basics">The basics</h2>
 <div class="sectionbody">
 <div class="ulist"><div class="title">Splout Terminology</div><ul>
@@ -83,8 +80,7 @@ Rollback: Splout can "rollback" previous versions if they are kept in the local 
 </p>
 </li>
 </ul></div>
-<div class="sect2">
-<h3 id="_table_definitions">Table definitions</h3>
+<h3 id="_table_definitions">Table definitions</h3><div style="clear:left"></div>
 <div class="paragraph"><p>A table schema&#8217;s is defined the same way a <a href="http://pangool.net/userguide/schemas.html">Pangool Tuple schema</a> is defined. However, the data types are adjusted to match <a href="http://www.sqlite.org/datatype3.html">those which are compatible with SQLite</a>.
 The following table shows the correspondence between a Pangool type and the underlying SQLite type used:</p></div>
 <div class="tableblock">
@@ -127,28 +123,19 @@ cellspacing="0" cellpadding="4">
 </tbody>
 </table>
 </div>
-</div>
-<div class="sect2">
-<h3 id="_table_types_and_restrictions">Table types and restrictions</h3>
+<h3 id="_table_types_and_restrictions">Table types and restrictions</h3><div style="clear:left"></div>
 <div class="paragraph"><p>A table is either partitioned or replicated to all partitions. However, a tablespace should have at least one partitioned table for the indexer to be able to distribute the data among partitions!</p></div>
-</div>
-<div class="sect2">
-<h3 id="_partitioning">Partitioning</h3>
+<h3 id="_partitioning">Partitioning</h3><div style="clear:left"></div>
 <div class="paragraph"><p>Partitioning is the basis of Splout and it allows it to balance data before indexing and deploying it.</p></div>
 <div class="paragraph"><p>The most usual case of partitioning is columnar partitioning, meaning that a table is partitioned using one or more columns of its schema.</p></div>
 <div class="paragraph"><p>When more than one table is partitioned in the same tablespace, they must be co-partitioned using the same kind of fields. For example, if a tablespace A contains tables A1, A2 and A3, and A1 and A2
 are partitioned tables and A3 is replicated to all partitions, then if A1 is partitioned by a pair of (string, int) columns, then A2 should also be partitioned by a pair of (string, int) columns.</p></div>
 <div class="paragraph"><div class="title">TIP: Note that when a table is partitioned by some columns, Splout just concatenates the value of those columns as a single string. From that point of view, partitioning is a function of a row that returns a string.</div><p>Therefore, it is also possible to partition using arbitrary functions, for example a javascript function that takes the first two characters of a field. You can check this in the <a href="#_hadoop_java_api">Advanced API section</a>.</p></div>
-</div>
-<div class="sect2">
-<h3 id="_partitioning_and_querying">Partitioning and Querying</h3>
+<h3 id="_partitioning_and_querying">Partitioning and Querying</h3><div style="clear:left"></div>
 <div class="paragraph"><p>Because data is explicitly partitioned, the user must also explicitly provide a partitioning key when querying Splout.
 For example, if a dataset has been partitioned by "customer_id", then the user will provide the appropriated "customer_id" together with the SQL query when querying Splout through its REST interface.</p></div>
 <div class="paragraph"><p><a href="user_guide.html"> &gt; Back to table of contents</a></p></div>
 </div>
-</div>
-</div>
-<div class="sect1">
 <h2 id="splout_configuration">Splout SQL Configuration</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Splout uses a dual-configuration method, one file for the defaults and one file for overriding them. The defaults file is bundled in the JAR and loaded from the classpath. All you need to do if you want to override a default is specify it in a new “splout.properties” file. This file must be in SPLOUT_HOME or in any other place from where you will launch the daemons or in any location of the classpath.</p></div>
@@ -347,8 +334,7 @@ cellspacing="0" cellpadding="4">
 </tbody>
 </table>
 </div>
-<div class="sect2">
-<h3 id="_typical_distributed_configurations">Typical distributed configurations</h3>
+<h3 id="_typical_distributed_configurations">Typical distributed configurations</h3><div style="clear:left"></div>
 <div class="paragraph"><p>It is fairly easy to install Splout in a distributed environment. By default, Splout will use <a href="http://hazelcast.com">Hazelcast</a> in Multicast mode for finding members, but it is possible to configure Splout for explicit TCP/IP or Amazon AWS auto-discovery. Following there are some examples of distributed configurations:</p></div>
 <div class="tableblock">
 <table rules="all"
@@ -380,9 +366,6 @@ cellspacing="0" cellpadding="4">
 </div>
 <div class="paragraph"><p><a href="user_guide.html"> &gt; Back to table of contents</a></p></div>
 </div>
-</div>
-</div>
-<div class="sect1">
 <h2 id="_splout_hadoop_api">Splout-Hadoop API</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>The Splout-Hadoop API contains the libraries and command-line tools needed for indexing and deploying "Tablespaces" to Splout. Splout uses <a href="http://pangool.net">Pangool</a> jobs for balancing and creating
@@ -390,12 +373,10 @@ the needed binary files for being able to serve the provided datasets afterwards
 then leveraged by sampling processes to equitatively distribute data among partitions.</p></div>
 <div class="paragraph"><p>The output of these processes is usually a set of binary SQLite ".db" files and a partition map which specifies how queries should be routed to these files. Then, a "deployer" process
 is used to distribute these files to the Splout cluster. The "deployer" can also make the same file replicate several times in order to have fail-over replication.</p></div>
-<div class="sect2">
-<h3 id="_command_line_tools">Command line tools</h3>
+<h3 id="_command_line_tools">Command line tools</h3><div style="clear:left"></div>
 <div class="paragraph"><p>The command line tools have been developed to ease the most common use cases. They only work with textual (CSV or fixed-width) files at this moment.
 There are two "generator" tools that are responsible for launching a Hadoop process that will balance and index the input files,
 and there is one "deployer" tool that is able to deploy the result of any of the generators to an alive Splout cluster.</p></div>
-<div class="sect3">
 <h4 id="_simple_generator">Simple generator</h4>
 <div class="paragraph"><p>The "Simple generator" allows us to seamlessly index and deploy a single tablespace made up by a single table, which is a very common use case.
 By invoking the tool with no parameters we obtain an explanation of all possible parameters. We will see a few examples of how to use this tool:</p></div>
@@ -436,8 +417,6 @@ By invoking the tool with no parameters we obtain an explanation of all possible
 <div class="title">Fixed-width textual format</div>Splout can also use fixed-width text files. For that, you can use the argument "--fixedwidthfields". When used, you must provide a comma-separated list of numbers. These numbers will be interpreted by pairs, as [beginning, end] inclusive position offsets. For example: "0,3,5,7" means there are two fields, the first one of 4 characters at offsets [0, 3] and the second one of 3 characters at offsets [5, 7].</td>
 </tr></table>
 </div>
-</div>
-<div class="sect3">
 <h4 id="_generator">Generator</h4>
 <div class="paragraph"><p>The "generator" is a simpler command-line which only accepts a JSON file. This JSON file will contain the specification of the tablespace or tablespaces to generate. In this case, tablespace specs can be as complex as desired, containing multiple tables if needed. You can also provide more than one JSON tablespace file to generate them together. Following we will show an example tablespace JSON file:</p></div>
 <div class="literalblock">
@@ -651,14 +630,12 @@ cellspacing="0" cellpadding="4">
 </tbody>
 </table>
 </div>
-</div>
-<div class="sect3">
 <h4 id="_deployer">Deployer</h4>
 <div class="paragraph"><p>The "deployer" tool can be used for deploying any tablespace or set of tablespaces that has been generated by any of the generators. More than one tablespace may be deployed at the same time, and Splout will increment the version for all of them in an "all-or-nothing" fashion.
 For the common case of deploying only one tablespace, you can use straight command-line parameters:</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><tt>hadoop jar splout-hadoop-0.1-SNAPSHOT-hadoop.jar deploy -r 2 -root my-generated-tablespace -tn mytablespace -q http://localhost:4412</tt></pre>
+<pre><tt>hadoop jar splout-hadoop-*-SNAPSHOT-hadoop.jar deploy -r 2 -root my-generated-tablespace -tn mytablespace -q http://localhost:4412</tt></pre>
 </div></div>
 <div class="paragraph"><p>The above line will deploy binary files generated in "my-generated-tablespace" folder using replication 2. The deployed tablespace will be named "mytablespace" and it will be deployed to the alive Splout cluster using the local QNode address at port 4412.
 The corresponding expected file tree for this example would have been the following:</p></div>
@@ -682,7 +659,7 @@ hdfs://.../my-generated-tablespace/store</tt></pre>
 <div class="paragraph"><p>For deploying more than one tablespace atomically and with the same replication factor, you can also use command-line parameters:</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><tt>hadoop jar splout-hadoop-0.1-SNAPSHOT-hadoop.jar deploy -r 2 -root my-root-folder -tn mytablespace1,mytablespace2,mytablespace3 -q http://localhost:4412</tt></pre>
+<pre><tt>hadoop jar splout-hadoop-*-SNAPSHOT-hadoop.jar deploy -r 2 -root my-root-folder -tn mytablespace1,mytablespace2,mytablespace3 -q http://localhost:4412</tt></pre>
 </div></div>
 <div class="paragraph"><p>In this case we will deploy 3 tablespaces at the same time: mytablespace1, mytablespace2 and mytablespace3. The "root" parameter is a parent folder that contains the specified subfolders, and the tablespaces will be named after the folder name. So in this case the file tree structure is the following:</p></div>
 <div class="literalblock">
@@ -734,14 +711,10 @@ cellspacing="0" cellpadding="4">
 <div class="paragraph"><p>In this case, we can just pass the configuration file like shown below, taking into account that the file must be present in the local file system:</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><tt>hadoop jar splout-hadoop-0.1-SNAPSHOT-hadoop.jar -c my-config.json -q http://localhost:4412</tt></pre>
+<pre><tt>hadoop jar splout-hadoop-*-SNAPSHOT-hadoop.jar -c my-config.json -q http://localhost:4412</tt></pre>
 </div></div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_hadoop_java_api">Hadoop Java API</h3>
+<h3 id="_hadoop_java_api">Hadoop Java API</h3><div style="clear:left"></div>
 <div class="paragraph"><p>All the command-line tools use the underlying Java API that we have implemented for Splout. You can also use this Java API directly in your Java project and you can have access to more advanced features such as specifying custom partitioning functions, record processing functions and such.</p></div>
-<div class="sect3">
 <h4 id="_basic_api">Basic API</h4>
 <div class="paragraph"><p>The basic API consists of the following classes:</p></div>
 <div class="ulist"><ul>
@@ -767,22 +740,14 @@ cellspacing="0" cellpadding="4">
 </li>
 </ul></div>
 <div class="paragraph"><p>The javadoc of each of these classes should guide you well into using them in your custom Java project. In addition, you can <a href="https://github.com/datasalt/splout-db/blob/master/splout-hadoop/src/main/java/com/splout/db/examples/PageCountsExample.java">check this example</a> which uses the <a href="http://dom.as/2007/12/10/wikipedia-page-counters/">Wikipedia Pagecounts data</a> for seeing a practical example on how to use this programmatic API.</p></div>
-<div class="sect4">
 <h5 id="_custom_partitioning">Custom partitioning</h5>
 <div class="paragraph"><p>Aside of column-based partitioning, an arbitrary partitioning function can be provided in the form of a Javascript function. This function ca be passed to TableBuilder&#8217;s partitionByJavaScript() method.</p></div>
-</div>
-<div class="sect4">
 <h5 id="_recordprocessor">RecordProcessor</h5>
 <div class="paragraph"><p>If you want to have more control on the generation process, you can implement your own RecordProcessor which will receive Tuples as they have been parsed by the input files and should emit Tuples as you want them to be indexed in your SQL tables.
 For example, you may choose to narrow your input Tuple and emit a subset of it, modify some field by decoding its content, and so on. The RecordProcessor may also act as a filter. If "null" is returned, the input Tuple would have been filtered out from the generation process.</p></div>
 <div class="paragraph"><p>The <a href="https://github.com/datasalt/splout-db/blob/master/splout-hadoop/src/main/java/com/splout/db/examples/PageCountsRecordProcessor.java">pagecounts example RecordProcessor</a> is a good example.</p></div>
 <div class="paragraph"><p><a href="user_guide.html"> &gt; Back to table of contents</a></p></div>
 </div>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
 <h2 id="RESTAPI">REST API</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>You can interact with the server through the <a href="apidocs/splout-javaclient/com/splout/db/common/SploutClient.html">Java client</a> or directly through the REST interface. These are the basic methods of the REST interface:</p></div>
@@ -872,8 +837,7 @@ cellspacing="0" cellpadding="4">
 </table>
 </div>
 <div class="paragraph"><p>Following we will see each method with a little more detail:</p></div>
-<div class="sect2">
-<h3 id="_api_overview">api/overview</h3>
+<h3 id="_api_overview">api/overview</h3><div style="clear:left"></div>
 <div class="paragraph"><p>Use this method for obtaining an overview on the cluster status. Returns a QNodeStatus status object.
 Example response:</p></div>
 <div class="literalblock">
@@ -1149,9 +1113,7 @@ cellspacing="0" cellpadding="4">
 </tbody>
 </table>
 </div>
-</div>
-<div class="sect2">
-<h3 id="_api_dnodelist">api/dnodelist</h3>
+<h3 id="_api_dnodelist">api/dnodelist</h3><div style="clear:left"></div>
 <div class="paragraph"><p>Use this method for getting the list of alive DNodes. Returns a list of strings. Example response:</p></div>
 <div class="literalblock">
 <div class="content">
@@ -1160,9 +1122,7 @@ cellspacing="0" cellpadding="4">
        "192.168.1.4:4422",
 ]</tt></pre>
 </div></div>
-</div>
-<div class="sect2">
-<h3 id="_api_tablespaces">api/tablespaces</h3>
+<h3 id="_api_tablespaces">api/tablespaces</h3><div style="clear:left"></div>
 <div class="paragraph"><p>Use this method for getting the list of tablespaces being served in the cluster. Returns a list of strings. Example reponse:</p></div>
 <div class="literalblock">
 <div class="content">
@@ -1170,9 +1130,7 @@ cellspacing="0" cellpadding="4">
        "pagecounts"
 ]</tt></pre>
 </div></div>
-</div>
-<div class="sect2">
-<h3 id="_api_tablespace_tablespace">api/tablespace/{tablespace}</h3>
+<h3 id="_api_tablespace_tablespace">api/tablespace/{tablespace}</h3><div style="clear:left"></div>
 <div class="paragraph"><p>Use this method for getting the associated information of a tablespace being served by the cluster. Returns a <a href="#Tablespace">Tablespace</a> object. Example response:</p></div>
 <div class="literalblock">
 <div class="content">
@@ -1211,9 +1169,7 @@ cellspacing="0" cellpadding="4">
        creationDate: 1354124763853
 }</tt></pre>
 </div></div>
-</div>
-<div class="sect2">
-<h3 id="_api_tablespace_tablespace_versions">api/tablespace/{tablespace}/versions</h3>
+<h3 id="_api_tablespace_tablespace_versions">api/tablespace/{tablespace}/versions</h3><div style="clear:left"></div>
 <div class="paragraph"><p>Returns all available versions for the specified tablespace, including the one which may be being served at the moment by the cluster. Returns a Map&lt;Long, <a href="#Tablespace">[Tablespace]</a>&gt;.
 For every version in the key of the map, returns the associated <a href="#Tablespace">Tablespace</a> object information. Example response:</p></div>
 <div class="literalblock">
@@ -1255,9 +1211,7 @@ For every version in the key of the map, returns the associated <a href="#Tables
        }
 }</tt></pre>
 </div></div>
-</div>
-<div class="sect2">
-<h3 id="_api_dnode_dnode_status">api/dnode/{dnode}/status</h3>
+<h3 id="_api_dnode_dnode_status">api/dnode/{dnode}/status</h3><div style="clear:left"></div>
 <div class="paragraph"><p>Returns a <a href="#DNodeSystemStatus">DNodeSystemStatus</a> object filled with the detailed information of the specified DNode. Example response:</p></div>
 <div class="literalblock">
 <div class="content">
@@ -1285,9 +1239,7 @@ For every version in the key of the map, returns the associated <a href="#Tables
        lastExceptionTime: -1
 }</tt></pre>
 </div></div>
-</div>
-<div class="sect2">
-<h3 id="_api_query_tablespace">api/query/{tablespace}</h3>
+<h3 id="_api_query_tablespace">api/query/{tablespace}</h3><div style="clear:left"></div>
 <div class="paragraph"><p>Perform a SQL query and get a JSON result back. Returns a QueryStatus object with some metadata about the query execution. Example response for key=Up, sql=SELECT * FROM pagecounts LIMIT 1 and tablespace pagecounts (<a href="http://localhost:4412/api/query/pagecounts?key=Up&amp;sql=SELECT%20*%20FROM%20pagecounts%20LIMIT%201">http://localhost:4412/api/query/pagecounts?key=Up&amp;sql=SELECT%20*%20FROM%20pagecounts%20LIMIT%201</a>;):</p></div>
 <div class="literalblock">
 <div class="content">
@@ -1343,9 +1295,7 @@ cellspacing="0" cellpadding="4">
 </tbody>
 </table>
 </div>
-</div>
-<div class="sect2">
-<h3 id="_api_deploy">api/deploy</h3>
+<h3 id="_api_deploy">api/deploy</h3><div style="clear:left"></div>
 <div class="admonitionblock">
 <table><tr>
 <td class="icon">
@@ -1496,9 +1446,7 @@ cellspacing="0" cellpadding="4">
 </tbody>
 </table>
 </div>
-</div>
-<div class="sect2">
-<h3 id="_api_rollback">api/rollback</h3>
+<h3 id="_api_rollback">api/rollback</h3><div style="clear:left"></div>
 <div class="paragraph"><p>By providing a list of <a href="#SwitchVersionRequest">SwitchVersionRequest</a> objects we can perform a rollback through this POST method. We just need to specify the tablespace
 name (which must be being served by the cluster at the moment of the rollback) and the version we want to set it to.</p></div>
 <div class="tableblock" id="SwitchVersionRequest">
@@ -1563,14 +1511,10 @@ cellspacing="0" cellpadding="4">
 </div>
 <div class="paragraph"><p><a href="user_guide.html"> &gt; Back to table of contents</a></p></div>
 </div>
-</div>
-</div>
-<div class="sect1">
 <h2 id="_tips_troubleshooting">Tips / Troubleshooting</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>In this section we will take a look to the common problems or tips that one has to take into account when using Splout:</p></div>
-<div class="sect2">
-<h3 id="_query_speed">Query speed</h3>
+<h3 id="_query_speed">Query speed</h3><div style="clear:left"></div>
 <div class="paragraph"><p>There are a wide variety of reasons why queries may or may not perform well.
 It is important to understand that each query is executed in a SQLite connection of a binary SQLite file.
 When troubleshooting query performance, it is advisable to take a look to the <a href="http://www.sqlite.org/">SQLite documentation</a>
@@ -1591,6 +1535,11 @@ EXPLAIN QUERY PLAN (query) - to show if SQLite is using the expected indexes or 
 PRAGMA case_sensitive_like - when doing LIKE queries, SQLite will use an index only if this pragma is set to true and the index was created using standard collation, or if this pragma is set to false and the index was created using COLLATE NOCASE.
 </p>
 </li>
+<li>
+<p>
+ANALYZE - You can run ANALYZE as finalStatement on partitions generation. It could help when planning query execution.
+</p>
+</li>
 </ul></div>
 <div class="paragraph"><p>Remember that you can fine-tune your data indexing process with initialStatements, preInsertStatements, postInsertStatements and finalStatements
 (see <a href="#JSONTableDefinition">[JSONTableDefinition]</a>) and initStatements (see <a href="#DeployRequest">[DeployRequest]</a>). All these features are available as part of
@@ -1600,22 +1549,18 @@ Use them for adding custom PRAGMA or custom CREATE INDEX commands if needed.</p>
 <div class="paragraph"><p>It is also very important to keep in mind that colocating data in disk is crucial for query speed. For example, if your query impacts 1000 records and these records need to be loaded from the main table, if they are not colocated in disk and the database doesn&#8217;t fit in memory, it would mean that the server has to peform 1000 potential seeks.
 You can control the data colocation policy with "insertionOrderBy" as explained in <a href="#JSONTableDefinition">[JSONTableDefinition]</a>, which is also available in <a href="apidocs/splout-hadoop/com/splout/db/hadoop/TableBuilder.html">TableBuilder</a>.</p></div>
 <div class="paragraph"><p>As an example, we have used data colocation techniques within Splout SQL to obtain &lt; 50ms average query time with 10 threads on dynamic GROUP BY&#8217;s that hit an average of 2000 records each in a multi-gigabyte database that exceeded available RAM in orders of magnitude in a m1.small EC2 machine.</p></div>
-</div>
-<div class="sect2">
-<h3 id="_deploys_failing_or_taking_too_long">Deploys failing or taking too long</h3>
+<h3 id="_deploys_failing_or_taking_too_long">Deploys failing or taking too long</h3><div style="clear:left"></div>
 <div class="paragraph"><p>Because deployments are asynchronous operations, it can be tricky to know if they have succeeded or not. You can monitor a deployment using the information returned by the <a href="#RESTAPI">API</a> (deployInProgress flags).</p></div>
 <div class="paragraph"><p>A deploy may fail if some of the DNodes fail, if a timeout is reached (see <a href="#splout_configuration">Configuration</a>) or if the leader QNode dies. The default timeout is 10 hours, so it shouldn&#8217;t be hit under normal circumstances.</p></div>
-</div>
-<div class="sect2">
-<h3 id="_the_cluster_is_inconsistent_there_are_less_dnodes_than_expected">The cluster is inconsistent: there are less DNodes than expected</h3>
+<h3 id="_the_cluster_is_inconsistent_there_are_less_dnodes_than_expected">The cluster is inconsistent: there are less DNodes than expected</h3><div style="clear:left"></div>
 <div class="paragraph"><p>In big networks in can take some time for Hazelcast to negotiate the membership. It can be a matter of minutes.</p></div>
-</div>
-</div>
+<h3 id="_dnode_fails_all_queries_with_too_many_open_files_exceptions">DNode fails all queries with "Too many open files" exceptions</h3><div style="clear:left"></div>
+<div class="paragraph"><p>You might have to tune your open files limit as Splout is opening one connection to each partition file it has for every serving thread. So if you have 64 serving threads and 20 partitions to serve, this means up to 1280 opened files which is more than the default in some machines (1024). You can check and change your limits: <a href="http://www.cyberciti.biz/faq/linux-increase-the-maximum-number-of-open-files/">http://www.cyberciti.biz/faq/linux-increase-the-maximum-number-of-open-files/</a></p></div>
 </div>
 </div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2012-12-03 18:24:16 CET
+Last updated 2013-01-16 11:34:44 CEST
 </div>
 </div>
