@@ -109,13 +109,13 @@ public class TestTablespaceGenerator implements Serializable {
 		Runtime.getRuntime().exec("rm -rf " + OUTPUT);
 		
 		Configuration conf = new Configuration();
-    TupleFile.Writer writer = new TupleFile.Writer(FileSystem.get(conf), conf, new Path(INPUT), new NullableSchema(theSchema2));
+    TupleFile.Writer writer = new TupleFile.Writer(FileSystem.get(conf), conf, new Path(INPUT), NullableSchema.nullableSchema(theSchema2));
 
-		writer.append(new NullableTuple(getTupleWithNulls("id1", "value11", null, -1.0, null)));
-		writer.append(new NullableTuple(getTupleWithNulls("id2", "value12", null, null, "Hello")));
-		writer.append(new NullableTuple(getTupleWithNulls("id3", "value13", 100, null, "Hello")));
-		writer.append(new NullableTuple(getTupleWithNulls("id4", "value14", 100, 2.0, "")));
-		writer.append(new NullableTuple(getTupleWithNulls("id5", "value15", 100, 2.0, null)));
+		writer.append(getTupleWithNulls("id1", "value11", null, -1.0, null));
+		writer.append(getTupleWithNulls("id2", "value12", null, null, "Hello"));
+		writer.append(getTupleWithNulls("id3", "value13", 100, null, "Hello"));
+		writer.append(getTupleWithNulls("id4", "value14", 100, 2.0, ""));
+		writer.append(getTupleWithNulls("id5", "value15", 100, 2.0, null));
 		
 		writer.close();
 		
@@ -169,17 +169,19 @@ public class TestTablespaceGenerator implements Serializable {
     Runtime.getRuntime().exec("rm -rf " + OUTPUT);
 
     Configuration conf = new Configuration();
-    TupleFile.Writer writer = new TupleFile.Writer(FileSystem.get(conf), conf, new Path(INPUT), new NullableSchema(theSchema1));
+    TupleFile.Writer writer = new TupleFile.Writer(FileSystem.get(conf), conf, new Path(INPUT),
+        NullableSchema.nullableSchema(theSchema1));
 
     for(int i=0; i<TUPLES_TO_GENERATE; i++) {
-      writer.append(new NullableTuple(getTuple("id" + i, "str" + i)));
+      writer.append(getTuple("id" + i, "str" + i));
     }
 
     writer.close();
 
     // Dummy table.
-    writer = new TupleFile.Writer(FileSystem.get(conf), conf, new Path(INPUT+2), new NullableSchema(theSchema1));
-    writer.append(new NullableTuple(getTuple("dummy", "dummy")));
+    writer = new TupleFile.Writer(FileSystem.get(conf), conf, new Path(INPUT+2),
+        NullableSchema.nullableSchema(theSchema1));
+    writer.append(getTuple("dummy", "dummy"));
     writer.close();
 
     TablespaceBuilder builder = new TablespaceBuilder();

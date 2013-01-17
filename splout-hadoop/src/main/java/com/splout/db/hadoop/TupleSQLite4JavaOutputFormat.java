@@ -20,17 +20,14 @@ package com.splout.db.hadoop;
  * #L%
  */
 
-import java.io.File;
-import java.io.IOException;
-import java.io.Serializable;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
-
+import com.almworks.sqlite4java.SQLiteConnection;
+import com.almworks.sqlite4java.SQLiteException;
+import com.almworks.sqlite4java.SQLiteStatement;
+import com.datasalt.pangool.io.ITuple;
+import com.datasalt.pangool.io.Schema.Field;
+import com.splout.db.common.HeartBeater;
+import com.splout.db.hadoop.SQLiteOutputFormat.SQLRecordWriter;
+import com.splout.db.hadoop.TableSpec.FieldIndex;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -42,19 +39,16 @@ import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
-import com.almworks.sqlite4java.SQLiteConnection;
-import com.almworks.sqlite4java.SQLiteException;
-import com.almworks.sqlite4java.SQLiteStatement;
-import com.datasalt.pangool.io.ITuple;
-import com.datasalt.pangool.io.Schema.Field;
-import com.splout.db.common.HeartBeater;
-import com.splout.db.hadoop.SQLiteOutputFormat.SQLRecordWriter;
-import com.splout.db.hadoop.TableSpec.FieldIndex;
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * An OutputFormat that accepts Pangool's Tuples and writes to a sqlite4Java SQLite file. The Tuples that are written to
  * it must conform to a particular schema: having a "_partition" integer field (which will then create a file named
- * "partition".db) and be a {@link NullableTuple} so that nulls are accepted as normal SQL values.
+ * "partition".db).
  * <p>
  * The different schemas that will be given to this OutputFormat are defined in the constructor by providing a
  * {@link TableSpec}. These TableSpec also contains information such as pre-SQL or post-SQL statements but most notably
@@ -90,9 +84,6 @@ public class TupleSQLite4JavaOutputFormat extends FileOutputFormat<ITuple, NullW
 		String createTable = "CREATE TABLE " + tableSpec.getSchema().getName() + " (";
 		for(Field field : tableSpec.getSchema().getFields()) {
 			if(field.getName().equals(PARTITION_TUPLE_FIELD)) {
-				continue;
-			}
-			if(field.getName().equals(NullableSchema.NULLS_FIELD)) {
 				continue;
 			}
 			createTable += field.getName() + " ";
@@ -322,13 +313,6 @@ public class TupleSQLite4JavaOutputFormat extends FileOutputFormat<ITuple, NullW
 		public void write(ITuple tuple, NullWritable ignore) throws IOException, InterruptedException {
 			int partition = (Integer) tuple.get(PARTITION_TUPLE_FIELD);
 
-			Object nulls = null;
-			try {
-				nulls = tuple.get(NullableSchema.NULLS_FIELD);
-			} catch(IllegalArgumentException e) {
-				throw new RuntimeException("Expected a NullableTuple but received a normal Tuple instead.");
-			}
-
 			try {
 				/*
 				 * Key performance trick: Cache PreparedStatements when possible. We will have one PreparedStatement per each
@@ -345,8 +329,8 @@ public class TupleSQLite4JavaOutputFormat extends FileOutputFormat<ITuple, NullW
 					SQLiteConnection conn = connCache.get(partition);
 					// Create a PreparedStatement according to the received Tuple
 					String preparedStatement = "INSERT INTO " + tuple.getSchema().getName() + " VALUES (";
-					// NOTE: tuple.getSchema().getFields().size() - 2 : quick way of skipping "_nulls" and "_partition" fields here
-					for(int i = 0; i < tuple.getSchema().getFields().size() - 2; i++) {
+					// NOTE: tuple.getSchema().getFields().size() - 1 : quick way of skipping "_partition" fields here
+					for(int i = 0; i < tuple.getSchema().getFields().size() - 1; i++) {
 						preparedStatement += "?, ";
 					}
 					preparedStatement = preparedStatement.substring(0, preparedStatement.length() - 2) + ");";
@@ -356,24 +340,12 @@ public class TupleSQLite4JavaOutputFormat extends FileOutputFormat<ITuple, NullW
 
 				int count = 1, tupleCount = 0;
 				for(Field field : tuple.getSchema().getFields()) {
-					if(field.getName().equals(NullableSchema.NULLS_FIELD)) {
-						tupleCount++;
-						continue;
-					}
 					if(field.getName().equals(PARTITION_TUPLE_FIELD)) {
 						tupleCount++;
 						continue;
 					}
 
-					boolean isNull = false;
-					if(nulls instanceof ByteBuffer) {
-						ByteBuffer bB = ((ByteBuffer) nulls);
-						isNull = NullableTuple.isNull(tupleCount, bB.array(), bB.position());
-					} else if(nulls instanceof byte[]) {
-						isNull = NullableTuple.isNull(tupleCount, (byte[]) nulls, 0);
-					}
-
-					if(isNull) {
+					if(tuple.get(tupleCount) == null) {
 						pS.bindNull(count);
 					} else {
 						switch(field.getType()) {

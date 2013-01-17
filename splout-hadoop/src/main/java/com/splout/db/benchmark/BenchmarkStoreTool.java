@@ -20,11 +20,24 @@ package com.splout.db.benchmark;
  * #L%
  */
 
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParameterException;
+import com.datasalt.pangool.io.Fields;
+import com.datasalt.pangool.io.ITuple;
+import com.datasalt.pangool.io.Schema;
+import com.datasalt.pangool.io.Schema.Field;
+import com.datasalt.pangool.io.Schema.Field.Type;
+import com.datasalt.pangool.io.Tuple;
+import com.datasalt.pangool.tuplemr.MapOnlyJobBuilder;
+import com.datasalt.pangool.tuplemr.mapred.MapOnlyMapper;
+import com.datasalt.pangool.tuplemr.mapred.lib.input.HadoopInputFormat;
+import com.datasalt.pangool.utils.HadoopUtils;
+import com.splout.db.common.JSONSerDe;
+import com.splout.db.common.PartitionEntry;
+import com.splout.db.common.PartitionMap;
+import com.splout.db.hadoop.TableSpec;
+import com.splout.db.hadoop.TupleSQLite4JavaOutputFormat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -35,24 +48,10 @@ import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.ParameterException;
-import com.datasalt.pangool.io.Fields;
-import com.datasalt.pangool.io.ITuple;
-import com.datasalt.pangool.io.Schema;
-import com.datasalt.pangool.io.Schema.Field;
-import com.datasalt.pangool.io.Schema.Field.Type;
-import com.datasalt.pangool.tuplemr.MapOnlyJobBuilder;
-import com.datasalt.pangool.tuplemr.mapred.MapOnlyMapper;
-import com.datasalt.pangool.tuplemr.mapred.lib.input.HadoopInputFormat;
-import com.datasalt.pangool.utils.HadoopUtils;
-import com.splout.db.common.JSONSerDe;
-import com.splout.db.common.PartitionEntry;
-import com.splout.db.common.PartitionMap;
-import com.splout.db.hadoop.NullableTuple;
-import com.splout.db.hadoop.TableSpec;
-import com.splout.db.hadoop.TupleSQLite4JavaOutputFormat;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Distributed map-only job that creates an arbitrarily big database for being used by {@link BenchmarkTool}. It doesn't
@@ -172,7 +171,7 @@ public class BenchmarkStoreTool implements Tool, Serializable {
 		    NullWritable.class);
 		job.addInput(input, new HadoopInputFormat(TextInputFormat.class), new MapOnlyMapper<LongWritable, Text, ITuple, NullWritable>() {
 
-			ITuple metaTuple = new NullableTuple(schema);
+			ITuple metaTuple = new Tuple(schema);
 
 			protected void map(LongWritable key, Text value, Context context) throws IOException,
 			    InterruptedException {

@@ -20,41 +20,27 @@ package com.splout.db.hadoop;
  * #L%
  */
 
+import com.datasalt.pangool.io.Schema;
+import com.datasalt.pangool.io.Schema.Field;
+
 import java.util.ArrayList;
 import java.util.List;
 
-import com.datasalt.pangool.io.Schema;
-
-/**
- * An extended Pangool (http://pangool.net) Schema that adds one more field for indicating which fields are "null".
- * This is part of a workaround for being able to serialize null values using Pangool (see {@link NullableTuple}.
- */
 @SuppressWarnings("serial")
-public class NullableSchema extends Schema {
+public class NullableSchema {
 
-	public final static String NULLS_FIELD = "_nulls";
-	
-	public NullableSchema(Schema schema) {
-	  super(schema.getName(), addNulls(schema));
+  /**
+   * Returns a copy of the given schema, but with all
+   * fields configured as nullable.
+   * @param anSchema An schema
+   * @return A copy of the schema, but all fields nullable.
+   **/
+  public static Schema nullableSchema(Schema anSchema) {
+    ArrayList<Schema.Field> newFields = new ArrayList<Schema.Field>();
+    List<Field> oldFields = anSchema.getFields();
+    for (Field f: oldFields) {
+      newFields.add(Field.cloneField(f, f.getName(), true));
+    }
+    return new Schema(anSchema.getName(), newFields);
   }
-	
-	public static boolean isNullable(Schema schema) {
-		for(Field field: schema.getFields()) {
-			if(field.getName().equals(NULLS_FIELD)) {
-				// Already a nullable schema
-			return true;
-			}
-		}	
-		return false;
-	}
-	
-	public static List<Field> addNulls(Schema schema) {
-		if(isNullable(schema)) {
-			return schema.getFields();
-		}
-		List<Field> newFields = new ArrayList<Field>();
-		newFields.addAll(schema.getFields());
-		newFields.add(Field.create(NULLS_FIELD, Field.Type.BYTES));
-		return newFields;
-	}
 }

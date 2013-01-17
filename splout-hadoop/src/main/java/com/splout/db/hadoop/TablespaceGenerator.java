@@ -20,9 +20,12 @@ package com.splout.db.hadoop;
  * #L%
  */
 
-import com.datasalt.pangool.io.*;
+import com.datasalt.pangool.io.ITuple;
+import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.io.Schema.Field;
 import com.datasalt.pangool.io.Schema.Field.Type;
+import com.datasalt.pangool.io.Tuple;
+import com.datasalt.pangool.io.TupleFile;
 import com.datasalt.pangool.tuplemr.Criteria.Order;
 import com.datasalt.pangool.tuplemr.Criteria.SortElement;
 import com.datasalt.pangool.tuplemr.*;
@@ -277,7 +280,7 @@ public class TablespaceGenerator implements Serializable {
 			final Schema tableSchema = new Schema(table.getTableSpec().getSchema().getName(), fields);
 			final TableSpec tableSpec = table.getTableSpec();
 			schemaCounter++;
-			builder.addIntermediateSchema(new NullableSchema(tableSchema));
+			builder.addIntermediateSchema(NullableSchema.nullableSchema(tableSchema));
 
 			// For each input file for the Table we add an input and a TupleMapper
 			for(TableInput inputFile : table.getFiles()) {
@@ -287,7 +290,7 @@ public class TablespaceGenerator implements Serializable {
 				for(Path path : inputFile.getPaths()) {
 					builder.addInput(path, inputFile.getFormat(), new TupleMapper<ITuple, NullWritable>() {
 
-						NullableTuple tableTuple = new NullableTuple(tableSchema);
+						Tuple tableTuple = new Tuple(tableSchema);
 						JavascriptEngine jsEngine = null;
 						CounterInterface counterInterface = null;
 
@@ -355,8 +358,8 @@ public class TablespaceGenerator implements Serializable {
 			fields.add(Field.create(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD, Type.INT));
 			final Schema tableSchema = new Schema(table.getTableSpec().getSchema().getName(), fields);
 			schemaCounter++;
-			fields.add(Fields.createTupleField("tuple", new NullableSchema(tableSchema)));
-			builder.addIntermediateSchema(new NullableSchema(tableSchema));
+			fields.add(Field.createTupleField("tuple", NullableSchema.nullableSchema(tableSchema)));
+			builder.addIntermediateSchema(NullableSchema.nullableSchema(tableSchema));
 			// For each input file for the Table we add an input and a TupleMapper
 			for(TableInput inputFile : table.getFiles()) {
 
@@ -365,7 +368,7 @@ public class TablespaceGenerator implements Serializable {
 				for(Path path : inputFile.getPaths()) {
 					builder.addInput(path, inputFile.getFormat(), new TupleMapper<ITuple, NullWritable>() {
 
-						NullableTuple tableTuple = new NullableTuple(tableSchema);
+						Tuple tableTuple = new Tuple(tableSchema);
             CounterInterface counterInterface = null;
 
 						@Override

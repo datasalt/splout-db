@@ -28,7 +28,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<hadoop.version>0.20.2</hadoop.version>
 		<jackson.version>1.7.9</jackson.version>
-		<pangool.version>0.5</pangool.version>
+		<pangool.version>0.50.2-SNAPSHOT</pangool.version>
 	</properties>
 
 	<build>
@@ -424,4 +424,18 @@
 			<version>0.7.1</version>
 		</dependency>
 	</dependencies>
+
+    <repositories>
+        <repository>
+            <id>pangool-snapshots</id>
+            <name>Pangool Snapshot Repository</name>
+            <url>http://clinker.datasalt.com/nexus/content/groups/public-snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 </project>
