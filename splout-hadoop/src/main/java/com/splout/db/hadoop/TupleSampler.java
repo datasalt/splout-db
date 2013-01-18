@@ -20,16 +20,14 @@ package com.splout.db.hadoop;
  * #L%
  */
 
-import java.io.IOException;
-import java.io.Serializable;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.datasalt.pangool.io.ITuple;
+import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.io.Tuple;
 import com.datasalt.pangool.io.TupleFile;
+import com.datasalt.pangool.tuplemr.MapOnlyJobBuilder;
+import com.datasalt.pangool.tuplemr.TupleMRException;
+import com.datasalt.pangool.tuplemr.mapred.MapOnlyMapper;
+import com.splout.db.common.PartitionMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -37,23 +35,17 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.mapreduce.Counter;
-import org.apache.hadoop.mapreduce.InputFormat;
-import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.RecordReader;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.TaskAttemptID;
-import org.apache.hadoop.mapreduce.TaskID;
+import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.mockito.Mockito;
 
-import com.datasalt.pangool.io.ITuple;
-import com.datasalt.pangool.io.Schema;
-import com.datasalt.pangool.tuplemr.MapOnlyJobBuilder;
-import com.datasalt.pangool.tuplemr.TupleMRException;
-import com.datasalt.pangool.tuplemr.mapred.MapOnlyMapper;
-import com.splout.db.common.PartitionMap;
+import java.io.IOException;
+import java.io.Serializable;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This class samples a list of {@link TableInput} files that produce a certain Table Schema. There are two sampling
@@ -192,7 +184,8 @@ public class TupleSampler implements Serializable {
 					    CounterInterface counterInterface;
 					    long recordCounter = 0;
 
-					    protected void setup(Context context) throws IOException, InterruptedException {
+              @Override
+              protected void setup(Context context) throws IOException, InterruptedException {
 						    counterInterface = new CounterInterface(context);
 					    };
 
@@ -219,7 +212,7 @@ public class TupleSampler implements Serializable {
 						    }
 
 						    if(reservoirIndex < nSamples) {
-							    samples[(int) reservoirIndex] = new NullableTuple(uTuple, true); // deep copy the Tuple
+							    samples[(int) reservoirIndex] = Tuple.deepCopy(uTuple);
 						    }
 
 						    recordCounter++;
@@ -238,7 +231,7 @@ public class TupleSampler implements Serializable {
 		}
 		// Set output path
 		Path outReservoirPath = new Path(outputPath + "-reservoir");
-		builder.setTupleOutput(outReservoirPath, new NullableSchema(tableSchema));
+		builder.setTupleOutput(outReservoirPath, NullableSchema.nullableSchema(tableSchema));
 		Job job = builder.createJob();
 		if(!job.waitForCompletion(true)) {
 			throw new TupleSamplerException("Reservoir Sampling failed!");
@@ -246,7 +239,7 @@ public class TupleSampler implements Serializable {
 
 		FileSystem outFs = outReservoirPath.getFileSystem(hadoopConf);
 		// Instantiate the writer we will write samples to
-    TupleFile.Writer writer = new TupleFile.Writer(outFs, hadoopConf, outputPath, new NullableSchema(
+    TupleFile.Writer writer = new TupleFile.Writer(outFs, hadoopConf, outputPath, NullableSchema.nullableSchema(
 		    tableSchema));
 
 		if(outFs.listStatus(outReservoirPath) == null) {
@@ -281,7 +274,7 @@ public class TupleSampler implements Serializable {
 
 		// Instantiate the writer we will write samples to
     FileSystem fs = FileSystem.get(outFile.toUri(), hadoopConf);
-		TupleFile.Writer writer = new TupleFile.Writer(fs, hadoopConf, outFile, new NullableSchema(
+		TupleFile.Writer writer = new TupleFile.Writer(fs, hadoopConf, outFile, NullableSchema.nullableSchema(
 		    tableSchema));
 
 		if(splits.size() == 0) {
@@ -322,7 +315,7 @@ public class TupleSampler implements Serializable {
 					throw new RuntimeException(e);
 				}
 				if(uTuple != null) { // user may have filtered the record
-					writer.append(new NullableTuple(uTuple));
+					writer.append(uTuple);
 					records += 1;
 					if((i + 1) * recordsPerSample <= records) {
 						break;

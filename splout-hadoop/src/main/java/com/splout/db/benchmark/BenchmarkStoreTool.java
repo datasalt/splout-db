@@ -20,6 +20,7 @@ package com.splout.db.benchmark;
  * #L%
  */
 
+
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -44,6 +45,7 @@ import com.datasalt.pangool.io.ITuple;
 import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.io.Schema.Field;
 import com.datasalt.pangool.io.Schema.Field.Type;
+import com.datasalt.pangool.io.Tuple;
 import com.datasalt.pangool.tuplemr.MapOnlyJobBuilder;
 import com.datasalt.pangool.tuplemr.mapred.MapOnlyMapper;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.HadoopInputFormat;
@@ -52,7 +54,6 @@ import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.PartitionEntry;
 import com.splout.db.common.PartitionMap;
 import com.splout.db.common.SploutHadoopConfiguration;
-import com.splout.db.hadoop.NullableTuple;
 import com.splout.db.hadoop.TableSpec;
 import com.splout.db.hadoop.TupleSQLite4JavaOutputFormat;
 
@@ -181,7 +182,7 @@ public class BenchmarkStoreTool implements Tool, Serializable {
 		    NullWritable.class);
 		job.addInput(input, new HadoopInputFormat(TextInputFormat.class), new MapOnlyMapper<LongWritable, Text, ITuple, NullWritable>() {
 
-			ITuple metaTuple = new NullableTuple(schema);
+			ITuple metaTuple = new Tuple(schema);
 
 			protected void map(LongWritable key, Text value, Context context) throws IOException,
 			    InterruptedException {

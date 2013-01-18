@@ -20,28 +20,11 @@ package com.splout.db.hadoop;
  * #L%
  */
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Serializable;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
-import org.junit.Test;
-
 import com.datasalt.pangool.io.Fields;
 import com.datasalt.pangool.io.ITuple;
 import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.io.Schema.Field;
+import com.datasalt.pangool.io.Tuple;
 import com.datasalt.pangool.tuplemr.IdentityTupleReducer;
 import com.datasalt.pangool.tuplemr.TupleMRBuilder;
 import com.datasalt.pangool.tuplemr.TupleMRException;
@@ -52,6 +35,23 @@ import com.splout.db.common.JSONSerDe.JSONSerDeException;
 import com.splout.db.common.SQLiteJDBCManager;
 import com.splout.db.hadoop.TableSpec.FieldIndex;
 import com.splout.db.hadoop.TupleSQLite4JavaOutputFormat.TupleSQLiteOutputFormatException;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.junit.Test;
+
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Serializable;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 
 @SuppressWarnings("serial")
 public class TestTupleSQLiteOutputFormat implements Serializable {
@@ -138,12 +138,12 @@ public class TestTupleSQLiteOutputFormat implements Serializable {
 		final Schema metaSchema2  = new Schema("schema2", fields);
 		
 		TupleMRBuilder builder = new TupleMRBuilder(new Configuration());
-		builder.addIntermediateSchema(new NullableSchema(metaSchema1));
-		builder.addIntermediateSchema(new NullableSchema(metaSchema2));
+		builder.addIntermediateSchema(NullableSchema.nullableSchema(metaSchema1));
+		builder.addIntermediateSchema(NullableSchema.nullableSchema(metaSchema2));
 		builder.addInput(new Path(INPUT1), new HadoopInputFormat(TextInputFormat.class),
 		    new TupleMapper<LongWritable, Text>() {
 
-			    ITuple tupleInTuple1 = new NullableTuple(metaSchema1);
+			    ITuple tupleInTuple1 = new Tuple(metaSchema1);
 
 			    @Override
 			    public void map(LongWritable key, Text value, TupleMRContext context, Collector collector)
@@ -159,7 +159,7 @@ public class TestTupleSQLiteOutputFormat implements Serializable {
 		builder.addInput(new Path(INPUT2), new HadoopInputFormat(TextInputFormat.class),
 		    new TupleMapper<LongWritable, Text>() {
 
-			    ITuple tupleInTuple2 = new NullableTuple(metaSchema2);
+			    ITuple tupleInTuple2 = new Tuple(metaSchema2);
 
 			    @Override
 			    public void map(LongWritable key, Text value, TupleMRContext context, Collector collector)
