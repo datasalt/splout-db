@@ -32,6 +32,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
+import com.beust.jcommander.IStringConverter;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.datasalt.pangool.io.Fields;
@@ -74,8 +75,8 @@ public class SimpleGeneratorCMD implements Tool {
 	@Parameter(required = true, names = { "-p", "--partitions" }, description = "The number of partitions to create for the view.")
 	private Integer nPartitions;
 
-	@Parameter(names = { "-sep", "--separator" }, description = "The separator character of your text input file, defaults to a tabulation")
-	private String separator = "\t";
+	@Parameter(converter = CharConverter.class, names = { "-sep", "--separator" }, description = "The separator character of your text input file, defaults to a tabulation")
+	private Character separator = '\t';
 
 	@Parameter(names = { "-quo", "--quotes" }, description = "The quotes character of your input file, defaults to none.")
 	private String quotes = TupleTextInputFormat.NO_QUOTE_CHARACTER + "";
@@ -95,6 +96,13 @@ public class SimpleGeneratorCMD implements Tool {
 	@Parameter(names = { "-fw", "--fixedwidthfields" }, description = "When used, you must provide a comma-separated list of numbers. These numbers will be interpreted by pairs, as [beginning, end] inclusive position offsets. For example: 0,3,5,7 means there are two fields, the first one of 4 characters at offsets [0, 3] and the second one of 3 characters at offsets [5, 7]. This option can be used in combination with --nullstring parameter. The rest of CSV parameters are ignored.")
 	private String fixedWidthFields;
 	
+  public static class CharConverter implements IStringConverter<Character> {
+
+		@Override
+    public Character convert(String value) {
+	    return value.toCharArray()[0];
+    }
+	}
 	
 	private Configuration conf;
 
@@ -153,7 +161,7 @@ public class SimpleGeneratorCMD implements Tool {
 		TableBuilder tableBuilder = new TableBuilder(schema);
 		if (fixedWidth == null) {
 			// CSV
-			tableBuilder.addCSVTextFile(inputPath, separator.toCharArray()[0], quotes.toCharArray()[0],
+			tableBuilder.addCSVTextFile(inputPath, separator, quotes.toCharArray()[0],
 			    escape.toCharArray()[0], skipHeading, strictQuotes, nullString);
 		} else {
 			// Fixed Width 

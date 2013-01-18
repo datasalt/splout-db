@@ -20,6 +20,7 @@ package com.splout.db.benchmark;
  * #L%
  */
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -50,6 +51,7 @@ import com.datasalt.pangool.utils.HadoopUtils;
 import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.PartitionEntry;
 import com.splout.db.common.PartitionMap;
+import com.splout.db.common.SploutHadoopConfiguration;
 import com.splout.db.hadoop.NullableTuple;
 import com.splout.db.hadoop.TableSpec;
 import com.splout.db.hadoop.TupleSQLite4JavaOutputFormat;
@@ -165,6 +167,13 @@ public class BenchmarkStoreTool implements Tool, Serializable {
 		}
 		final String theValue = new String(valueArray);
 
+		if(!FileSystem.getLocal(conf).equals(FileSystem.get(conf))) {
+			File nativeLibs = new File("native");
+			if(nativeLibs.exists()) {
+				SploutHadoopConfiguration.addSQLite4JavaNativeLibsToDC(conf);
+			}
+		}
+		
 		MapOnlyJobBuilder job = new MapOnlyJobBuilder(conf);
 		TableSpec tableSpec = new TableSpec(schema, schema.getFields().get(1));
 		
