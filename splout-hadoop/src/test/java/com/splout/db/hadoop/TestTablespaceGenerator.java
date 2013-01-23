@@ -22,6 +22,7 @@ package com.splout.db.hadoop;
 
 import com.datasalt.pangool.io.*;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat;
+import com.datasalt.pangool.utils.test.AbstractHadoopTestLibrary;
 import com.splout.db.common.PartitionEntry;
 import com.splout.db.common.SQLiteJDBCManager;
 import com.splout.db.hadoop.TupleSampler.SamplingType;
@@ -38,7 +39,7 @@ import java.util.Map;
 
 import static org.junit.Assert.*;
 
-public class TestTablespaceGenerator implements Serializable {
+public class TestTablespaceGenerator extends AbstractHadoopTestLibrary implements Serializable  {
 
 	public final static String INPUT  = "in-"  + TestTablespaceGenerator.class.getName();
 	public final static String OUTPUT = "out-" + TestTablespaceGenerator.class.getName();
@@ -48,9 +49,8 @@ public class TestTablespaceGenerator implements Serializable {
 
   @Test
 	public void simpleTest() throws Exception {
-		Runtime.getRuntime().exec("rm -rf " + INPUT);
-		Runtime.getRuntime().exec("rm -rf " + OUTPUT);
-		
+    trash(INPUT, OUTPUT);
+
 		Configuration conf = new Configuration();
 		TupleFile.Writer writer = new TupleFile.Writer(FileSystem.get(conf), conf, new Path(INPUT), theSchema1);
 
@@ -98,16 +98,14 @@ public class TestTablespaceGenerator implements Serializable {
 		assertEquals("id7", partitionMap.get(3).getMin());
 		assertEquals(null, partitionMap.get(3).getMax());
 		assertEquals(3, (int) partitionMap.get(3).getShard());
-		
-		Runtime.getRuntime().exec("rm -rf " + INPUT);
-		Runtime.getRuntime().exec("rm -rf " + OUTPUT);
+
+    trash(INPUT, OUTPUT);
 	}
 	
   @Test
   public void testAcceptNullValues() throws Exception {
-		Runtime.getRuntime().exec("rm -rf " + INPUT);
-		Runtime.getRuntime().exec("rm -rf " + OUTPUT);
-		
+    trash(INPUT, OUTPUT);
+
 		Configuration conf = new Configuration();
     TupleFile.Writer writer = new TupleFile.Writer(FileSystem.get(conf), conf, new Path(INPUT), NullableSchema.nullableSchema(theSchema2));
 
@@ -147,8 +145,7 @@ public class TestTablespaceGenerator implements Serializable {
     assertEquals(2.0, searchRow(results, "id", "id5").get("doubleValue"));
     assertNull(searchRow(results, "id", "id5").get("strValue"));
 
-		Runtime.getRuntime().exec("rm -rf " + INPUT);
-		Runtime.getRuntime().exec("rm -rf " + OUTPUT);
+    trash(INPUT, OUTPUT);
   }
 
   @Test
@@ -164,9 +161,7 @@ public class TestTablespaceGenerator implements Serializable {
   public void testRecordProcessor(boolean replicateAll) throws Exception {
     int TUPLES_TO_GENERATE = 10;
 
-    Runtime.getRuntime().exec("rm -rf " + INPUT);
-    Runtime.getRuntime().exec("rm -rf " + INPUT + 2);
-    Runtime.getRuntime().exec("rm -rf " + OUTPUT);
+    trash(INPUT, INPUT + 2, OUTPUT);
 
     Configuration conf = new Configuration();
     TupleFile.Writer writer = new TupleFile.Writer(FileSystem.get(conf), conf, new Path(INPUT),
@@ -222,9 +217,7 @@ public class TestTablespaceGenerator implements Serializable {
       assertEquals("str" + i + "mod", getVal(results, i, "value"));
     }
 
-    Runtime.getRuntime().exec("rm -rf " + INPUT);
-    Runtime.getRuntime().exec("rm -rf " + INPUT + 2);
-    Runtime.getRuntime().exec("rm -rf " + OUTPUT);
+    trash(INPUT, INPUT + 2, OUTPUT);
   }
 
   public static Object resultSize(String result) throws IOException {
