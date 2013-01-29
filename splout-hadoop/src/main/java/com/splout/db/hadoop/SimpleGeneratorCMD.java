@@ -44,8 +44,7 @@ import com.splout.db.hadoop.TupleSampler.SamplingType;
 
 /**
  * This tool can be used for creating and deploying a single-table tablespace from text files. Use command-line
- * parameters for definiting your Tablespace. For a more general multi-tablespace generator use
- * {@link GeneratorCMD}.
+ * parameters for definiting your Tablespace. For a more general multi-tablespace generator use {@link GeneratorCMD}.
  */
 public class SimpleGeneratorCMD implements Tool {
 
@@ -78,32 +77,33 @@ public class SimpleGeneratorCMD implements Tool {
 	@Parameter(converter = CharConverter.class, names = { "-sep", "--separator" }, description = "The separator character of your text input file, defaults to a tabulation")
 	private Character separator = '\t';
 
-	@Parameter(names = { "-quo", "--quotes" }, description = "The quotes character of your input file, defaults to none.")
-	private String quotes = TupleTextInputFormat.NO_QUOTE_CHARACTER + "";
+	@Parameter(converter = CharConverter.class, names = { "-quo", "--quotes" }, description = "The quotes character of your input file, defaults to none.")
+	private Character quotes = TupleTextInputFormat.NO_QUOTE_CHARACTER;
 
-	@Parameter(names = { "-esc", "--escape" }, description = "The escape character of your input file, defaults to none.")
-	private String escape = TupleTextInputFormat.NO_ESCAPE_CHARACTER + "";
+	@Parameter(converter = CharConverter.class, names = { "-esc", "--escape" }, description = "The escape character of your input file, defaults to none.")
+	private Character escape = TupleTextInputFormat.NO_ESCAPE_CHARACTER;
 
 	@Parameter(names = { "-sh", "--skipheading" }, description = "Specify this flag for skipping the header line of your text file.")
 	private boolean skipHeading = false;
 
 	@Parameter(names = { "-sq", "--strictquotes" }, description = "Activate strict quotes mode where all values that are not quoted are considered null.")
 	private boolean strictQuotes = false;
-	
+
 	@Parameter(names = { "-ns", "--nullstring" }, description = "A string sequence which, if found and not quoted, it's considered null. For example, \\N in mysqldumps.")
 	private String nullString = TupleTextInputFormat.NO_NULL_STRING;
-	
+
 	@Parameter(names = { "-fw", "--fixedwidthfields" }, description = "When used, you must provide a comma-separated list of numbers. These numbers will be interpreted by pairs, as [beginning, end] inclusive position offsets. For example: 0,3,5,7 means there are two fields, the first one of 4 characters at offsets [0, 3] and the second one of 3 characters at offsets [5, 7]. This option can be used in combination with --nullstring parameter. The rest of CSV parameters are ignored.")
 	private String fixedWidthFields;
-	
-  public static class CharConverter implements IStringConverter<Character> {
+
+	public static class CharConverter implements IStringConverter<Character> {
 
 		@Override
-    public Character convert(String value) {
-	    return value.toCharArray()[0];
-    }
+		public Character convert(String value) {
+			// Because space gets trimmed by JCommander we recover it here
+			return value.length() == 0 ? ' ' : value.toCharArray()[0];
+		}
 	}
-	
+
 	private Configuration conf;
 
 	@Override
@@ -136,35 +136,36 @@ public class SimpleGeneratorCMD implements Tool {
 		Path out = new Path(output, tablespace);
 		FileSystem outFs = out.getFileSystem(getConf());
 		HadoopUtils.deleteIfExists(outFs, out);
-		
+
 		if(!FileSystem.getLocal(conf).equals(FileSystem.get(conf))) {
 			File nativeLibs = new File("native");
 			if(nativeLibs.exists()) {
 				SploutHadoopConfiguration.addSQLite4JavaNativeLibsToDC(conf);
 			}
 		}
-		
+
 		int fixedWidth[] = null;
-		if (fixedWidthFields != null) {
-			String []posStr = fixedWidthFields.split(",");
+		if(fixedWidthFields != null) {
+			String[] posStr = fixedWidthFields.split(",");
 			fixedWidth = new int[posStr.length];
-			for (int i = 0; i<posStr.length; i++) {
+			for(int i = 0; i < posStr.length; i++) {
 				try {
 					fixedWidth[i] = new Integer(posStr[i]);
-				} catch (NumberFormatException e) {
-					System.out.println("Wrongly formed fixed with field list: [" + fixedWidthFields + "]. " + posStr[i] + " does not look as a number.");
+				} catch(NumberFormatException e) {
+					System.out.println("Wrongly formed fixed with field list: [" + fixedWidthFields + "]. "
+					    + posStr[i] + " does not look as a number.");
 				}
 			}
 		}
 
 		TablespaceBuilder builder = new TablespaceBuilder();
 		TableBuilder tableBuilder = new TableBuilder(schema);
-		if (fixedWidth == null) {
+		if(fixedWidth == null) {
 			// CSV
-			tableBuilder.addCSVTextFile(inputPath, separator, quotes.toCharArray()[0],
-			    escape.toCharArray()[0], skipHeading, strictQuotes, nullString);
+			tableBuilder.addCSVTextFile(inputPath, separator, quotes, escape, skipHeading, strictQuotes,
+			    nullString);
 		} else {
-			// Fixed Width 
+			// Fixed Width
 			tableBuilder.addFixedWidthTextFile(inputPath, schema, fixedWidth, skipHeading, nullString, null);
 		}
 
@@ -181,9 +182,10 @@ public class SimpleGeneratorCMD implements Tool {
 		builder.setNPartitions(nPartitions);
 
 		TablespaceGenerator viewGenerator = new TablespaceGenerator(builder.build(), out);
-		viewGenerator.generateView(conf, SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions()); // TODO Parametrize
+		viewGenerator.generateView(conf, SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions()); 
 
-		log.info("Success! Tablespace [" + tablespace + "] with table [" + tablename + "] properly created at path [" + out + "]");
+		log.info("Success! Tablespace [" + tablespace + "] with table [" + tablename
+		    + "] properly created at path [" + out + "]");
 		return 0;
 	}
 
