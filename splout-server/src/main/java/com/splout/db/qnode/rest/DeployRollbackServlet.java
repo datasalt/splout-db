@@ -42,6 +42,7 @@ public class DeployRollbackServlet extends BaseServlet {
 
 	public final static String ACTION_DEPLOY = "deploy";
 	public final static String ACTION_ROLLBACK = "rollback";
+	public final static String ACTION_CREATE = "create";
 
 	public DeployRollbackServlet(IQNodeHandler qNodeHandler) {
 		super(qNodeHandler);
@@ -88,6 +89,15 @@ public class DeployRollbackServlet extends BaseServlet {
 				// List of RollbackRequest
 				log.info(Thread.currentThread().getName() + ": Rollback request received [" + rReq + "]");
 				response = JSONSerDe.ser(qNodeHandler.rollback(rReq));
+			} else if(action.equals(ACTION_CREATE)) {
+				// Accept a single DeployRequest for creating empty tablespaces
+				DeployRequest request = JSONSerDe.deSer(postBody.toString(), DeployRequest.class);
+				log.info(Thread.currentThread().getName() + ": Create request received [" + request + "]");
+				if(request.getReplicationMap() == null || request.getReplicationMap().size() < 1) {
+					throw new IllegalArgumentException("Invalid deploy request with empty replication map ["
+					    + request + "]");
+				}
+				response = JSONSerDe.ser(qNodeHandler.createTablespace(request));
 			} else {
 				throw new ServletException("Unknown action: " + action);
 			}

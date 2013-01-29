@@ -166,7 +166,9 @@ public class QNodeHandlerContext {
 								// Remove also from PartitionMap
 								PartitionEntry pEntry = new PartitionEntry();
 								pEntry.setShard(entry.getShard());
-								tablespace.getPartitionMap().getPartitionEntries().remove(pEntry);
+								if(tablespace.getPartitionMap() != null) {
+									tablespace.getPartitionMap().getPartitionEntries().remove(pEntry);
+								}
 							}
 						}
 					}
@@ -192,13 +194,15 @@ public class QNodeHandlerContext {
 					Long versionName = versionEntry.getKey();
 					TablespaceVersion tablespaceVersion = new TablespaceVersion(tablespaceName, versionName);
 					Tablespace currentTablespace = tablespaceVersionMap.get(tablespaceVersion);
-					List<PartitionEntry> partitionMap = new ArrayList<PartitionEntry>();
+					List<PartitionEntry> newPartitionMap = new ArrayList<PartitionEntry>();
 					List<ReplicationEntry> replicationMap = new ArrayList<ReplicationEntry>();
 					long deployDate = -1;
 					if(currentTablespace != null) {
 						// Not first time we see this tablespace. We do a copy of the partition map to be able to modify it without
 						// contention.
-						partitionMap.addAll(currentTablespace.getPartitionMap().getPartitionEntries());
+						if(currentTablespace.getPartitionMap() != null) {
+							newPartitionMap.addAll(currentTablespace.getPartitionMap().getPartitionEntries());
+						}
 						replicationMap.addAll(currentTablespace.getReplicationMap().getReplicationEntries());
 						deployDate = currentTablespace.getCreationDate();
 					}
@@ -210,52 +214,58 @@ public class QNodeHandlerContext {
 							    "Inconsistent partition metadata within same node, deploy date was " + deployDate
 							        + " versus " + partition.getValue().getDeploymentDate());
 						}
+
 						PartitionMetadata metadata = partition.getValue();
 						Integer shard = partition.getKey();
-						// Create a PartitionEntry according to this PartitionMetadata
-						PartitionEntry myEntry = new PartitionEntry();
-						myEntry.setMax(metadata.getMaxKey());
-						myEntry.setMin(metadata.getMinKey());
-						myEntry.setShard(shard);
 						PartitionEntry existingPartitionEntry = null;
-						// Look for an existing PartitionEntry for the same shard in the PartitionMap
-						if(!partitionMap.contains(myEntry)) {
-							if(!event.equals(DNodeEvent.LEAVE)) {
-								// In this case all conditions are met for adding a new entry to the PartitionMap
-								partitionMap.add(myEntry);
-								// Note that now the PartitionMap is not necessarily sorted! let's sort it now
-								Collections.sort(partitionMap);
-							}
-						} else {
-							// Check consistency of this Partition Metadata
-							existingPartitionEntry = partitionMap.get(partitionMap.indexOf(myEntry));
-							if(existingPartitionEntry.getMax() == null || myEntry.getMax() == null) {
-								if(!(existingPartitionEntry.getMax() == null && myEntry.getMax() == null)) {
-									throw new TablespaceVersionInfoException(
-									    "Inconsistent partition metadata between nodes: " + existingPartitionEntry
-									        + " versus " + myEntry);
+
+						// The following is only applicable to tablespaces with explicit key ordering (partition map):
+						if(!metadata.isHasNoPartitionMap()) {
+							// Create a PartitionEntry according to this PartitionMetadata
+							PartitionEntry myEntry = new PartitionEntry();
+							myEntry.setMax(metadata.getMaxKey());
+							myEntry.setMin(metadata.getMinKey());
+							myEntry.setShard(shard);
+							// Look for an existing PartitionEntry for the same shard in the PartitionMap
+							if(!newPartitionMap.contains(myEntry)) {
+								if(!event.equals(DNodeEvent.LEAVE)) {
+									// In this case all conditions are met for adding a new entry to the PartitionMap
+									newPartitionMap.add(myEntry);
+									// Note that now the PartitionMap is not necessarily sorted! let's sort it now
+									Collections.sort(newPartitionMap);
 								}
 							} else {
-								if(!existingPartitionEntry.getMax().equals(myEntry.getMax())) {
-									throw new TablespaceVersionInfoException(
-									    "Inconsistent partition metadata between nodes: " + existingPartitionEntry
-									        + " versus " + myEntry);
+								// Check consistency of this Partition Metadata
+								existingPartitionEntry = newPartitionMap.get(newPartitionMap.indexOf(myEntry));
+								if(existingPartitionEntry.getMax() == null || myEntry.getMax() == null) {
+									if(!(existingPartitionEntry.getMax() == null && myEntry.getMax() == null)) {
+										throw new TablespaceVersionInfoException(
+										    "Inconsistent partition metadata between nodes: " + existingPartitionEntry
+										        + " versus " + myEntry);
+									}
+								} else {
+									if(!existingPartitionEntry.getMax().equals(myEntry.getMax())) {
+										throw new TablespaceVersionInfoException(
+										    "Inconsistent partition metadata between nodes: " + existingPartitionEntry
+										        + " versus " + myEntry);
+									}
 								}
-							}
-							if(existingPartitionEntry.getMin() == null || myEntry.getMin() == null) {
-								if(!(existingPartitionEntry.getMin() == null && myEntry.getMin() == null)) {
-									throw new TablespaceVersionInfoException(
-									    "Inconsistent partition metadata between nodes: " + existingPartitionEntry
-									        + " versus " + myEntry);
-								}
-							} else {
-								if(!existingPartitionEntry.getMin().equals(myEntry.getMin())) {
-									throw new TablespaceVersionInfoException(
-									    "Inconsistent partition metadata between nodes: " + existingPartitionEntry
-									        + " versus " + myEntry);
+								if(existingPartitionEntry.getMin() == null || myEntry.getMin() == null) {
+									if(!(existingPartitionEntry.getMin() == null && myEntry.getMin() == null)) {
+										throw new TablespaceVersionInfoException(
+										    "Inconsistent partition metadata between nodes: " + existingPartitionEntry
+										        + " versus " + myEntry);
+									}
+								} else {
+									if(!existingPartitionEntry.getMin().equals(myEntry.getMin())) {
+										throw new TablespaceVersionInfoException(
+										    "Inconsistent partition metadata between nodes: " + existingPartitionEntry
+										        + " versus " + myEntry);
+									}
 								}
 							}
 						}
+
 						// Create a ReplicationEntry according to this PartitionMetadata
 						// Will only contain this DNode as we don't know about the others yet
 						ReplicationEntry reEntry = new ReplicationEntry();
@@ -270,7 +280,7 @@ public class QNodeHandlerContext {
 								if(existingEntry.getNodes().isEmpty()) {
 									replicationMap.remove(existingEntry);
 									if(existingPartitionEntry != null) {
-										partitionMap.remove(existingPartitionEntry);
+										newPartitionMap.remove(existingPartitionEntry);
 									} else {
 										throw new RuntimeException(
 										    "ReplicationEntry for one shard with no associated PartitionEntry. This is very likely to be a software bug.");
@@ -300,8 +310,19 @@ public class QNodeHandlerContext {
 						tablespaceVersionMap.remove(tablespaceVersion);
 					} else {
 						// Update the info in memory
-						currentTablespace = new Tablespace(new PartitionMap(partitionMap), new ReplicationMap(
-						    replicationMap), versionName, deployDate);
+						PartitionMap pMap;
+						// Make sure we don't attempt to create an empty partitionMap when we really mean to put a null PartitionMap
+						// We want to be consistent with the semantics of a Tablespace: it either has a PartitionMap
+						// or it doesn't (partitionMap = null)
+						if(currentTablespace != null && currentTablespace.getPartitionMap() == null) {
+							pMap = null;
+						} else if(currentTablespace == null && newPartitionMap.size() == 0) {
+							pMap = null;
+						} else {
+							pMap = new PartitionMap(newPartitionMap);
+						}
+						currentTablespace = new Tablespace(pMap, new ReplicationMap(replicationMap), versionName,
+						    deployDate);
 						tablespaceVersionMap.put(tablespaceVersion, currentTablespace);
 					}
 				}

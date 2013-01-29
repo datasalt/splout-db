@@ -49,18 +49,18 @@ public class SploutClient {
 	String[] qNodes;
 	String[] qNodesNoProtocol;
 
-  public SploutClient(String... qnodes) {
-    this(20 * 1000, qnodes);
-  }
+	public SploutClient(String... qnodes) {
+		this(20 * 1000, qnodes);
+	}
 
 	public SploutClient(final int timeoutMillis, String... qnodes) {
 		HttpTransport transport = new NetHttpTransport();
 		requestFactory = transport.createRequestFactory(new HttpRequestInitializer() {
-      @Override
-      public void initialize(HttpRequest request) throws IOException {
-        request.readTimeout = timeoutMillis;
-      }
-    });
+			@Override
+			public void initialize(HttpRequest request) throws IOException {
+				request.readTimeout = timeoutMillis;
+			}
+		});
 		this.qNodes = qnodes;
 		// strip last "/" if present
 		for(int i = 0; i < qNodes.length; i++) {
@@ -84,19 +84,19 @@ public class SploutClient {
 			writer.close();
 		}
 	}
-	
+
 	/*
 	 * 
 	 */
 	public Tablespace tablespace(String tablespace) throws IOException {
 		HttpRequest request = requestFactory.buildGetRequest(new GenericUrl(
-		    qNodes[(int) (Math.random() * qNodes.length)] + "/api/tablespace/" +  tablespace));
+		    qNodes[(int) (Math.random() * qNodes.length)] + "/api/tablespace/" + tablespace));
 		HttpResponse resp = request.execute();
 		try {
 			return JSONSerDe.deSer(asString(resp.getContent()), Tablespace.class);
 		} catch(JSONSerDeException e) {
 			throw new IOException(e);
-		}		
+		}
 	}
 
 	/*
@@ -151,6 +151,21 @@ public class SploutClient {
 		}
 	}
 
+	public DeployInfo create(String tablespace, ReplicationMap replicationMap, List<String> initStatements)
+	    throws IOException {
+		DeployRequest deployRequest = new DeployRequest();
+		deployRequest.setTablespace(tablespace);
+		deployRequest.setReplicationMap(replicationMap.getReplicationEntries());
+		deployRequest.setInitStatements(initStatements);
+
+		try {
+			final String strCont = JSONSerDe.ser(deployRequest);
+			return sendDeploy(true, strCont);
+		} catch(JSONSerDeException e) {
+			throw new IOException(e);
+		}
+	}
+
 	public DeployInfo deploy(String tablespace, PartitionMap partitionMap, ReplicationMap replicationMap,
 	    URI dataUri) throws IOException {
 
@@ -166,7 +181,14 @@ public class SploutClient {
 	public DeployInfo deploy(final DeployRequest... requests) throws IOException {
 		try {
 			final String strCont = JSONSerDe.ser(new ArrayList<DeployRequest>(Arrays.asList(requests)));
-			System.out.println(strCont);
+			return sendDeploy(false, strCont);
+		} catch(JSONSerDeException e) {
+			throw new IOException(e);
+		}
+	}
+
+	private DeployInfo sendDeploy(boolean onlyCreate, final String strCont) throws IOException {
+		try {
 			HttpContent content = new HttpContent() {
 				byte[] content = strCont.getBytes("UTF-8");
 
@@ -196,8 +218,10 @@ public class SploutClient {
 				}
 			};
 
+			String endPoint = onlyCreate ? "/api/create" : "/api/deploy";
+
 			HttpRequest request = requestFactory.buildPostRequest(new GenericUrl(
-			    qNodes[(int) (Math.random() * qNodes.length)] + "/api/deploy"), content);
+			    qNodes[(int) (Math.random() * qNodes.length)] + endPoint), content);
 			HttpResponse resp = request.execute();
 			return JSONSerDe.deSer(asString(resp.getContent()), DeployInfo.class);
 		} catch(JSONSerDeException e) {

@@ -30,6 +30,8 @@ public class DNodeService {
 
     public String deploy(List<DeployAction> deployActions, long version) throws DNodeException, org.apache.thrift.TException;
 
+    public String createTablespacePartitions(List<DeployAction> deployActions, long version) throws DNodeException, org.apache.thrift.TException;
+
     public String rollback(List<RollbackAction> rollbackActions, String distributedBarrier) throws DNodeException, org.apache.thrift.TException;
 
     public String status() throws DNodeException, org.apache.thrift.TException;
@@ -47,6 +49,8 @@ public class DNodeService {
     public void deleteOldVersions(List<TablespaceVersion> versions, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.deleteOldVersions_call> resultHandler) throws org.apache.thrift.TException;
 
     public void deploy(List<DeployAction> deployActions, long version, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.deploy_call> resultHandler) throws org.apache.thrift.TException;
+
+    public void createTablespacePartitions(List<DeployAction> deployActions, long version, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.createTablespacePartitions_call> resultHandler) throws org.apache.thrift.TException;
 
     public void rollback(List<RollbackAction> rollbackActions, String distributedBarrier, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.rollback_call> resultHandler) throws org.apache.thrift.TException;
 
@@ -158,6 +162,33 @@ public class DNodeService {
         throw result.excep;
       }
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "deploy failed: unknown result");
+    }
+
+    public String createTablespacePartitions(List<DeployAction> deployActions, long version) throws DNodeException, org.apache.thrift.TException
+    {
+      send_createTablespacePartitions(deployActions, version);
+      return recv_createTablespacePartitions();
+    }
+
+    public void send_createTablespacePartitions(List<DeployAction> deployActions, long version) throws org.apache.thrift.TException
+    {
+      createTablespacePartitions_args args = new createTablespacePartitions_args();
+      args.setDeployActions(deployActions);
+      args.setVersion(version);
+      sendBase("createTablespacePartitions", args);
+    }
+
+    public String recv_createTablespacePartitions() throws DNodeException, org.apache.thrift.TException
+    {
+      createTablespacePartitions_result result = new createTablespacePartitions_result();
+      receiveBase(result, "createTablespacePartitions");
+      if (result.isSetSuccess()) {
+        return result.success;
+      }
+      if (result.excep != null) {
+        throw result.excep;
+      }
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "createTablespacePartitions failed: unknown result");
     }
 
     public String rollback(List<RollbackAction> rollbackActions, String distributedBarrier) throws DNodeException, org.apache.thrift.TException
@@ -390,6 +421,41 @@ public class DNodeService {
       }
     }
 
+    public void createTablespacePartitions(List<DeployAction> deployActions, long version, org.apache.thrift.async.AsyncMethodCallback<createTablespacePartitions_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      createTablespacePartitions_call method_call = new createTablespacePartitions_call(deployActions, version, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class createTablespacePartitions_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private List<DeployAction> deployActions;
+      private long version;
+      public createTablespacePartitions_call(List<DeployAction> deployActions, long version, org.apache.thrift.async.AsyncMethodCallback<createTablespacePartitions_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.deployActions = deployActions;
+        this.version = version;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("createTablespacePartitions", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        createTablespacePartitions_args args = new createTablespacePartitions_args();
+        args.setDeployActions(deployActions);
+        args.setVersion(version);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public String getResult() throws DNodeException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        return (new Client(prot)).recv_createTablespacePartitions();
+      }
+    }
+
     public void rollback(List<RollbackAction> rollbackActions, String distributedBarrier, org.apache.thrift.async.AsyncMethodCallback<rollback_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       rollback_call method_call = new rollback_call(rollbackActions, distributedBarrier, resultHandler, this, ___protocolFactory, ___transport);
@@ -534,6 +600,7 @@ public class DNodeService {
       processMap.put("sqlQuery", new sqlQuery());
       processMap.put("deleteOldVersions", new deleteOldVersions());
       processMap.put("deploy", new deploy());
+      processMap.put("createTablespacePartitions", new createTablespacePartitions());
       processMap.put("rollback", new rollback());
       processMap.put("status", new status());
       processMap.put("abortDeploy", new abortDeploy());
@@ -594,6 +661,26 @@ public class DNodeService {
         deploy_result result = new deploy_result();
         try {
           result.success = iface.deploy(args.deployActions, args.version);
+        } catch (DNodeException excep) {
+          result.excep = excep;
+        }
+        return result;
+      }
+    }
+
+    private static class createTablespacePartitions<I extends Iface> extends org.apache.thrift.ProcessFunction<I, createTablespacePartitions_args> {
+      public createTablespacePartitions() {
+        super("createTablespacePartitions");
+      }
+
+      protected createTablespacePartitions_args getEmptyArgsInstance() {
+        return new createTablespacePartitions_args();
+      }
+
+      protected createTablespacePartitions_result getResult(I iface, createTablespacePartitions_args args) throws org.apache.thrift.TException {
+        createTablespacePartitions_result result = new createTablespacePartitions_result();
+        try {
+          result.success = iface.createTablespacePartitions(args.deployActions, args.version);
         } catch (DNodeException excep) {
           result.excep = excep;
         }
@@ -3156,6 +3243,815 @@ public class DNodeService {
 
   }
 
+  public static class createTablespacePartitions_args implements org.apache.thrift.TBase<createTablespacePartitions_args, createTablespacePartitions_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("createTablespacePartitions_args");
+
+    private static final org.apache.thrift.protocol.TField DEPLOY_ACTIONS_FIELD_DESC = new org.apache.thrift.protocol.TField("deployActions", org.apache.thrift.protocol.TType.LIST, (short)1);
+    private static final org.apache.thrift.protocol.TField VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("version", org.apache.thrift.protocol.TType.I64, (short)2);
+
+    public List<DeployAction> deployActions; // required
+    public long version; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      DEPLOY_ACTIONS((short)1, "deployActions"),
+      VERSION((short)2, "version");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // DEPLOY_ACTIONS
+            return DEPLOY_ACTIONS;
+          case 2: // VERSION
+            return VERSION;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __VERSION_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.DEPLOY_ACTIONS, new org.apache.thrift.meta_data.FieldMetaData("deployActions", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, DeployAction.class))));
+      tmpMap.put(_Fields.VERSION, new org.apache.thrift.meta_data.FieldMetaData("version", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(createTablespacePartitions_args.class, metaDataMap);
+    }
+
+    public createTablespacePartitions_args() {
+    }
+
+    public createTablespacePartitions_args(
+      List<DeployAction> deployActions,
+      long version)
+    {
+      this();
+      this.deployActions = deployActions;
+      this.version = version;
+      setVersionIsSet(true);
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public createTablespacePartitions_args(createTablespacePartitions_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      if (other.isSetDeployActions()) {
+        List<DeployAction> __this__deployActions = new ArrayList<DeployAction>();
+        for (DeployAction other_element : other.deployActions) {
+          __this__deployActions.add(new DeployAction(other_element));
+        }
+        this.deployActions = __this__deployActions;
+      }
+      this.version = other.version;
+    }
+
+    public createTablespacePartitions_args deepCopy() {
+      return new createTablespacePartitions_args(this);
+    }
+
+    @Override
+    public void clear() {
+      this.deployActions = null;
+      setVersionIsSet(false);
+      this.version = 0;
+    }
+
+    public int getDeployActionsSize() {
+      return (this.deployActions == null) ? 0 : this.deployActions.size();
+    }
+
+    public java.util.Iterator<DeployAction> getDeployActionsIterator() {
+      return (this.deployActions == null) ? null : this.deployActions.iterator();
+    }
+
+    public void addToDeployActions(DeployAction elem) {
+      if (this.deployActions == null) {
+        this.deployActions = new ArrayList<DeployAction>();
+      }
+      this.deployActions.add(elem);
+    }
+
+    public List<DeployAction> getDeployActions() {
+      return this.deployActions;
+    }
+
+    public createTablespacePartitions_args setDeployActions(List<DeployAction> deployActions) {
+      this.deployActions = deployActions;
+      return this;
+    }
+
+    public void unsetDeployActions() {
+      this.deployActions = null;
+    }
+
+    /** Returns true if field deployActions is set (has been assigned a value) and false otherwise */
+    public boolean isSetDeployActions() {
+      return this.deployActions != null;
+    }
+
+    public void setDeployActionsIsSet(boolean value) {
+      if (!value) {
+        this.deployActions = null;
+      }
+    }
+
+    public long getVersion() {
+      return this.version;
+    }
+
+    public createTablespacePartitions_args setVersion(long version) {
+      this.version = version;
+      setVersionIsSet(true);
+      return this;
+    }
+
+    public void unsetVersion() {
+      __isset_bit_vector.clear(__VERSION_ISSET_ID);
+    }
+
+    /** Returns true if field version is set (has been assigned a value) and false otherwise */
+    public boolean isSetVersion() {
+      return __isset_bit_vector.get(__VERSION_ISSET_ID);
+    }
+
+    public void setVersionIsSet(boolean value) {
+      __isset_bit_vector.set(__VERSION_ISSET_ID, value);
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case DEPLOY_ACTIONS:
+        if (value == null) {
+          unsetDeployActions();
+        } else {
+          setDeployActions((List<DeployAction>)value);
+        }
+        break;
+
+      case VERSION:
+        if (value == null) {
+          unsetVersion();
+        } else {
+          setVersion((Long)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case DEPLOY_ACTIONS:
+        return getDeployActions();
+
+      case VERSION:
+        return Long.valueOf(getVersion());
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case DEPLOY_ACTIONS:
+        return isSetDeployActions();
+      case VERSION:
+        return isSetVersion();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof createTablespacePartitions_args)
+        return this.equals((createTablespacePartitions_args)that);
+      return false;
+    }
+
+    public boolean equals(createTablespacePartitions_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_deployActions = true && this.isSetDeployActions();
+      boolean that_present_deployActions = true && that.isSetDeployActions();
+      if (this_present_deployActions || that_present_deployActions) {
+        if (!(this_present_deployActions && that_present_deployActions))
+          return false;
+        if (!this.deployActions.equals(that.deployActions))
+          return false;
+      }
+
+      boolean this_present_version = true;
+      boolean that_present_version = true;
+      if (this_present_version || that_present_version) {
+        if (!(this_present_version && that_present_version))
+          return false;
+        if (this.version != that.version)
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(createTablespacePartitions_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      createTablespacePartitions_args typedOther = (createTablespacePartitions_args)other;
+
+      lastComparison = Boolean.valueOf(isSetDeployActions()).compareTo(typedOther.isSetDeployActions());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetDeployActions()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.deployActions, typedOther.deployActions);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetVersion()).compareTo(typedOther.isSetVersion());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetVersion()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.version, typedOther.version);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // DEPLOY_ACTIONS
+            if (field.type == org.apache.thrift.protocol.TType.LIST) {
+              {
+                org.apache.thrift.protocol.TList _list12 = iprot.readListBegin();
+                this.deployActions = new ArrayList<DeployAction>(_list12.size);
+                for (int _i13 = 0; _i13 < _list12.size; ++_i13)
+                {
+                  DeployAction _elem14; // required
+                  _elem14 = new DeployAction();
+                  _elem14.read(iprot);
+                  this.deployActions.add(_elem14);
+                }
+                iprot.readListEnd();
+              }
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // VERSION
+            if (field.type == org.apache.thrift.protocol.TType.I64) {
+              this.version = iprot.readI64();
+              setVersionIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      if (this.deployActions != null) {
+        oprot.writeFieldBegin(DEPLOY_ACTIONS_FIELD_DESC);
+        {
+          oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.deployActions.size()));
+          for (DeployAction _iter15 : this.deployActions)
+          {
+            _iter15.write(oprot);
+          }
+          oprot.writeListEnd();
+        }
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldBegin(VERSION_FIELD_DESC);
+      oprot.writeI64(this.version);
+      oprot.writeFieldEnd();
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("createTablespacePartitions_args(");
+      boolean first = true;
+
+      sb.append("deployActions:");
+      if (this.deployActions == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.deployActions);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("version:");
+      sb.append(this.version);
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+  }
+
+  public static class createTablespacePartitions_result implements org.apache.thrift.TBase<createTablespacePartitions_result, createTablespacePartitions_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("createTablespacePartitions_result");
+
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRING, (short)0);
+    private static final org.apache.thrift.protocol.TField EXCEP_FIELD_DESC = new org.apache.thrift.protocol.TField("excep", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    public String success; // required
+    public DNodeException excep; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      SUCCESS((short)0, "success"),
+      EXCEP((short)1, "excep");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 0: // SUCCESS
+            return SUCCESS;
+          case 1: // EXCEP
+            return EXCEP;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.EXCEP, new org.apache.thrift.meta_data.FieldMetaData("excep", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(createTablespacePartitions_result.class, metaDataMap);
+    }
+
+    public createTablespacePartitions_result() {
+    }
+
+    public createTablespacePartitions_result(
+      String success,
+      DNodeException excep)
+    {
+      this();
+      this.success = success;
+      this.excep = excep;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public createTablespacePartitions_result(createTablespacePartitions_result other) {
+      if (other.isSetSuccess()) {
+        this.success = other.success;
+      }
+      if (other.isSetExcep()) {
+        this.excep = new DNodeException(other.excep);
+      }
+    }
+
+    public createTablespacePartitions_result deepCopy() {
+      return new createTablespacePartitions_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.success = null;
+      this.excep = null;
+    }
+
+    public String getSuccess() {
+      return this.success;
+    }
+
+    public createTablespacePartitions_result setSuccess(String success) {
+      this.success = success;
+      return this;
+    }
+
+    public void unsetSuccess() {
+      this.success = null;
+    }
+
+    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    public boolean isSetSuccess() {
+      return this.success != null;
+    }
+
+    public void setSuccessIsSet(boolean value) {
+      if (!value) {
+        this.success = null;
+      }
+    }
+
+    public DNodeException getExcep() {
+      return this.excep;
+    }
+
+    public createTablespacePartitions_result setExcep(DNodeException excep) {
+      this.excep = excep;
+      return this;
+    }
+
+    public void unsetExcep() {
+      this.excep = null;
+    }
+
+    /** Returns true if field excep is set (has been assigned a value) and false otherwise */
+    public boolean isSetExcep() {
+      return this.excep != null;
+    }
+
+    public void setExcepIsSet(boolean value) {
+      if (!value) {
+        this.excep = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          setSuccess((String)value);
+        }
+        break;
+
+      case EXCEP:
+        if (value == null) {
+          unsetExcep();
+        } else {
+          setExcep((DNodeException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SUCCESS:
+        return getSuccess();
+
+      case EXCEP:
+        return getExcep();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SUCCESS:
+        return isSetSuccess();
+      case EXCEP:
+        return isSetExcep();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof createTablespacePartitions_result)
+        return this.equals((createTablespacePartitions_result)that);
+      return false;
+    }
+
+    public boolean equals(createTablespacePartitions_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_success = true && this.isSetSuccess();
+      boolean that_present_success = true && that.isSetSuccess();
+      if (this_present_success || that_present_success) {
+        if (!(this_present_success && that_present_success))
+          return false;
+        if (!this.success.equals(that.success))
+          return false;
+      }
+
+      boolean this_present_excep = true && this.isSetExcep();
+      boolean that_present_excep = true && that.isSetExcep();
+      if (this_present_excep || that_present_excep) {
+        if (!(this_present_excep && that_present_excep))
+          return false;
+        if (!this.excep.equals(that.excep))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(createTablespacePartitions_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      createTablespacePartitions_result typedOther = (createTablespacePartitions_result)other;
+
+      lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetSuccess()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.success, typedOther.success);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetExcep()).compareTo(typedOther.isSetExcep());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetExcep()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.excep, typedOther.excep);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 0: // SUCCESS
+            if (field.type == org.apache.thrift.protocol.TType.STRING) {
+              this.success = iprot.readString();
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 1: // EXCEP
+            if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
+              this.excep = new DNodeException();
+              this.excep.read(iprot);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetSuccess()) {
+        oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
+        oprot.writeString(this.success);
+        oprot.writeFieldEnd();
+      } else if (this.isSetExcep()) {
+        oprot.writeFieldBegin(EXCEP_FIELD_DESC);
+        this.excep.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("createTablespacePartitions_result(");
+      boolean first = true;
+
+      sb.append("success:");
+      if (this.success == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("excep:");
+      if (this.excep == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.excep);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+  }
+
   public static class rollback_args implements org.apache.thrift.TBase<rollback_args, rollback_args._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("rollback_args");
 
@@ -3476,14 +4372,14 @@ public class DNodeService {
           case 1: // ROLLBACK_ACTIONS
             if (field.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list12 = iprot.readListBegin();
-                this.rollbackActions = new ArrayList<RollbackAction>(_list12.size);
-                for (int _i13 = 0; _i13 < _list12.size; ++_i13)
+                org.apache.thrift.protocol.TList _list16 = iprot.readListBegin();
+                this.rollbackActions = new ArrayList<RollbackAction>(_list16.size);
+                for (int _i17 = 0; _i17 < _list16.size; ++_i17)
                 {
-                  RollbackAction _elem14; // required
-                  _elem14 = new RollbackAction();
-                  _elem14.read(iprot);
-                  this.rollbackActions.add(_elem14);
+                  RollbackAction _elem18; // required
+                  _elem18 = new RollbackAction();
+                  _elem18.read(iprot);
+                  this.rollbackActions.add(_elem18);
                 }
                 iprot.readListEnd();
               }
@@ -3517,9 +4413,9 @@ public class DNodeService {
         oprot.writeFieldBegin(ROLLBACK_ACTIONS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.rollbackActions.size()));
-          for (RollbackAction _iter15 : this.rollbackActions)
+          for (RollbackAction _iter19 : this.rollbackActions)
           {
-            _iter15.write(oprot);
+            _iter19.write(oprot);
           }
           oprot.writeListEnd();
         }

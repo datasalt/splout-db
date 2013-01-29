@@ -73,4 +73,8 @@ public class DNodeMockHandler implements IDNodeHandler {
 	@Override
   public void stop() throws Exception {
   }
+	@Override
+  public String createTablespacePartitions(List<DeployAction> deployAction, long version) throws DNodeException {
+	  return null;
+  }
 }

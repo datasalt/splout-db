@@ -59,4 +59,7 @@ public interface IDNodeHandler {
 	public String testCommand(String command) throws DNodeException;
 
 	public void stop() throws Exception;
+
+	public String createTablespacePartitions(List<DeployAction> deployAction, long version) throws DNodeException;
+
 }

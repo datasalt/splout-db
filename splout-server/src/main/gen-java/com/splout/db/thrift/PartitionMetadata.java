@@ -28,12 +28,14 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
   private static final org.apache.thrift.protocol.TField N_REPLICAS_FIELD_DESC = new org.apache.thrift.protocol.TField("nReplicas", org.apache.thrift.protocol.TType.I32, (short)3);
   private static final org.apache.thrift.protocol.TField DEPLOYMENT_DATE_FIELD_DESC = new org.apache.thrift.protocol.TField("deploymentDate", org.apache.thrift.protocol.TType.I64, (short)4);
   private static final org.apache.thrift.protocol.TField INIT_STATEMENTS_FIELD_DESC = new org.apache.thrift.protocol.TField("initStatements", org.apache.thrift.protocol.TType.LIST, (short)5);
+  private static final org.apache.thrift.protocol.TField HAS_NO_PARTITION_MAP_FIELD_DESC = new org.apache.thrift.protocol.TField("hasNoPartitionMap", org.apache.thrift.protocol.TType.BOOL, (short)6);
 
   public String minKey; // required
   public String maxKey; // required
   public int nReplicas; // required
   public long deploymentDate; // required
   public List<String> initStatements; // required
+  public boolean hasNoPartitionMap; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -41,7 +43,8 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
     MAX_KEY((short)2, "maxKey"),
     N_REPLICAS((short)3, "nReplicas"),
     DEPLOYMENT_DATE((short)4, "deploymentDate"),
-    INIT_STATEMENTS((short)5, "initStatements");
+    INIT_STATEMENTS((short)5, "initStatements"),
+    HAS_NO_PARTITION_MAP((short)6, "hasNoPartitionMap");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -66,6 +69,8 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
           return DEPLOYMENT_DATE;
         case 5: // INIT_STATEMENTS
           return INIT_STATEMENTS;
+        case 6: // HAS_NO_PARTITION_MAP
+          return HAS_NO_PARTITION_MAP;
         default:
           return null;
       }
@@ -108,7 +113,8 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
   // isset id assignments
   private static final int __NREPLICAS_ISSET_ID = 0;
   private static final int __DEPLOYMENTDATE_ISSET_ID = 1;
-  private BitSet __isset_bit_vector = new BitSet(2);
+  private static final int __HASNOPARTITIONMAP_ISSET_ID = 2;
+  private BitSet __isset_bit_vector = new BitSet(3);
 
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
@@ -124,6 +130,8 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
     tmpMap.put(_Fields.INIT_STATEMENTS, new org.apache.thrift.meta_data.FieldMetaData("initStatements", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING))));
+    tmpMap.put(_Fields.HAS_NO_PARTITION_MAP, new org.apache.thrift.meta_data.FieldMetaData("hasNoPartitionMap", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(PartitionMetadata.class, metaDataMap);
   }
@@ -135,7 +143,8 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
     String minKey,
     String maxKey,
     int nReplicas,
-    long deploymentDate)
+    long deploymentDate,
+    boolean hasNoPartitionMap)
   {
     this();
     this.minKey = minKey;
@@ -144,6 +153,8 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
     setNReplicasIsSet(true);
     this.deploymentDate = deploymentDate;
     setDeploymentDateIsSet(true);
+    this.hasNoPartitionMap = hasNoPartitionMap;
+    setHasNoPartitionMapIsSet(true);
   }
 
   /**
@@ -167,6 +178,7 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
       }
       this.initStatements = __this__initStatements;
     }
+    this.hasNoPartitionMap = other.hasNoPartitionMap;
   }
 
   public PartitionMetadata deepCopy() {
@@ -182,6 +194,8 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
     setDeploymentDateIsSet(false);
     this.deploymentDate = 0;
     this.initStatements = null;
+    setHasNoPartitionMapIsSet(false);
+    this.hasNoPartitionMap = false;
   }
 
   public String getMinKey() {
@@ -317,6 +331,29 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
     }
   }
 
+  public boolean isHasNoPartitionMap() {
+    return this.hasNoPartitionMap;
+  }
+
+  public PartitionMetadata setHasNoPartitionMap(boolean hasNoPartitionMap) {
+    this.hasNoPartitionMap = hasNoPartitionMap;
+    setHasNoPartitionMapIsSet(true);
+    return this;
+  }
+
+  public void unsetHasNoPartitionMap() {
+    __isset_bit_vector.clear(__HASNOPARTITIONMAP_ISSET_ID);
+  }
+
+  /** Returns true if field hasNoPartitionMap is set (has been assigned a value) and false otherwise */
+  public boolean isSetHasNoPartitionMap() {
+    return __isset_bit_vector.get(__HASNOPARTITIONMAP_ISSET_ID);
+  }
+
+  public void setHasNoPartitionMapIsSet(boolean value) {
+    __isset_bit_vector.set(__HASNOPARTITIONMAP_ISSET_ID, value);
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case MIN_KEY:
@@ -359,6 +396,14 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
       }
       break;
 
+    case HAS_NO_PARTITION_MAP:
+      if (value == null) {
+        unsetHasNoPartitionMap();
+      } else {
+        setHasNoPartitionMap((Boolean)value);
+      }
+      break;
+
     }
   }
 
@@ -378,6 +423,9 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
 
     case INIT_STATEMENTS:
       return getInitStatements();
+
+    case HAS_NO_PARTITION_MAP:
+      return Boolean.valueOf(isHasNoPartitionMap());
 
     }
     throw new IllegalStateException();
@@ -400,6 +448,8 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
       return isSetDeploymentDate();
     case INIT_STATEMENTS:
       return isSetInitStatements();
+    case HAS_NO_PARTITION_MAP:
+      return isSetHasNoPartitionMap();
     }
     throw new IllegalStateException();
   }
@@ -459,6 +509,15 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
       if (!(this_present_initStatements && that_present_initStatements))
         return false;
       if (!this.initStatements.equals(that.initStatements))
+        return false;
+    }
+
+    boolean this_present_hasNoPartitionMap = true;
+    boolean that_present_hasNoPartitionMap = true;
+    if (this_present_hasNoPartitionMap || that_present_hasNoPartitionMap) {
+      if (!(this_present_hasNoPartitionMap && that_present_hasNoPartitionMap))
+        return false;
+      if (this.hasNoPartitionMap != that.hasNoPartitionMap)
         return false;
     }
 
@@ -528,6 +587,16 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
         return lastComparison;
       }
     }
+    lastComparison = Boolean.valueOf(isSetHasNoPartitionMap()).compareTo(typedOther.isSetHasNoPartitionMap());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetHasNoPartitionMap()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.hasNoPartitionMap, typedOther.hasNoPartitionMap);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     return 0;
   }
 
@@ -592,6 +661,14 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
+        case 6: // HAS_NO_PARTITION_MAP
+          if (field.type == org.apache.thrift.protocol.TType.BOOL) {
+            this.hasNoPartitionMap = iprot.readBool();
+            setHasNoPartitionMapIsSet(true);
+          } else { 
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
         default:
           org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
       }
@@ -637,6 +714,9 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
         oprot.writeFieldEnd();
       }
     }
+    oprot.writeFieldBegin(HAS_NO_PARTITION_MAP_FIELD_DESC);
+    oprot.writeBool(this.hasNoPartitionMap);
+    oprot.writeFieldEnd();
     oprot.writeFieldStop();
     oprot.writeStructEnd();
   }
@@ -679,6 +759,10 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
       }
       first = false;
     }
+    if (!first) sb.append(", ");
+    sb.append("hasNoPartitionMap:");
+    sb.append(this.hasNoPartitionMap);
+    first = false;
     sb.append(")");
     return sb.toString();
   }

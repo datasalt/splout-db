@@ -23,6 +23,7 @@ package com.splout.db.dnode;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -113,18 +114,18 @@ public class DNodeHandler implements IDNodeHandler {
 
 	// The {@link Fetcher} is the responsible for downloading new deployment data.
 	private Fetcher fetcher;
-	
+
 	// Above this query time the query will be logged as slow query
 	private long absoluteSlowQueryLimit;
 	private long slowQueries = 0;
-	
+
 	// This thread will interrupt long-running queries
 	private TimeoutThread timeoutThread;
-	
+
 	public DNodeHandler(Fetcher fetcher) {
 		this.fetcher = fetcher;
 	}
-	
+
 	public DNodeHandler() {
 	}
 
@@ -212,7 +213,7 @@ public class DNodeHandler implements IDNodeHandler {
 	@Override
 	public String sqlQuery(String tablespace, long version, int partition, String query)
 	    throws DNodeException {
-		
+
 		try {
 			try {
 				performanceTool.startQuery();
@@ -252,16 +253,13 @@ public class DNodeHandler implements IDNodeHandler {
 					String result = ((SQLite4JavaManager) dbPoolInCache.getObjectValue()).query(query,
 					    maxResultsPerQuery);
 					long time = performanceTool.endQuery();
-					log.info("serving query [" + tablespace + "]"  + " [" + version + "] [" + partition + "] [" + query + "] time [" + time + "] OK.");
-//					double prob = performanceTool.getHistogram().getLeftAccumulatedProbability(time);
-//					if(prob > 0.95) {
-//						// slow query!
-//						log.warn("[SLOW QUERY] Query time over 95 percentil: [" + query + "] time [" + time + "]");
-//						slowQueries++;
-//					}
+					log.info("serving query [" + tablespace + "]" + " [" + version + "] [" + partition + "] ["
+					    + query + "] time [" + time + "] OK.");
+
 					if(time > absoluteSlowQueryLimit) {
 						// slow query!
-						log.warn("[SLOW QUERY] Query time over absolute slow query time (" + absoluteSlowQueryLimit + ") : [" + query + "] time [" + time + "]");						
+						log.warn("[SLOW QUERY] Query time over absolute slow query time (" + absoluteSlowQueryLimit
+						    + ") : [" + query + "] time [" + time + "]");
 						slowQueries++;
 					}
 					return result;
@@ -275,7 +273,8 @@ public class DNodeHandler implements IDNodeHandler {
 				throw new DNodeException(EXCEPTION_UNEXPECTED, e.getMessage());
 			}
 		} catch(DNodeException e) {
-			log.info("serving query [" + tablespace + "]"  + " [" + version + "] [" + partition + "] [" + query + "] FAILED [" + e.getMsg() + "]");
+			log.info("serving query [" + tablespace + "]" + " [" + version + "] [" + partition + "] [" + query
+			    + "] FAILED [" + e.getMsg() + "]");
 			failedQueries.incrementAndGet();
 			throw e;
 		}
@@ -285,6 +284,57 @@ public class DNodeHandler implements IDNodeHandler {
 		ConcurrentMap<String, String> panel = coord.getDeployErrorPanel(version);
 		panel.put(whoAmI(), errorMessage);
 		deployInProgress.decrementAndGet();
+	}
+
+	/**
+	 * Thrift RPC Method -> Create empty tablespace (for populating it via random writes, using hash modulo partitions).
+	 */
+	@Override
+	public String createTablespacePartitions(final List<DeployAction> deployActions, final long version)
+	    throws DNodeException {
+		try {
+			for(DeployAction deployAction : deployActions) {
+				// 1- Store metadata
+				File metadataFile = getLocalMetadataFile(deployAction.getTablespace(),
+				    deployAction.getPartition(), version);
+
+				if(!metadataFile.getParentFile().exists()) {
+					metadataFile.getParentFile().mkdirs();
+				}
+				ThriftWriter writer = new ThriftWriter(metadataFile);
+				writer.write(deployAction.getMetadata());
+				writer.close();
+
+				// 2- Create DB Folder
+				File dbFolder = getLocalStorageFolder(deployAction.getTablespace(), deployAction.getPartition(),
+				    version);
+				if(dbFolder.exists()) {
+					FileUtils.deleteDirectory(dbFolder);
+				}
+				dbFolder.mkdir();
+				
+				// Create an empty .db file so that the other system code can remain checking always for .db files
+				SQLite4JavaManager manager = new SQLite4JavaManager(dbFolder + "/" + deployAction.getPartition() + ".db", null);
+				manager.exec("SELECT 1;");
+				manager.close();
+			}
+			
+			// Publish new DNodeInfo in distributed registry.
+			// This makes QNodes notice that a new version is available...
+			// PartitionMap and ReplicationMap will be built incrementally as DNodes finish.
+			dnodesRegistry.changeInfo(new DNodeInfo(config));
+
+			return JSONSerDe.ser(new DNodeStatusResponse("Ok. Tablespace partitions created."));
+		} catch(IOException e) {
+			unexpectedException(e);
+			throw new DNodeException(EXCEPTION_UNEXPECTED, e.getMessage());
+		} catch(JSONSerDeException e) {
+			unexpectedException(e);
+			throw new DNodeException(EXCEPTION_UNEXPECTED, e.getMessage());
+		} catch(SQLException e) {
+			unexpectedException(e);
+			throw new DNodeException(EXCEPTION_UNEXPECTED, e.getMessage());
+    }
 	}
 
 	/**
@@ -600,6 +650,6 @@ public class DNodeHandler implements IDNodeHandler {
 	}
 
 	public CoordinationStructures getCoord() {
-  	return coord;
-  }
+		return coord;
+	}
 }

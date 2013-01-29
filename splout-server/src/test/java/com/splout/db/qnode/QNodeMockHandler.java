@@ -89,4 +89,8 @@ public class QNodeMockHandler implements IQNodeHandler {
   public Tablespace tablespace(String tablespace) throws Exception {
 	  return null;
   }
+	@Override
+  public DeployInfo createTablespace(DeployRequest deployReq) throws Exception {
+	  return null;
+  }
 }

@@ -49,7 +49,6 @@ import com.splout.db.dnode.DNode;
 import com.splout.db.dnode.DNodeHandler;
 import com.splout.db.dnode.DNodeMockHandler;
 import com.splout.db.dnode.DNodeProperties;
-import com.splout.db.dnode.IDNodeHandler;
 import com.splout.db.hazelcast.CoordinationStructures;
 import com.splout.db.hazelcast.DNodeInfo;
 import com.splout.db.hazelcast.HazelcastConfigBuilder;
@@ -116,11 +115,13 @@ public class TestQNodeHandler {
 			    versionsBeingServed);
 
 			new TestUtils.NotWaitingForeverCondition() {
-				
+
 				@Override
 				public boolean endCondition() {
-					return handler.getContext().getCurrentVersionsMap().get("t1") != null && handler.getContext().getCurrentVersionsMap().get("t1") == 0l
-					&& handler.getContext().getCurrentVersionsMap().get("t2") != null && handler.getContext().getCurrentVersionsMap().get("t2") == 1l;
+					return handler.getContext().getCurrentVersionsMap().get("t1") != null
+					    && handler.getContext().getCurrentVersionsMap().get("t1") == 0l
+					    && handler.getContext().getCurrentVersionsMap().get("t2") != null
+					    && handler.getContext().getCurrentVersionsMap().get("t2") == 1l;
 				}
 			}.waitAtMost(5000);
 
@@ -130,11 +131,13 @@ public class TestQNodeHandler {
 			    versionsBeingServed);
 
 			new TestUtils.NotWaitingForeverCondition() {
-				
+
 				@Override
 				public boolean endCondition() {
-					return handler.getContext().getCurrentVersionsMap().get("t1") != null && handler.getContext().getCurrentVersionsMap().get("t1") == 1l
-					&& handler.getContext().getCurrentVersionsMap().get("t2") != null && handler.getContext().getCurrentVersionsMap().get("t2") == 0l;
+					return handler.getContext().getCurrentVersionsMap().get("t1") != null
+					    && handler.getContext().getCurrentVersionsMap().get("t1") == 1l
+					    && handler.getContext().getCurrentVersionsMap().get("t2") != null
+					    && handler.getContext().getCurrentVersionsMap().get("t2") == 0l;
 				}
 			}.waitAtMost(5000);
 
@@ -264,16 +267,7 @@ public class TestQNodeHandler {
 		// Same as test deploy firing, but with more than one DNode and different deploy actions
 		SploutConfiguration config1 = SploutConfiguration.getTestConfig();
 
-		DNode dnode1 = TestUtils.getTestDNode(config1, new IDNodeHandler() {
-			@Override
-			public void init(SploutConfiguration config) throws Exception {
-			}
-
-			@Override
-			public String sqlQuery(String tablespace, long version, int partition, String query)
-			    throws DNodeException {
-				return null;
-			}
+		DNode dnode1 = TestUtils.getTestDNode(config1, new DNodeMockHandler() {
 
 			@Override
 			public String deploy(List<DeployAction> deployActions, long distributedBarrier)
@@ -289,54 +283,10 @@ public class TestQNodeHandler {
 				return "FOO";
 			}
 
-			@Override
-			public String rollback(List<RollbackAction> rollbackActions, String ignoreMe)
-			    throws DNodeException {
-				return null;
-			}
-
-			@Override
-			public String status() throws DNodeException {
-				return null;
-			}
-
-			@Override
-			public void stop() throws Exception {
-			}
-
-			@Override
-			public void giveGreenLigth() {
-			}
-
-			@Override
-			public String abortDeploy(long version) throws DNodeException {
-				return null;
-			}
-
-			@Override
-			public String deleteOldVersions(List<com.splout.db.thrift.TablespaceVersion> versions)
-			    throws DNodeException {
-				return null;
-			}
-
-			@Override
-			public String testCommand(String command) throws DNodeException {
-				// TODO Auto-generated method stub
-				return null;
-			}
 		}, "dnode-" + this.getClass().getName() + "-3");
 
 		SploutConfiguration config2 = SploutConfiguration.getTestConfig();
-		DNode dnode2 = TestUtils.getTestDNode(config2, new IDNodeHandler() {
-			@Override
-			public void init(SploutConfiguration config) throws Exception {
-			}
-
-			@Override
-			public String sqlQuery(String tablespace, long version, int partition, String query)
-			    throws DNodeException {
-				return null;
-			}
+		DNode dnode2 = TestUtils.getTestDNode(config2, new DNodeMockHandler() {
 
 			@Override
 			public String deploy(List<DeployAction> deployActions, long distributedBarrier)
@@ -350,41 +300,6 @@ public class TestQNodeHandler {
 				return "FOO";
 			}
 
-			@Override
-			public String rollback(List<RollbackAction> rollbackActions, String ignoreMe)
-			    throws DNodeException {
-				return null;
-			}
-
-			@Override
-			public String status() throws DNodeException {
-				return null;
-			}
-
-			@Override
-			public void stop() throws Exception {
-			}
-
-			@Override
-			public void giveGreenLigth() {
-			}
-
-			@Override
-			public String abortDeploy(long version) throws DNodeException {
-				return null;
-			}
-
-			@Override
-			public String deleteOldVersions(List<com.splout.db.thrift.TablespaceVersion> versions)
-			    throws DNodeException {
-				return null;
-			}
-
-			@Override
-			public String testCommand(String command) throws DNodeException {
-				// TODO Auto-generated method stub
-				return null;
-			}
 		}, "dnode-" + this.getClass().getName() + "-4");
 
 		QNodeHandler handler = new QNodeHandler();
@@ -419,22 +334,50 @@ public class TestQNodeHandler {
 	}
 
 	@Test
+	public void testCreateTablespace() throws Throwable {
+
+		QNodeHandler handler = new QNodeHandler();
+		SploutConfiguration config = SploutConfiguration.getTestConfig();
+
+		DNode dnode = TestUtils.getTestDNode(config, new DNodeMockHandler() {
+
+			@Override
+			public String createTablespacePartitions(List<DeployAction> deployActions, long version)
+			    throws DNodeException {
+				Assert.assertEquals(1, deployActions.size());
+				Assert.assertEquals("partition1", deployActions.get(0).getTablespace());
+				Assert.assertTrue(version >= 0); // TODO Is this the right checking here?
+				return "FOO";
+			}
+
+		}, "dnode-" + this.getClass().getName() + "-5");
+
+		try {
+			handler.init(config);
+
+			ReplicationEntry repEntry = new ReplicationEntry(0, dnode.getAddress());
+
+			DeployRequest deployRequest = new DeployRequest();
+			deployRequest.setTablespace("partition1");
+			deployRequest.setReplicationMap(Arrays.asList(repEntry));
+
+			handler.createTablespace(deployRequest);
+		} finally {
+			handler.close();
+			dnode.stop();
+			Hazelcast.shutdownAll();
+		}
+
+	}
+	
+	@Test
 	public void testDeployFiring() throws Throwable {
 		// Test the business logic that produces the firing of the deployment (not the continuation of it) For that, we will
 		// use dummy DNodeHandlers
 		QNodeHandler handler = new QNodeHandler();
 		SploutConfiguration config = SploutConfiguration.getTestConfig();
 
-		DNode dnode = TestUtils.getTestDNode(config, new IDNodeHandler() {
-			@Override
-			public void init(SploutConfiguration config) throws Exception {
-			}
-
-			@Override
-			public String sqlQuery(String tablespace, long version, int partition, String query)
-			    throws DNodeException {
-				return null;
-			}
+		DNode dnode = TestUtils.getTestDNode(config, new DNodeMockHandler() {
 
 			@Override
 			public String deploy(List<DeployAction> deployActions, long version) throws DNodeException {
@@ -445,41 +388,6 @@ public class TestQNodeHandler {
 				return "FOO";
 			}
 
-			@Override
-			public String rollback(List<RollbackAction> rollbackActions, String ignoreMe)
-			    throws DNodeException {
-				return null;
-			}
-
-			@Override
-			public String status() throws DNodeException {
-				return null;
-			}
-
-			@Override
-			public void stop() throws Exception {
-			}
-
-			@Override
-			public void giveGreenLigth() {
-			}
-
-			@Override
-			public String abortDeploy(long version) throws DNodeException {
-				return null;
-			}
-
-			@Override
-			public String deleteOldVersions(List<com.splout.db.thrift.TablespaceVersion> versions)
-			    throws DNodeException {
-				return null;
-			}
-
-			@Override
-			public String testCommand(String command) throws DNodeException {
-				// TODO Auto-generated method stub
-				return null;
-			}
 		}, "dnode-" + this.getClass().getName() + "-5");
 
 		try {

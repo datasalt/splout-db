@@ -125,7 +125,7 @@ public class DeployerCMD implements Tool {
       Path tablespacePath = new Path(spec.getSourcePath());
       FileSystem fs = tablespacePath.getFileSystem(getConf());
       if (!fs.exists(tablespacePath)) {
-        System.out.println("ERROR: Path [" + tablespacePath.makeQualified(fs) + "] not found.");
+        System.err.println("ERROR: Path [" + tablespacePath.makeQualified(fs) + "] not found.");
         return 1;
       }
     }

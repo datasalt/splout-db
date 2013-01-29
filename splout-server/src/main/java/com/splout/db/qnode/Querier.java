@@ -77,12 +77,20 @@ public class Querier extends QNodeHandlerModule {
 			return new ErrorQueryStatus("Unknown tablespace version:(" + version +") tablespace:(" + tablespaceName + ")");
 		}
 		PartitionMap partitionMap = tablespace.getPartitionMap();
+
+		// TODO TODO Is the replication map size always constant? Make sure
+		int nPartitions = tablespace.getReplicationMap().getReplicationEntries().size();
 		
 		// find the partition
 		int partitionId;
 		// use a key to find the appropriated partition
 		if(key != null) {
-			partitionId = partitionMap.findPartition(key);
+			if(partitionMap != null) {
+				partitionId = partitionMap.findPartition(key);
+			} else {
+				// if partitionMap == null -> use hash % partitions
+				partitionId = key.hashCode() % nPartitions;
+			}
 			if(partitionId == PartitionMap.NO_PARTITION) {
 				return new ErrorQueryStatus("Key out of partition ranges: " + key + " for tablespace "
 				    + tablespaceName);
@@ -90,7 +98,12 @@ public class Querier extends QNodeHandlerModule {
 		} else { // use provided partition
 			// partition shouldn't be null here -> we check it before at QNodeHandler
 			if(partition.toLowerCase().equals(PARTITION_RANDOM)) {
-				partitionId = (int)(Math.random() * partitionMap.getPartitionEntries().size());
+				if(partitionMap != null) {
+					partitionId = (int)(Math.random() * partitionMap.getPartitionEntries().size());
+				} else {
+					// if partitionMap == null -> use random % partitions
+					partitionId = (int)(Math.random() * nPartitions);
+				}
 			} else {
 				try {
 					partitionId = Integer.parseInt(partition);

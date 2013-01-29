@@ -139,6 +139,8 @@ public class DNode implements DNodeService.Iface {
 	public String status() throws DNodeException, TException {
 		return handler.status();
 	}
+	
+	
 
 	public void stop() throws Exception {
 		handler.stop();
@@ -171,5 +173,11 @@ public class DNode implements DNodeService.Iface {
 	@Override
   public String testCommand(String command) throws DNodeException, TException {
 	  return handler.testCommand(command);
+  }
+
+	@Override
+  public String createTablespacePartitions(List<DeployAction> deployActions, long version)
+      throws DNodeException, TException {
+	  return handler.createTablespacePartitions(deployActions, version);
   }
 }

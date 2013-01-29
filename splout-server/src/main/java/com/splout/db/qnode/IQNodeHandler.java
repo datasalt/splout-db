@@ -47,6 +47,7 @@ public interface IQNodeHandler {
 	public QueryStatus query(String tablespace, String key, String sql, String partition) throws Exception;
 	public ArrayList<QueryStatus> multiQuery(String tablespace, List<String> keyMins, List<String> keyMaxs, String sql) throws Exception;
 	public DeployInfo deploy(List<DeployRequest> deployReq) throws Exception;
+	public DeployInfo createTablespace(DeployRequest deployReq) throws Exception;
 	public StatusMessage rollback(List<SwitchVersionRequest> rollbackRequest) throws Exception;
 	public QNodeStatus overview() throws Exception;
 	public List<String> getDNodeList() throws Exception;

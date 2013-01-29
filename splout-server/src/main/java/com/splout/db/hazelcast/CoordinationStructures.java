@@ -152,4 +152,7 @@ public class CoordinationStructures {
 	public IMap<String, String> getDeployErrorPanel(long version) {
 		return hz.getMap(GLOBAL_DEPLOY_ERROR_PANEL + version);
 	}
+	
+	// ----------------- //
+	
 }

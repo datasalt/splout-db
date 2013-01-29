@@ -26,7 +26,6 @@ import com.datasalt.pangool.io.Schema.Field;
 import java.util.ArrayList;
 import java.util.List;
 
-@SuppressWarnings("serial")
 public class NullableSchema {
 
   /**

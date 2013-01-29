@@ -119,6 +119,7 @@ public class DNodeInfo implements Serializable {
 					}
 				}
 			}
+			log.info("Serving info: " + servingInfo);
 		} catch(IOException e) {
 			log.error("Corrupted metadata file", e);
 			throw new RuntimeException("Corrupted metadata file", e);
