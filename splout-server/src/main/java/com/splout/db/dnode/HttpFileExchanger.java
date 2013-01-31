@@ -40,29 +40,31 @@ import java.util.zip.Checksum;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.splout.db.common.SploutConfiguration;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
 /**
- * A simple class that allows for fast (GZip), chunked transport of binary files between nodes through HTTP.
- * This class is both a server and a client: use its Runnable method for creating a server that can receive files
- * or use the {@link #send(File, String)} method for sending a file to another peer.
+ * A simple class that allows for fast (GZip), chunked transport of binary files between nodes through HTTP. This class
+ * is both a server and a client: use its Runnable method for creating a server that can receive files or use the
+ * {@link #send(File, String)} method for sending a file to another peer.
  * <p>
  * For safety, every transfer checks whether the checksum (CRC32) matches the expected one or not.
  * <p>
- * This class should have the same semantics as {@link Fetcher} so it should save files to the same temp folder, etc.
- * It can be configured by {@link SploutConfiguration}. 
- * 
- * TODO Work in progress. Unit test, etc.
+ * This class should have the same semantics as {@link Fetcher} so it should save files to the same temp folder, etc. It
+ * can be configured by {@link SploutConfiguration}.
  */
 public class HttpFileExchanger implements HttpHandler, Runnable {
 
-	// TODO Add a logger
-	
+	private final static Log log = LogFactory.getLog(HttpFileExchanger.class);
+
 	private File tempDir;
 	private int downloadBufferSize;
+	private String host;
 
 	private int port;
 	private int backlog;
@@ -72,11 +74,18 @@ public class HttpFileExchanger implements HttpHandler, Runnable {
 	private HttpServer server;
 	private AtomicBoolean isListening = new AtomicBoolean(false);
 
-	public HttpFileExchanger(SploutConfiguration conf) {
-		// TODO
+	public HttpFileExchanger(SploutConfiguration config) {
+		this(config.getString(DNodeProperties.HOST),
+		    config.getInt(HttpFileExchangerProperties.HTTP_PORT), config
+		        .getInt(HttpFileExchangerProperties.HTTP_THREADS), config
+		        .getInt(HttpFileExchangerProperties.HTTP_BACKLOG), new File(
+		        config.getString(FetcherProperties.TEMP_DIR)), config
+		        .getInt(FetcherProperties.DOWNLOAD_BUFFER));
 	}
 
-	public HttpFileExchanger(int port, int nThreads, int backlog, File tempDir, int downloadBufferSize) {
+	public HttpFileExchanger(String host, int port, int nThreads, int backlog, File tempDir,
+	    int downloadBufferSize) {
+		this.host = host;
 		this.port = port;
 		this.backlog = backlog;
 		this.nThreads = nThreads;
@@ -87,14 +96,14 @@ public class HttpFileExchanger implements HttpHandler, Runnable {
 	@Override
 	public void run() {
 		try {
-			server = HttpServer.create(new InetSocketAddress("localhost", port), backlog);
+			server = HttpServer.create(new InetSocketAddress(host, port), backlog);
 			// serve all http requests at root context
 			server.createContext("/", this);
 			// executor with fixed number of threads
 			executors = Executors.newFixedThreadPool(nThreads);
 			server.setExecutor(executors);
 			server.start();
-			System.out.println("HTTP File exchanger listening on port: " + port);
+			log.info("HTTP File exchanger LISTENING on port: " + port);
 			isListening.set(true);
 		} catch(IOException e) {
 			throw new RuntimeException(e);
@@ -108,7 +117,7 @@ public class HttpFileExchanger implements HttpHandler, Runnable {
 	public void close() {
 		server.stop(1);
 		executors.shutdown();
-		System.out.println("Server stopped.");
+		log.warn("HTTP File exchanger STOPPED.");
 	}
 
 	@Override
@@ -133,10 +142,10 @@ public class HttpFileExchanger implements HttpHandler, Runnable {
 
 			// 1- Read file size
 			long fileSize = iS.readLong();
-			System.err.println("Going to read file size: " + fileSize);
+			log.debug("Going to read file [" + fileName + "] of size: " + fileSize);
 			// 2- Read file contents
 			long readSoFar = 0;
-			
+
 			do {
 				long missingBytes = fileSize - readSoFar;
 				int bytesToRead = (int) Math.min(missingBytes, buffer.length);
@@ -145,14 +154,14 @@ public class HttpFileExchanger implements HttpHandler, Runnable {
 				writer.write(buffer, 0, read);
 				readSoFar += read;
 			} while(readSoFar < fileSize);
-			
+
 			// 3- Read CRC
 			long expectedCrc = iS.readLong();
 			if(expectedCrc == checkSum.getValue()) {
-				System.err.println("File received -> Checksum -- " + checkSum.getValue()
+				log.info("File [" + fileName + "] received -> Checksum -- " + checkSum.getValue()
 				    + " matches expected CRC [OK]");
 			} else {
-				System.err.println("File received -> Checksum -- " + checkSum.getValue()
+				log.error("File received -> Checksum -- " + checkSum.getValue()
 				    + " doesn't match expected CRC: " + expectedCrc);
 			}
 		} finally {
@@ -191,11 +200,11 @@ public class HttpFileExchanger implements HttpHandler, Runnable {
 				checkSum.update(buffer, 0, length);
 				wrote += length;
 			}
-			System.err.println("Wrote bytes: " + wrote);
 			// 3 - add the CRC so that we can verify the download
 			writer.writeLong(checkSum.getValue());
-			System.err.println("Wrote checksum: " + checkSum.getValue());
 			writer.flush();
+			log.info("Sent file " + binaryFile + " with #bytes: " + wrote + " and checksum: "
+			    + checkSum.getValue());
 		} finally {
 			if(input != null) {
 				input.close();
@@ -204,22 +213,5 @@ public class HttpFileExchanger implements HttpHandler, Runnable {
 				writer.close();
 			}
 		}
-
-		System.err.println("File sent -> Checksum -- " + checkSum.getValue());
-	}
-
-	public static void main(String[] args) throws MalformedURLException, IOException, InterruptedException {
-		HttpFileExchanger exchanger = new HttpFileExchanger(4444, 10, 10, new File("tmp-download"), 1024);
-		Thread t = new Thread(exchanger);
-		t.start();
-
-		while(!exchanger.isListening()) {
-			Thread.sleep(100);
-		}
-
-		exchanger.send(new File("/home/pere/cd.txt"), "http://localhost:4444");
-
-		exchanger.close();
-		t.join();
 	}
 }
