@@ -39,6 +39,7 @@ public class ReplicationEntry extends BaseBean implements Serializable, Comparab
 	
 	Integer shard;
 	List<String> nodes;
+	int expectedReplicationFactor;
 
 	public ReplicationEntry() {
 		
@@ -48,6 +49,7 @@ public class ReplicationEntry extends BaseBean implements Serializable, Comparab
 		this.shard = shard;
 		this.nodes = new ArrayList<String>();
 		this.nodes.addAll(Arrays.asList(nodes));
+		this.expectedReplicationFactor = this.nodes.size();
 	}
 	
 	// ----------------- //
@@ -67,6 +69,14 @@ public class ReplicationEntry extends BaseBean implements Serializable, Comparab
 		this.nodes = nodes;
 	}
 	
+	public void setExpectedReplicationFactor(int expectedReplicationFactor) {
+  	this.expectedReplicationFactor = expectedReplicationFactor;
+  }
+
+	public int getExpectedReplicationFactor() {
+  	return expectedReplicationFactor;
+  }
+
 	@Override
 	public boolean equals(Object obj) {
 		ReplicationEntry reEntry = (ReplicationEntry)obj;

@@ -3,9 +3,13 @@ package com.splout.db.dnode;
 public class HttpFileExchangerProperties {
 
 	/*
-	 * The number of serving threads of the HTTP server (maximum files that can be transferred in parallel)
+	 * The number of serving threads of the HTTP server (maximum files that can be received in parallel)
 	 */
-	public final static String HTTP_THREADS = "http.exchanger.threads";
+	public final static String HTTP_THREADS_SERVER = "http.exchanger.threads.server";
+	/*
+	 * The number of serving threads of the HTTP client (maximum files that can be sent in parallel)
+	 */
+	public final static String HTTP_THREADS_CLIENT = "http.exchanger.threads.client";
 	/*
 	 * The allowed maximum backlog for the HTTP server  
 	 */	
