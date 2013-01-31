@@ -208,11 +208,13 @@ public class DNodeHandler implements IDNodeHandler {
 		deployThread = Executors.newFixedThreadPool(1);
 		// A thread that will listen to file exchanges through HTTP
 		httpExchanger = new HttpFileExchanger(config, new FileReceiverCallback());
-		httpExchanger.start();
+		// TODO Still work in progress -
+//		httpExchanger.start();
 		// Connect with the cluster.
 		hz = Hazelcast.newHazelcastInstance(HazelcastConfigBuilder.build(config));
 		coord = new CoordinationStructures(hz);
-		coord.getDNodeReplicaBalanceActionsSet().addItemListener(new BalanceActionItemListener(), false);
+		// TODO Still work in progress -
+//		coord.getDNodeReplicaBalanceActionsSet().addItemListener(new BalanceActionItemListener(), false);
 		// Add shutdown hook
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
@@ -560,7 +562,8 @@ public class DNodeHandler implements IDNodeHandler {
 		dbCache.dispose();
 		deployThread.shutdownNow();
 		timeoutThread.interrupt();
-		httpExchanger.close();
+		// TODO Still work in progress.
+//		httpExchanger.close();
 		hz.getLifecycleService().shutdown();
 	}
 

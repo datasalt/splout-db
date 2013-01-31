@@ -80,7 +80,7 @@ public class HttpFileExchanger extends Thread implements HttpHandler {
 
 	// This callback will be called when the files are received
 	private ReceiveFileCallback callback;
-	
+
 	public HttpFileExchanger(SploutConfiguration config, ReceiveFileCallback callback) {
 		this(config.getString(DNodeProperties.HOST), config.getInt(HttpFileExchangerProperties.HTTP_PORT),
 		    config.getInt(HttpFileExchangerProperties.HTTP_THREADS_SERVER), config
@@ -91,13 +91,16 @@ public class HttpFileExchanger extends Thread implements HttpHandler {
 	}
 
 	public interface ReceiveFileCallback {
-		
+
 		public void onProgress(File file, long totalSize, long sizeDownloaded);
+
 		public void onFileReceived(File file);
+
 		public void onBadCRC(File file);
+
 		public void onError(File file);
 	}
-	
+
 	public HttpFileExchanger(String host, int port, int nThreadsServer, int nThreadsClient, int backlog,
 	    File tempDir, int downloadBufferSize, ReceiveFileCallback callback) {
 		this.host = host;
@@ -132,10 +135,12 @@ public class HttpFileExchanger extends Thread implements HttpHandler {
 	}
 
 	public void close() {
-		server.stop(1);
-		serverExecutors.shutdown();
-		clientExecutors.shutdown();
-		log.warn("HTTP File exchanger STOPPED.");
+		if(server != null) {
+			server.stop(1);
+			serverExecutors.shutdown();
+			clientExecutors.shutdown();
+			log.warn("HTTP File exchanger STOPPED.");
+		}
 	}
 
 	@Override
@@ -143,7 +148,7 @@ public class HttpFileExchanger extends Thread implements HttpHandler {
 		DataInputStream iS = null;
 		FileOutputStream writer = null;
 		File dest = null;
-		
+
 		try {
 			iS = new DataInputStream(new GZIPInputStream(exchange.getRequestBody()));
 			String fileName = exchange.getRequestHeaders().getFirst("filename");
