@@ -56,8 +56,8 @@ public class ReplicationMap implements Serializable {
 			repEntry.setShard(i);
 			List<String> shardDNodes = new ArrayList<String>();
 			for(int j = 0; j < repFactor; j++) {
-				toNode = (toNode + j) % hosts.length;
-				shardDNodes.add(hosts[toNode]);
+				int chosen = (toNode + j) % hosts.length;
+				shardDNodes.add(hosts[chosen]);
 			}
 			repEntry.setNodes(shardDNodes);
 			repEntries.add(repEntry);

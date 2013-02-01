@@ -27,43 +27,67 @@ import org.junit.Test;
 public class TestReplicationMap {
 
 	/**
-	 * Through this example one can understand how is a "Round-robin replication map" built.
-	 * Each shard (partition) is assigned to consecutive hosts up to the specified replication factor.
-	 * Each new shard is assigned starting from the next host.
+	 * Through this example one can understand how is a "Round-robin replication map" built. Each shard (partition) is
+	 * assigned to consecutive hosts up to the specified replication factor. Each new shard is assigned starting from the
+	 * next host.
 	 */
 	@Test
 	public void testRoundRobinMap() {
 		ReplicationMap rMap = ReplicationMap.roundRobinMap(6, 2, "host1", "host2", "host3");
 		assertEquals(6, rMap.getReplicationEntries().size());
 
-		assertEquals(0, (int)rMap.getReplicationEntries().get(0).getShard());
-		assertEquals(2, (int)rMap.getReplicationEntries().get(0).getNodes().size());
+		assertEquals(0, (int) rMap.getReplicationEntries().get(0).getShard());
+		assertEquals(2, (int) rMap.getReplicationEntries().get(0).getNodes().size());
 		assertEquals("host1", rMap.getReplicationEntries().get(0).getNodes().get(0));
 		assertEquals("host2", rMap.getReplicationEntries().get(0).getNodes().get(1));
-		
-		assertEquals(1, (int)rMap.getReplicationEntries().get(1).getShard());
-		assertEquals(2, (int)rMap.getReplicationEntries().get(1).getNodes().size());
+
+		assertEquals(1, (int) rMap.getReplicationEntries().get(1).getShard());
+		assertEquals(2, (int) rMap.getReplicationEntries().get(1).getNodes().size());
 		assertEquals("host2", rMap.getReplicationEntries().get(1).getNodes().get(0));
 		assertEquals("host3", rMap.getReplicationEntries().get(1).getNodes().get(1));
-		
-		assertEquals(2, (int)rMap.getReplicationEntries().get(2).getShard());
-		assertEquals(2, (int)rMap.getReplicationEntries().get(2).getNodes().size());
+
+		assertEquals(2, (int) rMap.getReplicationEntries().get(2).getShard());
+		assertEquals(2, (int) rMap.getReplicationEntries().get(2).getNodes().size());
 		assertEquals("host3", rMap.getReplicationEntries().get(2).getNodes().get(0));
 		assertEquals("host1", rMap.getReplicationEntries().get(2).getNodes().get(1));
-		
-		assertEquals(3, (int)rMap.getReplicationEntries().get(3).getShard());
-		assertEquals(2, (int)rMap.getReplicationEntries().get(3).getNodes().size());
+
+		assertEquals(3, (int) rMap.getReplicationEntries().get(3).getShard());
+		assertEquals(2, (int) rMap.getReplicationEntries().get(3).getNodes().size());
 		assertEquals("host1", rMap.getReplicationEntries().get(3).getNodes().get(0));
 		assertEquals("host2", rMap.getReplicationEntries().get(3).getNodes().get(1));
-		
-		assertEquals(4, (int)rMap.getReplicationEntries().get(4).getShard());
-		assertEquals(2, (int)rMap.getReplicationEntries().get(4).getNodes().size());
+
+		assertEquals(4, (int) rMap.getReplicationEntries().get(4).getShard());
+		assertEquals(2, (int) rMap.getReplicationEntries().get(4).getNodes().size());
 		assertEquals("host2", rMap.getReplicationEntries().get(4).getNodes().get(0));
 		assertEquals("host3", rMap.getReplicationEntries().get(4).getNodes().get(1));
-		
-		assertEquals(5, (int)rMap.getReplicationEntries().get(5).getShard());
-		assertEquals(2, (int)rMap.getReplicationEntries().get(5).getNodes().size());
+
+		assertEquals(5, (int) rMap.getReplicationEntries().get(5).getShard());
+		assertEquals(2, (int) rMap.getReplicationEntries().get(5).getNodes().size());
 		assertEquals("host3", rMap.getReplicationEntries().get(5).getNodes().get(0));
 		assertEquals("host1", rMap.getReplicationEntries().get(5).getNodes().get(1));
+	}
+
+	@Test
+	public void test() {
+		ReplicationMap rMap = ReplicationMap.roundRobinMap(3, 3, "host1", "host2", "host3");
+		assertEquals(3, rMap.getReplicationEntries().size());
+
+		assertEquals(0, (int) rMap.getReplicationEntries().get(0).getShard());
+		assertEquals(3, (int) rMap.getReplicationEntries().get(0).getNodes().size());
+		assertEquals("host1", rMap.getReplicationEntries().get(0).getNodes().get(0));
+		assertEquals("host2", rMap.getReplicationEntries().get(0).getNodes().get(1));
+		assertEquals("host3", rMap.getReplicationEntries().get(0).getNodes().get(2));
+		
+		assertEquals(1, (int) rMap.getReplicationEntries().get(1).getShard());
+		assertEquals(3, (int) rMap.getReplicationEntries().get(1).getNodes().size());
+		assertEquals("host2", rMap.getReplicationEntries().get(1).getNodes().get(0));
+		assertEquals("host3", rMap.getReplicationEntries().get(1).getNodes().get(1));
+		assertEquals("host1", rMap.getReplicationEntries().get(1).getNodes().get(2));
+
+		assertEquals(2, (int) rMap.getReplicationEntries().get(2).getShard());
+		assertEquals(3, (int) rMap.getReplicationEntries().get(2).getNodes().size());
+		assertEquals("host3", rMap.getReplicationEntries().get(2).getNodes().get(0));
+		assertEquals("host1", rMap.getReplicationEntries().get(2).getNodes().get(1));
+		assertEquals("host2", rMap.getReplicationEntries().get(2).getNodes().get(2));
 	}
 }
