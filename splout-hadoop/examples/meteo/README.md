@@ -1,6 +1,6 @@
 This example shows how to load data into Splout SQL and then shows an example app using the uploaded data. 
 
-Data:
+Data
 =====
 The data is the example data from "Daily Global Weather Measurements, 1929-2009 (NCDC,
 GSOD)" http://aws.amazon.com/datasets/2759
@@ -16,7 +16,7 @@ The data is composed by tree tables:
 * stations -> ish-history.csv file. Contains the stations list.
 * countries -> country-list.txt. Contains the list of countries.
 
-Generate and deploy meteo table by command line:
+Generate and deploy meteo table by command line
 =====================================
 We will see first, an example on how to use the command line to deploy sigle table tablespaces.
 
@@ -39,18 +39,18 @@ And can be deployed in the Splout SQL cloud using the following command:
 hadoop jar splout-*-hadoop.jar deploy --root database-files --tablespaces meteo_table --replication 2 --qnode http://localhost:4412
 </pre>
 
-Generating Meteo from definition files:
+Generating Meteo from definition files
 ===========================
 
 We will create two tablespaces:
 
-Tablespace meteo-pby-stn-wban:
+Tablespace meteo-pby-stn-wban
 ------------------------------
 
 The tables stations and countries is replicated in every partition meanwhile the table meteo is partitioned by **stn** and **wban** columns. The tablespace definition file can be seen here: https://github.com/datasalt/splout-db/blob/master/splout-hadoop/examples/meteo/meteo-pby-stn-wban.json
 
-Tablespace meteo-pby-date:
-------------------------------
+Tablespace meteo-pby-date
+-------------------------
 
 The tables stations and countries is replicated in every partition meanwhile the table meteo is partitioned by the **date** column. The tablespace definition file can be seen here: https://github.com/datasalt/splout-db/blob/master/splout-hadoop/examples/meteo/meteo-pby-date.json
 
@@ -63,7 +63,9 @@ hadoop jar splout-*-hadoop.jar generate -tf examples/meteo/meteo-pby-stn-wban.js
 Now both tablespaces are ready to be deployed atomically into the Splout SQL cluster:
 
 <pre>
-hadoop jar splout-*-hadoop.jar generate --qnode http://localhost:4412 --root database-files --tablespaces meteo-pby-stn-wban
+hadoop jar splout-*-hadoop.jar deploy --qnode http://localhost:4412 --root database-files --tablespaces meteo-pby-stn-wban
 </pre>
 
+If you visit http://localhost:4412/ you will be able to see the deployed tablespaces, and you will be able to perform queries at http://localhost:4412/console.html
 
+Now let's see how an example aplication makes use of this data. Open the file examples/meteo/web/index.html in your browser and try the example. The code of the example can be seen here: https://github.com/datasalt/splout-db/blob/master/splout-hadoop/examples/meteo/web/index.html
