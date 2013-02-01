@@ -72,4 +72,4 @@ Now let's see how an example aplication makes use of this data. Open the file ex
 
 ![Meteo example app](https://raw.github.com/datasalt/splout-db/master/splout-hadoop/examples/meteo/web/meteo-screenshot.png)
 
-The code of the example can be seen here: https://github.com/datasalt/splout-db/blob/master/splout-hadoop/examples/meteo/web/index.html
+The code of the example app can be seen here: https://github.com/datasalt/splout-db/blob/master/splout-hadoop/examples/meteo/web/index.html
