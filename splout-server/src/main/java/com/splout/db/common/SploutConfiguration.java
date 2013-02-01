@@ -70,6 +70,10 @@ public class SploutConfiguration extends CompositeConfiguration implements Seria
 		// Disable wait for testing speedup.
 		properties.setProperty(HazelcastProperties.DISABLE_WAIT_WHEN_JOINING, true);
 		
+		// Disable warming up - set it to only one second
+		// that's enough since Hazelcast joining is by far slower
+		properties.setProperty(QNodeProperties.WARMING_TIME, 1);
+		
 		// Disable HZ state storage
 		properties.clearProperty(HazelcastProperties.HZ_PERSISTENCE_FOLDER);
 		return properties;

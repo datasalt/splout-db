@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -139,48 +140,219 @@ public class DNodeHandler implements IDNodeHandler {
 	public String whoAmI() {
 		return config.getString(DNodeProperties.HOST) + ":" + config.getInt(DNodeProperties.PORT);
 	}
-	
+
 	/**
-	 * This inner class will listen for additions to the balance actions map, so that if a balance action
-	 * has to be taken and this DNode is the one who has the send the file, it will start doing so.
+	 * This inner class will listen for additions to the balance actions map, so that if a balance action has to be taken
+	 * and this DNode is the one who has the send the file, it will start doing so.
 	 */
 	private class BalanceActionItemListener implements ItemListener<ReplicaBalancer.BalanceAction> {
 		@Override
-    public void itemAdded(ItemEvent<BalanceAction> item) {
+		public void itemAdded(ItemEvent<BalanceAction> item) {
 			BalanceAction action = item.getItem();
 			if(action.getOriginNode().equals(whoAmI())) {
 				// I must do a balance action!
-				File toSend = new File(getLocalStorageFolder(action.getTablespace(), action.getPartition(), action.getVersion()), action.getPartition() + ".db");
-				String dnodeHost = action.getFinalNode().substring(0, action.getFinalNode().indexOf(":"));
-				// TODO FIX-ME This is the HTTP port of this node, not the final node
-				httpExchanger.send(toSend, "http://" + dnodeHost + ":" + config.getInt(HttpFileExchangerProperties.HTTP_PORT), false);
+				File toSend = new File(getLocalStorageFolder(action.getTablespace(), action.getPartition(),
+				    action.getVersion()), action.getPartition() + ".db");
+				File metadataFile = getLocalMetadataFile(action.getTablespace(), action.getPartition(),
+				    action.getVersion());
+				// send both the .db and the .meta file -> when the other part has both files it will move them atomically...
+				httpExchanger.send(action.getTablespace(), action.getPartition(), action.getVersion(), toSend,
+				    action.getFinalNode(), false);
+				httpExchanger.send(action.getTablespace(), action.getPartition(), action.getVersion(),
+				    metadataFile, action.getFinalNode(), false);
 			}
-    }
+		}
+
 		@Override
-    public void itemRemoved(ItemEvent<BalanceAction> item) {
+		public void itemRemoved(ItemEvent<BalanceAction> item) {
 			// usually we won't care - but the final DNode might have pro-actively removed this action
-    }
+		}
 	}
 
 	/**
-	 * This inner class will perform the business logic associated with receiving files:
-	 * what to do on failures, bad CRC, file received OK...
+	 * This bean describes the state of a file transaction (tablespace/partition/version) between DNodes in progress.
+	 * These transactions have two files: the .meta and the .db so we need to know when both have been received to
+	 * transfer the partition data to the appropriated folder.
+	 */
+	public static class BalanceFileReceivingProgress {
+
+		private boolean receivedMetaFile;
+		private boolean receivedBinaryFile;
+		private File metaFile;
+		private File binaryFile;
+		private long binaryFileSize;
+		private long receivedSizeSoFar;
+
+		private final String tablespace;
+		private final int partition;
+		private final long version;
+
+		public BalanceFileReceivingProgress(String tablespace, int partition, long version) {
+			this.tablespace = tablespace;
+			this.partition = partition;
+			this.version = version;
+		}
+
+		// --- Modifiers --- //
+		public void metaFileReceived(File metaFile) {
+			this.receivedMetaFile = true;
+			this.metaFile = metaFile;
+		}
+
+		public void binaryFileReceived(File binaryFile) {
+			this.receivedBinaryFile = true;
+			this.binaryFile = binaryFile;
+		}
+
+		public void progressBinaryFile(long finalSize, long sizeSoFar) {
+			this.binaryFileSize = finalSize;
+			this.receivedSizeSoFar = sizeSoFar;
+		}
+
+		// --- Getters --- //
+		public boolean isReceivedMetaFile() {
+			return receivedMetaFile;
+		}
+		public boolean isReceivedBinaryFile() {
+			return receivedBinaryFile;
+		}
+		public long getBinaryFileSize() {
+			return binaryFileSize;
+		}
+		public long getReceivedSizeSoFar() {
+			return receivedSizeSoFar;
+		}
+		public String getTablespace() {
+			return tablespace;
+		}
+		public int getPartition() {
+			return partition;
+		}
+		public long getVersion() {
+			return version;
+		}
+		public File getMetaFile() {
+			return metaFile;
+		}
+		public File getBinaryFile() {
+			return binaryFile;
+		}
+	}
+
+	// This map will hold all the current balance file transactions being done
+	private ConcurrentHashMap<String, BalanceFileReceivingProgress> balanceActionsStateMap = new ConcurrentHashMap<String, BalanceFileReceivingProgress>();
+
+	/**
+	 * This inner class will perform the business logic associated with receiving files: what to do on failures, bad CRC,
+	 * file received OK...
 	 */
 	private class FileReceiverCallback implements HttpFileExchanger.ReceiveFileCallback {
+
 		@Override
-    public void onFileReceived(File file) {
-    }
+		public void onProgress(String tablespace, Integer partition, Long version, File file,
+		    long totalSize, long sizeDownloaded) {
+
+			if(file.getName().endsWith(".db")) {
+				getProgressFromLocalPanel(tablespace, partition, version).progressBinaryFile(totalSize,
+				    sizeDownloaded);
+			}
+		}
+
 		@Override
-    public void onBadCRC(File file) {
-    }
+		public void onFileReceived(String tablespace, Integer partition, Long version, File file) {
+			BalanceFileReceivingProgress progress = getProgressFromLocalPanel(tablespace, partition, version);
+			if(file.getName().endsWith(".meta")) {
+				progress.metaFileReceived(file);
+			} else if(file.getName().endsWith(".db")) {
+				progress.binaryFileReceived(file);
+			}
+
+			// this can be reached simultaneously by 2 different threads so we must synchronized it
+			// (thread that downloaded the .meta file and thread that downloaded the .db file)
+			synchronized(FileReceiverCallback.this) {
+				if(progress.isReceivedMetaFile() && progress.isReceivedBinaryFile()) {
+					if(progress.getMetaFile().exists() && progress.getBinaryFile().exists()) {
+						// check if we already have the binary & meta -> then move partition
+						// and then remove this action from the panel so that it's completed.
+						try {
+							FileUtils.moveFile(progress.getMetaFile(),
+							    getLocalMetadataFile(tablespace, partition, version));
+							FileUtils.moveToDirectory(progress.getBinaryFile(),
+							    getLocalStorageFolder(tablespace, partition, version), true);
+							log.info("Balance action successfully completed, received both .db and .meta files ("
+							    + tablespace + ", " + partition + ", " + version + ")");
+							// Publish new changes to HZ
+							dnodesRegistry.changeInfo(new DNodeInfo(config));
+						} catch(IOException e) {
+							log.error(e);
+						} finally {
+							removeBalanceActionFromHZPanel(tablespace, partition, version);
+						}
+					}
+				}
+			}
+		}
+
 		@Override
-    public void onError(File file) {
-    }
+		public void onBadCRC(String tablespace, Integer partition, Long version, File file) {
+			// cancel this
+			// TODO Clean stalled data
+			// TODO Report error (panel?)
+			removeBalanceActionFromHZPanel(tablespace, partition, version);
+		}
+
 		@Override
-    public void onProgress(File file, long totalSize, long sizeDownloaded) {
-    }
+		public void onError(String tablespace, Integer partition, Long version, File file) {
+			// cancel this
+			// TODO Clean stalled data
+			// TODO Report error (panel?)
+			removeBalanceActionFromHZPanel(tablespace, partition, version);
+		}
+
+		// --- Helper methods --- //
+
+		/**
+		 * Will remove the BalanceAction associated with this file receiving from HZ data structure.
+		 */
+		private synchronized void removeBalanceActionFromHZPanel(String tablespace, Integer partition,
+		    Long version) {
+			// first remove the local tracking of this action
+			String lookupKey = tablespace + "_" + partition + "_" + version;
+			// two threads may want to do it almost simultaneously so we do this checking before
+			if(balanceActionsStateMap.containsKey(lookupKey)) {
+				balanceActionsStateMap.remove(lookupKey);
+				// then remove from HZ
+				BalanceAction actionToRemove = null;
+				for(BalanceAction action : coord.getDNodeReplicaBalanceActionsSet()) {
+					if(action.getTablespace().equals(tablespace) && action.getPartition() == partition
+					    && action.getVersion() == version && action.getFinalNode().equals(httpExchanger.address())) {
+						actionToRemove = action;
+					}
+				}
+				if(actionToRemove == null) {
+					log.warn("Needed to remove a balance action but it wasn't in the HZ panel - who removed it removed before?");
+				} else {
+					coord.getDNodeReplicaBalanceActionsSet().remove(actionToRemove);
+					log.info("Removed balance action [" + actionToRemove + "] from HZ panel.");
+				}
+			}
+		}
+
+		/**
+		 * Will obtain a bean to fill some progress in a local hashmap or create it and put it otherwise.
+		 */
+		private synchronized BalanceFileReceivingProgress getProgressFromLocalPanel(String tablespace,
+		    Integer partition, Long version) {
+			String lookupKey = tablespace + "_" + partition + "_" + version;
+			BalanceFileReceivingProgress progress = balanceActionsStateMap.get(lookupKey);
+			if(progress == null) {
+				progress = new BalanceFileReceivingProgress(tablespace, partition, version);
+				balanceActionsStateMap.put(lookupKey, progress);
+			}
+			return progress;
+		}
 	}
-	
+
 	/**
 	 * Initialization logic: initialize things, connect to ZooKeeper, create Thrift server, etc.
 	 * 
@@ -208,13 +380,12 @@ public class DNodeHandler implements IDNodeHandler {
 		deployThread = Executors.newFixedThreadPool(1);
 		// A thread that will listen to file exchanges through HTTP
 		httpExchanger = new HttpFileExchanger(config, new FileReceiverCallback());
-		// TODO Still work in progress -
-//		httpExchanger.start();
+		httpExchanger.init();
+		httpExchanger.start();
 		// Connect with the cluster.
 		hz = Hazelcast.newHazelcastInstance(HazelcastConfigBuilder.build(config));
 		coord = new CoordinationStructures(hz);
-		// TODO Still work in progress -
-//		coord.getDNodeReplicaBalanceActionsSet().addItemListener(new BalanceActionItemListener(), false);
+		coord.getDNodeReplicaBalanceActionsSet().addItemListener(new BalanceActionItemListener(), false);
 		// Add shutdown hook
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
@@ -546,7 +717,7 @@ public class DNodeHandler implements IDNodeHandler {
 		String dataFolder = config.getString(DNodeProperties.DATA_FOLDER);
 		return new File(dataFolder + "/" + getLocalMetadataFileRelativePath(tablespace, partition, version));
 	}
-	
+
 	public static String getLocalMetadataFileRelativePath(String tablespace, int partition, long version) {
 		return tablespace + "/" + version + "/" + partition + ".meta";
 	}
@@ -562,8 +733,7 @@ public class DNodeHandler implements IDNodeHandler {
 		dbCache.dispose();
 		deployThread.shutdownNow();
 		timeoutThread.interrupt();
-		// TODO Still work in progress.
-//		httpExchanger.close();
+		httpExchanger.close();
 		hz.getLifecycleService().shutdown();
 	}
 

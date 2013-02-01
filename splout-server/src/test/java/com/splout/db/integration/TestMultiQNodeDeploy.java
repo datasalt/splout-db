@@ -70,11 +70,6 @@ public class TestMultiQNodeDeploy extends BaseIntegrationTest {
 		}
 	}
 
-	private SploutClient getRandomQNodeClient(Random random, SploutConfiguration config) {
-		int chosenQnode = Math.abs(random.nextInt()) % N_QNODES;
-		return new SploutClient(qNodes.get(chosenQnode).getAddress());
-	}
-
 	@SuppressWarnings("unchecked")
 	private void deployAndQueryRandomTablespace(Random random) throws Exception {
 		Tablespace testTablespace = createTestTablespace(N_DNODES);

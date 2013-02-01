@@ -37,8 +37,6 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.yammer.metrics.Metrics;
-import com.yammer.metrics.core.Gauge;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.thrift.TException;
@@ -56,9 +54,12 @@ import com.splout.db.dnode.DNodeClient;
 import com.splout.db.hazelcast.CoordinationStructures;
 import com.splout.db.hazelcast.DNodeInfo;
 import com.splout.db.hazelcast.TablespaceVersion;
+import com.splout.db.qnode.ReplicaBalancer.BalanceAction;
 import com.splout.db.thrift.DNodeException;
 import com.splout.db.thrift.DNodeService;
 import com.splout.db.thrift.PartitionMetadata;
+import com.yammer.metrics.Metrics;
+import com.yammer.metrics.core.Gauge;
 
 /**
  * This class contains the basic context of {@link QNodeHandler}. This context involves in-memory information of the
@@ -79,6 +80,8 @@ public class QNodeHandlerContext {
 	// Local map with all versions for a tablespace with the PartitionMap, ReplicationMap for each of them
 	private final Map<TablespaceVersion, Tablespace> tablespaceVersionsMap = new ConcurrentHashMap<TablespaceVersion, Tablespace>();
 
+	private ReplicaBalancer replicaBalancer;
+	
 	// The per-DNode Thrift client pools
 	private ConcurrentMap<String, BlockingQueue<DNodeService.Client>> thriftClientCache = new ConcurrentHashMap<String, BlockingQueue<DNodeService.Client>>();
 	private ReentrantLock thriftClientCacheLock = new ReentrantLock();
@@ -89,6 +92,7 @@ public class QNodeHandlerContext {
 		this.config = config;
 		this.coordinationStructures = coordinationStructures;
 		this.thriftClientPoolSize = config.getInt(QNodeProperties.DNODE_POOL_SIZE);
+		this.replicaBalancer = new ReplicaBalancer(this);
 		initMetrics();
 	}
 
@@ -125,6 +129,27 @@ public class QNodeHandlerContext {
 
 	public Object tVLock = new Object();
 
+	/**
+	 * Get the list of possible actions to take for balancing the cluster in case of under-replicated partitions.
+	 */
+	public List<BalanceAction> getBalanceActions() {
+		// we have this in this class to be able to use this lock (the same that recreats the in-memory TablespaceVersion map)
+		synchronized(tVLock) {
+			return replicaBalancer.scanPartitions();
+		}
+	}
+	
+	/**
+	 * Get the list of DNodes
+	 */
+	public List<String> getDNodeList() {
+		List<String> dNodeList = new ArrayList<String>();
+		for(DNodeInfo dnode : getCoordinationStructures().getDNodes().values()) {
+			dNodeList.add(dnode.getAddress());
+		}
+		return dNodeList;
+	}
+	
 	/**
 	 * Update the in-memory <TablespaceVersion, Tablespace> map when a DNode joins, leaves or updates its DNodeINfo.
 	 */
@@ -282,8 +307,7 @@ public class QNodeHandlerContext {
 									// Add it to replication map
 									existingEntry.getNodes().add(dNodeInfo.getAddress());
 								} else {
-									// We are adding / updating but the node already exists in the replication map. Check consistency here
-									// TODO We are not saving the expected replication factor anywhere currently
+									// We are adding / updating but the node already exists in the replication map.
 								}
 							}
 						} else if(!event.equals(DNodeEvent.LEAVE)) { // Otherwise just add and sort
@@ -579,19 +603,15 @@ public class QNodeHandlerContext {
 	public Map<String, Long> getCurrentVersionsMap() {
 		return currentVersionsMap;
 	}
-
 	public Map<TablespaceVersion, Tablespace> getTablespaceVersionsMap() {
 		return tablespaceVersionsMap;
 	}
-
 	public CoordinationStructures getCoordinationStructures() {
 		return coordinationStructures;
 	}
-
 	public SploutConfiguration getConfig() {
 		return config;
 	}
-
 	public ConcurrentMap<String, BlockingQueue<DNodeService.Client>> getThriftClientCache() {
 		return thriftClientCache;
 	}

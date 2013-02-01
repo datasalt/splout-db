@@ -34,6 +34,7 @@ import com.splout.db.common.SploutConfiguration;
 import com.splout.db.common.ThriftReader;
 import com.splout.db.dnode.DNodeHandler;
 import com.splout.db.dnode.DNodeProperties;
+import com.splout.db.dnode.HttpFileExchangerProperties;
 import com.splout.db.thrift.PartitionMetadata;
 
 /**
@@ -53,13 +54,15 @@ public class DNodeInfo implements Serializable {
 	}
 	
 	private String address;
+	private String httpExchangerAddress;
 	private Map<String, Map<Long, Map<Integer, PartitionMetadata>>> servingInfo;
 
 	public DNodeInfo() {
 	}
 	
-	public DNodeInfo(String address, Map<String, Map<Long, Map<Integer, PartitionMetadata>>> servingInfo) {
+	public DNodeInfo(String address, String httpExchangerAddress, Map<String, Map<Long, Map<Integer, PartitionMetadata>>> servingInfo) {
 		this.address = address;
+		this.httpExchangerAddress = httpExchangerAddress;
 		this.servingInfo = servingInfo;
 	}
 
@@ -69,6 +72,7 @@ public class DNodeInfo implements Serializable {
 	public DNodeInfo(SploutConfiguration config) {
 		this.servingInfo = new HashMap<String, Map<Long, Map<Integer, PartitionMetadata>>>();
 		this.address = config.getString(DNodeProperties.HOST) + ":" + config.getInt(DNodeProperties.PORT);
+		this.httpExchangerAddress = "http://" + config.getString(DNodeProperties.HOST) + ":" + config.getInt(HttpFileExchangerProperties.HTTP_PORT); 
 		File dataFolder = new File(config.getString(DNodeProperties.DATA_FOLDER));
 		// inspect the file system
 		File[] tablespaces = dataFolder.listFiles();
@@ -132,6 +136,12 @@ public class DNodeInfo implements Serializable {
 	public void setAddress(String address) {
 		this.address = address;
 	}
+	public String getHttpExchangerAddress() {
+  	return httpExchangerAddress;
+  }
+	public void setHttpExchangerAddress(String httpExchangerAddress) {
+  	this.httpExchangerAddress = httpExchangerAddress;
+  }
 	public Map<String, Map<Long, Map<Integer, PartitionMetadata>>> getServingInfo() {
 		return servingInfo;
 	}

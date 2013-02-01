@@ -9,6 +9,7 @@ import java.util.Map;
 import com.splout.db.common.ReplicationEntry;
 import com.splout.db.common.ReplicationMap;
 import com.splout.db.common.Tablespace;
+import com.splout.db.hazelcast.DNodeInfo;
 import com.splout.db.hazelcast.TablespaceVersion;
 
 /**
@@ -29,23 +30,31 @@ public class ReplicaBalancer {
 	/**
 	 * Bean that represents an action that has to be taken for balancing a partition. The origin node should copy its
 	 * partition from the tablespace/version to the final node.
+	 * <p>
+	 * Note that originNodeId is a DNode if (Thrift) whereas finalNodeHttpAddres is an HTTP end-point (not a DNode Id).
 	 */
 	@SuppressWarnings("serial")
-  public static class BalanceAction implements Serializable {
-		
-		private String originNode;
-		private String finalNode;
+	public static class BalanceAction implements Serializable {
+
+		private String originNodeId;
+		private String finalNodeHttpAddress;
 		private String tablespace;
 		private int partition;
 		private long version;
 
-		public BalanceAction(String originNode, String finalNode, String tablespace, int partition,
-		    long version) {
-			this.originNode = originNode;
-			this.finalNode = finalNode;
+		// Note that originNodeId is a DNode if (Thrift) whereas finalNodeHttpAddres is an HTTP end-point (not a DNode Id)
+		public BalanceAction(String originNode, String finalNodeHttpAddress, String tablespace,
+		    int partition, long version) {
+			this.originNodeId = originNode;
+			this.finalNodeHttpAddress = finalNodeHttpAddress;
 			this.tablespace = tablespace;
 			this.partition = partition;
 			this.version = version;
+		}
+
+		public String toString() {
+			return originNodeId + " => " + finalNodeHttpAddress + " (" + tablespace + ", " + partition + ", "
+			    + version + ")";
 		}
 
 		/**
@@ -67,19 +76,23 @@ public class ReplicaBalancer {
 		}
 
 		// ---- Getters ---- //
-		
+
 		public String getOriginNode() {
-			return originNode;
+			return originNodeId;
 		}
+
 		public String getFinalNode() {
-			return finalNode;
+			return finalNodeHttpAddress;
 		}
+
 		public String getTablespace() {
 			return tablespace;
 		}
+
 		public int getPartition() {
 			return partition;
 		}
+
 		public long getVersion() {
 			return version;
 		}
@@ -87,8 +100,7 @@ public class ReplicaBalancer {
 
 	public List<BalanceAction> scanPartitions() {
 		// get list of DNodes
-		List<String> aliveDNodes = new ArrayList<String>(context.getCoordinationStructures().getDNodes()
-		    .keySet());
+		List<String> aliveDNodes = context.getDNodeList();
 		Collections.sort(aliveDNodes);
 
 		// actions that can be taken after analyzing the current replicas / partitions
@@ -107,25 +119,31 @@ public class ReplicaBalancer {
 						// we found an under-replicated partition! add it as candidate
 						// we will copy the partition from the first available node in this partition
 						String originNode = rEntry.getNodes().get(0);
-						String finalNode = null;
 						// ... then find the first DNode which doesn't currently hold this partition
 						// as candidate to receive it
 						for(int k = 0; k < aliveDNodes.size(); k++) {
-							int roundRobinIndex = roundRobinCount + k;
-							if(roundRobinIndex == aliveDNodes.size()) {
-								roundRobinIndex = 0;
+							int roundRobinIndex = (roundRobinCount + k) % aliveDNodes.size();
+							String finalNode = aliveDNodes.get(roundRobinIndex);
+							if(rEntry.getNodes().contains(finalNode)) {
+								continue;
 							}
-							String aliveDNode = aliveDNodes.get(roundRobinIndex);
-							if(!rEntry.getNodes().contains(aliveDNode)) {
-								finalNode = aliveDNode;
+							// we have a possible balance action
+							// note we must exchange the DNode Id by its HTTP end-point to be able to send files there
+							String finalHttpAddress = null;
+							for(DNodeInfo dnode : context.getCoordinationStructures().getDNodes().values()) {
+								if(dnode.getAddress().equals(finalNode)) {
+									finalHttpAddress = dnode.getHttpExchangerAddress();
+								}
+							}
+							if(finalHttpAddress == null) {
+								// race condition: DNode went down right in the middle - cancel this and try another one
+							} else {
+								// add balance action and break for() loop
+								balanceActions.add(new BalanceAction(originNode, finalHttpAddress, entry.getKey()
+								    .getTablespace(), rEntry.getShard(), entry.getKey().getVersion()));
+								roundRobinCount++;
 								break;
 							}
-						}
-						if(finalNode != null) {
-							// we have a possible balance action
-							balanceActions.add(new BalanceAction(originNode, finalNode,
-							    entry.getKey().getTablespace(), rEntry.getShard(), entry.getKey().getVersion()));
-							roundRobinCount++;
 						}
 					}
 				}

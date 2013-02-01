@@ -25,15 +25,18 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 import org.junit.After;
+import org.junit.Before;
 
 import com.hazelcast.core.Hazelcast;
-import com.splout.db.common.SploutConfiguration;
 import com.splout.db.common.PartitionEntry;
 import com.splout.db.common.PartitionMap;
 import com.splout.db.common.ReplicationEntry;
 import com.splout.db.common.ReplicationMap;
+import com.splout.db.common.SploutClient;
+import com.splout.db.common.SploutConfiguration;
 import com.splout.db.common.Tablespace;
 import com.splout.db.common.TestUtils;
 import com.splout.db.dnode.DNode;
@@ -45,6 +48,7 @@ import com.splout.db.qnode.QNodeHandler;
 public class BaseIntegrationTest {
 	
 	@After
+	@Before
 	public void cleanUp() throws IOException {
 		TestUtils.cleanUpTmpFolders(this.getClass().getName(), 4);
 	}
@@ -52,6 +56,11 @@ public class BaseIntegrationTest {
 	List<DNode> dNodes = new ArrayList<DNode>();
 	List<QNode> qNodes = new ArrayList<QNode>();
 	
+	protected SploutClient getRandomQNodeClient(Random random, SploutConfiguration config) {
+		int chosenQnode = Math.abs(random.nextInt()) % qNodes.size();
+		return new SploutClient(qNodes.get(chosenQnode).getAddress());
+	}
+
 	public void createSploutEnsemble(int nQnodes, int nDnodes) throws Throwable {
 		/*
 		 * Create an ensemble of QNodes

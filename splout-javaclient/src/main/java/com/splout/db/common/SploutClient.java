@@ -166,7 +166,6 @@ public class SploutClient {
 	public DeployInfo deploy(final DeployRequest... requests) throws IOException {
 		try {
 			final String strCont = JSONSerDe.ser(new ArrayList<DeployRequest>(Arrays.asList(requests)));
-			System.out.println(strCont);
 			HttpContent content = new HttpContent() {
 				byte[] content = strCont.getBytes("UTF-8");
 

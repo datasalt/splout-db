@@ -108,7 +108,7 @@ public class TimeoutThread extends Thread {
 				}
 			}
 		} catch(InterruptedException e) {
-			throw new RuntimeException(e);
+			log.info("Interrupted!");
 		}
 	}
 

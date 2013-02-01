@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -109,16 +110,20 @@ public class QNodeHandler implements IQNodeHandler {
 	private QNodeHandlerContext context;
 	private Deployer deployer;
 	private Querier querier;
-	private ReplicaBalancer replicaBalancer;
 	private SploutConfiguration config;
 	private CoordinationStructures coord;
+
+	// This flag is set to "false" after WARMING_TIME seconds (qnode.warming.time)
+	// Some actions will only be taken after warming time, just in case some nodes still didn't join the cluster.
+	private final AtomicBoolean isWarming = new AtomicBoolean(true);
+	private Thread warmingThread;
 
 	private final Counter meterQueriesServed = Metrics.newCounter(QNodeHandler.class, "queries-served");
 	private final Meter meterRequestsPerSecond = Metrics.newMeter(QNodeHandler.class, "queries-second",
 	    "queries-second", TimeUnit.SECONDS);
-  private final Histogram meterResultSize = Metrics.newHistogram(QNodeHandler.class, "response-size");
+	private final Histogram meterResultSize = Metrics.newHistogram(QNodeHandler.class, "response-size");
 
-  /**
+	/**
 	 * Keep track of die/alive DNodes events.
 	 */
 	public class DNodesListener implements EntryListener<String, DNodeInfo> {
@@ -133,13 +138,14 @@ public class QNodeHandler implements IQNodeHandler {
 				    + "] as it connected.");
 				context.initializeThriftClientCacheFor(dnode);
 				context.updateTablespaceVersions(event.getValue(), QNodeHandlerContext.DNodeEvent.ENTRY);
+				maybeBalance();
 			} catch(TablespaceVersionInfoException e) {
 				throw new RuntimeException(e);
 			} catch(TTransportException e) {
 				throw new RuntimeException(e);
-      } catch(InterruptedException e) {
-      	throw new RuntimeException(e);
-      }
+			} catch(InterruptedException e) {
+				throw new RuntimeException(e);
+			}
 		}
 
 		@Override
@@ -149,20 +155,33 @@ public class QNodeHandler implements IQNodeHandler {
 			try {
 				context.discardThriftClientCacheFor(event.getValue().getAddress());
 				context.updateTablespaceVersions(event.getValue(), QNodeHandlerContext.DNodeEvent.LEAVE);
-				// check if we could balance some partitions
-				List<ReplicaBalancer.BalanceAction> balanceActions = replicaBalancer.scanPartitions();
-				for(ReplicaBalancer.BalanceAction action: balanceActions) {
-					if(coord.getDNodeReplicaBalanceActionsSet().add(action)) {
-						log.info("Triggering a balance action: " + action);
-					} else {
-						// somebody else already triggered it, nothing bad happens
-					}
-				}
+				maybeBalance();
 			} catch(TablespaceVersionInfoException e) {
 				throw new RuntimeException(e);
-      } catch(InterruptedException e) {
-      	throw new RuntimeException(e);
-      }
+			} catch(InterruptedException e) {
+				throw new RuntimeException(e);
+			}
+		}
+
+		private void maybeBalance() {
+			// do this only after warming
+			if(!isWarming.get()) {
+				// check if we could balance some partitions
+				List<ReplicaBalancer.BalanceAction> balanceActions = context.getBalanceActions();
+				// we will only re-balance versions being served
+				// otherwise strange things may happen: to re-balance a version in the middle of its deployment...
+				Map<String, Long> versionsBeingServed = coord.getCopyVersionsBeingServed();
+				for(ReplicaBalancer.BalanceAction action : balanceActions) {
+					if(versionsBeingServed != null && versionsBeingServed.get(action.getTablespace()) != null
+					    && versionsBeingServed.get(action.getTablespace()) == action.getVersion()) {
+						if(coord.getDNodeReplicaBalanceActionsSet().add(action)) {
+							log.info("Triggering a balance action: " + action);
+						} else {
+							// somebody else already triggered it, nothing bad happens
+						}
+					}
+				}
+			}
 		}
 
 		@Override
@@ -206,13 +225,13 @@ public class QNodeHandler implements IQNodeHandler {
 
 		@Override
 		public void entryAdded(EntryEvent<String, Map<String, Long>> event) {
-			log.info("New versions table event received.");
+			// log.info("New versions table event received.");
 			processAddOrUpdate(event);
 		}
 
 		@Override
 		public void entryUpdated(EntryEvent<String, Map<String, Long>> event) {
-			log.info("Updated versions table event received.");
+			// log.info("Updated versions table event received.");
 			processAddOrUpdate(event);
 		}
 
@@ -231,16 +250,17 @@ public class QNodeHandler implements IQNodeHandler {
 		}
 	}
 
-	public void init(SploutConfiguration config) throws Exception {
+	public void init(final SploutConfiguration config) throws Exception {
 		this.config = config;
 		log.info(this + " - Initializing QNode...");
 		// Connect with the cluster.
 		HazelcastInstance hz = Hazelcast.newHazelcastInstance(HazelcastConfigBuilder.build(config));
 		int minutesToCheckRegister = config.getInt(HazelcastProperties.MAX_TIME_TO_CHECK_REGISTRATION, 5);
 		int oldestMembersLeading = config.getInt(HazelcastProperties.OLDEST_MEMBERS_LEADING_COUNT, 3);
-		// we must instantiate the DistributedRegistry even if we're not a DNode to be able to receive memembership leaving 
+		// we must instantiate the DistributedRegistry even if we're not a DNode to be able to receive memembership leaving
 		// in race conditions such as all DNodes leaving.
-		new DistributedRegistry(CoordinationStructures.DNODES, null, hz, minutesToCheckRegister, oldestMembersLeading);
+		new DistributedRegistry(CoordinationStructures.DNODES, null, hz, minutesToCheckRegister,
+		    oldestMembersLeading);
 		coord = new CoordinationStructures(hz);
 		context = new QNodeHandlerContext(config, coord);
 		// Initialialize DNodes tracking
@@ -253,6 +273,21 @@ public class QNodeHandler implements IQNodeHandler {
 		// Get updated tablespace + version information
 		context.synchronizeTablespaceVersions();
 		log.info(Thread.currentThread() + " - Initializing QNode [DONE].");
+		warmingThread = new Thread() {
+			@Override
+			public void run() {
+				try {
+					log.info("Currently warming up for [" + config.getInt(QNodeProperties.WARMING_TIME)
+					    + "] - certain actions will only be taken afterwards.");
+					Thread.sleep(config.getInt(QNodeProperties.WARMING_TIME) * 1000);
+					log.info("Warming time ended [OK] Now the QNode will operate fully normally.");
+				} catch(InterruptedException e) {
+					log.error("Warming time interrupted - ");
+				}
+				isWarming.set(false);
+			}
+		};
+		warmingThread.start();
 	}
 
 	/**
@@ -273,9 +308,9 @@ public class QNodeHandler implements IQNodeHandler {
 				throw new RuntimeException(e);
 			} catch(TTransportException e) {
 				throw new RuntimeException(e);
-      } catch(InterruptedException e) {
+			} catch(InterruptedException e) {
 				throw new RuntimeException(e);
-      }
+			}
 		}
 		log.info("Alive DNodes at QNode startup [" + Joiner.on(", ").skipNulls().join(dNodes) + "]");
 		log.info("TablespaceVersion map at QNode startup [" + context.getTablespaceVersionsMap() + "]");
@@ -296,18 +331,20 @@ public class QNodeHandler implements IQNodeHandler {
 		String persistenceFolder = config.getString(HazelcastProperties.HZ_PERSISTENCE_FOLDER);
 		if(persistenceFolder != null && !persistenceFolder.equals("")) {
 			TablespaceVersionStore vStore = new TablespaceVersionStore(persistenceFolder);
-			Map<String, Long> vBeingServedFromDisk = vStore.load(CoordinationStructures.KEY_FOR_VERSIONS_BEING_SERVED);
+			Map<String, Long> vBeingServedFromDisk = vStore
+			    .load(CoordinationStructures.KEY_FOR_VERSIONS_BEING_SERVED);
 			if(vBeingServedFromDisk != null) {
 				Map<String, Long> vBeingServed = null;
 				do {
 					vBeingServed = context.getCoordinationStructures().getCopyVersionsBeingServed();
 					if(vBeingServed != null) {
 						// We assume info in memory (Hazelcast) is fresher than info in disk
-						for(Map.Entry<String, Long> entry: vBeingServed.entrySet()) {
+						for(Map.Entry<String, Long> entry : vBeingServed.entrySet()) {
 							vBeingServedFromDisk.put(entry.getKey(), entry.getValue());
 						}
 					}
-				} while(!context.getCoordinationStructures().updateVersionsBeingServed(vBeingServed, vBeingServedFromDisk));
+				} while(!context.getCoordinationStructures().updateVersionsBeingServed(vBeingServed,
+				    vBeingServedFromDisk));
 				log.info("Loading tablespace versions to be served: " + vBeingServedFromDisk);
 				updateLocalTablespace(vBeingServedFromDisk);
 			}
@@ -333,9 +370,11 @@ public class QNodeHandler implements IQNodeHandler {
 	 * Given a key, a tablespace and a SQL, query it to the appropriated DNode and return the result.
 	 * <p>
 	 * Returns a {@link QueryStatus}.
-	 * @throws QuerierException 
+	 * 
+	 * @throws QuerierException
 	 */
-	public QueryStatus query(String tablespace, String key, String sql, String partition) throws JSONSerDeException, QuerierException {
+	public QueryStatus query(String tablespace, String key, String sql, String partition)
+	    throws JSONSerDeException, QuerierException {
 		if(sql == null) {
 			return new ErrorQueryStatus("Null sql provided, can't query.");
 		}
@@ -343,21 +382,23 @@ public class QNodeHandler implements IQNodeHandler {
 			return new ErrorQueryStatus("Empty sql provided, can't query.");
 		}
 		if(key == null && partition == null) {
-			return new ErrorQueryStatus("Null key / partition provided, can't query. Either partition or key must not be null.");
+			return new ErrorQueryStatus(
+			    "Null key / partition provided, can't query. Either partition or key must not be null.");
 		}
 		if(key != null && partition != null) {
-			return new ErrorQueryStatus("(partition, key) parameters are mutually exclusive. Please use one or other, not both at the same time.");
+			return new ErrorQueryStatus(
+			    "(partition, key) parameters are mutually exclusive. Please use one or other, not both at the same time.");
 		}
 		meterQueriesServed.inc();
 		meterRequestsPerSecond.mark();
 		/*
 		 * The queries are handled by the specialized module {@link Querier}
 		 */
-    QueryStatus result = querier.query(tablespace, key, sql, partition);
-    if (result.getResult() != null) {
-		  meterResultSize.update(result.getResult().size());
-    }
-    return result;
+		QueryStatus result = querier.query(tablespace, key, sql, partition);
+		if(result.getResult() != null) {
+			meterResultSize.update(result.getResult().size());
+		}
+		return result;
 	}
 
 	/**
@@ -433,7 +474,8 @@ public class QNodeHandler implements IQNodeHandler {
 	 */
 	public StatusMessage rollback(List<SwitchVersionRequest> rollbackRequest) throws JSONSerDeException {
 		try {
-			// TODO: Coordinate with context.synchronizeTablespaceVersions() because one could being deleting some tablespace when other is trying a rollback.
+			// TODO: Coordinate with context.synchronizeTablespaceVersions() because one could being deleting some tablespace
+			// when other is trying a rollback.
 			deployer.switchVersions(rollbackRequest);
 			// TODO: Change this status message to something more programmatic
 			return new StatusMessage("Done");
@@ -454,9 +496,8 @@ public class QNodeHandler implements IQNodeHandler {
 			DNodeService.Client client = null;
 			boolean renew = false;
 			try {
-				client = getContext().getDNodeClientFromPool(dnode.getAddress()); 
-				aliveDNodes.put(dnode.getAddress(), JSONSerDe.deSer(client
-				    .status(), DNodeSystemStatus.class));
+				client = getContext().getDNodeClientFromPool(dnode.getAddress());
+				aliveDNodes.put(dnode.getAddress(), JSONSerDe.deSer(client.status(), DNodeSystemStatus.class));
 			} catch(TTransportException e) {
 				renew = true;
 				throw e;
@@ -510,8 +551,7 @@ public class QNodeHandler implements IQNodeHandler {
 		boolean renew = false;
 		try {
 			client = getContext().getDNodeClientFromPool(dnode);
-			return JSONSerDe
-			    .deSer(client.status(), DNodeSystemStatus.class);
+			return JSONSerDe.deSer(client.status(), DNodeSystemStatus.class);
 		} catch(TTransportException e) {
 			renew = true;
 			throw e;
@@ -537,11 +577,7 @@ public class QNodeHandler implements IQNodeHandler {
 	 */
 	@Override
 	public List<String> getDNodeList() throws Exception {
-		List<String> dNodeList = new ArrayList<String>();
-		for(DNodeInfo dnode : context.getCoordinationStructures().getDNodes().values()) {
-			dNodeList.add(dnode.getAddress());
-		}
-		return dNodeList;
+		return context.getDNodeList();
 	}
 
 	/**
@@ -550,6 +586,10 @@ public class QNodeHandler implements IQNodeHandler {
 	@Override
 	public void close() throws Exception {
 		context.close();
+		if(warmingThread != null) {
+			warmingThread.interrupt();
+			warmingThread.join();
+		}
 	}
 
 	/**

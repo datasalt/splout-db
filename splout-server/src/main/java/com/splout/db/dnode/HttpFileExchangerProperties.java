@@ -18,4 +18,8 @@ public class HttpFileExchangerProperties {
 	 * The port where the HTTP file exchanger will bind to 
 	 */
 	public final static String HTTP_PORT = "http.exchanger.port";
+	/*
+	 * Whether or not to use auto-increment for the HTTP port in case it is already busy 
+	 */
+	public final static String HTTP_PORT_AUTO_INCREMENT = "http.exchanger.port.auto.increment";
 }

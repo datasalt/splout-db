@@ -68,7 +68,7 @@ public class TestQNodeHandler {
 	@Before
 	public void cleanUp() throws IOException {
 		FileUtils.deleteDirectory(new File(FAKE_DEPLOY_FOLDER));
-		TestUtils.cleanUpTmpFolders(this.getClass().getName(), 6);
+		TestUtils.cleanUpTmpFolders(this.getClass().getName(), 7);
 	}
 
 	DNodeMockHandler dHandler = new DNodeMockHandler() {
@@ -233,7 +233,7 @@ public class TestQNodeHandler {
 		handler.init(SploutConfiguration.getTestConfig());
 
 		SploutConfiguration config = SploutConfiguration.getTestConfig();
-		DNode dnode = TestUtils.getTestDNode(config, dHandler, "dnode-" + this.getClass().getName() + "-2b");
+		DNode dnode = TestUtils.getTestDNode(config, dHandler, "dnode-" + this.getClass().getName() + "-6");
 		try {
 			ReplicationEntry repEntry = new ReplicationEntry(0, dnode.getAddress());
 			Tablespace tablespace1 = new Tablespace(PartitionMap.oneShardOpenedMap(), new ReplicationMap(

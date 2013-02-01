@@ -51,7 +51,14 @@ public class QNodeProperties {
 	 */
 	public final static String DEPLOY_TIMEOUT = "qnode.deploy.timeout";
 	/**
-	 * The number of seconds to wait before checking each time if a DNode has failed or if timeout has ocurred in the middle of a deploy
+	 * The number of seconds to wait before checking each time if a DNode has failed or if timeout has ocurred in the
+	 * middle of a deploy
 	 */
 	public final static String DEPLOY_SECONDS_TO_CHECK_ERROR = "qnode.deploy.seconds.to.check.error";
+	/**
+	 * A fixed amount of time (seconds) that this QNode will wait before taking certain actions. For example, a QNode may decide to
+	 * re-balance under-replicated partitions. But if we are at cluster start, some DNodes may still be connecting or are
+	 * to connect in the near future. For that it is useful to wait this "warming time" before deciding such things.
+	 */
+	public final static String WARMING_TIME = "qnode.warming.time";
 }
