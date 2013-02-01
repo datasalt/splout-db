@@ -68,4 +68,8 @@ hadoop jar splout-*-hadoop.jar deploy --qnode http://localhost:4412 --root datab
 
 If you visit http://localhost:4412/ you will be able to see the deployed tablespaces, and you will be able to perform queries at http://localhost:4412/console.html
 
-Now let's see how an example aplication makes use of this data. Open the file examples/meteo/web/index.html in your browser and try the example. The code of the example can be seen here: https://github.com/datasalt/splout-db/blob/master/splout-hadoop/examples/meteo/web/index.html
+Now let's see how an example aplication makes use of this data. Open the file examples/meteo/web/index.html in your browser and try the example. You should see something like that:
+
+![Meteo example app](https://raw.github.com/datasalt/splout-db/master/splout-hadoop/examples/meteo/web/meteo-screenshot.png)
+
+The code of the example can be seen here: https://github.com/datasalt/splout-db/blob/master/splout-hadoop/examples/meteo/web/index.html
