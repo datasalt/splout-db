@@ -6,9 +6,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import com.splout.db.common.ReplicationEntry;
 import com.splout.db.common.ReplicationMap;
 import com.splout.db.common.Tablespace;
@@ -23,8 +20,6 @@ import com.splout.db.hazelcast.TablespaceVersion;
  * should not start this daemon before X time.
  */
 public class ReplicaBalancer {
-
-	private final static Log log = LogFactory.getLog(ReplicaBalancer.class);
 
 	private QNodeHandlerContext context;
 

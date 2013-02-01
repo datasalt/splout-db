@@ -110,7 +110,6 @@ public class QNodeHandler implements IQNodeHandler {
 	private QNodeHandlerContext context;
 	private Deployer deployer;
 	private Querier querier;
-	private ReplicaBalancer replicaBalancer;
 	private SploutConfiguration config;
 	private CoordinationStructures coord;
 
@@ -168,12 +167,12 @@ public class QNodeHandler implements IQNodeHandler {
 			// do this only after warming
 			if(!isWarming.get()) {
 				// check if we could balance some partitions
-				List<ReplicaBalancer.BalanceAction> balanceActions = replicaBalancer.scanPartitions();
+				List<ReplicaBalancer.BalanceAction> balanceActions = context.getBalanceActions();
 				// we will only re-balance versions being served
 				// otherwise strange things may happen: to re-balance a version in the middle of its deployment...
 				Map<String, Long> versionsBeingServed = coord.getCopyVersionsBeingServed();
 				for(ReplicaBalancer.BalanceAction action : balanceActions) {
-					if(versionsBeingServed.get(action.getTablespace()) != null
+					if(versionsBeingServed != null && versionsBeingServed.get(action.getTablespace()) != null
 					    && versionsBeingServed.get(action.getTablespace()) == action.getVersion()) {
 						if(coord.getDNodeReplicaBalanceActionsSet().add(action)) {
 							log.info("Triggering a balance action: " + action);
@@ -271,7 +270,6 @@ public class QNodeHandler implements IQNodeHandler {
 		// Now instantiate modules
 		deployer = new Deployer(context);
 		querier = new Querier(context);
-		replicaBalancer = new ReplicaBalancer(context);
 		// Get updated tablespace + version information
 		context.synchronizeTablespaceVersions();
 		log.info(Thread.currentThread() + " - Initializing QNode [DONE].");
