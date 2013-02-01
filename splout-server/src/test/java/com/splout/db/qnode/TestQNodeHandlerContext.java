@@ -59,13 +59,17 @@ public class TestQNodeHandlerContext {
 		}
 		
 		public void addTablespaceVersionPartition(String tablespace, Long version, Integer partition) {
+			addTablespaceVersionPartition(tablespace, version, partition, DEFAULT_METADATA);
+		}
+		
+		public void addTablespaceVersionPartition(String tablespace, Long version, Integer partition, PartitionMetadata metadata) {
 			if(servingInfo.get(tablespace) == null) {
 				servingInfo.put(tablespace, new HashMap<Long, Map<Integer, PartitionMetadata>>());
 			}
 			if(servingInfo.get(tablespace).get(version) == null) {
 				servingInfo.get(tablespace).put(version, new HashMap<Integer, PartitionMetadata>());
 			}
-			servingInfo.get(tablespace).get(version).put(partition, DEFAULT_METADATA);
+			servingInfo.get(tablespace).get(version).put(partition, metadata);
 		}
 		
 		public DNodeInfo getDNodeInfo() {

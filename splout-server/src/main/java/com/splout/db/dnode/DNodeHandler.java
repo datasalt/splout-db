@@ -52,6 +52,8 @@ import com.google.common.collect.Lists;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ICountDownLatch;
+import com.hazelcast.core.ItemEvent;
+import com.hazelcast.core.ItemListener;
 import com.splout.db.benchmark.PerformanceTool;
 import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
@@ -68,6 +70,8 @@ import com.splout.db.hazelcast.DistributedRegistry;
 import com.splout.db.hazelcast.HazelcastConfigBuilder;
 import com.splout.db.hazelcast.HazelcastConfigBuilder.HazelcastConfigBuilderException;
 import com.splout.db.hazelcast.HazelcastProperties;
+import com.splout.db.qnode.ReplicaBalancer;
+import com.splout.db.qnode.ReplicaBalancer.BalanceAction;
 import com.splout.db.thrift.DNodeException;
 import com.splout.db.thrift.DeployAction;
 import com.splout.db.thrift.PartitionMetadata;
@@ -85,6 +89,7 @@ public class DNodeHandler implements IDNodeHandler {
 	private HazelcastInstance hz;
 	private DistributedRegistry dnodesRegistry;
 	private CoordinationStructures coord;
+	private HttpFileExchanger httpExchanger;
 
 	// The {@link Fetcher} is the responsible for downloading new deployment data.
 	Cache dbCache;
@@ -113,18 +118,18 @@ public class DNodeHandler implements IDNodeHandler {
 
 	// The {@link Fetcher} is the responsible for downloading new deployment data.
 	private Fetcher fetcher;
-	
+
 	// Above this query time the query will be logged as slow query
 	private long absoluteSlowQueryLimit;
 	private long slowQueries = 0;
-	
+
 	// This thread will interrupt long-running queries
 	private TimeoutThread timeoutThread;
-	
+
 	public DNodeHandler(Fetcher fetcher) {
 		this.fetcher = fetcher;
 	}
-	
+
 	public DNodeHandler() {
 	}
 
@@ -134,7 +139,48 @@ public class DNodeHandler implements IDNodeHandler {
 	public String whoAmI() {
 		return config.getString(DNodeProperties.HOST) + ":" + config.getInt(DNodeProperties.PORT);
 	}
+	
+	/**
+	 * This inner class will listen for additions to the balance actions map, so that if a balance action
+	 * has to be taken and this DNode is the one who has the send the file, it will start doing so.
+	 */
+	private class BalanceActionItemListener implements ItemListener<ReplicaBalancer.BalanceAction> {
+		@Override
+    public void itemAdded(ItemEvent<BalanceAction> item) {
+			BalanceAction action = item.getItem();
+			if(action.getOriginNode().equals(whoAmI())) {
+				// I must do a balance action!
+				File toSend = new File(getLocalStorageFolder(action.getTablespace(), action.getPartition(), action.getVersion()), action.getPartition() + ".db");
+				String dnodeHost = action.getFinalNode().substring(0, action.getFinalNode().indexOf(":"));
+				// TODO FIX-ME This is the HTTP port of this node, not the final node
+				httpExchanger.send(toSend, "http://" + dnodeHost + ":" + config.getInt(HttpFileExchangerProperties.HTTP_PORT), false);
+			}
+    }
+		@Override
+    public void itemRemoved(ItemEvent<BalanceAction> item) {
+			// usually we won't care - but the final DNode might have pro-actively removed this action
+    }
+	}
 
+	/**
+	 * This inner class will perform the business logic associated with receiving files:
+	 * what to do on failures, bad CRC, file received OK...
+	 */
+	private class FileReceiverCallback implements HttpFileExchanger.ReceiveFileCallback {
+		@Override
+    public void onFileReceived(File file) {
+    }
+		@Override
+    public void onBadCRC(File file) {
+    }
+		@Override
+    public void onError(File file) {
+    }
+		@Override
+    public void onProgress(File file, long totalSize, long sizeDownloaded) {
+    }
+	}
+	
 	/**
 	 * Initialization logic: initialize things, connect to ZooKeeper, create Thrift server, etc.
 	 * 
@@ -160,9 +206,15 @@ public class DNodeHandler implements IDNodeHandler {
 		dbCache.getCacheEventNotificationService().registerListener(new CacheListener());
 		// The thread that will execute deployments asynchronously
 		deployThread = Executors.newFixedThreadPool(1);
+		// A thread that will listen to file exchanges through HTTP
+		httpExchanger = new HttpFileExchanger(config, new FileReceiverCallback());
+		// TODO Still work in progress -
+//		httpExchanger.start();
 		// Connect with the cluster.
 		hz = Hazelcast.newHazelcastInstance(HazelcastConfigBuilder.build(config));
 		coord = new CoordinationStructures(hz);
+		// TODO Still work in progress -
+//		coord.getDNodeReplicaBalanceActionsSet().addItemListener(new BalanceActionItemListener(), false);
 		// Add shutdown hook
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
@@ -212,7 +264,7 @@ public class DNodeHandler implements IDNodeHandler {
 	@Override
 	public String sqlQuery(String tablespace, long version, int partition, String query)
 	    throws DNodeException {
-		
+
 		try {
 			try {
 				performanceTool.startQuery();
@@ -252,16 +304,18 @@ public class DNodeHandler implements IDNodeHandler {
 					String result = ((SQLite4JavaManager) dbPoolInCache.getObjectValue()).query(query,
 					    maxResultsPerQuery);
 					long time = performanceTool.endQuery();
-					log.info("serving query [" + tablespace + "]"  + " [" + version + "] [" + partition + "] [" + query + "] time [" + time + "] OK.");
-//					double prob = performanceTool.getHistogram().getLeftAccumulatedProbability(time);
-//					if(prob > 0.95) {
-//						// slow query!
-//						log.warn("[SLOW QUERY] Query time over 95 percentil: [" + query + "] time [" + time + "]");
-//						slowQueries++;
-//					}
+					log.info("serving query [" + tablespace + "]" + " [" + version + "] [" + partition + "] ["
+					    + query + "] time [" + time + "] OK.");
+					// double prob = performanceTool.getHistogram().getLeftAccumulatedProbability(time);
+					// if(prob > 0.95) {
+					// // slow query!
+					// log.warn("[SLOW QUERY] Query time over 95 percentil: [" + query + "] time [" + time + "]");
+					// slowQueries++;
+					// }
 					if(time > absoluteSlowQueryLimit) {
 						// slow query!
-						log.warn("[SLOW QUERY] Query time over absolute slow query time (" + absoluteSlowQueryLimit + ") : [" + query + "] time [" + time + "]");						
+						log.warn("[SLOW QUERY] Query time over absolute slow query time (" + absoluteSlowQueryLimit
+						    + ") : [" + query + "] time [" + time + "]");
 						slowQueries++;
 					}
 					return result;
@@ -275,7 +329,8 @@ public class DNodeHandler implements IDNodeHandler {
 				throw new DNodeException(EXCEPTION_UNEXPECTED, e.getMessage());
 			}
 		} catch(DNodeException e) {
-			log.info("serving query [" + tablespace + "]"  + " [" + version + "] [" + partition + "] [" + query + "] FAILED [" + e.getMsg() + "]");
+			log.info("serving query [" + tablespace + "]" + " [" + version + "] [" + partition + "] [" + query
+			    + "] FAILED [" + e.getMsg() + "]");
 			failedQueries.incrementAndGet();
 			throw e;
 		}
@@ -469,7 +524,13 @@ public class DNodeHandler implements IDNodeHandler {
 	public static File getLocalStorageFolder(SploutConfiguration config, String tablespace, int partition,
 	    long version) {
 		String dataFolder = config.getString(DNodeProperties.DATA_FOLDER);
-		return new File(dataFolder + "/" + tablespace + "/" + version + "/" + partition);
+		return new File(dataFolder + "/"
+		    + getLocalStoragePartitionRelativePath(tablespace, partition, version));
+	}
+
+	public static String getLocalStoragePartitionRelativePath(String tablespace, int partition,
+	    long version) {
+		return tablespace + "/" + version + "/" + partition;
 	}
 
 	protected File getLocalMetadataFile(String tablespace, int partition, long version) {
@@ -483,7 +544,11 @@ public class DNodeHandler implements IDNodeHandler {
 	public static File getLocalMetadataFile(SploutConfiguration config, String tablespace, int partition,
 	    long version) {
 		String dataFolder = config.getString(DNodeProperties.DATA_FOLDER);
-		return new File(dataFolder + "/" + tablespace + "/" + version + "/" + partition + ".meta");
+		return new File(dataFolder + "/" + getLocalMetadataFileRelativePath(tablespace, partition, version));
+	}
+	
+	public static String getLocalMetadataFileRelativePath(String tablespace, int partition, long version) {
+		return tablespace + "/" + version + "/" + partition + ".meta";
 	}
 
 	public boolean isDeployInProgress() {
@@ -497,6 +562,8 @@ public class DNodeHandler implements IDNodeHandler {
 		dbCache.dispose();
 		deployThread.shutdownNow();
 		timeoutThread.interrupt();
+		// TODO Still work in progress.
+//		httpExchanger.close();
 		hz.getLifecycleService().shutdown();
 	}
 
@@ -600,6 +667,6 @@ public class DNodeHandler implements IDNodeHandler {
 	}
 
 	public CoordinationStructures getCoord() {
-  	return coord;
-  }
+		return coord;
+	}
 }

@@ -98,6 +98,7 @@ dnode.slow.query.abs.limit	2500
 
 #
 # DNode Data Fetcher Properties
+# (The DNode Data Fetcher is in charge of downloading the files under a new deploy request)
 #
 
 # If using S3 fetching, specify here your AWS credentials.
@@ -107,19 +108,37 @@ dnode.slow.query.abs.limit	2500
 #fetcher.s3.secret.key	SECRETKEY
 
 # The local folder that will be used to download new deployments
-
+# This folder is also used by the HTTP File exchanger module
 fetcher.temp.dir	fetcher-tmp
 
 # The size in bytes of the in-memory buffer used to download files from S3 
-
+# This property is the same for the HTTP File exchanger module
 fetcher.download.buffer	1048576
+
+# (Deprecated) Whether to use throttling (> 0) or not. If so, number of bytes per second to throttle.
 fetcher.bytes.per.sec.throttle	-1
 
+#
 # If using Hadoop fetching, the address of the NameNode for 
 # being able download data from HDFS. Uncomment when needed.
-
+#
 #fetcher.hadoop.fs.name=...
  
+#
+# DNode HTTP File exchanger Properties.
+# (The HTTP File exchanger sends binary files between DNodes for auto-balancing under-replicated partitions).
+#
+
+# The number of serving threads of the HTTP server / client (maximum files that can be received / transferred in parallel).
+http.exchanger.threads.server=2
+http.exchanger.threads.client=2
+
+# The allowed maximum backlog for the HTTP server.
+http.exchanger.backlog=0
+
+# The port where the HTTP file exchanger will bind to.
+http.exchanger.port=4432
+
 #
 # Hazelcast properties
 #

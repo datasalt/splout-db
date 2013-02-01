@@ -260,6 +260,7 @@ public class QNodeHandlerContext {
 						// Will only contain this DNode as we don't know about the others yet
 						ReplicationEntry reEntry = new ReplicationEntry();
 						reEntry.setShard(shard);
+						reEntry.setExpectedReplicationFactor(metadata.getNReplicas());
 						reEntry.setNodes(new ArrayList<String>());
 						// Look for an existing ReplicationEntry for the same shard in the ReplicationMap
 						if(replicationMap.contains(reEntry)) {

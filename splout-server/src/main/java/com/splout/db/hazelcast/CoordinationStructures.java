@@ -27,7 +27,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ICountDownLatch;
 import com.hazelcast.core.IMap;
+import com.hazelcast.core.ISet;
 import com.hazelcast.core.IdGenerator;
+import com.splout.db.qnode.ReplicaBalancer;
 
 /**
  * Class that centralizes the distributed structures
@@ -58,6 +60,8 @@ public class CoordinationStructures {
 	public static final String GLOBAL_DEPLOY_ERROR_PANEL = "com.splout.db.deploy.errorPanel-";
 	// Version generator. Generates unique version id across the cluster
 	public static final String VERSION_GENERATOR = "com.splout.db.versionGenerator"; 
+	// Key for #getDNodeReplicaBalanceActionsSet()
+	public static final String DNODE_REPLICA_BALANCE_ACTIONS_SET = "com.splout.db.replicaBalanceActions"; 
 	
 	private HazelcastInstance hz;
 	
@@ -67,6 +71,17 @@ public class CoordinationStructures {
 			
 	public CoordinationStructures(HazelcastInstance hz) {
 		this.hz = hz;
+	}
+	
+	/**
+	 * Returns the set that shows what {@link ReplicaBalancer.BalanceAction}s 
+	 * are currently being performed in the cluster. If some QNode wants to trigger a balance
+	 * action it has to update this map only in the case that the key doesn't already exist.
+	 * <p>
+	 * 
+	 */
+	public ISet<ReplicaBalancer.BalanceAction> getDNodeReplicaBalanceActionsSet() {
+		return hz.getSet(CoordinationStructures.DNODE_REPLICA_BALANCE_ACTIONS_SET);
 	}
 	
 	/**

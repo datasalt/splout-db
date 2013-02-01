@@ -21,33 +21,56 @@ package com.splout.db.qnode;
  * #L%
  */
 
-import com.google.common.base.Joiner;
-import com.hazelcast.core.*;
-import com.splout.db.common.JSONSerDe;
-import com.splout.db.common.JSONSerDe.JSONSerDeException;
-import com.splout.db.common.SploutConfiguration;
-import com.splout.db.common.Tablespace;
-import com.splout.db.dnode.beans.DNodeSystemStatus;
-import com.splout.db.hazelcast.*;
-import com.splout.db.qnode.Deployer.UnexistingVersion;
-import com.splout.db.qnode.QNodeHandlerContext.DNodeEvent;
-import com.splout.db.qnode.QNodeHandlerContext.TablespaceVersionInfoException;
-import com.splout.db.qnode.Querier.QuerierException;
-import com.splout.db.qnode.beans.*;
-import com.splout.db.thrift.DNodeService;
-import com.yammer.metrics.Metrics;
-import com.yammer.metrics.core.Counter;
-import com.yammer.metrics.core.Histogram;
-import com.yammer.metrics.core.Meter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.thrift.transport.TTransportException;
 import org.codehaus.jackson.type.TypeReference;
 
-import java.io.IOException;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
+import com.google.common.base.Joiner;
+import com.hazelcast.core.EntryEvent;
+import com.hazelcast.core.EntryListener;
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.IMap;
+import com.splout.db.common.JSONSerDe;
+import com.splout.db.common.JSONSerDe.JSONSerDeException;
+import com.splout.db.common.SploutConfiguration;
+import com.splout.db.common.Tablespace;
+import com.splout.db.dnode.beans.DNodeSystemStatus;
+import com.splout.db.hazelcast.CoordinationStructures;
+import com.splout.db.hazelcast.DNodeInfo;
+import com.splout.db.hazelcast.DistributedRegistry;
+import com.splout.db.hazelcast.HazelcastConfigBuilder;
+import com.splout.db.hazelcast.HazelcastProperties;
+import com.splout.db.hazelcast.TablespaceVersion;
+import com.splout.db.hazelcast.TablespaceVersionStore;
+import com.splout.db.qnode.Deployer.UnexistingVersion;
+import com.splout.db.qnode.QNodeHandlerContext.DNodeEvent;
+import com.splout.db.qnode.QNodeHandlerContext.TablespaceVersionInfoException;
+import com.splout.db.qnode.Querier.QuerierException;
+import com.splout.db.qnode.beans.DeployInfo;
+import com.splout.db.qnode.beans.DeployRequest;
+import com.splout.db.qnode.beans.ErrorQueryStatus;
+import com.splout.db.qnode.beans.QNodeStatus;
+import com.splout.db.qnode.beans.QueryStatus;
+import com.splout.db.qnode.beans.StatusMessage;
+import com.splout.db.qnode.beans.SwitchVersionRequest;
+import com.splout.db.thrift.DNodeService;
+import com.yammer.metrics.Metrics;
+import com.yammer.metrics.core.Counter;
+import com.yammer.metrics.core.Histogram;
+import com.yammer.metrics.core.Meter;
 
 /**
  * Implements the business logic for the {@link QNode}.
@@ -86,8 +109,9 @@ public class QNodeHandler implements IQNodeHandler {
 	private QNodeHandlerContext context;
 	private Deployer deployer;
 	private Querier querier;
+	private ReplicaBalancer replicaBalancer;
 	private SploutConfiguration config;
-	CoordinationStructures coord;
+	private CoordinationStructures coord;
 
 	private final Counter meterQueriesServed = Metrics.newCounter(QNodeHandler.class, "queries-served");
 	private final Meter meterRequestsPerSecond = Metrics.newMeter(QNodeHandler.class, "queries-second",
@@ -125,6 +149,15 @@ public class QNodeHandler implements IQNodeHandler {
 			try {
 				context.discardThriftClientCacheFor(event.getValue().getAddress());
 				context.updateTablespaceVersions(event.getValue(), QNodeHandlerContext.DNodeEvent.LEAVE);
+				// check if we could balance some partitions
+				List<ReplicaBalancer.BalanceAction> balanceActions = replicaBalancer.scanPartitions();
+				for(ReplicaBalancer.BalanceAction action: balanceActions) {
+					if(coord.getDNodeReplicaBalanceActionsSet().add(action)) {
+						log.info("Triggering a balance action: " + action);
+					} else {
+						// somebody else already triggered it, nothing bad happens
+					}
+				}
 			} catch(TablespaceVersionInfoException e) {
 				throw new RuntimeException(e);
       } catch(InterruptedException e) {
