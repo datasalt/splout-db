@@ -126,6 +126,17 @@ public class QNodeHandlerContext {
 	public Object tVLock = new Object();
 
 	/**
+	 * Get the list of DNodes
+	 */
+	public List<String> getDNodeList() {
+		List<String> dNodeList = new ArrayList<String>();
+		for(DNodeInfo dnode : getCoordinationStructures().getDNodes().values()) {
+			dNodeList.add(dnode.getAddress());
+		}
+		return dNodeList;
+	}
+	
+	/**
 	 * Update the in-memory <TablespaceVersion, Tablespace> map when a DNode joins, leaves or updates its DNodeINfo.
 	 */
 	public void updateTablespaceVersions(DNodeInfo dNodeInfo, DNodeEvent event)
@@ -282,8 +293,7 @@ public class QNodeHandlerContext {
 									// Add it to replication map
 									existingEntry.getNodes().add(dNodeInfo.getAddress());
 								} else {
-									// We are adding / updating but the node already exists in the replication map. Check consistency here
-									// TODO We are not saving the expected replication factor anywhere currently
+									// We are adding / updating but the node already exists in the replication map.
 								}
 							}
 						} else if(!event.equals(DNodeEvent.LEAVE)) { // Otherwise just add and sort
@@ -579,19 +589,15 @@ public class QNodeHandlerContext {
 	public Map<String, Long> getCurrentVersionsMap() {
 		return currentVersionsMap;
 	}
-
 	public Map<TablespaceVersion, Tablespace> getTablespaceVersionsMap() {
 		return tablespaceVersionsMap;
 	}
-
 	public CoordinationStructures getCoordinationStructures() {
 		return coordinationStructures;
 	}
-
 	public SploutConfiguration getConfig() {
 		return config;
 	}
-
 	public ConcurrentMap<String, BlockingQueue<DNodeService.Client>> getThriftClientCache() {
 		return thriftClientCache;
 	}

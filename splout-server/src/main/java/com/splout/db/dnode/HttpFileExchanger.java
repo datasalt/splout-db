@@ -28,6 +28,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.BindException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
@@ -63,71 +64,82 @@ public class HttpFileExchanger extends Thread implements HttpHandler {
 	private final static Log log = LogFactory.getLog(HttpFileExchanger.class);
 
 	private File tempDir;
-	private int downloadBufferSize;
-	private String host;
-
-	private int port;
-	private int backlog;
-	private int nThreadsServer;
-	private int nThreadsClient;
+	private SploutConfiguration config;
 
 	// this thread pool is passed to the HTTP server for handling incoming requests
 	private ExecutorService serverExecutors;
 	// this thread pool is used for sending multiple files at the same time
 	private ExecutorService clientExecutors;
 	private HttpServer server;
+
 	private AtomicBoolean isListening = new AtomicBoolean(false);
+	private AtomicBoolean isInit = new AtomicBoolean(false);
 
 	// This callback will be called when the files are received
 	private ReceiveFileCallback callback;
 
 	public HttpFileExchanger(SploutConfiguration config, ReceiveFileCallback callback) {
-		this(config.getString(DNodeProperties.HOST), config.getInt(HttpFileExchangerProperties.HTTP_PORT),
-		    config.getInt(HttpFileExchangerProperties.HTTP_THREADS_SERVER), config
-		        .getInt(HttpFileExchangerProperties.HTTP_THREADS_CLIENT), config
-		        .getInt(HttpFileExchangerProperties.HTTP_BACKLOG), new File(
-		        config.getString(FetcherProperties.TEMP_DIR)), config
-		        .getInt(FetcherProperties.DOWNLOAD_BUFFER), callback);
+		this.config = config;
+		this.callback = callback;
 	}
 
 	public interface ReceiveFileCallback {
 
-		public void onProgress(File file, long totalSize, long sizeDownloaded);
+		public void onProgress(String tablespace, Integer partition, Long version, File file, long totalSize, long sizeDownloaded);
 
-		public void onFileReceived(File file);
+		public void onFileReceived(String tablespace, Integer partition, Long version, File file);
 
-		public void onBadCRC(File file);
+		public void onBadCRC(String tablespace, Integer partition, Long version, File file);
 
-		public void onError(File file);
+		public void onError(String tablespace, Integer partition, Long version, File file);
 	}
 
-	public HttpFileExchanger(String host, int port, int nThreadsServer, int nThreadsClient, int backlog,
-	    File tempDir, int downloadBufferSize, ReceiveFileCallback callback) {
-		this.host = host;
-		this.port = port;
-		this.backlog = backlog;
-		this.nThreadsServer = nThreadsServer;
-		this.nThreadsClient = nThreadsClient;
-		this.tempDir = tempDir;
-		this.downloadBufferSize = downloadBufferSize;
-		this.callback = callback;
+	/**
+	 * We initialize everything in an init() method to be able to catch explicit exceptions (otherwise that's not possible
+	 * in Thread's run()).
+	 */
+	public void init() throws IOException {
+		tempDir = new File(config.getString(FetcherProperties.TEMP_DIR));
+		int httpPort = 0;
+		int trials = 0;
+		boolean bind = false;
+		do {
+			try {
+				httpPort = config.getInt(HttpFileExchangerProperties.HTTP_PORT);
+				server = HttpServer.create(new InetSocketAddress(config.getString(DNodeProperties.HOST),
+				    httpPort), config.getInt(HttpFileExchangerProperties.HTTP_BACKLOG));
+				bind = true;
+			} catch(BindException e) {
+				if(config.getBoolean(HttpFileExchangerProperties.HTTP_PORT_AUTO_INCREMENT)) {
+					config.setProperty(HttpFileExchangerProperties.HTTP_PORT, httpPort + 1);
+				} else {
+					throw e;
+				}
+			}
+		} while(!bind && trials < 50);
+		// serve all http requests at root context
+		server.createContext("/", this);
+		serverExecutors = Executors.newFixedThreadPool(config
+		    .getInt(HttpFileExchangerProperties.HTTP_THREADS_SERVER));
+		clientExecutors = Executors.newFixedThreadPool(config
+		    .getInt(HttpFileExchangerProperties.HTTP_THREADS_CLIENT));
+		server.setExecutor(serverExecutors);
+		isInit.set(true);
 	}
 
+	public String address() {
+		return "http://" + config.getString(DNodeProperties.HOST) + ":" + config.getInt(HttpFileExchangerProperties.HTTP_PORT);
+	}
+	
 	@Override
 	public void run() {
-		try {
-			server = HttpServer.create(new InetSocketAddress(host, port), backlog);
-			// serve all http requests at root context
-			server.createContext("/", this);
-			serverExecutors = Executors.newFixedThreadPool(nThreadsServer);
-			clientExecutors = Executors.newFixedThreadPool(nThreadsClient);
-			server.setExecutor(serverExecutors);
-			server.start();
-			log.info("HTTP File exchanger LISTENING on port: " + port);
-			isListening.set(true);
-		} catch(IOException e) {
-			throw new RuntimeException(e);
+		if(!isInit.get()) {
+			throw new IllegalStateException("HTTP server must be init with init() method.");
 		}
+		server.start();
+		log.info("HTTP File exchanger LISTENING on port: "
+		    + config.getInt(HttpFileExchangerProperties.HTTP_PORT));
+		isListening.set(true);
 	}
 
 	public boolean isListening() {
@@ -149,11 +161,20 @@ public class HttpFileExchanger extends Thread implements HttpHandler {
 		FileOutputStream writer = null;
 		File dest = null;
 
+		String tablespace = null; 
+		Integer partition = null;
+		Long version = null;
+		
 		try {
 			iS = new DataInputStream(new GZIPInputStream(exchange.getRequestBody()));
 			String fileName = exchange.getRequestHeaders().getFirst("filename");
+			tablespace = exchange.getRequestHeaders().getFirst("tablespace");
+			partition = Integer.valueOf(exchange.getRequestHeaders().getFirst("partition"));
+			version = Long.valueOf(exchange.getRequestHeaders().getFirst("version"));
+			
+			dest = new File(new File(tempDir, DNodeHandler.getLocalStoragePartitionRelativePath(tablespace,
+			    partition, version)), fileName);
 
-			dest = new File(tempDir, fileName);
 			if(!dest.getParentFile().exists()) {
 				dest.getParentFile().mkdirs();
 			}
@@ -162,7 +183,7 @@ public class HttpFileExchanger extends Thread implements HttpHandler {
 			}
 
 			writer = new FileOutputStream(dest);
-			byte[] buffer = new byte[downloadBufferSize];
+			byte[] buffer = new byte[config.getInt(FetcherProperties.DOWNLOAD_BUFFER)];
 
 			Checksum checkSum = new CRC32();
 
@@ -179,23 +200,23 @@ public class HttpFileExchanger extends Thread implements HttpHandler {
 				checkSum.update(buffer, 0, read);
 				writer.write(buffer, 0, read);
 				readSoFar += read;
-				callback.onProgress(dest, fileSize, readSoFar);
+				callback.onProgress(tablespace, partition, version, dest, fileSize, readSoFar);
 			} while(readSoFar < fileSize);
 
 			// 3- Read CRC
 			long expectedCrc = iS.readLong();
 			if(expectedCrc == checkSum.getValue()) {
-				log.info("File [" + fileName + "] received -> Checksum -- " + checkSum.getValue()
+				log.info("File [" + dest.getAbsolutePath() + "] received -> Checksum -- " + checkSum.getValue()
 				    + " matches expected CRC [OK]");
-				callback.onFileReceived(dest);
+				callback.onFileReceived(tablespace, partition, version, dest);
 			} else {
-				log.error("File received -> Checksum -- " + checkSum.getValue()
+				log.error("File received [" + dest.getAbsolutePath() + "] -> Checksum -- " + checkSum.getValue()
 				    + " doesn't match expected CRC: " + expectedCrc);
-				callback.onBadCRC(dest);
+				callback.onBadCRC(tablespace, partition, version, dest);
 			}
 		} catch(Throwable t) {
 			log.error(t);
-			callback.onError(dest);
+			callback.onError(tablespace, partition, version, dest);
 		} finally {
 			if(writer != null) {
 				writer.close();
@@ -206,7 +227,8 @@ public class HttpFileExchanger extends Thread implements HttpHandler {
 		}
 	}
 
-	public void send(final File binaryFile, final String url, boolean blockUntilComplete) {
+	public void send(final String tablespace, final int partition, final long version,
+	    final File binaryFile, final String url, boolean blockUntilComplete) {
 		Future<?> future = clientExecutors.submit(new Runnable() {
 			@Override
 			public void run() {
@@ -214,9 +236,12 @@ public class HttpFileExchanger extends Thread implements HttpHandler {
 				InputStream input = null;
 				try {
 					HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
-					connection.setChunkedStreamingMode(downloadBufferSize);
+					connection.setChunkedStreamingMode(config.getInt(FetcherProperties.DOWNLOAD_BUFFER));
 					connection.setDoOutput(true);
 					connection.setRequestProperty("filename", binaryFile.getName());
+					connection.setRequestProperty("tablespace", tablespace);
+					connection.setRequestProperty("partition", partition + "");
+					connection.setRequestProperty("version", version + "");
 
 					Checksum checkSum = new CRC32();
 
@@ -226,7 +251,7 @@ public class HttpFileExchanger extends Thread implements HttpHandler {
 					writer.flush();
 					// 2 - write file content
 					input = new FileInputStream(binaryFile);
-					byte[] buffer = new byte[downloadBufferSize];
+					byte[] buffer = new byte[config.getInt(FetcherProperties.DOWNLOAD_BUFFER)];
 					long wrote = 0;
 					for(int length = 0; (length = input.read(buffer)) > 0;) {
 						writer.write(buffer, 0, length);
@@ -236,8 +261,8 @@ public class HttpFileExchanger extends Thread implements HttpHandler {
 					// 3 - add the CRC so that we can verify the download
 					writer.writeLong(checkSum.getValue());
 					writer.flush();
-					log.info("Sent file " + binaryFile + " with #bytes: " + wrote + " and checksum: "
-					    + checkSum.getValue());
+					log.info("Sent file " + binaryFile + " to " + url + " with #bytes: " + wrote
+					    + " and checksum: " + checkSum.getValue());
 				} catch(IOException e) {
 					log.error(e);
 				} finally {

@@ -33,6 +33,12 @@ qnode.versions.per.tablespace	10
 
 qnode.deploy.seconds.to.check.error	60
 
+# A fixed amount of time (seconds) that this QNode will wait before taking certain actions. For example, a QNode may decide to
+# re-balance under-replicated partitions. But if we are at cluster start, some DNodes may still be connecting or are
+# to connect in the near future. For that it is useful to wait this "warming time" before deciding such things.
+
+qnode.warming.time	60
+
 #
 # DNode properties
 #
@@ -138,6 +144,9 @@ http.exchanger.backlog=0
 
 # The port where the HTTP file exchanger will bind to.
 http.exchanger.port=4432
+
+# Whether or not to use auto-increment for the HTTP port in case it is already busy 
+http.exchanger.port.auto.increment=true
 
 #
 # Hazelcast properties

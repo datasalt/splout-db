@@ -34,32 +34,30 @@ public class TestHttpFileExchanger {
 
 		HttpFileExchanger exchanger = new HttpFileExchanger(conf, new ReceiveFileCallback() {
 			@Override
-			public void onFileReceived(File file) {
-				receivedOk.set(true);
-			}
-
-			@Override
-			public void onError(File file) {
-			}
-
-			@Override
-			public void onBadCRC(File file) {
-			}
-
-			@Override
-      public void onProgress(File file, long totalSize, long sizeDownloaded) {
-	      
+      public void onProgress(String tablespace, Integer partition, Long version, File file,
+          long totalSize, long sizeDownloaded) {
       }
+			@Override
+      public void onFileReceived(String tablespace, Integer partition, Long version, File file) {
+				receivedOk.set(true);
+      }
+			@Override
+      public void onBadCRC(String tablespace, Integer partition, Long version, File file) {
+      }
+			@Override
+      public void onError(String tablespace, Integer partition, Long version, File file) {
+			}
 		});
-		Thread t = new Thread(exchanger);
-		t.run();
+		exchanger.init();
+		exchanger.run();
 
 		String dnodeHost = conf.getString(DNodeProperties.HOST);
 		int httpPort = conf.getInt(HttpFileExchangerProperties.HTTP_PORT);
 
-		exchanger.send(fileToSend, "http://" + dnodeHost + ":" + httpPort, true);
+		exchanger.send("t1", 0, 1l, fileToSend, "http://" + dnodeHost + ":" + httpPort, true);
 
-		final File downloadedFile = new File(TMP_DOWNLOAD_DIR, fileToSend.getName());
+		final File downloadedFile = new File(new File(TMP_DOWNLOAD_DIR,
+		    DNodeHandler.getLocalStoragePartitionRelativePath("t1", 0, 1l)), fileToSend.getName());
 
 		new TestUtils.NotWaitingForeverCondition() {
 
@@ -75,7 +73,7 @@ public class TestHttpFileExchanger {
 		Assert.assertTrue(receivedOk.get());
 
 		exchanger.close();
-		t.join();
+		exchanger.join();
 
 		fileToSend.delete();
 		downloadedFile.delete();

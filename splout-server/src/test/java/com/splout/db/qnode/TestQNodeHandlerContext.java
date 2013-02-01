@@ -51,10 +51,16 @@ public class TestQNodeHandlerContext {
 	public static class DNodeInfoFacade {
 		
 		String address;
+		String httpAddress;
 		Map<String, Map<Long, Map<Integer, PartitionMetadata>>> servingInfo;
 		
 		public DNodeInfoFacade(String address) {
+			this(address, address);
+		}
+		
+		public DNodeInfoFacade(String address, String httpAddress) {
 			this.address = address;
+			this.httpAddress = httpAddress;
 			servingInfo = new HashMap<String, Map<Long, Map<Integer, PartitionMetadata>>>();
 		}
 		
@@ -73,7 +79,7 @@ public class TestQNodeHandlerContext {
 		}
 		
 		public DNodeInfo getDNodeInfo() {
-			return new DNodeInfo(address, servingInfo);
+			return new DNodeInfo(address, httpAddress, servingInfo);
 		}
 	}
 

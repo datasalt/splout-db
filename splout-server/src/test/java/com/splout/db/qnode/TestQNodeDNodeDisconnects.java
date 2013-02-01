@@ -79,7 +79,7 @@ public class TestQNodeDNodeDisconnects {
 			assertEquals(handler.getDNodeList().size(), 0);
 			assertNull(handler.getContext().getThriftClientCache().get(dnode1.getAddress()));
 
-			dnode1 = TestUtils.getTestDNode(config, dNodeHandler1, "test-dnode-" + this.getClass().getName());
+			dnode1 = TestUtils.getTestDNode(config, dNodeHandler1, "dnode-" + this.getClass().getName() + "-2");
 
 			assertEquals(handler.getDNodeList().size(), 1);
 
