@@ -32,6 +32,8 @@ import java.net.BindException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -77,7 +79,10 @@ public class HttpFileExchanger extends Thread implements HttpHandler {
 
 	// This callback will be called when the files are received
 	private ReceiveFileCallback callback;
-
+	
+	private Map<String, Object> currentTransfers = new HashMap<String, Object>();
+	private Object currentTransfersMonitor = new Object();
+	
 	public HttpFileExchanger(SploutConfiguration config, ReceiveFileCallback callback) {
 		this.config = config;
 		this.callback = callback;
@@ -88,7 +93,7 @@ public class HttpFileExchanger extends Thread implements HttpHandler {
 		public void onProgress(String tablespace, Integer partition, Long version, File file, long totalSize, long sizeDownloaded);
 		public void onFileReceived(String tablespace, Integer partition, Long version, File file);
 		public void onBadCRC(String tablespace, Integer partition, Long version, File file);
-		public void onError(String tablespace, Integer partition, Long version, File file);
+		public void onError(Throwable t, String tablespace, Integer partition, Long version, File file);
 	}
 
 	/**
@@ -172,6 +177,15 @@ public class HttpFileExchanger extends Thread implements HttpHandler {
 			dest = new File(new File(tempDir, DNodeHandler.getLocalStoragePartitionRelativePath(tablespace,
 			    partition, version)), fileName);
 
+			// just in case, avoid copying the same file concurrently
+			// (but we also shouldn't avoid this in other levels of the app)
+			synchronized(currentTransfersMonitor) {
+				if(currentTransfers.containsKey(dest.toString())) {
+					throw new IOException("Incoming file already being transferred - " + dest);
+				}
+				currentTransfers.put(dest.toString(), new Object());
+			}
+			
 			if(!dest.getParentFile().exists()) {
 				dest.getParentFile().mkdirs();
 			}
@@ -213,13 +227,16 @@ public class HttpFileExchanger extends Thread implements HttpHandler {
 			}
 		} catch(Throwable t) {
 			log.error(t);
-			callback.onError(tablespace, partition, version, dest);
+			callback.onError(t, tablespace, partition, version, dest);
 		} finally {
 			if(writer != null) {
 				writer.close();
 			}
 			if(iS != null) {
 				iS.close();
+			}
+			if(dest != null) {
+				currentTransfers.remove(dest.toString());
 			}
 		}
 	}

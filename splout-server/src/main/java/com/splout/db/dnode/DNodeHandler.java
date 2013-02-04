@@ -302,7 +302,7 @@ public class DNodeHandler implements IDNodeHandler {
 		}
 
 		@Override
-		public void onError(String tablespace, Integer partition, Long version, File file) {
+		public void onError(Throwable t, String tablespace, Integer partition, Long version, File file) {
 			// cancel this
 			// TODO Clean stalled data
 			// TODO Report error (panel?)
