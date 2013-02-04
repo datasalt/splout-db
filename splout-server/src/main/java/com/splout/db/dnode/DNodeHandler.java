@@ -332,6 +332,12 @@ public class DNodeHandler implements IDNodeHandler {
 				if(actionToRemove == null) {
 					log.warn("Needed to remove a balance action but it wasn't in the HZ panel - who removed it removed before?");
 				} else {
+					// TODO
+					try {
+	          Thread.sleep(3000);
+          } catch(InterruptedException e) {
+	          e.printStackTrace();
+          }
 					coord.getDNodeReplicaBalanceActionsSet().remove(actionToRemove);
 					log.info("Removed balance action [" + actionToRemove + "] from HZ panel.");
 				}
@@ -812,6 +818,7 @@ public class DNodeHandler implements IDNodeHandler {
 			// It is designed for unit and integration testing.
 			shutDownByTestAPI.set(true);
 			dnodesRegistry.unregister();
+			log.info("Received a shutdown by test API.");
 			hz.getLifecycleService().shutdown();
 		} else if(command.equals(TestCommands.RESTART)) {
 			// on-demand restart
@@ -821,6 +828,7 @@ public class DNodeHandler implements IDNodeHandler {
 			try {
 				hz = Hazelcast.newHazelcastInstance(HazelcastConfigBuilder.build(config));
 				coord = new CoordinationStructures(hz);
+				log.info("Received a restart by test API.");
 				giveGreenLigth();
 			} catch(HazelcastConfigBuilderException e) {
 				log.error("Error while trying to connect to Hazelcast", e);

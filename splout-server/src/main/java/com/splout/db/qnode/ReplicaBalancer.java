@@ -6,6 +6,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.splout.db.common.ReplicationEntry;
 import com.splout.db.common.ReplicationMap;
 import com.splout.db.common.Tablespace;
@@ -21,6 +24,8 @@ import com.splout.db.hazelcast.TablespaceVersion;
  */
 public class ReplicaBalancer {
 
+	protected final static Log log = LogFactory.getLog(ReplicaBalancer.class);
+	
 	private QNodeHandlerContext context;
 
 	public ReplicaBalancer(QNodeHandlerContext context) {
@@ -102,6 +107,7 @@ public class ReplicaBalancer {
 		// get list of DNodes
 		List<String> aliveDNodes = context.getDNodeList();
 		Collections.sort(aliveDNodes);
+		log.info(Thread.currentThread() + " - alive DNodes : " + aliveDNodes);
 
 		// actions that can be taken after analyzing the current replicas / partitions
 		List<BalanceAction> balanceActions = new ArrayList<BalanceAction>();
@@ -109,8 +115,11 @@ public class ReplicaBalancer {
 		// we will use round robin for assigning new partitions to DNodes
 		// so that if several BalanceAction have to be taken, they will be more or less spread
 		int roundRobinCount = 0;
-
-		for(Map.Entry<TablespaceVersion, Tablespace> entry : context.getTablespaceVersionsMap().entrySet()) {
+		
+		Map<TablespaceVersion, Tablespace> tablespaceVersion = context.getTablespaceVersionsMap();
+		log.info(Thread.currentThread() + " - Tablespace versions: " + tablespaceVersion);
+		
+		for(Map.Entry<TablespaceVersion, Tablespace> entry : tablespaceVersion.entrySet()) {
 			ReplicationMap replicationMap = entry.getValue().getReplicationMap();
 			for(ReplicationEntry rEntry : replicationMap.getReplicationEntries()) {
 				// for every missing replica... maybe perform a BalanceAction

@@ -138,6 +138,7 @@ public class QNodeHandler implements IQNodeHandler {
 				    + "] as it connected.");
 				context.initializeThriftClientCacheFor(dnode);
 				context.updateTablespaceVersions(event.getValue(), QNodeHandlerContext.DNodeEvent.ENTRY);
+				log.info(Thread.currentThread() + ": Maybe balance (entryAdded)");
 				maybeBalance();
 			} catch(TablespaceVersionInfoException e) {
 				throw new RuntimeException(e);
@@ -155,6 +156,7 @@ public class QNodeHandler implements IQNodeHandler {
 			try {
 				context.discardThriftClientCacheFor(event.getValue().getAddress());
 				context.updateTablespaceVersions(event.getValue(), QNodeHandlerContext.DNodeEvent.LEAVE);
+				log.info(Thread.currentThread() + ": Maybe balance (entryRemoved)");
 				maybeBalance();
 			} catch(TablespaceVersionInfoException e) {
 				throw new RuntimeException(e);

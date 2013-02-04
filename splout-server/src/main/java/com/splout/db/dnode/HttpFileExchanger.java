@@ -86,11 +86,8 @@ public class HttpFileExchanger extends Thread implements HttpHandler {
 	public interface ReceiveFileCallback {
 
 		public void onProgress(String tablespace, Integer partition, Long version, File file, long totalSize, long sizeDownloaded);
-
 		public void onFileReceived(String tablespace, Integer partition, Long version, File file);
-
 		public void onBadCRC(String tablespace, Integer partition, Long version, File file);
-
 		public void onError(String tablespace, Integer partition, Long version, File file);
 	}
 

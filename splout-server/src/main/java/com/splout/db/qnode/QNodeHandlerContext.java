@@ -315,7 +315,7 @@ public class QNodeHandlerContext {
 							// wasn't present
 							reEntry.getNodes().add(dNodeInfo.getAddress());
 							replicationMap.add(reEntry);
-							Collections.sort(replicationMap);
+							Collections.sort(reEntry.getNodes());
 						}
 					}
 					// Delete tablespaceVersion if it is empty now
