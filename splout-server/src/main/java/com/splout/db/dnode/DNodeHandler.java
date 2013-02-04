@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
@@ -50,11 +51,11 @@ import org.apache.commons.logging.LogFactory;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
+import com.hazelcast.core.EntryEvent;
+import com.hazelcast.core.EntryListener;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ICountDownLatch;
-import com.hazelcast.core.ItemEvent;
-import com.hazelcast.core.ItemListener;
 import com.splout.db.benchmark.PerformanceTool;
 import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
@@ -153,10 +154,11 @@ public class DNodeHandler implements IDNodeHandler {
 	 * This inner class will listen for additions to the balance actions map, so that if a balance action has to be taken
 	 * and this DNode is the one who has the send the file, it will start doing so.
 	 */
-	private class BalanceActionItemListener implements ItemListener<ReplicaBalancer.BalanceAction> {
+	private class BalanceActionItemListener implements EntryListener<ReplicaBalancer.BalanceAction, String> {
+
 		@Override
-		public void itemAdded(ItemEvent<BalanceAction> item) {
-			BalanceAction action = item.getItem();
+    public void entryAdded(EntryEvent<BalanceAction, String> event) {
+			BalanceAction action = event.getKey();
 			if(action.getOriginNode().equals(whoAmI())) {
 				// I must do a balance action!
 				File toSend = new File(getLocalStorageFolder(action.getTablespace(), action.getPartition(),
@@ -169,12 +171,19 @@ public class DNodeHandler implements IDNodeHandler {
 				httpExchanger.send(action.getTablespace(), action.getPartition(), action.getVersion(),
 				    metadataFile, action.getFinalNode(), false);
 			}
-		}
+    }
 
 		@Override
-		public void itemRemoved(ItemEvent<BalanceAction> item) {
-			// usually we won't care - but the final DNode might have pro-actively removed this action
-		}
+    public void entryRemoved(EntryEvent<BalanceAction, String> event) {
+			// usually we won't care - but the final DNode might have pro-actively removed this action	    
+    }
+
+		@Override
+    public void entryUpdated(EntryEvent<BalanceAction, String> event) {
+    }
+		@Override
+    public void entryEvicted(EntryEvent<BalanceAction, String> event) {
+    }
 	}
 
 	/**
@@ -251,7 +260,8 @@ public class DNodeHandler implements IDNodeHandler {
 				balanceActionsStateMap.remove(lookupKey);
 				// then remove from HZ
 				BalanceAction actionToRemove = null;
-				for(BalanceAction action : coord.getDNodeReplicaBalanceActionsSet()) {
+				for(Map.Entry<BalanceAction, String> actionEntry : coord.getDNodeReplicaBalanceActionsSet().entrySet()) {
+					BalanceAction action = actionEntry.getKey();
 					if(action.getTablespace().equals(tablespace) && action.getPartition() == partition
 					    && action.getVersion() == version && action.getFinalNode().equals(httpExchanger.address())) {
 						actionToRemove = action;
@@ -313,7 +323,7 @@ public class DNodeHandler implements IDNodeHandler {
 		// Connect with the cluster.
 		hz = Hazelcast.newHazelcastInstance(HazelcastConfigBuilder.build(config));
 		coord = new CoordinationStructures(hz);
-		coord.getDNodeReplicaBalanceActionsSet().addItemListener(new BalanceActionItemListener(), false);
+		coord.getDNodeReplicaBalanceActionsSet().addEntryListener(new BalanceActionItemListener(), false);
 		// Add shutdown hook
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override

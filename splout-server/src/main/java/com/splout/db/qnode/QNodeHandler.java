@@ -176,11 +176,9 @@ public class QNodeHandler implements IQNodeHandler {
 				for(ReplicaBalancer.BalanceAction action : balanceActions) {
 					if(versionsBeingServed != null && versionsBeingServed.get(action.getTablespace()) != null
 					    && versionsBeingServed.get(action.getTablespace()) == action.getVersion()) {
-						if(coord.getDNodeReplicaBalanceActionsSet().add(action)) {
-							log.info("Triggering a balance action: " + action);
-						} else {
-							// somebody else already triggered it, nothing bad happens
-						}
+						// put if absent + TTL
+						coord.getDNodeReplicaBalanceActionsSet().putIfAbsent(action, "",
+						    config.getLong(QNodeProperties.BALANCE_ACTIONS_TTL), TimeUnit.SECONDS);
 					}
 				}
 			}

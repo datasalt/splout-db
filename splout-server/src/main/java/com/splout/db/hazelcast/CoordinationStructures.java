@@ -27,7 +27,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ICountDownLatch;
 import com.hazelcast.core.IMap;
-import com.hazelcast.core.ISet;
 import com.hazelcast.core.IdGenerator;
 import com.splout.db.qnode.ReplicaBalancer;
 
@@ -80,8 +79,8 @@ public class CoordinationStructures {
 	 * <p>
 	 * 
 	 */
-	public ISet<ReplicaBalancer.BalanceAction> getDNodeReplicaBalanceActionsSet() {
-		return hz.getSet(CoordinationStructures.DNODE_REPLICA_BALANCE_ACTIONS_SET);
+	public IMap<ReplicaBalancer.BalanceAction, String> getDNodeReplicaBalanceActionsSet() {
+		return hz.getMap(CoordinationStructures.DNODE_REPLICA_BALANCE_ACTIONS_SET);
 	}
 	
 	/**

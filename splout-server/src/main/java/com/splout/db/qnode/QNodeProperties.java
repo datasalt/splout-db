@@ -61,4 +61,10 @@ public class QNodeProperties {
 	 * to connect in the near future. For that it is useful to wait this "warming time" before deciding such things.
 	 */
 	public final static String WARMING_TIME = "qnode.warming.time";
+	/**
+	 * The TTL (in seconds) of balance actions: if they take more than this number of seconds they will be evicted.
+	 * This is necessary because there are a number of race conditions that might block certain actions (i.e. final DNode
+	 * going down in the middle of the transfer).
+	 */
+	public final static String BALANCE_ACTIONS_TTL = "qnode.balance.actions.ttl";
 }
