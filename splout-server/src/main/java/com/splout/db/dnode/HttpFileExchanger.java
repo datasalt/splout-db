@@ -224,10 +224,14 @@ public class HttpFileExchanger extends Thread implements HttpHandler {
 				log.error("File received [" + dest.getAbsolutePath() + "] -> Checksum -- " + checkSum.getValue()
 				    + " doesn't match expected CRC: " + expectedCrc);
 				callback.onBadCRC(tablespace, partition, version, dest);
+				dest.delete();
 			}
 		} catch(Throwable t) {
 			log.error(t);
 			callback.onError(t, tablespace, partition, version, dest);
+			if(dest != null && dest.exists()) {
+				dest.delete();
+			}
 		} finally {
 			if(writer != null) {
 				writer.close();
@@ -301,5 +305,35 @@ public class HttpFileExchanger extends Thread implements HttpHandler {
 		} catch(InterruptedException e) {
 			// interrupted!
 		}
+	}
+
+	public Map<String, Object> getCurrentTransfers() {
+  	return currentTransfers;
+  }
+	
+	// Use this main for testing purposes, as a client
+	// args: [file] [server]
+	public static void main(String[] args) throws IOException {
+		SploutConfiguration conf = SploutConfiguration.get();
+		HttpFileExchanger fileExchanger = new HttpFileExchanger(conf, new ReceiveFileCallback() {
+			@Override
+			public void onProgress(String tablespace, Integer partition, Long version, File file, long totalSize,
+			    long sizeDownloaded) {
+			}
+			@Override
+			public void onFileReceived(String tablespace, Integer partition, Long version, File file) {
+			}
+			@Override
+			public void onError(Throwable t, String tablespace, Integer partition, Long version, File file) {
+			}
+			@Override
+			public void onBadCRC(String tablespace, Integer partition, Long version, File file) {
+			}
+		});
+		
+		fileExchanger.init();
+		fileExchanger.send("t1", 0, 1l, new File(args[0]), args[1], true);
+		
+		fileExchanger.close();
 	}
 }

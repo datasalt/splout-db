@@ -115,6 +115,7 @@ public class TestHttpFileExchanger {
 		downloadedFile.delete();
 		downloadedFile.getParentFile().delete();
 		
+		assertEquals(0, exchanger.getCurrentTransfers().size());
 		assertEquals(1, failed.get());
 	}
 	
@@ -176,6 +177,7 @@ public class TestHttpFileExchanger {
 		exchanger.join();
 
 		fileToSend.delete();
+		assertEquals(0, exchanger.getCurrentTransfers().size());
 		downloadedFile.delete();
 		downloadedFile.getParentFile().delete();
 	}

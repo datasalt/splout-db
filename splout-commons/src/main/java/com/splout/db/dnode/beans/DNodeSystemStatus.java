@@ -21,6 +21,7 @@ package com.splout.db.dnode.beans;
  */
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * JSON bean that is returned when requesting for the status of the DNode.
@@ -38,6 +39,8 @@ public class DNodeSystemStatus {
 	private long occupiedSpaceInDisk;
 	private long freeSpaceInDisk;
 	private List<String> files;
+	private String httpExchangerAddress;
+	private Map<String, BalanceFileReceivingProgress> balanceActionsStateMap;
 	
 	public List<String> getFiles() {
   	return files;
@@ -104,5 +107,17 @@ public class DNodeSystemStatus {
   }
 	public void setLastExceptionTime(long lastExceptionTime) {
   	this.lastExceptionTime = lastExceptionTime;
+  }
+	public Map<String, BalanceFileReceivingProgress> getBalanceActionsStateMap() {
+  	return balanceActionsStateMap;
+  }
+	public void setBalanceActionsStateMap(Map<String, BalanceFileReceivingProgress> balanceActionsStateMap) {
+  	this.balanceActionsStateMap = balanceActionsStateMap;
+  }
+	public String getHttpExchangerAddress() {
+  	return httpExchangerAddress;
+  }
+	public void setHttpExchangerAddress(String httpExchangerAddress) {
+  	this.httpExchangerAddress = httpExchangerAddress;
   }
 }

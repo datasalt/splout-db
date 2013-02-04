@@ -63,6 +63,7 @@ import com.splout.db.common.SploutConfiguration;
 import com.splout.db.common.ThriftReader;
 import com.splout.db.common.ThriftWriter;
 import com.splout.db.common.TimeoutThread;
+import com.splout.db.dnode.beans.BalanceFileReceivingProgress;
 import com.splout.db.dnode.beans.DNodeStatusResponse;
 import com.splout.db.dnode.beans.DNodeSystemStatus;
 import com.splout.db.hazelcast.CoordinationStructures;
@@ -127,6 +128,9 @@ public class DNodeHandler implements IDNodeHandler {
 	// This thread will interrupt long-running queries
 	private TimeoutThread timeoutThread;
 
+	// This map will hold all the current balance file transactions being done
+	private ConcurrentHashMap<String, BalanceFileReceivingProgress> balanceActionsStateMap = new ConcurrentHashMap<String, BalanceFileReceivingProgress>();
+
 	public DNodeHandler(Fetcher fetcher) {
 		this.fetcher = fetcher;
 	}
@@ -139,6 +143,10 @@ public class DNodeHandler implements IDNodeHandler {
 	 */
 	public String whoAmI() {
 		return config.getString(DNodeProperties.HOST) + ":" + config.getInt(DNodeProperties.PORT);
+	}
+	
+	public String httpExchangerAddress() {
+		return "http://" + config.getString(DNodeProperties.HOST) + ":" + config.getInt(HttpFileExchangerProperties.HTTP_PORT);
 	}
 
 	/**
@@ -170,79 +178,6 @@ public class DNodeHandler implements IDNodeHandler {
 	}
 
 	/**
-	 * This bean describes the state of a file transaction (tablespace/partition/version) between DNodes in progress.
-	 * These transactions have two files: the .meta and the .db so we need to know when both have been received to
-	 * transfer the partition data to the appropriated folder.
-	 */
-	public static class BalanceFileReceivingProgress {
-
-		private boolean receivedMetaFile;
-		private boolean receivedBinaryFile;
-		private File metaFile;
-		private File binaryFile;
-		private long binaryFileSize;
-		private long receivedSizeSoFar;
-
-		private final String tablespace;
-		private final int partition;
-		private final long version;
-
-		public BalanceFileReceivingProgress(String tablespace, int partition, long version) {
-			this.tablespace = tablespace;
-			this.partition = partition;
-			this.version = version;
-		}
-
-		// --- Modifiers --- //
-		public void metaFileReceived(File metaFile) {
-			this.receivedMetaFile = true;
-			this.metaFile = metaFile;
-		}
-
-		public void binaryFileReceived(File binaryFile) {
-			this.receivedBinaryFile = true;
-			this.binaryFile = binaryFile;
-		}
-
-		public void progressBinaryFile(long finalSize, long sizeSoFar) {
-			this.binaryFileSize = finalSize;
-			this.receivedSizeSoFar = sizeSoFar;
-		}
-
-		// --- Getters --- //
-		public boolean isReceivedMetaFile() {
-			return receivedMetaFile;
-		}
-		public boolean isReceivedBinaryFile() {
-			return receivedBinaryFile;
-		}
-		public long getBinaryFileSize() {
-			return binaryFileSize;
-		}
-		public long getReceivedSizeSoFar() {
-			return receivedSizeSoFar;
-		}
-		public String getTablespace() {
-			return tablespace;
-		}
-		public int getPartition() {
-			return partition;
-		}
-		public long getVersion() {
-			return version;
-		}
-		public File getMetaFile() {
-			return metaFile;
-		}
-		public File getBinaryFile() {
-			return binaryFile;
-		}
-	}
-
-	// This map will hold all the current balance file transactions being done
-	private ConcurrentHashMap<String, BalanceFileReceivingProgress> balanceActionsStateMap = new ConcurrentHashMap<String, BalanceFileReceivingProgress>();
-
-	/**
 	 * This inner class will perform the business logic associated with receiving files: what to do on failures, bad CRC,
 	 * file received OK...
 	 */
@@ -271,13 +206,13 @@ public class DNodeHandler implements IDNodeHandler {
 			// (thread that downloaded the .meta file and thread that downloaded the .db file)
 			synchronized(FileReceiverCallback.this) {
 				if(progress.isReceivedMetaFile() && progress.isReceivedBinaryFile()) {
-					if(progress.getMetaFile().exists() && progress.getBinaryFile().exists()) {
+					if(new File(progress.getMetaFile()).exists() && new File(progress.getBinaryFile()).exists()) {
 						// check if we already have the binary & meta -> then move partition
 						// and then remove this action from the panel so that it's completed.
 						try {
-							FileUtils.moveFile(progress.getMetaFile(),
+							FileUtils.moveFile(new File(progress.getMetaFile()),
 							    getLocalMetadataFile(tablespace, partition, version));
-							FileUtils.moveToDirectory(progress.getBinaryFile(),
+							FileUtils.moveToDirectory(new File(progress.getBinaryFile()),
 							    getLocalStorageFolder(tablespace, partition, version), true);
 							log.info("Balance action successfully completed, received both .db and .meta files ("
 							    + tablespace + ", " + partition + ", " + version + ")");
@@ -295,17 +230,11 @@ public class DNodeHandler implements IDNodeHandler {
 
 		@Override
 		public void onBadCRC(String tablespace, Integer partition, Long version, File file) {
-			// cancel this
-			// TODO Clean stalled data
-			// TODO Report error (panel?)
 			removeBalanceActionFromHZPanel(tablespace, partition, version);
 		}
 
 		@Override
 		public void onError(Throwable t, String tablespace, Integer partition, Long version, File file) {
-			// cancel this
-			// TODO Clean stalled data
-			// TODO Report error (panel?)
 			removeBalanceActionFromHZPanel(tablespace, partition, version);
 		}
 
@@ -318,7 +247,6 @@ public class DNodeHandler implements IDNodeHandler {
 		    Long version) {
 			// first remove the local tracking of this action
 			String lookupKey = tablespace + "_" + partition + "_" + version;
-			// two threads may want to do it almost simultaneously so we do this checking before
 			if(balanceActionsStateMap.containsKey(lookupKey)) {
 				balanceActionsStateMap.remove(lookupKey);
 				// then remove from HZ
@@ -330,14 +258,8 @@ public class DNodeHandler implements IDNodeHandler {
 					}
 				}
 				if(actionToRemove == null) {
-					log.warn("Needed to remove a balance action but it wasn't in the HZ panel - who removed it removed before?");
+					// no need to worry - another thread might have gone into this code already almost simultaneously
 				} else {
-					// TODO
-					try {
-	          Thread.sleep(3000);
-          } catch(InterruptedException e) {
-	          e.printStackTrace();
-          }
 					coord.getDNodeReplicaBalanceActionsSet().remove(actionToRemove);
 					log.info("Removed balance action [" + actionToRemove + "] from HZ panel.");
 				}
@@ -665,6 +587,8 @@ public class DNodeHandler implements IDNodeHandler {
 			status.setAverage(performanceTool.getAverage());
 			status.setSlowQueries(slowQueries);
 			status.setDeployInProgress(deployInProgress.get() > 0);
+			status.setHttpExchangerAddress(httpExchangerAddress());
+			status.setBalanceActionsStateMap(balanceActionsStateMap);
 			File folder = new File(config.getString(DNodeProperties.DATA_FOLDER));
 			status.setFreeSpaceInDisk(FileSystemUtils.freeSpaceKb());
 			if(folder.exists()) {
