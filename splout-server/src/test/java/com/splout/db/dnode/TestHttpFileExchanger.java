@@ -53,7 +53,7 @@ public class TestHttpFileExchanger {
 
 		// big file to make it unlikely that several concurrent transfers will not colide.
 		BufferedWriter writer = new BufferedWriter(new FileWriter(fileToSend));
-		for(int i = 0; i < 5000; i++) {
+		for(int i = 0; i < 1000; i++) {
 			writer.write(FOO_CONTENT + "\n");
 		}
 
@@ -87,11 +87,11 @@ public class TestHttpFileExchanger {
 		String dnodeHost = conf.getString(DNodeProperties.HOST);
 		int httpPort = conf.getInt(HttpFileExchangerProperties.HTTP_PORT);
 
-		exchanger.send("t1", 0, 1l, fileToSend, "http://" + dnodeHost + ":" + httpPort, true);
-		exchanger.send("t1", 0, 1l, fileToSend, "http://" + dnodeHost + ":" + httpPort, true);
+		exchanger.send("t1", 1, 1l, fileToSend, "http://" + dnodeHost + ":" + httpPort, true);
+		exchanger.send("t1", 1, 1l, fileToSend, "http://" + dnodeHost + ":" + httpPort, true);
 		
 		final File downloadedFile = new File(new File(TMP_DOWNLOAD_DIR,
-		    DNodeHandler.getLocalStoragePartitionRelativePath("t1", 0, 1l)), fileToSend.getName());
+		    DNodeHandler.getLocalStoragePartitionRelativePath("t1", 1, 1l)), fileToSend.getName());
 
 		new TestUtils.NotWaitingForeverCondition() {
 

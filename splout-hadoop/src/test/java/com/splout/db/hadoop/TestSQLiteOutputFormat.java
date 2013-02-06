@@ -55,8 +55,8 @@ public class TestSQLiteOutputFormat implements Serializable {
 	@Test
 	public void test() throws IOException, TupleMRException, InterruptedException, ClassNotFoundException, SQLException,
 	    JSONSerDeException {
-		Runtime.getRuntime().exec("rm -rf " + INPUT);
-		Runtime.getRuntime().exec("rm -rf " + OUTPUT);
+		Runtime.getRuntime().exec("rm -rf " + INPUT).waitFor();
+		Runtime.getRuntime().exec("rm -rf " + OUTPUT).waitFor();
 
 		// Prepare input
 		BufferedWriter writer = new BufferedWriter(new FileWriter(INPUT));
@@ -98,7 +98,7 @@ public class TestSQLiteOutputFormat implements Serializable {
 		assertTrue(manager.query("SELECT COUNT(*) FROM foo;", 100).contains("COUNT(*)\":4"));
 		manager.close();
 
-		Runtime.getRuntime().exec("rm -rf " + INPUT);
-		Runtime.getRuntime().exec("rm -rf " + OUTPUT);
+		Runtime.getRuntime().exec("rm -rf " + INPUT).waitFor();
+		Runtime.getRuntime().exec("rm -rf " + OUTPUT).waitFor();
 	}
 }

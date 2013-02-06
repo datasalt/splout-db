@@ -167,7 +167,7 @@ public class QNodeHandler implements IQNodeHandler {
 
 		private void maybeBalance() {
 			// do this only after warming
-			if(!isWarming.get()) {
+			if(!isWarming.get() && config.getBoolean(QNodeProperties.REPLICA_BALANCE_ENABLE)) {
 				// check if we could balance some partitions
 				List<ReplicaBalancer.BalanceAction> balanceActions = context.getBalanceActions();
 				// we will only re-balance versions being served

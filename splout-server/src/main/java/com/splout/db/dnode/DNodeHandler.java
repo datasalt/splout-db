@@ -600,7 +600,7 @@ public class DNodeHandler implements IDNodeHandler {
 			status.setHttpExchangerAddress(httpExchangerAddress());
 			status.setBalanceActionsStateMap(balanceActionsStateMap);
 			File folder = new File(config.getString(DNodeProperties.DATA_FOLDER));
-			status.setFreeSpaceInDisk(FileSystemUtils.freeSpaceKb());
+			status.setFreeSpaceInDisk(FileSystemUtils.freeSpaceKb(folder.toString()));
 			if(folder.exists()) {
 				status.setOccupiedSpaceInDisk(FileUtils.sizeOfDirectory(folder));
 				Collection<File> files = FileUtils.listFilesAndDirs(folder, TrueFileFilter.INSTANCE,

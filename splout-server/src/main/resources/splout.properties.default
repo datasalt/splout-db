@@ -39,6 +39,13 @@ qnode.deploy.seconds.to.check.error	60
 
 qnode.warming.time	60
 
+# Whether or not to enable automatic replica balancing.
+# If automatic replica balancing is enabled, the system will become highly available so that
+# if one replica is down, it will copy other replicas to another DNode so that the affected
+# partitions don't remain under-replicated. As a downside, replica balancing might use more disk space than desired.
+
+qnode.enable.replica.balance	false
+
 # The TTL (in seconds) of balance actions: if they take more than this number of seconds they will be evicted.
 # This is necessary because there are a number of race conditions that might block certain actions (i.e. final DNode
 # going down in the middle of the transfer). Default is 10 hours.

@@ -67,4 +67,12 @@ public class QNodeProperties {
 	 * going down in the middle of the transfer).
 	 */
 	public final static String BALANCE_ACTIONS_TTL = "qnode.balance.actions.ttl";
+	/**
+	 * Whether or not to enable automatic replica balancing.
+	 * If automatic replica balancing is enabled, the system will become highly available so that
+	 * if one replica is down, it will copy other replicas to another DNode so that the affected
+	 * partitions don't remain under-replicated.
+	 * As a downside, replica balancing might use more disk space than desired. 
+	 */
+	public final static String REPLICA_BALANCE_ENABLE = "qnode.enable.replica.balance";
 }

@@ -229,7 +229,7 @@ public class HttpFileExchanger extends Thread implements HttpHandler {
 		} catch(Throwable t) {
 			log.error(t);
 			callback.onError(t, tablespace, partition, version, dest);
-			if(dest != null && dest.exists()) {
+			if(dest != null && dest.exists() && !t.getMessage().contains("Incoming file already being transferred")) {
 				dest.delete();
 			}
 		} finally {
