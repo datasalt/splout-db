@@ -227,6 +227,7 @@ public class TableBuilder {
 				partitionBySchemaFields = new Field[partitionByFields.length];
 				int i = 0;
 				for(String partitionByField: partitionByFields) {
+					partitionByField = partitionByField.trim();
 					Field partitionField = schema.getField(partitionByField);
 					if(partitionField == null) {
 						throw new TableBuilderException("Invalid partition field: " + partitionByField + " not present in its Schema: "
@@ -245,6 +246,7 @@ public class TableBuilder {
 		// Indexes
 		List<FieldIndex> indexes = new ArrayList<FieldIndex>();
 		for(String fieldToIndex : fieldsToIndex) {
+			fieldToIndex = fieldToIndex.trim();
 			// Check that field exists in schema
 			Field field1 = schema.getField(fieldToIndex);
 			if(field1 == null) {
@@ -257,6 +259,7 @@ public class TableBuilder {
 		for(List<String> compoundIndex : compoundIndexes) {
 			List<Field> compoundIndexFields = new ArrayList<Field>();
 			for(String field : compoundIndex) {
+				field = field.trim();
 				// Check that each field exists in schema
 				Field field2 = schema.getField(field);
 				if(field2 == null) {
