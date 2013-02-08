@@ -66,7 +66,10 @@ public class SploutConfiguration extends CompositeConfiguration implements Seria
 		SploutConfiguration properties = new SploutConfiguration();
 		PropertiesConfiguration config = load("", SPLOUT_PROPERTIES + ".default", true);
 		properties.addConfiguration(config);
-
+		
+		// Activate replica balancing for tests
+		properties.setProperty(QNodeProperties.REPLICA_BALANCE_ENABLE, true);
+		
 		// Disable wait for testing speedup.
 		properties.setProperty(HazelcastProperties.DISABLE_WAIT_WHEN_JOINING, true);
 		
