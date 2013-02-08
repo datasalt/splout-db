@@ -88,7 +88,7 @@ public class DNodeHandler implements IDNodeHandler {
 
 	private final static Log log = LogFactory.getLog(DNodeHandler.class);
 
-	private SploutConfiguration config;
+	protected SploutConfiguration config;
 	private HazelcastInstance hz;
 	private DistributedRegistry dnodesRegistry;
 	private CoordinationStructures coord;
@@ -145,19 +145,21 @@ public class DNodeHandler implements IDNodeHandler {
 	public String whoAmI() {
 		return config.getString(DNodeProperties.HOST) + ":" + config.getInt(DNodeProperties.PORT);
 	}
-	
+
 	public String httpExchangerAddress() {
-		return "http://" + config.getString(DNodeProperties.HOST) + ":" + config.getInt(HttpFileExchangerProperties.HTTP_PORT);
+		return "http://" + config.getString(DNodeProperties.HOST) + ":"
+		    + config.getInt(HttpFileExchangerProperties.HTTP_PORT);
 	}
 
 	/**
 	 * This inner class will listen for additions to the balance actions map, so that if a balance action has to be taken
 	 * and this DNode is the one who has the send the file, it will start doing so.
 	 */
-	private class BalanceActionItemListener implements EntryListener<ReplicaBalancer.BalanceAction, String> {
+	private class BalanceActionItemListener implements
+	    EntryListener<ReplicaBalancer.BalanceAction, String> {
 
 		@Override
-    public void entryAdded(EntryEvent<BalanceAction, String> event) {
+		public void entryAdded(EntryEvent<BalanceAction, String> event) {
 			BalanceAction action = event.getKey();
 			if(action.getOriginNode().equals(whoAmI())) {
 				// I must do a balance action!
@@ -171,19 +173,20 @@ public class DNodeHandler implements IDNodeHandler {
 				httpExchanger.send(action.getTablespace(), action.getPartition(), action.getVersion(),
 				    metadataFile, action.getFinalNode(), false);
 			}
-    }
+		}
 
 		@Override
-    public void entryRemoved(EntryEvent<BalanceAction, String> event) {
-			// usually we won't care - but the final DNode might have pro-actively removed this action	    
-    }
+		public void entryRemoved(EntryEvent<BalanceAction, String> event) {
+			// usually we won't care - but the final DNode might have pro-actively removed this action
+		}
 
 		@Override
-    public void entryUpdated(EntryEvent<BalanceAction, String> event) {
-    }
+		public void entryUpdated(EntryEvent<BalanceAction, String> event) {
+		}
+
 		@Override
-    public void entryEvicted(EntryEvent<BalanceAction, String> event) {
-    }
+		public void entryEvicted(EntryEvent<BalanceAction, String> event) {
+		}
 	}
 
 	/**
@@ -215,13 +218,25 @@ public class DNodeHandler implements IDNodeHandler {
 			// (thread that downloaded the .meta file and thread that downloaded the .db file)
 			synchronized(FileReceiverCallback.this) {
 				if(progress.isReceivedMetaFile() && progress.isReceivedBinaryFile()) {
+					// This assures that the move will only be done once
 					if(new File(progress.getMetaFile()).exists() && new File(progress.getBinaryFile()).exists()) {
 						// check if we already have the binary & meta -> then move partition
 						// and then remove this action from the panel so that it's completed.
 						try {
-							FileUtils.moveFile(new File(progress.getMetaFile()),
-							    getLocalMetadataFile(tablespace, partition, version));
-							FileUtils.moveToDirectory(new File(progress.getBinaryFile()),
+							// we need to remove existing files if they exist
+							// they might be stalled from old deployments
+							File meta = getLocalMetadataFile(tablespace, partition, version);
+							if(meta.exists()) {
+								meta.delete();
+							}
+							FileUtils.moveFile(new File(progress.getMetaFile()), meta);
+							File binaryToMove = new File(progress.getBinaryFile());
+							File binary = new File(getLocalStorageFolder(tablespace, partition, version),
+							    binaryToMove.getName());
+							if(binary.exists()) {
+								binary.delete();
+							}
+							FileUtils.moveToDirectory(binaryToMove,
 							    getLocalStorageFolder(tablespace, partition, version), true);
 							log.info("Balance action successfully completed, received both .db and .meta files ("
 							    + tablespace + ", " + partition + ", " + version + ")");
@@ -260,7 +275,8 @@ public class DNodeHandler implements IDNodeHandler {
 				balanceActionsStateMap.remove(lookupKey);
 				// then remove from HZ
 				BalanceAction actionToRemove = null;
-				for(Map.Entry<BalanceAction, String> actionEntry : coord.getDNodeReplicaBalanceActionsSet().entrySet()) {
+				for(Map.Entry<BalanceAction, String> actionEntry : coord.getDNodeReplicaBalanceActionsSet()
+				    .entrySet()) {
 					BalanceAction action = actionEntry.getKey();
 					if(action.getTablespace().equals(tablespace) && action.getPartition() == partition
 					    && action.getVersion() == version && action.getFinalNode().equals(httpExchanger.address())) {
@@ -503,11 +519,6 @@ public class DNodeHandler implements IDNodeHandler {
 									// PartitionMap and ReplicationMap will be built incrementally as DNodes finish.
 									dnodesRegistry.changeInfo(new DNodeInfo(config));
 
-									// Decrement the countdown latch. On 0, deployer knows that the deploy
-									// finished.
-									ICountDownLatch countdown = coord.getCountDownLatchForDeploy(version);
-									countdown.countDown();
-
 									long end = System.currentTimeMillis();
 									log.info("Local deploy actions [" + deployActions + "] successfully finished in "
 									    + (end - start) + " ms.");
@@ -516,6 +527,11 @@ public class DNodeHandler implements IDNodeHandler {
 									// In order to avoid stale deployments, we flag this deploy to be aborted
 									log.warn("Error deploying [" + deployActions + "] barrier + [" + version + "]", t);
 									abortDeploy(version, ExceptionUtils.getStackTrace(t));
+								} finally {
+									// Decrement the countdown latch. On 0, deployer knows that the deploy
+									// finished.
+									ICountDownLatch countdown = coord.getCountDownLatchForDeploy(version);
+									countdown.countDown();
 								}
 							}
 						});
@@ -778,7 +794,13 @@ public class DNodeHandler implements IDNodeHandler {
 		}
 	}
 
+	// --- Getters mainly for testing --- /
+
 	public CoordinationStructures getCoord() {
 		return coord;
+	}
+
+	public DistributedRegistry getDnodesRegistry() {
+		return dnodesRegistry;
 	}
 }

@@ -63,7 +63,7 @@ public class TestDeployAbort {
 	 * Thread.sleep(FOREVER). This way we can test deploy cancellation to DNodes: we set a flag if the Thread.sleep() has
 	 * been interrupted.
 	 */
-	static class StuckInDeployHandler extends DNodeHandler {
+	public static class StuckInDeployHandler extends DNodeHandler {
 
 		public static long FOREVER = Long.MAX_VALUE;
 		public boolean interrupted = false;
@@ -93,9 +93,12 @@ public class TestDeployAbort {
 		SploutConfiguration config = SploutConfiguration.getTestConfig();
 		SploutConfiguration config1 = SploutConfiguration.getTestConfig();
 		SploutConfiguration config2 = SploutConfiguration.getTestConfig();
+		// since #12 and #7 we must disable replica balancing which is enabled for testing to fail the deploy
+		config.setProperty(QNodeProperties.REPLICA_BALANCE_ENABLE, false);
 		config.setProperty(QNodeProperties.DEPLOY_SECONDS_TO_CHECK_ERROR, 1); // this has to be quick for testing
 		DNodeHandler dHandler = new DNodeHandler();
-		DNode dnode1 = TestUtils.getTestDNode(config1, dHandler, "dnode-" + this.getClass().getName() + "-1");
+		DNode dnode1 = TestUtils
+		    .getTestDNode(config1, dHandler, "dnode-" + this.getClass().getName() + "-1");
 
 		StuckInDeployHandler stuck = new StuckInDeployHandler();
 		DNode dnode2 = TestUtils.getTestDNode(config2, stuck, "dnode-" + this.getClass().getName() + "-2");
@@ -103,7 +106,7 @@ public class TestDeployAbort {
 		try {
 			handler.init(config);
 
-			ReplicationEntry repEntry1 = new ReplicationEntry(0,  dnode1.getAddress(), dnode2.getAddress());
+			ReplicationEntry repEntry1 = new ReplicationEntry(0, dnode1.getAddress(), dnode2.getAddress());
 
 			DeployRequest deployRequest1 = new DeployRequest();
 			deployRequest1.setTablespace("partition1");

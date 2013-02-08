@@ -25,6 +25,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -56,8 +57,8 @@ import com.splout.db.thrift.PartitionMetadata;
 
 /**
  * The Deployer is a specialized module ({@link com.splout.db.qnode.QNodeHandlerModule}) of the
- * {@link com.splout.db.qnode.QNode} that performs the business logic associated with a distributed deployment. It
- * is used by the {@link com.splout.db.qnode.QNodeHandler}.
+ * {@link com.splout.db.qnode.QNode} that performs the business logic associated with a distributed deployment. It is
+ * used by the {@link com.splout.db.qnode.QNodeHandler}.
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class Deployer extends QNodeHandlerModule {
@@ -79,7 +80,7 @@ public class Deployer extends QNodeHandlerModule {
 
 	/**
 	 * Runnable that deals with the asynchronous part of the deployment. Particularly, it waits until DNodes finish their
-	 * work, and then perform the version switch.
+	 * work, and then performs the version switch.
 	 */
 	public class ManageDeploy implements Runnable {
 
@@ -92,23 +93,28 @@ public class Deployer extends QNodeHandlerModule {
 		private List<String> dnodes;
 		private long timeoutSeconds;
 		private List<DeployRequest> deployRequests;
+		private boolean isReplicaBalancingEnabled;
 
-		public ManageDeploy(List<String> dnodes, List<DeployRequest> deployRequests, long version, long timeoutSeconds, long secondsToCheckFailureOrTimeout) {
+		public ManageDeploy(List<String> dnodes, List<DeployRequest> deployRequests, long version,
+		    long timeoutSeconds, long secondsToCheckFailureOrTimeout, boolean isReplicaBalancingEnabled) {
 			this.dnodes = dnodes;
 			this.deployRequests = deployRequests;
 			this.version = version;
 			this.timeoutSeconds = timeoutSeconds;
 			this.secondsToCheckFailureOrTimeout = secondsToCheckFailureOrTimeout;
+			this.isReplicaBalancingEnabled = isReplicaBalancingEnabled;
 		}
 
 		@Override
 		public void run() {
-			log.info(context.getConfig().getProperty(QNodeProperties.PORT) + " Executing deploy for version [" + version + "]");
+			log.info(context.getConfig().getProperty(QNodeProperties.PORT) + " Executing deploy for version ["
+			    + version + "]");
 			CoordinationStructures.DEPLOY_IN_PROGRESS.incrementAndGet();
-			
+
 			try {
 				long waitSeconds = 0;
-				ICountDownLatch countDownLatchForDeploy = context.getCoordinationStructures().getCountDownLatchForDeploy(version);
+				ICountDownLatch countDownLatchForDeploy = context.getCoordinationStructures()
+				    .getCountDownLatchForDeploy(version);
 				boolean finished;
 				do {
 					finished = countDownLatchForDeploy.await(secondsToCheckFailureOrTimeout, TimeUnit.SECONDS);
@@ -123,28 +129,32 @@ public class Deployer extends QNodeHandlerModule {
 						// Let's see if we reached the timeout.
 						// Negative timeoutSeconds => waits forever
 						if(waitSeconds > timeoutSeconds && timeoutSeconds >= 0) {
-							log.warn("Deploy of version [" + version + "] timed out. Reached [" + waitSeconds + "] seconds.");
+							log.warn("Deploy of version [" + version + "] timed out. Reached [" + waitSeconds
+							    + "] seconds.");
 							abortDeploy(dnodes, version);
 							return;
 						}
 					}
 				} while(!finished);
 
-				log.info("All DNodes performed the deploy of version [" + version + "]. Publishing tablespaces...");
+				log.info("All DNodes performed the deploy of version [" + version
+				    + "]. Publishing tablespaces...");
 
 				// We finish by publishing the versions table with the new versions.
 				try {
 					switchVersions(switchActions());
 				} catch(UnexistingVersion e) {
-					throw new RuntimeException("Unexisting version after deploying this version. Sounds like a bug.", e);
+					throw new RuntimeException(
+					    "Unexisting version after deploying this version. Sounds like a bug.", e);
 				}
 
 				log.info("Deploy of version [" + version + "] Finished PROPERLY. :-)");
-				
+
 				// After a deploy we must synchronize tablespace versions to see if we have to remove some.
 				context.synchronizeTablespaceVersions();
+				// If some replicas are under-replicated, start a balancing process
+				context.maybeBalance();
 				
-				CoordinationStructures.DEPLOY_IN_PROGRESS.decrementAndGet();
 			} catch(MemberLeftException e) {
 				log.error("Error while deploying version [" + version + "]", e);
 				abortDeploy(dnodes, version);
@@ -157,6 +167,8 @@ public class Deployer extends QNodeHandlerModule {
 			} catch(Throwable t) {
 				t.printStackTrace();
 				throw new RuntimeException(t);
+			} finally {
+				CoordinationStructures.DEPLOY_IN_PROGRESS.decrementAndGet();
 			}
 		}
 
@@ -177,10 +189,11 @@ public class Deployer extends QNodeHandlerModule {
 		 * Log DNodes errors in deployment
 		 */
 		private void explainErrors() {
-			IMap<String, String> deployErrorPanel = context.getCoordinationStructures().getDeployErrorPanel(version);
-			String msg = "Deployment of version [" + version + "] failed because DNode[";
+			IMap<String, String> deployErrorPanel = context.getCoordinationStructures().getDeployErrorPanel(
+			    version);
+			String msg = "Deployment of version [" + version + "] failed in DNode[";
 			for(Entry<String, String> entry : deployErrorPanel.entrySet()) {
-				log.error(msg + entry.getKey() + "] failed with the error [" + entry.getValue() + "]");
+				log.error(msg + entry.getKey() + "] - it failed with the error [" + entry.getValue() + "]");
 			}
 		}
 
@@ -188,8 +201,23 @@ public class Deployer extends QNodeHandlerModule {
 		 * Return true if one or more of the DNodes reported an error.
 		 */
 		private boolean checkForFailure() {
-			IMap<String, String> deployErrorPanel = context.getCoordinationStructures().getDeployErrorPanel(version);
-			return !deployErrorPanel.isEmpty();
+			IMap<String, String> deployErrorPanel = context.getCoordinationStructures().getDeployErrorPanel(
+			    version);
+			if(!isReplicaBalancingEnabled) {
+				return !deployErrorPanel.isEmpty();
+			}
+			// If replica balancing is enabled we check whether we could survive after the failed DNodes
+			Set<String> failedDNodes = new HashSet<String>(deployErrorPanel.keySet());
+			// Check if deploy needs to be canceled or if the system could auto-rebalance itself afterwards
+			for(DeployRequest deployRequest : deployRequests) {
+				for(ReplicationEntry repEntry: deployRequest.getReplicationMap()) {
+					if(failedDNodes.containsAll(repEntry.getNodes())) {
+						// There is AT LEAST one partition that depends on the failed DNodes so the deploy must fail!
+						return true;
+					}
+				}
+			}
+			return false;
 		}
 	} /* End ManageDeploy */
 
@@ -204,7 +232,8 @@ public class Deployer extends QNodeHandlerModule {
 	/**
 	 * Call this method for starting an asynchronous deployment given a proper deploy request - proxy method for
 	 * {@link QNodeHandler}. Returns a {@link QueryStatus} with the status of the request.
-	 * @throws InterruptedException 
+	 * 
+	 * @throws InterruptedException
 	 */
 	public DeployInfo deploy(List<DeployRequest> deployRequests) throws InterruptedException {
 
@@ -212,10 +241,12 @@ public class Deployer extends QNodeHandlerModule {
 		long version = context.getCoordinationStructures().uniqueVersionId();
 
 		// Generate the list of actions per DNode
-		Map<String, List<DeployAction>> actionsPerDNode = generateDeployActionsPerDNode(deployRequests, version);
+		Map<String, List<DeployAction>> actionsPerDNode = generateDeployActionsPerDNode(deployRequests,
+		    version);
 
 		// Starting the countdown latch.
-		ICountDownLatch countDownLatchForDeploy = context.getCoordinationStructures().getCountDownLatchForDeploy(version);
+		ICountDownLatch countDownLatchForDeploy = context.getCoordinationStructures()
+		    .getCountDownLatchForDeploy(version);
 		Set<String> dnodesInvolved = actionsPerDNode.keySet();
 		countDownLatchForDeploy.setCount(dnodesInvolved.size());
 
@@ -243,8 +274,10 @@ public class Deployer extends QNodeHandlerModule {
 		}
 
 		// Initiating an asynchronous process to manage the deployment
-		deployThread.execute(new ManageDeploy(new ArrayList(actionsPerDNode.keySet()), deployRequests, version, context.getConfig()
-		    .getLong(QNodeProperties.DEPLOY_TIMEOUT, -1), context.getConfig().getLong(QNodeProperties.DEPLOY_SECONDS_TO_CHECK_ERROR)));
+		deployThread.execute(new ManageDeploy(new ArrayList(actionsPerDNode.keySet()), deployRequests,
+		    version, context.getConfig().getLong(QNodeProperties.DEPLOY_TIMEOUT, -1), context.getConfig()
+		        .getLong(QNodeProperties.DEPLOY_SECONDS_TO_CHECK_ERROR), context.getConfig().getBoolean(
+		        QNodeProperties.REPLICA_BALANCE_ENABLE)));
 
 		DeployInfo deployInfo = new DeployInfo();
 		deployInfo.setVersion(version);
@@ -254,15 +287,16 @@ public class Deployer extends QNodeHandlerModule {
 
 	/**
 	 * DNodes are informed to stop the deployment, as something failed.
-	 * @throws InterruptedException 
+	 * 
+	 * @throws InterruptedException
 	 */
 	public void abortDeploy(List<String> dnodes, long version) {
-		for(String dnode: dnodes) {
+		for(String dnode : dnodes) {
 			DNodeService.Client client = null;
 			boolean renew = false;
 			try {
 				try {
-				client = context.getDNodeClientFromPool(dnode);
+					client = context.getDNodeClientFromPool(dnode);
 				} catch(TTransportException e) {
 					renew = true;
 					throw e;
@@ -300,29 +334,32 @@ public class Deployer extends QNodeHandlerModule {
 				TablespaceVersion tsv = new TablespaceVersion(req.getTablespace(), req.getVersion());
 				newVersionsTable.put(tsv.getTablespace(), tsv.getVersion());
 			}
-		} while(!context.getCoordinationStructures().updateVersionsBeingServed(versionsTable, newVersionsTable));
+		} while(!context.getCoordinationStructures().updateVersionsBeingServed(versionsTable,
+		    newVersionsTable));
 	}
 
 	/**
 	 * Generates the list of individual deploy actions that has to be sent to each DNode.
 	 */
-	private static Map<String, List<DeployAction>> generateDeployActionsPerDNode(List<DeployRequest> deployRequests,
-	    long version) {
+	private static Map<String, List<DeployAction>> generateDeployActionsPerDNode(
+	    List<DeployRequest> deployRequests, long version) {
 		HashMap<String, List<DeployAction>> actions = new HashMap<String, List<DeployAction>>();
 
-		long deployDate = System.currentTimeMillis(); // Here is where we decide the data of the deployment for all deployed tablespaces
-		
+		long deployDate = System.currentTimeMillis(); // Here is where we decide the data of the deployment for all deployed
+																									// tablespaces
+
 		for(DeployRequest req : deployRequests) {
 			for(Object obj : req.getReplicationMap()) {
 				ReplicationEntry rEntry = (ReplicationEntry) obj;
 				PartitionEntry pEntry = null;
-				for(PartitionEntry partEntry: req.getPartitionMap()) {
+				for(PartitionEntry partEntry : req.getPartitionMap()) {
 					if(partEntry.getShard() == rEntry.getShard()) {
 						pEntry = partEntry;
 					}
 				}
 				if(pEntry == null) {
-					throw new RuntimeException("No Partition metadata for shard: " + rEntry.getShard() + " this is very likely to be a software bug.");
+					throw new RuntimeException("No Partition metadata for shard: " + rEntry.getShard()
+					    + " this is very likely to be a software bug.");
 				}
 				// Normalize DNode ids -> The convention is that DNodes are identified by host:port . So we need to strip the
 				// protocol, if any
@@ -342,7 +379,7 @@ public class Deployer extends QNodeHandlerModule {
 					deployAction.setTablespace(req.getTablespace());
 					deployAction.setVersion(version);
 					deployAction.setPartition(rEntry.getShard());
-					
+
 					// Add partition metadata to the deploy action for DNodes to save it
 					PartitionMetadata metadata = new PartitionMetadata();
 					metadata.setMinKey(pEntry.getMin());
@@ -350,7 +387,7 @@ public class Deployer extends QNodeHandlerModule {
 					metadata.setNReplicas(rEntry.getNodes().size());
 					metadata.setDeploymentDate(deployDate);
 					metadata.setInitStatements(req.getInitStatements());
-					
+
 					deployAction.setMetadata(metadata);
 					actionsSoFar.add(deployAction);
 				}

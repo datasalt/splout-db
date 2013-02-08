@@ -31,7 +31,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -112,10 +111,6 @@ public class QNodeHandler implements IQNodeHandler {
 	private Querier querier;
 	private SploutConfiguration config;
 	private CoordinationStructures coord;
-
-	// This flag is set to "false" after WARMING_TIME seconds (qnode.warming.time)
-	// Some actions will only be taken after warming time, just in case some nodes still didn't join the cluster.
-	private final AtomicBoolean isWarming = new AtomicBoolean(true);
 	private Thread warmingThread;
 
 	private final Counter meterQueriesServed = Metrics.newCounter(QNodeHandler.class, "queries-served");
@@ -139,7 +134,7 @@ public class QNodeHandler implements IQNodeHandler {
 				context.initializeThriftClientCacheFor(dnode);
 				context.updateTablespaceVersions(event.getValue(), QNodeHandlerContext.DNodeEvent.ENTRY);
 				log.info(Thread.currentThread() + ": Maybe balance (entryAdded)");
-				maybeBalance();
+				context.maybeBalance();
 			} catch(TablespaceVersionInfoException e) {
 				throw new RuntimeException(e);
 			} catch(TTransportException e) {
@@ -157,30 +152,11 @@ public class QNodeHandler implements IQNodeHandler {
 				context.discardThriftClientCacheFor(event.getValue().getAddress());
 				context.updateTablespaceVersions(event.getValue(), QNodeHandlerContext.DNodeEvent.LEAVE);
 				log.info(Thread.currentThread() + ": Maybe balance (entryRemoved)");
-				maybeBalance();
+				context.maybeBalance();
 			} catch(TablespaceVersionInfoException e) {
 				throw new RuntimeException(e);
 			} catch(InterruptedException e) {
 				throw new RuntimeException(e);
-			}
-		}
-
-		private void maybeBalance() {
-			// do this only after warming
-			if(!isWarming.get() && config.getBoolean(QNodeProperties.REPLICA_BALANCE_ENABLE)) {
-				// check if we could balance some partitions
-				List<ReplicaBalancer.BalanceAction> balanceActions = context.getBalanceActions();
-				// we will only re-balance versions being served
-				// otherwise strange things may happen: to re-balance a version in the middle of its deployment...
-				Map<String, Long> versionsBeingServed = coord.getCopyVersionsBeingServed();
-				for(ReplicaBalancer.BalanceAction action : balanceActions) {
-					if(versionsBeingServed != null && versionsBeingServed.get(action.getTablespace()) != null
-					    && versionsBeingServed.get(action.getTablespace()) == action.getVersion()) {
-						// put if absent + TTL
-						coord.getDNodeReplicaBalanceActionsSet().putIfAbsent(action, "",
-						    config.getLong(QNodeProperties.BALANCE_ACTIONS_TTL), TimeUnit.SECONDS);
-					}
-				}
 			}
 		}
 
@@ -284,7 +260,7 @@ public class QNodeHandler implements IQNodeHandler {
 				} catch(InterruptedException e) {
 					log.error("Warming time interrupted - ");
 				}
-				isWarming.set(false);
+				context.getIsWarming().set(false);
 			}
 		};
 		warmingThread.start();

@@ -34,7 +34,7 @@ import java.util.List;
 public class ReplicationEntry extends BaseBean implements Serializable, Comparable<ReplicationEntry> {
 
 	public String toString() {
-		return "Shard:" + shard + ",nodes:" + nodes;
+		return "Shard:" + shard + ", nodes:" + nodes + ", expected rep.factor: " + expectedReplicationFactor;
 	}
 	
 	Integer shard;
@@ -44,7 +44,7 @@ public class ReplicationEntry extends BaseBean implements Serializable, Comparab
 	public ReplicationEntry() {
 		
 	}
-	
+
 	public ReplicationEntry(int shard, String... nodes) {
 		this.shard = shard;
 		this.nodes = new ArrayList<String>();

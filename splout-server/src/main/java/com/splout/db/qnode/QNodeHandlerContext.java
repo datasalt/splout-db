@@ -34,6 +34,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -81,6 +82,10 @@ public class QNodeHandlerContext {
 	private final Map<TablespaceVersion, Tablespace> tablespaceVersionsMap = new ConcurrentHashMap<TablespaceVersion, Tablespace>();
 
 	private ReplicaBalancer replicaBalancer;
+	
+	// This flag is set to "false" after WARMING_TIME seconds (qnode.warming.time)
+	// Some actions will only be taken after warming time, just in case some nodes still didn't join the cluster.
+	private final AtomicBoolean isWarming = new AtomicBoolean(true);
 	
 	// The per-DNode Thrift client pools
 	private ConcurrentMap<String, BlockingQueue<DNodeService.Client>> thriftClientCache = new ConcurrentHashMap<String, BlockingQueue<DNodeService.Client>>();
@@ -598,6 +603,25 @@ public class QNodeHandlerContext {
 			}
 		}
 	}
+	
+	public void maybeBalance() {
+		// do this only after warming
+		if(!isWarming.get() && config.getBoolean(QNodeProperties.REPLICA_BALANCE_ENABLE)) {
+			// check if we could balance some partitions
+			List<ReplicaBalancer.BalanceAction> balanceActions = getBalanceActions();
+			// we will only re-balance versions being served
+			// otherwise strange things may happen: to re-balance a version in the middle of its deployment...
+			Map<String, Long> versionsBeingServed = coordinationStructures.getCopyVersionsBeingServed();
+			for(ReplicaBalancer.BalanceAction action : balanceActions) {
+				if(versionsBeingServed != null && versionsBeingServed.get(action.getTablespace()) != null
+				    && versionsBeingServed.get(action.getTablespace()) == action.getVersion()) {
+					// put if absent + TTL
+					coordinationStructures.getDNodeReplicaBalanceActionsSet().putIfAbsent(action, "",
+					    config.getLong(QNodeProperties.BALANCE_ACTIONS_TTL), TimeUnit.SECONDS);
+				}
+			}
+		}
+	}
 
 	// ---- Getters ---- //
 
@@ -616,4 +640,7 @@ public class QNodeHandlerContext {
 	public ConcurrentMap<String, BlockingQueue<DNodeService.Client>> getThriftClientCache() {
 		return thriftClientCache;
 	}
+	public AtomicBoolean getIsWarming() {
+  	return isWarming;
+  }
 }

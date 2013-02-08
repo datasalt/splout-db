@@ -143,6 +143,7 @@ public class ReplicaBalancer {
 		for(Map.Entry<TablespaceVersion, Tablespace> entry : tablespaceVersion.entrySet()) {
 			ReplicationMap replicationMap = entry.getValue().getReplicationMap();
 			for(ReplicationEntry rEntry : replicationMap.getReplicationEntries()) {
+				log.info(rEntry);
 				// for every missing replica... maybe perform a BalanceAction
 				if(rEntry.getNodes().size() > 0) {
 					for(int i = rEntry.getNodes().size(); i < rEntry.getExpectedReplicationFactor(); i++) {
