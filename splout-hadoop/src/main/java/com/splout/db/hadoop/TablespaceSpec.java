@@ -20,16 +20,26 @@ package com.splout.db.hadoop;
  * #L%
  */
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.InputFormat;
+import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.RecordReader;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.TaskAttemptID;
+import org.apache.hadoop.mapreduce.TaskID;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 
 import com.datasalt.pangool.io.ITuple;
 import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.io.Schema.Field;
+import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleTextInputFormat;
 import com.google.common.collect.ImmutableList;
 import com.splout.db.hadoop.TableSpec.FieldIndex;
 
@@ -56,6 +66,41 @@ public class TablespaceSpec {
 	 */
 	public static TablespaceSpec of(Schema schema, String partitionField, Path input, InputFormat<ITuple, NullWritable> inputFormat, int nPartitions) {
 		return of(schema, new String[] {  partitionField } , input, inputFormat, nPartitions);
+	}
+	
+	/**
+	 * Schema-less quick tablespace builder that samples the first record of the first InputSplit in order to obtain the Table Schema.
+	 * Note that this will only work for InputFormats that can obtain the Schema implicitly (e.g. TupleInputFormat).
+	 */
+	public static TablespaceSpec of(Configuration conf, String[] partitionFields, Path input, InputFormat<ITuple, NullWritable> inputFormat, int nPartitions) throws IOException, InterruptedException {
+		if(inputFormat instanceof TupleTextInputFormat) {
+			throw new IllegalArgumentException("Can't derive an implicit schema from a text file.");
+		}
+		Schema schema = null;
+		// sample schema from input path given the provided InputFormat
+		Job job = new Job(conf);
+		FileInputFormat.setInputPaths(job, input);
+		// get first inputSplit
+		List<InputSplit> inputSplits = inputFormat.getSplits(job);
+		if(inputSplits == null || inputSplits.size() == 0) {
+			throw new IllegalArgumentException("Given input format doesn't produce any input split. Can't sample first record.");
+		}
+		InputSplit inputSplit = inputSplits.get(0);
+		TaskAttemptID attemptId = new TaskAttemptID(new TaskID(), 1);
+		TaskAttemptContext attemptContext = new TaskAttemptContext(conf, attemptId);
+		
+		RecordReader<ITuple, NullWritable> rReader = inputFormat.createRecordReader(inputSplit, attemptContext);
+		rReader.initialize(inputSplit, attemptContext);
+
+		if(!rReader.nextKeyValue()) {
+			throw new IllegalArgumentException("Can't read first record of first input split of the given path [" + input + "].");
+		}
+		
+		// finally get the sample schema
+		schema = rReader.getCurrentKey().getSchema();
+		rReader.close();
+		
+		return of(schema, partitionFields, input, inputFormat, nPartitions);
 	}
 	
 	public static TablespaceSpec of(Schema schema, String[] partitionFields, Path input, InputFormat<ITuple, NullWritable> inputFormat, int nPartitions) {
