@@ -114,7 +114,7 @@ public class TestFetcher {
 		long endTime = System.currentTimeMillis();
 		
 		double bytesPerSec = (str.getBytes().length / (double)(endTime - startTime)) * 1000;
-		assertEquals(8, bytesPerSec, 0.1);
+		assertEquals(8, bytesPerSec, 0.5);
 		
 		assertTrue(f.exists());
 		assertTrue(f.isDirectory());
@@ -169,7 +169,7 @@ public class TestFetcher {
 		long endTime = System.currentTimeMillis();
 		
 		double bytesPerSec = (str.getBytes().length / (double)(endTime - startTime)) * 1000;
-		assertEquals(8, bytesPerSec, 0.1);
+		assertEquals(8, bytesPerSec, 0.5);
 		
 		assertTrue(f.exists());
 		assertTrue(f.isDirectory());
