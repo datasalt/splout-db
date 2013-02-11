@@ -99,7 +99,7 @@ public class TestTablespaceGeneratorMultiTable {
 		
 		// 2 - generate view
 		Path outputPath = new Path(TEST_OUTPUT);
-		TablespaceGenerator viewGenerator = new TablespaceGenerator(tablespace, outputPath);
+		TablespaceGenerator viewGenerator = new TablespaceGenerator(tablespace, outputPath, this.getClass());
 		viewGenerator.generateView(new Configuration(), SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions());
 		
 		// 3 - assert result

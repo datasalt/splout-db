@@ -195,7 +195,7 @@ public class PageCountsExample implements Tool, Serializable {
 				// we subclass TablespaceGenerator to be able to run the generation without outputting the SQLite stores, for
 				// benchmark comparisons.
 				// In the future this feature may be useful in general for debugging store creation.
-				tablespaceViewBuilder = new TablespaceGenerator(tablespaceBuilder.build(), outPath) {
+				tablespaceViewBuilder = new TablespaceGenerator(tablespaceBuilder.build(), outPath, this.getClass()) {
 
 					@Override
 					public void generateView(Configuration conf, SamplingType samplingType,
@@ -220,7 +220,7 @@ public class PageCountsExample implements Tool, Serializable {
 				};
 			} else {
 				// ... otherwise a standard TablespaceGenerator is used.
-				tablespaceViewBuilder = new TablespaceGenerator(tablespaceBuilder.build(), outPath);
+				tablespaceViewBuilder = new TablespaceGenerator(tablespaceBuilder.build(), outPath, this.getClass());
 			}
 
 			tablespaceViewBuilder.generateView(getConf(), SamplingType.RESERVOIR,

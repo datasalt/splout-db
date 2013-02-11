@@ -76,7 +76,7 @@ public class TestTablespaceGeneratorJavaScript {
 		    .partitionByJavaScript("function partition(record) { var str = record.get('id').toString(); return str.substring(0, 2); }");
 		builder.add(tableBuilder.build());
 
-		TablespaceGenerator viewGenerator = new TablespaceGenerator(builder.build(), new Path(OUTPUT));
+		TablespaceGenerator viewGenerator = new TablespaceGenerator(builder.build(), new Path(OUTPUT), this.getClass());
 		viewGenerator.generateView(conf, SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions());
 		
 		PartitionMap partitionMap = JSONSerDe.deSer(

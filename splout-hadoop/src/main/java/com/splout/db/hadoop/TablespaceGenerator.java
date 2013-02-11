@@ -102,10 +102,14 @@ public class TablespaceGenerator implements Serializable {
 	protected PartitionMap partitionMap;
 
 	private TupleReducer<ITuple, NullWritable> customReducer = null;
+	
+	// will be used to set the JarByClass
+	private Class callingClass;
 
-	public TablespaceGenerator(TablespaceSpec tablespace, Path outputPath) {
+	public TablespaceGenerator(TablespaceSpec tablespace, Path outputPath, Class callingClass) {
 		this.tablespace = tablespace;
 		this.outputPath = outputPath;
+		this.callingClass = callingClass;
 	}
 
 	public final static String OUT_SAMPLED_INPUT = "sampled-input";
@@ -449,7 +453,7 @@ public class TablespaceGenerator implements Serializable {
 			builder.setTupleReducer(customReducer);
 		}
 
-		builder.setJarByClass(TablespaceGenerator.class);
+		builder.setJarByClass(callingClass);
 		// Define the output format - Tuple to SQL
 		OutputFormat outputFormat = new TupleSQLite4JavaOutputFormat(batchSize,
 		    tableSpecs.toArray(new TableSpec[0]));

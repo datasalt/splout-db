@@ -181,7 +181,7 @@ public class SimpleGeneratorCMD implements Tool {
 		builder.add(tableBuilder.build());
 		builder.setNPartitions(nPartitions);
 
-		TablespaceGenerator viewGenerator = new TablespaceGenerator(builder.build(), out);
+		TablespaceGenerator viewGenerator = new TablespaceGenerator(builder.build(), out, this.getClass());
 		viewGenerator.generateView(conf, SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions()); 
 
 		log.info("Success! Tablespace [" + tablespace + "] with table [" + tablename

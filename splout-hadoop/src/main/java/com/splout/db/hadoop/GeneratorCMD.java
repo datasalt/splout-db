@@ -109,9 +109,9 @@ public class GeneratorCMD implements Tool {
 			TablespaceSpec spec = tablespace.getValue();
 
 			log.info("Generating view with Hadoop (" + tablespace.getKey() + ")");
-			TablespaceGenerator viewGenerator = new TablespaceGenerator(spec, tablespaceOut);
-			viewGenerator.generateView(conf, samplingType, new TupleSampler.DefaultSamplingOptions()); // TODO
-																																																				 // Parametrize
+			TablespaceGenerator viewGenerator = new TablespaceGenerator(spec, tablespaceOut, this.getClass());
+			// TODO Parametrize sampling options?
+			viewGenerator.generateView(conf, samplingType, new TupleSampler.DefaultSamplingOptions());
 		}
 
 		log.info("Done!");

@@ -39,6 +39,7 @@ import java.util.Map;
 
 import static org.junit.Assert.*;
 
+@SuppressWarnings({ "rawtypes", "serial" })
 public class TestTablespaceGenerator extends AbstractHadoopTestLibrary implements Serializable  {
 
 	public final static String INPUT  = "in-"  + TestTablespaceGenerator.class.getName();
@@ -77,7 +78,7 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary implement
 		writer.close();
 		
 		TablespaceSpec tablespace = TablespaceSpec.of(theSchema1, "id", new Path(INPUT), new TupleInputFormat(),  4);
-		TablespaceGenerator viewGenerator = new TablespaceGenerator(tablespace, new Path(OUTPUT));
+		TablespaceGenerator viewGenerator = new TablespaceGenerator(tablespace, new Path(OUTPUT), this.getClass());
 		viewGenerator.generateView(conf, SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions());
 		
 		List<PartitionEntry> partitionMap = viewGenerator.getPartitionMap().getPartitionEntries();
@@ -118,7 +119,7 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary implement
 		writer.close();
 		
 		TablespaceSpec tablespace = TablespaceSpec.of(theSchema2, "id", new Path(INPUT), new TupleInputFormat(), 1);
-		TablespaceGenerator viewGenerator = new TablespaceGenerator(tablespace, new Path(OUTPUT));
+		TablespaceGenerator viewGenerator = new TablespaceGenerator(tablespace, new Path(OUTPUT), this.getClass());
 		viewGenerator.generateView(conf, SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions());
 		
 		SQLiteJDBCManager manager = new SQLiteJDBCManager(OUTPUT + "/store/0.db", 10);
@@ -205,7 +206,7 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary implement
     tBuilder.partitionBy("id");
     builder.add(tBuilder.build());
 
-    TablespaceGenerator viewGenerator = new TablespaceGenerator(builder.build(), new Path(OUTPUT));
+    TablespaceGenerator viewGenerator = new TablespaceGenerator(builder.build(), new Path(OUTPUT), this.getClass());
     viewGenerator.generateView(conf, SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions());
 
     SQLiteJDBCManager manager = new SQLiteJDBCManager(OUTPUT + "/store/0.db", 10);

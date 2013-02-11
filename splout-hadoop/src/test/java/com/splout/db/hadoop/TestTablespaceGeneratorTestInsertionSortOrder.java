@@ -107,7 +107,7 @@ public class TestTablespaceGeneratorTestInsertionSortOrder implements Serializab
 
 		// 2 - generate view
 		Path outputPath = new Path(TEST_OUTPUT);
-		TablespaceGenerator viewGenerator = new TablespaceGenerator(tablespace, outputPath);
+		TablespaceGenerator viewGenerator = new TablespaceGenerator(tablespace, outputPath, this.getClass());
 		viewGenerator.setCustomReducer(new TupleReducer<ITuple, NullWritable>() {
 
 			public void reduce(ITuple group, Iterable<ITuple> tuples, TupleMRContext context,

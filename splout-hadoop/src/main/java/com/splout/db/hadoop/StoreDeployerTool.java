@@ -110,7 +110,7 @@ public class StoreDeployerTool {
       // If rep>dnodes, imposible to reach this level of replication
       int repFactor = tablespace.getReplication();
       if (dnodes.size() < repFactor) {
-        System.out.println("WARNING: Replication factor " + repFactor + " for tablespace " + tablespace.getTablespace() + " is bigger than the number of serving DNodes. Adjusting replication factor to " + dnodes.size());
+        log.warn("WARNING: Replication factor " + repFactor + " for tablespace " + tablespace.getTablespace() + " is bigger than the number of serving DNodes. Adjusting replication factor to " + dnodes.size());
         repFactor = dnodes.size();
       }
 
