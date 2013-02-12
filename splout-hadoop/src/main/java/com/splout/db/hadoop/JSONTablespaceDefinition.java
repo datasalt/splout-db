@@ -20,14 +20,17 @@ package com.splout.db.hadoop;
  * #L%
  */
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 
 import com.datasalt.pangool.io.Fields;
 import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.tuplemr.OrderBy;
+import com.datasalt.pangool.tuplemr.mapred.lib.input.CascadingTupleInputFormat;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleTextInputFormat;
 import com.splout.db.hadoop.TableBuilder.TableBuilderException;
 import com.splout.db.hadoop.TablespaceBuilder.TablespaceBuilderException;
@@ -40,327 +43,375 @@ import com.splout.db.hadoop.TablespaceBuilder.TablespaceBuilderException;
  */
 public class JSONTablespaceDefinition {
 
-  private String name;
-  private int nPartitions;
-  private List<JSONTableDefinition> partitionedTables;
-  private List<JSONTableDefinition> replicateAllTables = new ArrayList<JSONTableDefinition>();
+	private String name;
+	private int nPartitions;
+	private List<JSONTableDefinition> partitionedTables;
+	private List<JSONTableDefinition> replicateAllTables = new ArrayList<JSONTableDefinition>();
 
-  /*
-  * Inner static method for converting a {@link JSONTableDefinition} into a {@link Table} bean through {@link TableBuilder}.
-  */
-  private static Table buildTable(JSONTableDefinition table, boolean isReplicateAll) throws TableBuilderException {
-    if (table.getName() == null) {
-      throw new IllegalArgumentException("Must provide a name for all tables.");
-    }
-    if (table.getSchema() == null) {
-      throw new IllegalArgumentException("Must provide an schema for all tables.");
-    }
-    if (!isReplicateAll && (table.getPartitionFields() == null || table.getPartitionFields() == null || table.getPartitionFields().length() == 0)) {
-      throw new IllegalArgumentException("Partitioned table must be partitioned by some field.");
-    }
-    if (table.getTableInputs() == null || table.getTableInputs().size() == 0) {
-      throw new IllegalArgumentException("Table must have some table inputs.");
-    }
+	/*
+	 * Inner static method for converting a {@link JSONTableDefinition} into a {@link Table} bean through {@link
+	 * TableBuilder}.
+	 */
+	private static Table buildTable(JSONTableDefinition table, boolean isReplicateAll, Configuration hadoopConf)
+	    throws TableBuilderException, IOException {
+		if(table.getName() == null) {
+			throw new IllegalArgumentException("Must provide a name for all tables.");
+		}
+		if(!isReplicateAll
+		    && (table.getPartitionFields() == null || table.getPartitionFields() == null || table
+		        .getPartitionFields().length() == 0)) {
+			throw new IllegalArgumentException("Partitioned table must be partitioned by some field.");
+		}
+		if(table.getTableInputs() == null || table.getTableInputs().size() == 0) {
+			throw new IllegalArgumentException("Table must have some table inputs.");
+		}
 
-    Schema schema = new Schema(table.getName(), Fields.parse(table.getSchema()));
-    TableBuilder tableBuilder = new TableBuilder(schema);
-    for (String index : table.getIndexes()) {
-      tableBuilder.createIndex(index.split(","));
-    }
+		TableBuilder tableBuilder;
+		Schema schema = null;
+		
+		if(table.getSchema() != null) {
+			schema = new Schema(table.getName(), Fields.parse(table.getSchema()));
+			tableBuilder = new TableBuilder(schema);
+		} else {
+			tableBuilder = new TableBuilder(hadoopConf);
+		}
+		
+		for(String index : table.getIndexes()) {
+			tableBuilder.createIndex(index.split(","));
+		}
 
-    if (!isReplicateAll) {
-      tableBuilder.partitionBy(table.getPartitionFields().split(","));
-    }
+		if(!isReplicateAll) {
+			tableBuilder.partitionBy(table.getPartitionFields().split(","));
+		}
 
-    // Adding pre and post SQL
-    if (table.getInitialStatements().size() != 0) {
-      tableBuilder.preInsertsSQL(table.getInitialStatements().toArray(new String[0]));
-    }
-    if (table.getPreInsertStatements().size() != 0) {
-      tableBuilder.preInsertsSQL(table.getPreInsertStatements().toArray(new String[0]));
-    }
-    if (table.getPostInsertStatements().size() != 0) {
-      tableBuilder.preInsertsSQL(table.getPostInsertStatements().toArray(new String[0]));
-    }
-    if (table.getFinalStatements().size() != 0) {
-      tableBuilder.finalSQL(table.getFinalStatements().toArray(new String[0]));
-    }
+		// Adding pre and post SQL
+		if(table.getInitialStatements().size() != 0) {
+			tableBuilder.preInsertsSQL(table.getInitialStatements().toArray(new String[0]));
+		}
+		if(table.getPreInsertStatements().size() != 0) {
+			tableBuilder.preInsertsSQL(table.getPreInsertStatements().toArray(new String[0]));
+		}
+		if(table.getPostInsertStatements().size() != 0) {
+			tableBuilder.preInsertsSQL(table.getPostInsertStatements().toArray(new String[0]));
+		}
+		if(table.getFinalStatements().size() != 0) {
+			tableBuilder.finalSQL(table.getFinalStatements().toArray(new String[0]));
+		}
 
-    if(table.getInsertionOrderBy() != null) {
-    	tableBuilder.insertionSortOrder(OrderBy.parse(table.getInsertionOrderBy()));
-    }
-    
-    for (JSONTableInputDefinition tableInput : table.getTableInputs()) {
-      TextInputSpecs specs = tableInput.getInputSpecs();
-      if (specs == null) {
-        specs = new TextInputSpecs(); // default specs (tabulated file)
-      }
-      if (tableInput.getPaths() == null || tableInput.getPaths().size() == 0) {
-        throw new IllegalArgumentException("All table inputs must have input paths.");
-      }
+		if(table.getInsertionOrderBy() != null) {
+			tableBuilder.insertionSortOrder(OrderBy.parse(table.getInsertionOrderBy()));
+		}
 
-      for (String file : tableInput.getPaths()) {
-        if (specs.getFixedWidthFields() != null) {
-          // Fixed width fields definition.
-          int[] fieldsArr = new int[specs.getFixedWidthFields().size()];
-          for (int i = 0; i < fieldsArr.length; i++) {
-            fieldsArr[i] = specs.getFixedWidthFields().get(i);
-          }
-          tableBuilder.addFixedWidthTextFile(new Path(file), schema, fieldsArr, specs.isSkipHeader(), specs.getNullString(), null);
-        } else {
-          // CSV definition
-          tableBuilder.addCSVTextFile(file, specs.getSeparatorChar(), specs.getQuotesChar(), specs.getEscapeChar(),
-              specs.isSkipHeader(), specs.isStrictQuotes(), specs.getNullString());
+		for(JSONTableInputDefinition tableInput : table.getTableInputs()) {
+			TextInputSpecs specs = tableInput.getInputSpecs();
+			if(specs == null) {
+				specs = new TextInputSpecs(); // default specs (tabulated file)
+			}
+			if(tableInput.getPaths() == null || tableInput.getPaths().size() == 0) {
+				throw new IllegalArgumentException("All table inputs must have input paths.");
+			}
 
-        }
-      }
-    }
+			for(String file : tableInput.getPaths()) {
 
-    if (isReplicateAll) {
-      tableBuilder.replicateToAll();
-    }
-    return tableBuilder.build();
-  }
+				if(tableInput.getInputType().equals(InputType.TEXT)) {
+					// Text file - like in SimpleGeneratorCMD, need a Pangool schema for parsing it
+					if(schema == null) {
+						throw new IllegalArgumentException("A Pangool schema must be provided when using InputType = TEXT");
+					}
+					
+					if(specs.getFixedWidthFields() != null) {
+						// Fixed width fields definition.
+						int[] fieldsArr = new int[specs.getFixedWidthFields().size()];
+						for(int i = 0; i < fieldsArr.length; i++) {
+							fieldsArr[i] = specs.getFixedWidthFields().get(i);
+						}
+						tableBuilder.addFixedWidthTextFile(new Path(file), schema, fieldsArr, specs.isSkipHeader(),
+						    specs.getNullString(), null);
+					} else {
+						// CSV definition
+						tableBuilder.addCSVTextFile(file, specs.getSeparatorChar(), specs.getQuotesChar(),
+						    specs.getEscapeChar(), specs.isSkipHeader(), specs.isStrictQuotes(),
+						    specs.getNullString());
 
-  /**
-   * Use this method for obtaining a {@link TablespaceSpec} through {@link TablespaceBuilder}.
-   */
-  public TablespaceSpec build() throws TablespaceBuilderException, TableBuilderException {
-    TablespaceBuilder builder = new TablespaceBuilder();
-    builder.setNPartitions(nPartitions);
+					}
+				} else if(tableInput.getInputType().equals(InputType.TUPLE)) {
+					// Pangool Tuple file	
+					tableBuilder.addTupleFile(new Path(file));
+				} else if(tableInput.getInputType().equals(InputType.CASCADING)) {
+					// Cascading Tuple file
+					if(tableInput.getCascadingColumns() == null) {
+						throw new IllegalArgumentException("Comma-separated column names (property cascadingColumns) must be specified when using InputType = CASCADING.");
+					}
+					CascadingTupleInputFormat.setSerializations(hadoopConf);
+					tableBuilder.addCustomInputFormatFile(new Path(file), new CascadingTupleInputFormat(table.getName(), tableInput.getCascadingColumns().split(",")));
+				}
+			}
+		}
 
-    if (partitionedTables == null) {
-      throw new IllegalArgumentException("Can't build a " + TablespaceSpec.class.getName()
-          + " without any partitioned table.");
-    }
+		if(isReplicateAll) {
+			tableBuilder.replicateToAll();
+		}
+		return tableBuilder.build();
+	}
 
-    if (name == null) {
-      throw new IllegalArgumentException("Must provide a name for the Tablespace.");
-    }
+	/**
+	 * Use this method for obtaining a {@link TablespaceSpec} through {@link TablespaceBuilder}.
+	 * @throws IOException 
+	 */
+	public TablespaceSpec build(Configuration hadoopConf) throws TablespaceBuilderException, TableBuilderException, IOException {
+		TablespaceBuilder builder = new TablespaceBuilder();
+		builder.setNPartitions(nPartitions);
 
-    for (JSONTableDefinition table : partitionedTables) {
-      builder.add(buildTable(table, false));
-    }
+		if(partitionedTables == null) {
+			throw new IllegalArgumentException("Can't build a " + TablespaceSpec.class.getName()
+			    + " without any partitioned table.");
+		}
 
-    for (JSONTableDefinition table : replicateAllTables) {
-      builder.add(buildTable(table, true));
-    }
+		if(name == null) {
+			throw new IllegalArgumentException("Must provide a name for the Tablespace.");
+		}
 
-    return builder.build();
-  }
+		for(JSONTableDefinition table : partitionedTables) {
+			builder.add(buildTable(table, false, hadoopConf));
+		}
 
-  public static class JSONTableDefinition {
+		for(JSONTableDefinition table : replicateAllTables) {
+			builder.add(buildTable(table, true, hadoopConf));
+		}
 
-    private String name;
-    private List<JSONTableInputDefinition> tableInputs;
-    private String schema;
-    private String partitionFields;
-    private String insertionOrderBy;
-    private List<String> indexes = new ArrayList<String>();
-    private List<String> initialStatements = new ArrayList<String>();
-    private List<String> preInsertStatements = new ArrayList<String>();
-    private List<String> postInsertStatements = new ArrayList<String>();
-    private List<String> finalStatements = new ArrayList<String>();
+		return builder.build();
+	}
 
-    public List<JSONTableInputDefinition> getTableInputs() {
-      return tableInputs;
-    }
+	public static class JSONTableDefinition {
 
-    public void setTableInputs(List<JSONTableInputDefinition> tableInputs) {
-      this.tableInputs = tableInputs;
-    }
+		private String name;
+		private List<JSONTableInputDefinition> tableInputs;
+		private String schema;
+		private String partitionFields;
+		private String insertionOrderBy;
+		private List<String> indexes = new ArrayList<String>();
+		private List<String> initialStatements = new ArrayList<String>();
+		private List<String> preInsertStatements = new ArrayList<String>();
+		private List<String> postInsertStatements = new ArrayList<String>();
+		private List<String> finalStatements = new ArrayList<String>();
 
-    public String getSchema() {
-      return schema;
-    }
+		public List<JSONTableInputDefinition> getTableInputs() {
+			return tableInputs;
+		}
 
-    public void setSchema(String schema) {
-      this.schema = schema;
-    }
+		public void setTableInputs(List<JSONTableInputDefinition> tableInputs) {
+			this.tableInputs = tableInputs;
+		}
 
-    public String getPartitionFields() {
-      return partitionFields;
-    }
+		public String getSchema() {
+			return schema;
+		}
 
-    public void setPartitionFields(String partitionFields) {
-      this.partitionFields = partitionFields;
-    }
+		public void setSchema(String schema) {
+			this.schema = schema;
+		}
 
-    public List<String> getIndexes() {
-      return indexes;
-    }
+		public String getPartitionFields() {
+			return partitionFields;
+		}
 
-    public void setIndexes(List<String> indexes) {
-      this.indexes = indexes;
-    }
+		public void setPartitionFields(String partitionFields) {
+			this.partitionFields = partitionFields;
+		}
 
-    public List<String> getInitialStatements() {
-      return initialStatements;
-    }
+		public List<String> getIndexes() {
+			return indexes;
+		}
 
-    public void setInitialStatements(List<String> initialStatements) {
-      this.initialStatements = initialStatements;
-    }
+		public void setIndexes(List<String> indexes) {
+			this.indexes = indexes;
+		}
 
-    public List<String> getPostInsertStatements() {
-      return postInsertStatements;
-    }
+		public List<String> getInitialStatements() {
+			return initialStatements;
+		}
 
-    public void setPostInsertStatements(List<String> postInsertStatements) {
-      this.postInsertStatements = postInsertStatements;
-    }
+		public void setInitialStatements(List<String> initialStatements) {
+			this.initialStatements = initialStatements;
+		}
 
-    public String getName() {
-      return name;
-    }
+		public List<String> getPostInsertStatements() {
+			return postInsertStatements;
+		}
 
-    public void setName(String name) {
-      this.name = name;
-    }
+		public void setPostInsertStatements(List<String> postInsertStatements) {
+			this.postInsertStatements = postInsertStatements;
+		}
 
-    public List<String> getPreInsertStatements() {
-      return preInsertStatements;
-    }
+		public String getName() {
+			return name;
+		}
 
-    public void setPreInsertStatements(List<String> preInsertStatements) {
-      this.preInsertStatements = preInsertStatements;
-    }
+		public void setName(String name) {
+			this.name = name;
+		}
 
-    public List<String> getFinalStatements() {
-      return finalStatements;
-    }
+		public List<String> getPreInsertStatements() {
+			return preInsertStatements;
+		}
 
-    public void setFinalStatements(List<String> finalStatements) {
-      this.finalStatements = finalStatements;
-    }
+		public void setPreInsertStatements(List<String> preInsertStatements) {
+			this.preInsertStatements = preInsertStatements;
+		}
+
+		public List<String> getFinalStatements() {
+			return finalStatements;
+		}
+
+		public void setFinalStatements(List<String> finalStatements) {
+			this.finalStatements = finalStatements;
+		}
 
 		String getInsertionOrderBy() {
-    	return insertionOrderBy;
-    }
+			return insertionOrderBy;
+		}
 
 		void setInsertionOrderBy(String insertionOrderBy) {
-    	this.insertionOrderBy = insertionOrderBy;
-    }
-  }
+			this.insertionOrderBy = insertionOrderBy;
+		}
+	}
 
-  public static class JSONTableInputDefinition {
+	public static class JSONTableInputDefinition {
 
-    private TextInputSpecs inputSpecs;
-    private List<String> paths;
+		private TextInputSpecs inputSpecs;
+		private InputType inputType = InputType.TEXT;
+		private String cascadingColumns;
+		private List<String> paths;
 
-    public TextInputSpecs getInputSpecs() {
-      return inputSpecs;
-    }
+		public TextInputSpecs getInputSpecs() {
+			return inputSpecs;
+		}
 
-    public void setInputSpecs(TextInputSpecs inputSpecs) {
-      this.inputSpecs = inputSpecs;
-    }
+		public void setInputSpecs(TextInputSpecs inputSpecs) {
+			this.inputSpecs = inputSpecs;
+		}
 
-    public List<String> getPaths() {
-      return paths;
-    }
+		public List<String> getPaths() {
+			return paths;
+		}
 
-    public void setPaths(List<String> paths) {
-      this.paths = paths;
-    }
-  }
+		public void setPaths(List<String> paths) {
+			this.paths = paths;
+		}
 
-  public static class TextInputSpecs {
+		public InputType getInputType() {
+			return inputType;
+		}
 
-    private char separatorChar = '\t';
-    private char quotesChar = TupleTextInputFormat.NO_QUOTE_CHARACTER;
-    private char escapeChar = TupleTextInputFormat.NO_ESCAPE_CHARACTER;
-    private boolean skipHeader = false;
-    private boolean strictQuotes = false;
-    private String nullString = TupleTextInputFormat.NO_NULL_STRING;
-    private ArrayList<Integer> fixedWidthFields = null;
+		public void setInputType(InputType inputType) {
+			this.inputType = inputType;
+		}
 
-    public char getSeparatorChar() {
-      return separatorChar;
-    }
+		public String getCascadingColumns() {
+			return cascadingColumns;
+		}
 
-    public void setSeparatorChar(char separatorChar) {
-      this.separatorChar = separatorChar;
-    }
+		public void setCascadingColumns(String cascadingColumns) {
+			this.cascadingColumns = cascadingColumns;
+		}
+	}
 
-    public char getQuotesChar() {
-      return quotesChar;
-    }
+	public static class TextInputSpecs {
 
-    public void setQuotesChar(char quotesChar) {
-      this.quotesChar = quotesChar;
-    }
+		private char separatorChar = '\t';
+		private char quotesChar = TupleTextInputFormat.NO_QUOTE_CHARACTER;
+		private char escapeChar = TupleTextInputFormat.NO_ESCAPE_CHARACTER;
+		private boolean skipHeader = false;
+		private boolean strictQuotes = false;
+		private String nullString = TupleTextInputFormat.NO_NULL_STRING;
+		private ArrayList<Integer> fixedWidthFields = null;
 
-    public char getEscapeChar() {
-      return escapeChar;
-    }
+		public char getSeparatorChar() {
+			return separatorChar;
+		}
 
-    public void setEscapeChar(char escapeChar) {
-      this.escapeChar = escapeChar;
-    }
+		public void setSeparatorChar(char separatorChar) {
+			this.separatorChar = separatorChar;
+		}
 
-    public boolean isSkipHeader() {
-      return skipHeader;
-    }
+		public char getQuotesChar() {
+			return quotesChar;
+		}
 
-    public void setSkipHeader(boolean skipHeader) {
-      this.skipHeader = skipHeader;
-    }
+		public void setQuotesChar(char quotesChar) {
+			this.quotesChar = quotesChar;
+		}
 
-    public boolean isStrictQuotes() {
-      return strictQuotes;
-    }
+		public char getEscapeChar() {
+			return escapeChar;
+		}
 
-    public void setStrictQuotes(boolean strictQuotes) {
-      this.strictQuotes = strictQuotes;
-    }
+		public void setEscapeChar(char escapeChar) {
+			this.escapeChar = escapeChar;
+		}
 
-    public String getNullString() {
-      return nullString;
-    }
+		public boolean isSkipHeader() {
+			return skipHeader;
+		}
 
-    public void setNullString(String nullString) {
-      this.nullString = nullString;
-    }
+		public void setSkipHeader(boolean skipHeader) {
+			this.skipHeader = skipHeader;
+		}
 
-    public ArrayList<Integer> getFixedWidthFields() {
-      return fixedWidthFields;
-    }
+		public boolean isStrictQuotes() {
+			return strictQuotes;
+		}
 
-    public void setFixedWidthFields(ArrayList<Integer> fixedWidthFields) {
-      this.fixedWidthFields = fixedWidthFields;
-    }
-  }
+		public void setStrictQuotes(boolean strictQuotes) {
+			this.strictQuotes = strictQuotes;
+		}
 
-  public int getnPartitions() {
-    return nPartitions;
-  }
+		public String getNullString() {
+			return nullString;
+		}
 
-  public void setnPartitions(int nPartitions) {
-    this.nPartitions = nPartitions;
-  }
+		public void setNullString(String nullString) {
+			this.nullString = nullString;
+		}
 
-  public List<JSONTableDefinition> getPartitionedTables() {
-    return partitionedTables;
-  }
+		public ArrayList<Integer> getFixedWidthFields() {
+			return fixedWidthFields;
+		}
 
-  public void setPartitionedTables(List<JSONTableDefinition> partitionedTables) {
-    this.partitionedTables = partitionedTables;
-  }
+		public void setFixedWidthFields(ArrayList<Integer> fixedWidthFields) {
+			this.fixedWidthFields = fixedWidthFields;
+		}
+	}
 
-  public List<JSONTableDefinition> getReplicateAllTables() {
-    return replicateAllTables;
-  }
+	public int getnPartitions() {
+		return nPartitions;
+	}
 
-  public void setReplicateAllTables(List<JSONTableDefinition> replicateAllTables) {
-    this.replicateAllTables = replicateAllTables;
-  }
+	public void setnPartitions(int nPartitions) {
+		this.nPartitions = nPartitions;
+	}
 
-  public String getName() {
-    return name;
-  }
+	public List<JSONTableDefinition> getPartitionedTables() {
+		return partitionedTables;
+	}
 
-  public void setName(String name) {
-    this.name = name;
-  }
+	public void setPartitionedTables(List<JSONTableDefinition> partitionedTables) {
+		this.partitionedTables = partitionedTables;
+	}
+
+	public List<JSONTableDefinition> getReplicateAllTables() {
+		return replicateAllTables;
+	}
+
+	public void setReplicateAllTables(List<JSONTableDefinition> replicateAllTables) {
+		this.replicateAllTables = replicateAllTables;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
 }

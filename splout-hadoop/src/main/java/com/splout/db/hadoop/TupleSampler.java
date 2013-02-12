@@ -75,7 +75,7 @@ public class TupleSampler implements Serializable {
 		public TupleSamplerException(String reason) {
 			super(reason);
 		}
-		
+
 		public TupleSamplerException(Exception e) {
 			super(e);
 		}
@@ -96,18 +96,18 @@ public class TupleSampler implements Serializable {
 	// Options for DEFAULT sampling
 	public static class DefaultSamplingOptions extends SamplingOptions {
 
-    public DefaultSamplingOptions() {
-      super();
-      setMaxSplitsToVisit(10);
-    }
+		public DefaultSamplingOptions() {
+			super();
+			setMaxSplitsToVisit(10);
+		}
 
-    public int getMaxSplitsToVisit() {
-      return (Integer) this.get("maxSplitsToVisit");
-    }
+		public int getMaxSplitsToVisit() {
+			return (Integer) this.get("maxSplitsToVisit");
+		}
 
-    public void setMaxSplitsToVisit(int maxSplitsToVisit) {
-      this.put("maxSplitsToVisit", maxSplitsToVisit);
-    }
+		public void setMaxSplitsToVisit(int maxSplitsToVisit) {
+			this.put("maxSplitsToVisit", maxSplitsToVisit);
+		}
 	}
 
 	public TupleSampler(SamplingType samplingType, SamplingOptions options) {
@@ -132,7 +132,7 @@ public class TupleSampler implements Serializable {
 					FileInputFormat.setMaxInputSplitSize(job, options.getMaxInputSplitSize());
 				}
 				job.setInputFormatClass(FileInputFormat.class);
-				
+
 				for(InputSplit split : tableFile.getFormat().getSplits(job)) {
 					splitToFormat.put(split, tableFile.getFormat());
 					recordProcessorPerSplit.put(split, tableFile.getRecordProcessor());
@@ -146,16 +146,16 @@ public class TupleSampler implements Serializable {
 			}
 
 			if(samplingType.equals(SamplingType.DEFAULT)) {
-        try {
-          DefaultSamplingOptions defOptions = (DefaultSamplingOptions) options;
-          // Default sampling method
-          defaultSampling(tableSchema, sampleSize, hadoopConf, outFile, splits, splitToFormat,
-              recordProcessorPerSplit, defOptions.getMaxSplitsToVisit());
-        } catch (ClassCastException e) {
-          throw new RuntimeException("Invalid options class: "+ options.getClass() + " Expected:" +
-              DefaultSamplingOptions.class);
-        }
-      } else {
+				try {
+					DefaultSamplingOptions defOptions = (DefaultSamplingOptions) options;
+					// Default sampling method
+					defaultSampling(tableSchema, sampleSize, hadoopConf, outFile, splits, splitToFormat,
+					    recordProcessorPerSplit, defOptions.getMaxSplitsToVisit());
+				} catch(ClassCastException e) {
+					throw new RuntimeException("Invalid options class: " + options.getClass() + " Expected:"
+					    + DefaultSamplingOptions.class);
+				}
+			} else {
 				// Reservoir sampling
 				reservoirSampling(tableSchema, sampleSize, hadoopConf, outFile, splits.size(), inputFiles);
 			}
@@ -169,7 +169,8 @@ public class TupleSampler implements Serializable {
 	 */
 	private void reservoirSampling(Schema tableSchema, final long sampleSize, Configuration hadoopConf,
 	    Path outputPath, final int nSplits, List<TableInput> inputFiles) throws IOException,
-	    InterruptedException, ClassNotFoundException, TupleMRException, URISyntaxException, TupleSamplerException {
+	    InterruptedException, ClassNotFoundException, TupleMRException, URISyntaxException,
+	    TupleSamplerException {
 
 		MapOnlyJobBuilder builder = new MapOnlyJobBuilder(hadoopConf, "Reservoir Sampling");
 		for(TableInput inputFile : inputFiles) {
@@ -184,8 +185,8 @@ public class TupleSampler implements Serializable {
 					    CounterInterface counterInterface;
 					    long recordCounter = 0;
 
-              @Override
-              protected void setup(Context context) throws IOException, InterruptedException {
+					    @Override
+					    protected void setup(Context context) throws IOException, InterruptedException {
 						    counterInterface = new CounterInterface(context);
 					    };
 
@@ -195,8 +196,7 @@ public class TupleSampler implements Serializable {
 					        InterruptedException {
 						    ITuple uTuple;
 						    try {
-							    uTuple = processor.process(key,
-							        counterInterface);
+							    uTuple = processor.process(key, counterInterface);
 						    } catch(Throwable e) {
 							    throw new RuntimeException(e);
 						    }
@@ -232,26 +232,30 @@ public class TupleSampler implements Serializable {
 		// Set output path
 		Path outReservoirPath = new Path(outputPath + "-reservoir");
 		builder.setTupleOutput(outReservoirPath, NullableSchema.nullableSchema(tableSchema));
-		Job job = builder.createJob();
-		if(!job.waitForCompletion(true)) {
-			throw new TupleSamplerException("Reservoir Sampling failed!");
+		try {
+			Job job = builder.createJob();
+			if(!job.waitForCompletion(true)) {
+				throw new TupleSamplerException("Reservoir Sampling failed!");
+			}
+		} finally {
+			builder.cleanUpInstanceFiles();
 		}
 
 		FileSystem outFs = outReservoirPath.getFileSystem(hadoopConf);
 		// Instantiate the writer we will write samples to
-    TupleFile.Writer writer = new TupleFile.Writer(outFs, hadoopConf, outputPath, NullableSchema.nullableSchema(
-		    tableSchema));
+		TupleFile.Writer writer = new TupleFile.Writer(outFs, hadoopConf, outputPath,
+		    NullableSchema.nullableSchema(tableSchema));
 
 		if(outFs.listStatus(outReservoirPath) == null) {
 			throw new IOException("Output folder not created: the Job failed!");
 		}
-		
+
 		// Aggregate the output into a single file for being consistent with the other sampling methods
 		for(FileStatus fileStatus : outFs.listStatus(outReservoirPath)) {
 			Path thisPath = fileStatus.getPath();
 			if(thisPath.getName().startsWith("part-m-")) {
 				TupleFile.Reader reader = new TupleFile.Reader(outFs, hadoopConf, thisPath);
-        Tuple tuple = new Tuple(reader.getSchema());
+				Tuple tuple = new Tuple(reader.getSchema());
 				while(reader.next(tuple)) {
 					writer.append(tuple);
 				}
@@ -269,19 +273,19 @@ public class TupleSampler implements Serializable {
 	private void defaultSampling(Schema tableSchema, long sampleSize, Configuration hadoopConf,
 	    Path outFile, List<InputSplit> splits,
 	    Map<InputSplit, InputFormat<ITuple, NullWritable>> splitToFormat,
-	    Map<InputSplit, RecordProcessor> recordProcessorPerSplit,
-      int maxSplitsToVisit) throws IOException, InterruptedException {
+	    Map<InputSplit, RecordProcessor> recordProcessorPerSplit, int maxSplitsToVisit)
+	    throws IOException, InterruptedException {
 
 		// Instantiate the writer we will write samples to
-    FileSystem fs = FileSystem.get(outFile.toUri(), hadoopConf);
-		TupleFile.Writer writer = new TupleFile.Writer(fs, hadoopConf, outFile, NullableSchema.nullableSchema(
-		    tableSchema));
+		FileSystem fs = FileSystem.get(outFile.toUri(), hadoopConf);
+		TupleFile.Writer writer = new TupleFile.Writer(fs, hadoopConf, outFile,
+		    NullableSchema.nullableSchema(tableSchema));
 
 		if(splits.size() == 0) {
 			throw new IllegalArgumentException("There are no splits to sample from!");
 		}
 		logger.info("Sampling from input splits > " + splits);
-    int samples = Math.min(maxSplitsToVisit, splits.size());
+		int samples = Math.min(maxSplitsToVisit, splits.size());
 		long recordsPerSample = sampleSize / samples;
 		int sampleStep = splits.size() / samples;
 

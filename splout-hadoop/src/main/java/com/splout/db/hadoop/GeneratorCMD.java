@@ -87,7 +87,7 @@ public class GeneratorCMD implements Tool {
 
 			String strContents = HadoopUtils.fileToString(fS, file);
 			JSONTablespaceDefinition def = JSONSerDe.deSer(strContents, JSONTablespaceDefinition.class);
-			TablespaceSpec spec = def.build();
+			TablespaceSpec spec = def.build(conf);
 
 			tablespacesToGenerate.put(def.getName(), spec);
 		}

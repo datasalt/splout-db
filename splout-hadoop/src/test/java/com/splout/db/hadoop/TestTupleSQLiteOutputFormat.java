@@ -20,6 +20,25 @@ package com.splout.db.hadoop;
  * #L%
  */
 
+import static org.junit.Assert.assertEquals;
+
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Serializable;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.junit.Test;
+
 import com.datasalt.pangool.io.Fields;
 import com.datasalt.pangool.io.ITuple;
 import com.datasalt.pangool.io.Schema;
@@ -35,23 +54,6 @@ import com.splout.db.common.JSONSerDe.JSONSerDeException;
 import com.splout.db.common.SQLiteJDBCManager;
 import com.splout.db.hadoop.TableSpec.FieldIndex;
 import com.splout.db.hadoop.TupleSQLite4JavaOutputFormat.TupleSQLiteOutputFormatException;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
-import org.junit.Test;
-
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Serializable;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
 
 @SuppressWarnings("serial")
 public class TestTupleSQLiteOutputFormat implements Serializable {
@@ -177,7 +179,13 @@ public class TestTupleSQLiteOutputFormat implements Serializable {
 		builder.setTupleReducer(new IdentityTupleReducer());
 		builder.setGroupByFields(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD);
 		builder.setOutput(new Path(OUTPUT), new TupleSQLite4JavaOutputFormat(100000, table1, table2), ITuple.class, NullWritable.class);
-		builder.createJob().waitForCompletion(true);
+		
+		Job job = builder.createJob();
+		try {
+			job.waitForCompletion(true);
+		} finally {
+			builder.cleanUpInstanceFiles();
+		}
 
 		// Assert that the DB has been created successfully
 

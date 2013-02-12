@@ -1,0 +1,15 @@
+{
+	"name": "hashtags",
+	"nPartitions": 2,
+	"partitionedTables": [{
+		"name": "hashtags",
+		"schema": "ignore:string,date:string,count:long,hashtag:string",
+		"partitionFields": "hashtag",
+    	"tableInputs": [{
+			"inputSpecs": {
+				"separatorChar": " "
+			},
+			"paths": [ "src/test/resources/hashtags_space.txt" ]
+		}]	
+	}]
+}

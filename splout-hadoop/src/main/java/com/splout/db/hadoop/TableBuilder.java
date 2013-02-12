@@ -20,6 +20,21 @@ package com.splout.db.hadoop;
  * #L%
  */
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.mapreduce.InputFormat;
+
+import com.datasalt.pangool.io.ITuple;
 import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.io.Schema.Field;
 import com.datasalt.pangool.tuplemr.Criteria.SortElement;
@@ -27,11 +42,6 @@ import com.datasalt.pangool.tuplemr.OrderBy;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleTextInputFormat;
 import com.splout.db.hadoop.TableSpec.FieldIndex;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.fs.Path;
-
-import java.util.*;
 
 /**
  * This builder can be used to obtain {@link Table} beans. These beans can then be used to obtain a
@@ -41,8 +51,9 @@ public class TableBuilder {
 
 	private final static Log log = LogFactory.getLog(TableBuilder.class);
 
-  /**
-   * Exception that is thrown if a Table cannot be built because there is missing data or inconsistent data has been specified. The reason is specified as the message of the Exception.
+	/**
+	 * Exception that is thrown if a Table cannot be built because there is missing data or inconsistent data has been
+	 * specified. The reason is specified as the message of the Exception.
 	 */
 	@SuppressWarnings("serial")
 	public static class TableBuilderException extends Exception {
@@ -52,47 +63,82 @@ public class TableBuilder {
 		}
 	}
 
-	private final Schema schema;
+	private Schema schema;
 	private List<TableInput> files = new ArrayList<TableInput>();
 	private String[] partitionByFields;
 	private String partitionByJavaScript = null;
 	private boolean isReplicated = false;
 	private Set<String> fieldsToIndex = new HashSet<String>();
 	private List<List<String>> compoundIndexes = new ArrayList<List<String>>();
-  private String[] initialSQL = null;
-  private String[] preInsertsSQL = null;
-  private String[] postInsertsSQL;
-  private String[] finalSQL = null;
-  private OrderBy orderBy;
+	private String[] initialSQL = null;
+	private String[] preInsertsSQL = null;
+	private String[] postInsertsSQL;
+	private String[] finalSQL = null;
+	private OrderBy orderBy;
 
+	// the Hadoop conf can be provided as an alternative to the Schema to be able to sample it from the input files in
+	// case the input files are not Textual
+	private Configuration hadoopConf;
+
+	/**
+	 * Fixed schema constructor: for example, if we use textual files.
+	 */
 	public TableBuilder(final Schema schema) {
+		if(schema == null) {
+			throw new IllegalArgumentException("Explicit table schema can't be null - please use the other constructors for implicit Schema discovering.");
+		}
 		this.schema = schema;
 	}
 
-	public TableBuilder addFixedWidthTextFile(Path path, Schema schema, int []fields, boolean hasHeader, String nullString, RecordProcessor recordProcessor) {
-		addFile(new TableInput(new TupleTextInputFormat(schema, fields, hasHeader, nullString), schema, (recordProcessor == null) ? new IdentityRecordProcessor() : recordProcessor, path));
+	/**
+	 * Hadoop configuration, no schema: The input files will contain the Schema (e.g. Tuple files / Cascading files).
+	 */
+	public TableBuilder(final Configuration hadoopConf) {
+		if(hadoopConf == null) {
+			throw new IllegalArgumentException("Hadoop configuration can't be null - please provide a valid one.");
+		}
+		this.hadoopConf = hadoopConf;
+	}
+
+	public TableBuilder addFixedWidthTextFile(Path path, Schema schema, int[] fields, boolean hasHeader,
+	    String nullString, RecordProcessor recordProcessor) {
+		addFile(new TableInput(new TupleTextInputFormat(schema, fields, hasHeader, nullString), schema,
+		    (recordProcessor == null) ? new IdentityRecordProcessor() : recordProcessor, path));
 		return this;
 	}
 
-	public TableBuilder addCSVTextFile(Path path, char separator, char quoteCharacter, char escapeCharacter, boolean hasHeader, boolean strictQuotes, String nullString, Schema fileSchema, RecordProcessor recordProcessor) {
-		addFile(new TableInput(new TupleTextInputFormat(fileSchema, hasHeader, strictQuotes, separator, quoteCharacter, escapeCharacter, TupleTextInputFormat.FieldSelector.NONE, nullString), fileSchema, recordProcessor, path));
-		return this;
+	public TableBuilder addCSVTextFile(Path path, char separator, char quoteCharacter,
+	    char escapeCharacter, boolean hasHeader, boolean strictQuotes, String nullString,
+	    Schema fileSchema, RecordProcessor recordProcessor) {
+		return addFile(new TableInput(
+		    new TupleTextInputFormat(fileSchema, hasHeader, strictQuotes, separator, quoteCharacter,
+		        escapeCharacter, TupleTextInputFormat.FieldSelector.NONE, nullString), fileSchema,
+		    recordProcessor, path));
 	}
 
-	public TableBuilder addCSVTextFile(String path, char separator, char quoteCharacter, char escapeCharacter, boolean hasHeader, boolean strictQuotes, String nullString, Schema fileSchema, RecordProcessor recordProcessor) {
-		return addCSVTextFile(new Path(path), separator, quoteCharacter, escapeCharacter, hasHeader, strictQuotes, nullString, fileSchema, recordProcessor);
+	public TableBuilder addCSVTextFile(String path, char separator, char quoteCharacter,
+	    char escapeCharacter, boolean hasHeader, boolean strictQuotes, String nullString,
+	    Schema fileSchema, RecordProcessor recordProcessor) {
+		return addCSVTextFile(new Path(path), separator, quoteCharacter, escapeCharacter, hasHeader,
+		    strictQuotes, nullString, fileSchema, recordProcessor);
 	}
 
-	public TableBuilder addCSVTextFile(Path path, char separator, char quoteCharacter, char escapeCharacter, boolean hasHeader, boolean strictQuotes, String nullString) {
-		return addCSVTextFile(path, separator, quoteCharacter, escapeCharacter, hasHeader, strictQuotes, nullString, schema, new IdentityRecordProcessor());
+	public TableBuilder addCSVTextFile(Path path, char separator, char quoteCharacter,
+	    char escapeCharacter, boolean hasHeader, boolean strictQuotes, String nullString) {
+		return addCSVTextFile(path, separator, quoteCharacter, escapeCharacter, hasHeader, strictQuotes,
+		    nullString, schema, new IdentityRecordProcessor());
 	}
 
-	public TableBuilder addCSVTextFile(String path, char separator, char quoteCharacter, char escapeCharacter, boolean hasHeader, boolean strictQuotes, String nullString) {
-		return addCSVTextFile(path, separator, quoteCharacter, escapeCharacter, hasHeader, strictQuotes, nullString, schema, new IdentityRecordProcessor());
+	public TableBuilder addCSVTextFile(String path, char separator, char quoteCharacter,
+	    char escapeCharacter, boolean hasHeader, boolean strictQuotes, String nullString) {
+		return addCSVTextFile(path, separator, quoteCharacter, escapeCharacter, hasHeader, strictQuotes,
+		    nullString, schema, new IdentityRecordProcessor());
 	}
 
 	public TableBuilder addCSVTextFile(Path path, Schema fileSchema, RecordProcessor recordProcessor) {
-		return addCSVTextFile(path, '\t', TupleTextInputFormat.NO_QUOTE_CHARACTER, TupleTextInputFormat.NO_ESCAPE_CHARACTER, false, false, TupleTextInputFormat.NO_NULL_STRING, fileSchema, recordProcessor);
+		return addCSVTextFile(path, '\t', TupleTextInputFormat.NO_QUOTE_CHARACTER,
+		    TupleTextInputFormat.NO_ESCAPE_CHARACTER, false, false, TupleTextInputFormat.NO_NULL_STRING,
+		    fileSchema, recordProcessor);
 	}
 
 	public TableBuilder addCSVTextFile(String path, Schema fileSchema, RecordProcessor recordProcessor) {
@@ -107,52 +153,70 @@ public class TableBuilder {
 		return addCSVTextFile(path, schema, new IdentityRecordProcessor());
 	}
 
-	public TableBuilder addTupleFile(Path path) {
-		addTupleFile(path, null);
+	public TableBuilder addCustomInputFormatFile(Path path, InputFormat<ITuple, NullWritable> inputFormat) throws IOException {
+		return addCustomInputFormatFile(path, inputFormat, null);
+	}
+
+	public TableBuilder addCustomInputFormatFile(Path path, InputFormat<ITuple, NullWritable> inputFormat,
+	    RecordProcessor recordProcessor) throws IOException {
+		if(schema == null) {
+			// sample it
+			try {
+	      schema = SchemaSampler.sample(hadoopConf, path, inputFormat);
+      } catch(InterruptedException e) {
+	      throw new IOException(e);
+      }
+		}
+		return addFile(new TableInput(inputFormat, schema,
+		    (recordProcessor == null) ? new IdentityRecordProcessor() : recordProcessor, path));
+	}
+
+	public TableBuilder addTupleFile(Path path) throws IOException {
+		return addTupleFile(path, null);
+	}
+
+	public TableBuilder addTupleFile(Path path, RecordProcessor recordProcessor) throws IOException {
+		return addCustomInputFormatFile(path, new TupleInputFormat(), recordProcessor);
+	}
+
+	/**
+	 * @param initialSQLStatements
+	 *          SQL statements that will be executed at the start of the process, just after some default PRAGMA
+	 *          statements and just before the CREATE TABLE statements.
+	 */
+	public TableBuilder initialSQL(String... initialSQLStatements) {
+		this.initialSQL = initialSQLStatements;
 		return this;
 	}
 
-  public TableBuilder addTupleFile(Path path, RecordProcessor recordProcessor) {
-    addFile(new TableInput(new TupleInputFormat(), schema, (recordProcessor == null) ? new IdentityRecordProcessor() : recordProcessor, path));
-    return this;
-  }
+	/**
+	 * @param preInsertsSQLStatements
+	 *          SQL statements that will be executed just after the CREATE TABLE statements but just before the INSERT
+	 *          statements used to insert data.
+	 */
+	public TableBuilder preInsertsSQL(String... preInsertsSQLStatements) {
+		this.preInsertsSQL = preInsertsSQLStatements;
+		return this;
+	}
 
+	/**
+	 * @param postInsertsSQLStatements
+	 *          SQL statements that will be executed just after all data is inserted but just before the CREATE INDEX
+	 *          statements.
+	 */
+	public TableBuilder postInsertsSQL(String... postInsertsSQLStatements) {
+		this.postInsertsSQL = postInsertsSQLStatements;
+		return this;
+	}
 
-  /**
-   * @param initialSQLStatements SQL statements that will be executed at the start of the process, just after
-   *                             some default PRAGMA statements and just before the CREATE TABLE statements.
-   */
-  public TableBuilder initialSQL(String... initialSQLStatements) {
-    this.initialSQL = initialSQLStatements;
-    return this;
-  }
-
-  /**
-   * @param preInsertsSQLStatements SQL statements that will be executed just after the CREATE TABLE statements
-   *                      but just before the INSERT statements used to insert data.
-   */
-  public TableBuilder preInsertsSQL(String... preInsertsSQLStatements) {
-    this.preInsertsSQL = preInsertsSQLStatements;
-    return this;
-  }
-
-  /**
-   * @param postInsertsSQLStatements SQL statements that will be executed just after all data is inserted but
-   *                                 just before the CREATE INDEX statements.
-   */
-  public TableBuilder postInsertsSQL(String... postInsertsSQLStatements) {
-    this.postInsertsSQL = postInsertsSQLStatements;
-    return this;
-  }
-
-  /**
-   * @param finalSQLStatements SQL statements that will be executed al the end of the process, just after the
-   *                           CREATE INDEX statements.
-   */
-  public TableBuilder finalSQL(String... finalSQLStatements) {
-    this.finalSQL = finalSQLStatements;
-    return this;
-  }
+	/**
+	 * @param finalSQLStatements
+	 *          SQL statements that will be executed al the end of the process, just after the CREATE INDEX statements.
+	 */
+	public TableBuilder finalSQL(String... finalSQLStatements) {
+		this.finalSQL = finalSQLStatements;
+		return this;
+	}
 
 	public TableBuilder createIndex(String... indexFields) {
 		if(indexFields.length == 1) {
@@ -174,21 +238,23 @@ public class TableBuilder {
 		JavascriptEngine engine;
 		try {
 			engine = new JavascriptEngine(javascript);
-    } catch(Throwable e) {
-    	log.error("Error evaluating javascript", e);
-	    throw new TableBuilderException("Invalid javascript: " + e.getMessage());
-    }
+		} catch(Throwable e) {
+			log.error("Error evaluating javascript", e);
+			throw new TableBuilderException("Invalid javascript: " + e.getMessage());
+		}
 
-    try {
-      engine.execute("partition", new Object[0]);
-    } catch(ClassCastException e) {
-    	log.error("Error evaluating javascript, doesn't contain partition function", e);
-	    throw new TableBuilderException("Invalid javascript, must contain partition() function that receives a record: " + e.getMessage());
-    } catch(Throwable e) {
-      // skip - might be null pointers as we are passing a null object
-    }
+		try {
+			engine.execute("partition", new Object[0]);
+		} catch(ClassCastException e) {
+			log.error("Error evaluating javascript, doesn't contain partition function", e);
+			throw new TableBuilderException(
+			    "Invalid javascript, must contain partition() function that receives a record: "
+			        + e.getMessage());
+		} catch(Throwable e) {
+			// skip - might be null pointers as we are passing a null object
+		}
 
-    partitionByJavaScript = javascript;
+		partitionByJavaScript = javascript;
 		return this;
 	}
 
@@ -203,9 +269,10 @@ public class TableBuilder {
 	}
 
 	public TableBuilder insertionSortOrder(OrderBy orderBy) throws TableBuilderException {
-		for(SortElement element: orderBy.getElements()) {
+		for(SortElement element : orderBy.getElements()) {
 			if(!schema.containsField(element.getName())) {
-				throw new TableBuilderException("Order by field: " + element.getName() + " not contained in table schema.");
+				throw new TableBuilderException("Order by field: " + element.getName()
+				    + " not contained in table schema.");
 			}
 		}
 		this.orderBy = orderBy;
@@ -221,17 +288,18 @@ public class TableBuilder {
 		if(!isReplicated) { // Check that partition field is good
 			// Check that is present in schema
 			if(partitionByFields == null && partitionByJavaScript == null) {
-				throw new TableBuilderException("No partition fields or partition-by-JavaScript for a non replicated table. Must specify at least one.");
+				throw new TableBuilderException(
+				    "No partition fields or partition-by-JavaScript for a non replicated table. Must specify at least one.");
 			}
 			if(partitionByFields != null) {
 				partitionBySchemaFields = new Field[partitionByFields.length];
 				int i = 0;
-				for(String partitionByField: partitionByFields) {
+				for(String partitionByField : partitionByFields) {
 					partitionByField = partitionByField.trim();
 					Field partitionField = schema.getField(partitionByField);
 					if(partitionField == null) {
-						throw new TableBuilderException("Invalid partition field: " + partitionByField + " not present in its Schema: "
-						    + schema + ".");
+						throw new TableBuilderException("Invalid partition field: " + partitionByField
+						    + " not present in its Schema: " + schema + ".");
 					}
 					partitionBySchemaFields[i] = partitionField;
 					i++;
@@ -239,7 +307,8 @@ public class TableBuilder {
 			}
 		} else {
 			if(partitionByFields != null) {
-				throw new TableBuilderException("Replicated table with partition fields is an inconsistent specification. Please check if you are doing something wrong.");
+				throw new TableBuilderException(
+				    "Replicated table with partition fields is an inconsistent specification. Please check if you are doing something wrong.");
 			}
 		}
 
@@ -263,8 +332,8 @@ public class TableBuilder {
 				// Check that each field exists in schema
 				Field field2 = schema.getField(field);
 				if(field2 == null) {
-					throw new TableBuilderException("Invalid compound index: " + compoundIndex + ", field " + field2
-					    + " not present in specified Schema: " + schema + ".");
+					throw new TableBuilderException("Invalid compound index: " + compoundIndex + ", field "
+					    + field2 + " not present in specified Schema: " + schema + ".");
 				}
 				compoundIndexFields.add(field2);
 			}
@@ -276,9 +345,11 @@ public class TableBuilder {
 		FieldIndex[] theIndexes = indexes.toArray(new FieldIndex[0]);
 
 		if(partitionByJavaScript != null) {
-      spec = new TableSpec(schema, partitionByJavaScript, theIndexes, initialSQL, preInsertsSQL, postInsertsSQL, finalSQL, orderBy);
-    } else {
-      spec = new TableSpec(schema, partitionBySchemaFields, theIndexes, initialSQL, preInsertsSQL, postInsertsSQL, finalSQL, orderBy);
+			spec = new TableSpec(schema, partitionByJavaScript, theIndexes, initialSQL, preInsertsSQL,
+			    postInsertsSQL, finalSQL, orderBy);
+		} else {
+			spec = new TableSpec(schema, partitionBySchemaFields, theIndexes, initialSQL, preInsertsSQL,
+			    postInsertsSQL, finalSQL, orderBy);
 		}
 
 		// Now get the input Paths

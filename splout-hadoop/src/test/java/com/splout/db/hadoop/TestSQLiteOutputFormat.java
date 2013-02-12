@@ -33,6 +33,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.junit.Test;
 
@@ -86,7 +87,14 @@ public class TestSQLiteOutputFormat implements Serializable {
 		builder.setOutput(new Path(OUTPUT), new SQLiteOutputFormat(
 		    new String[] { "CREATE TABLE foo (foobar1 TEXT, foobar2 INT32)" }, 
 		    new String[] { "CREATE INDEX idx_foobar1 ON foo (foobar1);" }, 1000000), ITuple.class, NullWritable.class);
-		builder.createJob().waitForCompletion(true);
+		
+		
+		Job job = builder.createJob();
+		try {
+			job.waitForCompletion(true);
+		} finally{
+			builder.cleanUpInstanceFiles();
+		}
 
 		// Assert that the DB has been created successfully
 

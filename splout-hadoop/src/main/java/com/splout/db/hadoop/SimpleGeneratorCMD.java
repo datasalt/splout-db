@@ -37,6 +37,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.datasalt.pangool.io.Fields;
 import com.datasalt.pangool.io.Schema;
+import com.datasalt.pangool.tuplemr.mapred.lib.input.CascadingTupleInputFormat;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleTextInputFormat;
 import com.datasalt.pangool.utils.HadoopUtils;
 import com.splout.db.common.SploutHadoopConfiguration;
@@ -62,8 +63,14 @@ public class SimpleGeneratorCMD implements Tool {
 	@Parameter(required = true, names = { "-o", "--output" }, description = "Output path where the view will be saved. If you are running the process from Hadoop, relative paths would use the Hadoop filesystem. Use full qualified URIs instead if you want other behaviour.")
 	private String output;
 
-	@Parameter(required = true, names = { "-s", "--schema" }, description = "Input schema, in Pangool in-line format. Fields are comma-sepparated. Example: \"id:int,name:string,salary:long\"")
+	@Parameter(names = { "-s", "--schema" }, description = "Input schema, in Pangool in-line format. Mandatory when using Textual input, optional if the input files are binary Tuple files that already contain a schema. Fields are comma-sepparated. Example: \"id:int,name:string,salary:long\"")
 	private String schema;
+
+	@Parameter(names = { "-it", "--inputType" }, description = "The input type (TEXT by default). Other support types are: TUPLE, CASCADING, HIVE, HCATALOG")
+	private InputType inputType = InputType.TEXT;
+
+	@Parameter(names = { "-cc", "--cascadingColumns" }, description = "When using input type CASCADING, one must provide a comma-separated column name list for interpreting the binary Cascading Tuples. These names will be used for the resulting Splout table.")
+	private String cascadingColumns;
 
 	@Parameter(required = true, names = { "-pby", "--partitionby" }, description = "The field or fields to partition the table by. Comma-sepparated if there is more than one.")
 	private String partitionByFields;
@@ -130,7 +137,29 @@ public class SimpleGeneratorCMD implements Tool {
 
 		log.info("Parsing input parameters...");
 
-		Schema schema = new Schema(tablename, Fields.parse(this.schema));
+		if(this.inputType.equals(InputType.TEXT) && this.schema == null) {
+			System.err.println("A Pangool Schema must be provided for parsing text files.");
+			jComm.usage();
+			return -1;
+		}
+
+		if(this.inputType.equals(InputType.CASCADING) && this.cascadingColumns == null) {
+			System.err
+			    .println("A comma-separated list of column names must be provided for reading Cascading Tuple files.");
+			jComm.usage();
+			return -1;
+		}
+
+		TableBuilder tableBuilder;
+
+		Schema schema = null;
+
+		if(this.schema != null) {
+			schema = new Schema(tablename, Fields.parse(this.schema));
+			tableBuilder = new TableBuilder(schema);
+		} else {
+			tableBuilder = new TableBuilder(conf);
+		}
 
 		Path inputPath = new Path(input);
 		Path out = new Path(output, tablespace);
@@ -159,14 +188,24 @@ public class SimpleGeneratorCMD implements Tool {
 		}
 
 		TablespaceBuilder builder = new TablespaceBuilder();
-		TableBuilder tableBuilder = new TableBuilder(schema);
-		if(fixedWidth == null) {
-			// CSV
-			tableBuilder.addCSVTextFile(inputPath, separator, quotes, escape, skipHeading, strictQuotes,
-			    nullString);
-		} else {
-			// Fixed Width
-			tableBuilder.addFixedWidthTextFile(inputPath, schema, fixedWidth, skipHeading, nullString, null);
+
+		if(inputType.equals(InputType.TEXT)) {
+			if(fixedWidth == null) {
+				// CSV
+				tableBuilder.addCSVTextFile(inputPath, separator, quotes, escape, skipHeading, strictQuotes,
+				    nullString);
+			} else {
+				// Fixed Width
+				tableBuilder.addFixedWidthTextFile(inputPath, schema, fixedWidth, skipHeading, nullString, null);
+			}
+		} else if(inputType.equals(InputType.TUPLE)) {
+			// Pangool Tuple file
+			tableBuilder.addTupleFile(inputPath);
+		} else if(inputType.equals(InputType.CASCADING)) {
+			// Cascading Tuple file
+			CascadingTupleInputFormat.setSerializations(conf);
+			tableBuilder.addCustomInputFormatFile(inputPath, new CascadingTupleInputFormat(tablename,
+			    cascadingColumns.split(",")));
 		}
 
 		String[] strPartitionByFields = this.partitionByFields.split(",");
@@ -182,7 +221,7 @@ public class SimpleGeneratorCMD implements Tool {
 		builder.setNPartitions(nPartitions);
 
 		TablespaceGenerator viewGenerator = new TablespaceGenerator(builder.build(), out, this.getClass());
-		viewGenerator.generateView(conf, SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions()); 
+		viewGenerator.generateView(conf, SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions());
 
 		log.info("Success! Tablespace [" + tablespace + "] with table [" + tablename
 		    + "] properly created at path [" + out + "]");

@@ -1,0 +1,12 @@
+{
+	"name": "pig_word_count",
+	"nPartitions": 2,
+	"partitionedTables": [{
+		"name": "pig_word_count",
+		"partitionFields": "word",
+    	"tableInputs": [{
+			"inputType": "TUPLE",
+			"paths": [ "src/test/resources/pig-wordcount.bin" ]
+		}]	
+	}]
+}

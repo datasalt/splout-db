@@ -1,0 +1,13 @@
+{
+	"name": "cascading_logs",
+	"nPartitions": 1,
+	"partitionedTables": [{
+		"name": "cascading_logs",
+		"partitionFields": "metric",
+    	"tableInputs": [{
+			"inputType": "CASCADING",
+    		"cascadingColumns": "day,month,year,count,metric,value",
+			"paths": [ "src/test/resources/cascading-tuples.bin" ]
+		}]	
+	}]
+}

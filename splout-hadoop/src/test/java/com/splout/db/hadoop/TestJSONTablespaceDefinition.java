@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
+import org.apache.hadoop.conf.Configuration;
 import org.junit.Test;
 
 import com.google.common.io.Files;
@@ -38,20 +39,20 @@ public class TestJSONTablespaceDefinition {
 	public void test() throws IOException, JSONSerDeException, TablespaceBuilderException, TableBuilderException {
 		String JSON_TO_TEST = Files.toString(new File(this.getClass().getClassLoader().getResource("tablespace.json").getFile()), Charset.forName("UTF-8"));
 		JSONTablespaceDefinition def = JSONSerDe.deSer(JSON_TO_TEST, JSONTablespaceDefinition.class);
-		def.build();
+		def.build(new Configuration());
 	}
 	
 	@Test(expected=IllegalArgumentException.class)
 	public void testInvalidTablespace() throws IOException, JSONSerDeException, TablespaceBuilderException, TableBuilderException {
 		String JSON_TO_TEST = Files.toString(new File(this.getClass().getClassLoader().getResource("invalidtablespace.json").getFile()), Charset.forName("UTF-8"));
 		JSONTablespaceDefinition def = JSONSerDe.deSer(JSON_TO_TEST, JSONTablespaceDefinition.class);
-		def.build();
+		def.build(new Configuration());
 	}
 	
 	@Test(expected=IllegalArgumentException.class)
 	public void testInvalidTable() throws IOException, JSONSerDeException, TablespaceBuilderException, TableBuilderException {
 		String JSON_TO_TEST = Files.toString(new File(this.getClass().getClassLoader().getResource("invalidtable.json").getFile()), Charset.forName("UTF-8"));
 		JSONTablespaceDefinition def = JSONSerDe.deSer(JSON_TO_TEST, JSONTablespaceDefinition.class);
-		def.build();
+		def.build(new Configuration());
 	}
 }

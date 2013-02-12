@@ -616,8 +616,8 @@ public class DNodeHandler implements IDNodeHandler {
 			status.setHttpExchangerAddress(httpExchangerAddress());
 			status.setBalanceActionsStateMap(balanceActionsStateMap);
 			File folder = new File(config.getString(DNodeProperties.DATA_FOLDER));
-			status.setFreeSpaceInDisk(FileSystemUtils.freeSpaceKb(folder.toString()));
 			if(folder.exists()) {
+				status.setFreeSpaceInDisk(FileSystemUtils.freeSpaceKb(folder.toString()));
 				status.setOccupiedSpaceInDisk(FileUtils.sizeOfDirectory(folder));
 				Collection<File> files = FileUtils.listFilesAndDirs(folder, TrueFileFilter.INSTANCE,
 				    TrueFileFilter.INSTANCE);
@@ -631,6 +631,7 @@ public class DNodeHandler implements IDNodeHandler {
 				Collections.sort(status.getFiles());
 			} else {
 				status.setOccupiedSpaceInDisk(0);
+				status.setFreeSpaceInDisk(FileSystemUtils.freeSpaceKb("."));
 				status.setFiles(new ArrayList<String>());
 			}
 			return JSONSerDe.ser(status);

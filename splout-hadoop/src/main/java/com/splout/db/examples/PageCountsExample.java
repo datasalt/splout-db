@@ -29,7 +29,6 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.mortbay.log.Log;
@@ -214,8 +213,7 @@ public class PageCountsExample implements Tool, Serializable {
 						// Set a TupleOutput here instead of SQLiteOutput
 						builder.setOutput(new Path(outputPath, OUT_STORE), new TupleOutputFormat(tableSchema),
 						    ITuple.class, NullWritable.class);
-						Job job = builder.createJob();
-						executeViewGeneration(job);
+						executeViewGeneration(builder);
 					}
 				};
 			} else {

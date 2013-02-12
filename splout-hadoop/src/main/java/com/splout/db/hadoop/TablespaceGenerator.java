@@ -102,7 +102,7 @@ public class TablespaceGenerator implements Serializable {
 	protected PartitionMap partitionMap;
 
 	private TupleReducer<ITuple, NullWritable> customReducer = null;
-	
+
 	// will be used to set the JarByClass
 	private Class callingClass;
 
@@ -118,9 +118,9 @@ public class TablespaceGenerator implements Serializable {
 	public final static String OUT_STORE = "store";
 
 	/**
-	 * This is the public method which has to be called when using this class as an API.
-	 * Business logic has been split in various protected functions to ease understading of it and also to be able
-	 * to subclass this easily to extend its functionality.
+	 * This is the public method which has to be called when using this class as an API. Business logic has been split in
+	 * various protected functions to ease understading of it and also to be able to subclass this easily to extend its
+	 * functionality.
 	 */
 	public void generateView(Configuration conf, TupleSampler.SamplingType samplingType,
 	    TupleSampler.SamplingOptions samplingOptions) throws Exception {
@@ -137,29 +137,30 @@ public class TablespaceGenerator implements Serializable {
 
 		writeOutputMetadata(conf);
 
-		Job job = createMRBuilder(nPartitions, conf).createJob();
-		executeViewGeneration(job);
+		TupleMRBuilder builder = createMRBuilder(nPartitions, conf);
+		executeViewGeneration(builder);
 	}
 
 	// ------------------------------- //
-	
+
 	protected void prepareOutput(Configuration conf) throws IOException {
 		FileSystem fileSystem = outputPath.getFileSystem(conf);
 		fileSystem.mkdirs(outputPath);
 	}
-	
+
 	/**
-	 * Write the partition map and other metadata to the output folder. They will be needed for deploying the dataset to Splout.
+	 * Write the partition map and other metadata to the output folder. They will be needed for deploying the dataset to
+	 * Splout.
 	 */
 	protected void writeOutputMetadata(Configuration conf) throws IOException, JSONSerDeException {
 		FileSystem fileSystem = outputPath.getFileSystem(conf);
-		
+
 		Path partitionMapPath = new Path(outputPath, OUT_PARTITION_MAP);
 		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fileSystem.create(
 		    partitionMapPath, true)));
 		writer.write(JSONSerDe.ser(partitionMap));
 		writer.close();
-		
+
 		// Write init statements, if applicable
 		if(tablespace.getInitStatements() != null) {
 			Path initStatementsPath = new Path(outputPath, OUT_INIT_STATEMENTS);
@@ -168,14 +169,14 @@ public class TablespaceGenerator implements Serializable {
 			writer.close();
 		}
 	}
-	
+
 	/**
 	 * Returns the partition key either by using partition-by-fields or partition-by-javascript as configured in the Table
 	 * Spec.
 	 */
 	protected static String getPartitionByKey(ITuple tuple, TableSpec tableSpec, JavascriptEngine jsEngine)
 	    throws Throwable {
-		
+
 		String strKey = "";
 		if(tableSpec.getPartitionFields() != null) {
 			for(Field partitionField : tableSpec.getPartitionFields()) {
@@ -199,9 +200,10 @@ public class TablespaceGenerator implements Serializable {
 	/**
 	 * Samples the input, if needed.
 	 */
-	protected PartitionMap sample(int nPartitions, Configuration conf, TupleSampler.SamplingType samplingType,
-	    TupleSampler.SamplingOptions samplingOptions) throws TupleSamplerException, IOException {
-		
+	protected PartitionMap sample(int nPartitions, Configuration conf,
+	    TupleSampler.SamplingType samplingType, TupleSampler.SamplingOptions samplingOptions)
+	    throws TupleSamplerException, IOException {
+
 		FileSystem fileSystem = outputPath.getFileSystem(conf);
 		List<String> keys = new ArrayList<String>();
 
@@ -265,11 +267,12 @@ public class TablespaceGenerator implements Serializable {
 		// 2.2 Create the partition map
 		return new PartitionMap(PartitionMap.adjustEmptyPartitions(partitionEntries));
 	}
-	
+
 	/**
 	 * Create TupleMRBuilder for launching generation Job.
 	 */
-	protected TupleMRBuilder createMRBuilder(final int nPartitions, Configuration conf) throws TupleMRException, TupleSQLiteOutputFormatException {
+	protected TupleMRBuilder createMRBuilder(final int nPartitions, Configuration conf)
+	    throws TupleMRException, TupleSQLiteOutputFormatException {
 		TupleMRBuilder builder = new TupleMRBuilder(conf, "Splout View Builder");
 
 		List<TableSpec> tableSpecs = new ArrayList<TableSpec>();
@@ -367,39 +370,39 @@ public class TablespaceGenerator implements Serializable {
 			// For each input file for the Table we add an input and a TupleMapper
 			for(TableInput inputFile : table.getFiles()) {
 
-        final RecordProcessor recordProcessor = inputFile.getRecordProcessor();
+				final RecordProcessor recordProcessor = inputFile.getRecordProcessor();
 
 				for(Path path : inputFile.getPaths()) {
 					builder.addInput(path, inputFile.getFormat(), new TupleMapper<ITuple, NullWritable>() {
 
 						Tuple tableTuple = new Tuple(tableSchema);
-            CounterInterface counterInterface = null;
+						CounterInterface counterInterface = null;
 
 						@Override
 						public void map(ITuple key, NullWritable value, TupleMRContext context, Collector collector)
 						    throws IOException, InterruptedException {
 
-              if(counterInterface == null) {
-                counterInterface = new CounterInterface(context.getHadoopContext());
-              }
+							if(counterInterface == null) {
+								counterInterface = new CounterInterface(context.getHadoopContext());
+							}
 
-              // For each input Tuple from this File execute the RecordProcessor
-              // The Default IdentityRecordProcessor just bypasses the same Tuple
-              ITuple processedTuple = null;
-              try {
-                processedTuple = recordProcessor.process(key, counterInterface);
-              } catch(Throwable e1) {
-                throw new RuntimeException(e1);
-              }
-              if(processedTuple == null) {
-                // The tuple has been filtered out by the user
-                return;
-              }
+							// For each input Tuple from this File execute the RecordProcessor
+							// The Default IdentityRecordProcessor just bypasses the same Tuple
+							ITuple processedTuple = null;
+							try {
+								processedTuple = recordProcessor.process(key, counterInterface);
+							} catch(Throwable e1) {
+								throw new RuntimeException(e1);
+							}
+							if(processedTuple == null) {
+								// The tuple has been filtered out by the user
+								return;
+							}
 
-              // Finally write it to the Hadoop output
-              for(Field field : processedTuple.getSchema().getFields()) {
-                tableTuple.set(field.getName(), processedTuple.get(field.getName()));
-              }
+							// Finally write it to the Hadoop output
+							for(Field field : processedTuple.getSchema().getFields()) {
+								tableTuple.set(field.getName(), processedTuple.get(field.getName()));
+							}
 
 							// Send the data of the replicated table to all partitions!
 							for(int i = 0; i < nPartitions; i++) {
@@ -464,16 +467,21 @@ public class TablespaceGenerator implements Serializable {
 		return builder;
 	}
 
-	protected void executeViewGeneration(Job generationJob) throws IOException, InterruptedException,
-	    ClassNotFoundException, TablespaceGeneratorException {
+	protected void executeViewGeneration(TupleMRBuilder builder) throws IOException, InterruptedException,
+	    ClassNotFoundException, TablespaceGeneratorException, TupleMRException {
 
-		long start = System.currentTimeMillis();
-		generationJob.waitForCompletion(true);
-		if(!generationJob.isSuccessful()) {
-			throw new TablespaceGeneratorException("Error executing generation Job");
+		try {
+			Job generationJob = builder.createJob();
+			long start = System.currentTimeMillis();
+			generationJob.waitForCompletion(true);
+			if(!generationJob.isSuccessful()) {
+				throw new TablespaceGeneratorException("Error executing generation Job");
+			}
+			long end = System.currentTimeMillis();
+			Log.info("Tablespace store generated in " + (end - start) + " ms.");
+		} finally {
+			builder.cleanUpInstanceFiles();
 		}
-		long end = System.currentTimeMillis();
-		Log.info("Tablespace store generated in " + (end - start) + " ms.");
 	}
 
 	// Package-access, to be used for unit testing
