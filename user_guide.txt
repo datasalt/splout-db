@@ -326,6 +326,50 @@ Hadoop Java API
 
 All the command-line tools use the underlying Java API that we have implemented for Splout. You can also use this Java API directly in your Java project and you can have access to more advanced features such as specifying custom partitioning functions, record processing functions and such.
 
+Configuring your environment for developing using the "splout-hadoop" API
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can use the https://github.com/datasalt/splout-hadoop-starter[splout-hadoop-starter] project as a starting point for your project that will use the
+splout-hadoop API. There are a few things you have to take into account:
+
+* Splout uses SQLite native libraries: they can be found in splout-resources maven dependency, and you can use a maven plugin for uncompressing them like
+in https://github.com/datasalt/splout-hadoop-starter/blob/master/pom.xml[the splout-hadoop-starter project's pom]:
+
+ <plugin>
+   <groupId>org.apache.maven.plugins</groupId>
+   <artifactId>maven-remote-resources-plugin</artifactId>
+     <version>1.4</version>
+     <configuration>
+       <resourceBundles>
+         <resourceBundle>com.splout.db:splout-resources:0.2.1</resourceBundle>
+       </resourceBundles>
+     </configuration>
+    <executions>
+      <execution>
+        <goals>
+          <goal>process</goal>
+        </goals>
+      </execution>
+    </executions>
+  </plugin>
+  
+* You then need to set your java.library.path in development mode (e.g. Eclipse) to contain the folder "target/maven-shared-archive-resources".
+In Eclipse, you can do that by:
+
+ Run Configurations -> ... -> JRE -> Installed JREs... -> Click -> Edit ... -> Default VM Arguments: -Djava.library.path=target/maven-shared-archive-resources/
+ 
+* When working in your own splout-hadoop project in pseudo-distributed or distributed Hadoop mode, you will need to copy the native libraries to the DistributedCache. The default 
+Splout command-line tools automatically do that, but in your own project you must do this for ensuring that the libraries will be loaded in your Hadoop cluster. You can do that
+by using the splout-hadoop API before launching the Jobs as follows: 
+
+ // Only for distributed mode: Add sqlite native libs to DistributedCache
+ if(!FileSystem.getLocal(hadoopConf).equals(fS)) {
+   SploutHadoopConfiguration.addSQLite4JavaNativeLibsToDC(hadoopConf);
+ }
+ 
+The default local folder containing the native libraries is "native" but you can use any other. You will need to copy the libraries in Maven's "target/maven-shared-archive-resources" to 
+e.g. "native" in your destination application distribution. You can do that with Maven's assembly. You can see https://github.com/datasalt/splout-hadoop-starter/blob/master/src/main/assembly/assembly.xml[an example of that in the splout-hadoop-starter project]. 
+
 Basic API
 ^^^^^^^^^
 
