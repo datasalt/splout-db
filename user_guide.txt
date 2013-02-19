@@ -292,7 +292,7 @@ TIP: For failover, it is convenient to replicate your tablespace when deploying 
 
 For deploying more than one tablespace atomically and with the same replication factor, you can also use command-line parameters:
 
- hadoop jar splout-hadoop-*-SNAPSHOT-hadoop.jar deploy -r 2 -root my-root-folder -tn mytablespace1,mytablespace2,mytablespace3 -q http://localhost:4412
+ hadoop jar splout-hadoop-*-SNAPSHOT-hadoop.jar deploy -r 2 -root my-root-folder -ts mytablespace1 -ts mytablespace2 -ts mytablespace3 -q http://localhost:4412
 
 In this case we will deploy 3 tablespaces at the same time: mytablespace1, mytablespace2 and mytablespace3. The "root" parameter is a parent folder that contains the specified subfolders, and the tablespaces will be named after the folder name. So in this case the file tree structure is the following:
 

@@ -659,7 +659,7 @@ hdfs://.../my-generated-tablespace/store</tt></pre>
 <div class="paragraph"><p>For deploying more than one tablespace atomically and with the same replication factor, you can also use command-line parameters:</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><tt>hadoop jar splout-hadoop-*-SNAPSHOT-hadoop.jar deploy -r 2 -root my-root-folder -tn mytablespace1,mytablespace2,mytablespace3 -q http://localhost:4412</tt></pre>
+<pre><tt>hadoop jar splout-hadoop-*-SNAPSHOT-hadoop.jar deploy -r 2 -root my-root-folder -ts mytablespace1 -ts mytablespace2 -ts mytablespace3 -q http://localhost:4412</tt></pre>
 </div></div>
 <div class="paragraph"><p>In this case we will deploy 3 tablespaces at the same time: mytablespace1, mytablespace2 and mytablespace3. The "root" parameter is a parent folder that contains the specified subfolders, and the tablespaces will be named after the folder name. So in this case the file tree structure is the following:</p></div>
 <div class="literalblock">
@@ -1618,6 +1618,6 @@ You can control the data colocation policy with "insertionOrderBy" as explained 
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2013-02-13 13:43:56 CEST
+Last updated 2013-02-19 17:44:19 CEST
 </div>
 </div>
