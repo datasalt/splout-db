@@ -333,7 +333,7 @@ public class TableBuilder {
 				Field field2 = schema.getField(field);
 				if(field2 == null) {
 					throw new TableBuilderException("Invalid compound index: " + compoundIndex + ", field "
-					    + field2 + " not present in specified Schema: " + schema + ".");
+					    + field + " not present in specified Schema: " + schema + ".");
 				}
 				compoundIndexFields.add(field2);
 			}
