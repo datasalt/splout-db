@@ -38,6 +38,7 @@ import com.beust.jcommander.Parameter;
 import com.datasalt.pangool.io.Fields;
 import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.CascadingTupleInputFormat;
+import com.datasalt.pangool.tuplemr.mapred.lib.input.HCatTupleInputFormat;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleTextInputFormat;
 import com.datasalt.pangool.utils.HadoopUtils;
 import com.splout.db.common.SploutHadoopConfiguration;
@@ -71,6 +72,12 @@ public class SimpleGeneratorCMD implements Tool {
 
 	@Parameter(names = { "-cc", "--cascadingColumns" }, description = "When using input type CASCADING, one must provide a comma-separated column name list for interpreting the binary Cascading Tuples. These names will be used for the resulting Splout table.")
 	private String cascadingColumns;
+
+	@Parameter(names = { "-hdb", "--hiveDbName" }, description = "When using input type HIVE, both db name and table name must be provided using appropriated arguments.")
+	private String hiveDbName;
+
+	@Parameter(names = { "-htn", "--hiveTableName" }, description = "When using input type HIVE, both db name and table name must be provided using appropriated arguments.")
+	private String hiveTableName;
 
 	@Parameter(required = true, names = { "-pby", "--partitionby" }, description = "The field or fields to partition the table by. Comma-sepparated if there is more than one.")
 	private String partitionByFields;
@@ -137,15 +144,26 @@ public class SimpleGeneratorCMD implements Tool {
 
 		log.info("Parsing input parameters...");
 
+		// because Schema is now optional (it can be derived from Cascading or Hive tables),
+		// check that it is provided when using TEXT as input.
 		if(this.inputType.equals(InputType.TEXT) && this.schema == null) {
 			System.err.println("A Pangool Schema must be provided for parsing text files.");
 			jComm.usage();
 			return -1;
 		}
 
+		// validate we have all needed args for Cascading integration
 		if(this.inputType.equals(InputType.CASCADING) && this.cascadingColumns == null) {
 			System.err
 			    .println("A comma-separated list of column names must be provided for reading Cascading Tuple files.");
+			jComm.usage();
+			return -1;
+		}
+
+		// validate we have all needed args for Hive integration
+		if(this.inputType.equals(InputType.HIVE) && (this.hiveDbName == null || this.hiveTableName == null)) {
+			System.err
+			    .println("When using input type HIVE, both db name and table name must be provided using appropriated arguments.");
 			jComm.usage();
 			return -1;
 		}
@@ -206,6 +224,10 @@ public class SimpleGeneratorCMD implements Tool {
 			CascadingTupleInputFormat.setSerializations(conf);
 			tableBuilder.addCustomInputFormatFile(inputPath, new CascadingTupleInputFormat(tablename,
 			    cascadingColumns.split(",")));
+		} else if(inputType.equals(InputType.HIVE)) {
+			// Hive table
+			tableBuilder.addCustomInputFormatFile(inputPath, new HCatTupleInputFormat(hiveDbName,
+			    hiveTableName, conf));
 		}
 
 		String[] strPartitionByFields = this.partitionByFields.split(",");

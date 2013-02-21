@@ -31,6 +31,7 @@ import com.datasalt.pangool.io.Fields;
 import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.tuplemr.OrderBy;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.CascadingTupleInputFormat;
+import com.datasalt.pangool.tuplemr.mapred.lib.input.HCatTupleInputFormat;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleTextInputFormat;
 import com.splout.db.hadoop.TableBuilder.TableBuilderException;
 import com.splout.db.hadoop.TablespaceBuilder.TablespaceBuilderException;
@@ -52,8 +53,8 @@ public class JSONTablespaceDefinition {
 	 * Inner static method for converting a {@link JSONTableDefinition} into a {@link Table} bean through {@link
 	 * TableBuilder}.
 	 */
-	private static Table buildTable(JSONTableDefinition table, boolean isReplicateAll, Configuration hadoopConf)
-	    throws TableBuilderException, IOException {
+	private static Table buildTable(JSONTableDefinition table, boolean isReplicateAll,
+	    Configuration hadoopConf) throws TableBuilderException, IOException {
 		if(table.getName() == null) {
 			throw new IllegalArgumentException("Must provide a name for all tables.");
 		}
@@ -68,14 +69,14 @@ public class JSONTablespaceDefinition {
 
 		TableBuilder tableBuilder;
 		Schema schema = null;
-		
+
 		if(table.getSchema() != null) {
 			schema = new Schema(table.getName(), Fields.parse(table.getSchema()));
 			tableBuilder = new TableBuilder(schema);
 		} else {
 			tableBuilder = new TableBuilder(hadoopConf);
 		}
-		
+
 		for(String index : table.getIndexes()) {
 			tableBuilder.createIndex(index.split(","));
 		}
@@ -116,9 +117,10 @@ public class JSONTablespaceDefinition {
 				if(tableInput.getInputType().equals(InputType.TEXT)) {
 					// Text file - like in SimpleGeneratorCMD, need a Pangool schema for parsing it
 					if(schema == null) {
-						throw new IllegalArgumentException("A Pangool schema must be provided when using InputType = TEXT");
+						throw new IllegalArgumentException(
+						    "A Pangool schema must be provided when using InputType = TEXT");
 					}
-					
+
 					if(specs.getFixedWidthFields() != null) {
 						// Fixed width fields definition.
 						int[] fieldsArr = new int[specs.getFixedWidthFields().size()];
@@ -135,15 +137,26 @@ public class JSONTablespaceDefinition {
 
 					}
 				} else if(tableInput.getInputType().equals(InputType.TUPLE)) {
-					// Pangool Tuple file	
+					// Pangool Tuple file
 					tableBuilder.addTupleFile(new Path(file));
 				} else if(tableInput.getInputType().equals(InputType.CASCADING)) {
 					// Cascading Tuple file
 					if(tableInput.getCascadingColumns() == null) {
-						throw new IllegalArgumentException("Comma-separated column names (property cascadingColumns) must be specified when using InputType = CASCADING.");
+						throw new IllegalArgumentException(
+						    "Comma-separated column names (property cascadingColumns) must be specified when using InputType = CASCADING.");
 					}
 					CascadingTupleInputFormat.setSerializations(hadoopConf);
-					tableBuilder.addCustomInputFormatFile(new Path(file), new CascadingTupleInputFormat(table.getName(), tableInput.getCascadingColumns().split(",")));
+					tableBuilder
+					    .addCustomInputFormatFile(new Path(file), new CascadingTupleInputFormat(table.getName(),
+					        tableInput.getCascadingColumns().split(",")));
+				} else if(tableInput.getInputType().equals(InputType.HIVE)) {
+					if(tableInput.getHiveDbName() == null || tableInput.getHiveTableName() == null) {
+						throw new IllegalArgumentException(
+						    "hiveDbName and hiveTableName properties must be specified when using InputType = HIVE.");
+					}
+					tableBuilder.addCustomInputFormatFile(new Path(file),
+					    new HCatTupleInputFormat(tableInput.getHiveDbName(), tableInput.getHiveTableName(),
+					        hadoopConf));
 				}
 			}
 		}
@@ -156,9 +169,11 @@ public class JSONTablespaceDefinition {
 
 	/**
 	 * Use this method for obtaining a {@link TablespaceSpec} through {@link TablespaceBuilder}.
-	 * @throws IOException 
+	 * 
+	 * @throws IOException
 	 */
-	public TablespaceSpec build(Configuration hadoopConf) throws TablespaceBuilderException, TableBuilderException, IOException {
+	public TablespaceSpec build(Configuration hadoopConf) throws TablespaceBuilderException,
+	    TableBuilderException, IOException {
 		TablespaceBuilder builder = new TablespaceBuilder();
 		builder.setNPartitions(nPartitions);
 
@@ -281,6 +296,8 @@ public class JSONTablespaceDefinition {
 		private TextInputSpecs inputSpecs;
 		private InputType inputType = InputType.TEXT;
 		private String cascadingColumns;
+		private String hiveTableName;
+		private String hiveDbName;
 		private List<String> paths;
 
 		public TextInputSpecs getInputSpecs() {
@@ -313,6 +330,22 @@ public class JSONTablespaceDefinition {
 
 		public void setCascadingColumns(String cascadingColumns) {
 			this.cascadingColumns = cascadingColumns;
+		}
+
+		public String getHiveTableName() {
+			return hiveTableName;
+		}
+
+		public void setHiveTableName(String hiveTableName) {
+			this.hiveTableName = hiveTableName;
+		}
+
+		public String getHiveDbName() {
+			return hiveDbName;
+		}
+
+		public void setHiveDbName(String hiveDbName) {
+			this.hiveDbName = hiveDbName;
 		}
 	}
 

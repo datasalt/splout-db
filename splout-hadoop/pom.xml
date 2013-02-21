@@ -253,6 +253,12 @@
 		</dependency>
 		
 		<dependency>
+			<groupId>org.apache.hcatalog</groupId>
+			<artifactId>hcatalog-core</artifactId>
+			<version>0.5.0-incubating</version>
+		</dependency>
+		
+		<dependency>
 			<!-- Included because many servlet-api referenced by other projects has 
 				an incompatible license -->
 			<groupId>org.apache.tomcat</groupId>
