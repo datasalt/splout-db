@@ -9,6 +9,7 @@ IMPROVEMENTS
 
 BUG FIXES
  - 2013-01-29 - Solved issue #9 now it is possible to use space as separator in SimpleGenerateCMD.
+ - 2013-01-29 - Solved bug "com.splout.db.hadoop.TableBuilder$TableBuilderException: Invalid compound index: ..., field null not present in specified Schema:"
 
 Splout SQL 0.2.1
 
