@@ -14,7 +14,7 @@ div.sectionbody {
 }
 
 span#author {
-  color: #dd4814;
+  color: #f36f21;
   font-weight: bold;
   font-size: 1.1em;
 }
@@ -59,7 +59,7 @@ div.content { /* Block element content. */
 
 /* Block element titles. */
 div.title, caption.title {
-  color: #dd4814;
+  color: #f36f21;
   font-weight: bold;
   text-align: left;
   margin-top: 1.0em;
@@ -121,7 +121,7 @@ div.admonitionblock .icon {
   font-size: 1.1em;
   font-weight: bold;
   text-decoration: underline;
-  color: #dd4814;
+  color: #f36f21;
   padding-right: 0.5em;
 }
 div.admonitionblock td.content {
@@ -147,7 +147,7 @@ dt {
   margin-bottom: 0;
   font-style: normal;
 /*  color: navy; */
-  color: #dd4814;
+  color: #f36f21;
 }
 dd > *:first-child {
   margin-top: 0.1em;
@@ -180,7 +180,7 @@ div.compact div, div.compact div {
 }
 
 div.tableblock > table {
-  border: 3px solid #dd4814;
+  border: 3px solid #f36f21;
 }
 thead, p.table.header {
   font-weight: bold;
@@ -223,7 +223,7 @@ td.hdlist1 {
   font-style: normal;
   padding-right: 0.8em;
 /*  color: navy; */
-  color: #dd4814;
+  color: #f36f21;
 }
 td.hdlist2 {
   vertical-align: top;
@@ -274,7 +274,7 @@ div#toc {
 }
 
 div#toctitle {
-  color: #dd4814;
+  color: #f36f21;
   font-size: 150%;
   font-weight: bold;
   margin-top: 1.0em;
