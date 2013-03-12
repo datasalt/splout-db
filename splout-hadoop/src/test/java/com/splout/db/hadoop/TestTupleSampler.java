@@ -25,6 +25,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
@@ -75,7 +76,7 @@ public class TestTupleSampler {
 		// Default input split size so only one InputSplit
 		// All sampled keys will be [0, 1, 2, ..., 9]
 		TupleSampler sampler = new TupleSampler(SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions());
-		sampler.sample(Arrays.asList(new TableInput[] { new TableInput(new TupleInputFormat(), schema, new IdentityRecordProcessor(), new Path(INPUT)) }), schema, conf, 10, new Path(OUTPUT));		
+		sampler.sample(Arrays.asList(new TableInput[] { new TableInput(new TupleInputFormat(), new HashMap<String, String>(), schema, new IdentityRecordProcessor(), new Path(INPUT)) }), schema, conf, 10, new Path(OUTPUT));		
 		
 		int nTuples = 0;
 		int[] sampledKeys = new int[10];
@@ -95,7 +96,7 @@ public class TestTupleSampler {
 
 		// Reservoir sampling should yield better results for this case, let's see
 		sampler = new TupleSampler(SamplingType.RESERVOIR, new TupleSampler.DefaultSamplingOptions());
-		sampler.sample(Arrays.asList(new TableInput[] { new TableInput(new TupleInputFormat(), schema, new IdentityRecordProcessor(), new Path(INPUT)) }), schema, conf, 10, new Path(OUTPUT));
+		sampler.sample(Arrays.asList(new TableInput[] { new TableInput(new TupleInputFormat(), new HashMap<String, String>(), schema, new IdentityRecordProcessor(), new Path(INPUT)) }), schema, conf, 10, new Path(OUTPUT));
 		
 		nTuples = 0;
 		sampledKeys = new int[10];
@@ -144,7 +145,7 @@ public class TestTupleSampler {
     options.setMaxSplitsToVisit(Integer.MAX_VALUE);
 		
 		TupleSampler sampler = new TupleSampler(SamplingType.DEFAULT, options);
-		sampler.sample(Arrays.asList(new TableInput[] { new TableInput(new TupleInputFormat(), schema, new IdentityRecordProcessor(), new Path(INPUT)) }), schema, conf, expectedSplits, new Path(OUTPUT));
+		sampler.sample(Arrays.asList(new TableInput[] { new TableInput(new TupleInputFormat(), new HashMap<String, String>(), schema, new IdentityRecordProcessor(), new Path(INPUT)) }), schema, conf, expectedSplits, new Path(OUTPUT));
 		int nTuples = 0;
     TupleFile.Reader reader = new TupleFile.Reader(FileSystem.get(conf), conf, new Path(OUTPUT));
     Tuple tuple = new Tuple(reader.getSchema());

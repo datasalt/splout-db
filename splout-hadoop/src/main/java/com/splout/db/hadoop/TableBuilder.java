@@ -23,8 +23,10 @@ package com.splout.db.hadoop;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -39,6 +41,8 @@ import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.io.Schema.Field;
 import com.datasalt.pangool.tuplemr.Criteria.SortElement;
 import com.datasalt.pangool.tuplemr.OrderBy;
+import com.datasalt.pangool.tuplemr.mapred.lib.input.CascadingTupleInputFormat;
+import com.datasalt.pangool.tuplemr.mapred.lib.input.HCatTupleInputFormat;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleTextInputFormat;
 import com.splout.db.hadoop.TableSpec.FieldIndex;
@@ -75,35 +79,56 @@ public class TableBuilder {
 	private String[] postInsertsSQL;
 	private String[] finalSQL = null;
 	private OrderBy orderBy;
+	private String tableName = null;
 
 	// the Hadoop conf can be provided as an alternative to the Schema to be able to sample it from the input files in
 	// case the input files are not Textual
 	private Configuration hadoopConf;
-
+	
 	/**
 	 * Fixed schema constructor: for example, if we use textual files.
+	 * The table name is extracted from the Schema name.
 	 */
 	public TableBuilder(final Schema schema) {
+		this(null, schema);
+	}
+
+	/**
+	 * Fixed schema + explicit table name.
+	 */
+	public TableBuilder(final String tableName, final Schema schema) {
 		if(schema == null) {
-			throw new IllegalArgumentException("Explicit table schema can't be null - please use the other constructors for implicit Schema discovering.");
+			throw new IllegalArgumentException(
+			    "Explicit table schema can't be null - please use the other constructors for implicit Schema discovering.");
 		}
-		this.schema = schema;
+		this.tableName = tableName;
+		this.schema = schema;	
 	}
 
 	/**
 	 * Hadoop configuration, no schema: The input files will contain the Schema (e.g. Tuple files / Cascading files).
 	 */
 	public TableBuilder(final Configuration hadoopConf) {
+		this(null, hadoopConf);
+	}
+
+	/**
+	 * Schema-less constructor with explicit table name.
+	 */
+	public TableBuilder(final String tableName, final Configuration hadoopConf) {
 		if(hadoopConf == null) {
-			throw new IllegalArgumentException("Hadoop configuration can't be null - please provide a valid one.");
+			throw new IllegalArgumentException(
+			    "Hadoop configuration can't be null - please provide a valid one.");
 		}
+		this.tableName = tableName;
 		this.hadoopConf = hadoopConf;
 	}
 
 	public TableBuilder addFixedWidthTextFile(Path path, Schema schema, int[] fields, boolean hasHeader,
 	    String nullString, RecordProcessor recordProcessor) {
-		addFile(new TableInput(new TupleTextInputFormat(schema, fields, hasHeader, nullString), schema,
-		    (recordProcessor == null) ? new IdentityRecordProcessor() : recordProcessor, path));
+		addFile(new TableInput(new TupleTextInputFormat(schema, fields, hasHeader, nullString),
+		    new HashMap<String, String>(), schema, (recordProcessor == null) ? new IdentityRecordProcessor()
+		        : recordProcessor, path));
 		return this;
 	}
 
@@ -112,8 +137,8 @@ public class TableBuilder {
 	    Schema fileSchema, RecordProcessor recordProcessor) {
 		return addFile(new TableInput(
 		    new TupleTextInputFormat(fileSchema, hasHeader, strictQuotes, separator, quoteCharacter,
-		        escapeCharacter, TupleTextInputFormat.FieldSelector.NONE, nullString), fileSchema,
-		    recordProcessor, path));
+		        escapeCharacter, TupleTextInputFormat.FieldSelector.NONE, nullString),
+		    new HashMap<String, String>(), fileSchema, recordProcessor, path));
 	}
 
 	public TableBuilder addCSVTextFile(String path, char separator, char quoteCharacter,
@@ -153,21 +178,60 @@ public class TableBuilder {
 		return addCSVTextFile(path, schema, new IdentityRecordProcessor());
 	}
 
-	public TableBuilder addCustomInputFormatFile(Path path, InputFormat<ITuple, NullWritable> inputFormat) throws IOException {
+	public TableBuilder addHiveTable(String dbName, String tableName) throws IOException {
+		if(hadoopConf == null) {
+			throw new IllegalArgumentException("Can't use this method if the builder hasn't been instantiated with a Hadoop conf. object!");
+		}
+		return addHiveTable(dbName, tableName, hadoopConf);
+	}
+	
+	public TableBuilder addHiveTable(String dbName, String tableName, Configuration conf) throws IOException {
+		if(hadoopConf == null) {
+			throw new IllegalArgumentException(
+			    "Hadoop configuration can't be null - please provide a valid one.");
+		}
+		HCatTupleInputFormat inputFormat = new HCatTupleInputFormat(dbName, tableName, conf);
+		Map<String, String> specificContext = new HashMap<String, String>();
+		specificContext.put("mapreduce.lib.hcat.job.info", conf.get("mapreduce.lib.hcat.job.info"));
+		specificContext.put("mapreduce.lib.hcatoutput.hive.conf", conf.get("mapreduce.lib.hcatoutput.hive.conf"));
+		addCustomInputFormatFile(new Path("hive/" + dbName + "/" + this.tableName), inputFormat, specificContext, new IdentityRecordProcessor());
+		return this;
+	}
+	
+	public TableBuilder addCascadingTable(Path path, String[] columnNames) throws IOException {
+		if(hadoopConf == null) {
+			throw new IllegalArgumentException("Can't use this method if the builder hasn't been instantiated with a Hadoop conf. object!");
+		}
+		return addCascadingTable(path, columnNames, hadoopConf);
+	}
+	
+	public TableBuilder addCascadingTable(Path inputPath, String[] columnNames, Configuration conf) throws IOException {
+		CascadingTupleInputFormat.setSerializations(conf);
+		return addCustomInputFormatFile(inputPath, new CascadingTupleInputFormat(tableName,
+		    columnNames));
+	}
+	
+	public TableBuilder addCustomInputFormatFile(Path path, InputFormat<ITuple, NullWritable> inputFormat)
+	    throws IOException {
 		return addCustomInputFormatFile(path, inputFormat, null);
 	}
 
 	public TableBuilder addCustomInputFormatFile(Path path, InputFormat<ITuple, NullWritable> inputFormat,
 	    RecordProcessor recordProcessor) throws IOException {
+		return addCustomInputFormatFile(path, inputFormat, new HashMap<String, String>(), recordProcessor);
+	}
+
+	public TableBuilder addCustomInputFormatFile(Path path, InputFormat<ITuple, NullWritable> inputFormat,
+	    Map<String, String> specificContext, RecordProcessor recordProcessor) throws IOException {
 		if(schema == null) {
 			// sample it
 			try {
-	      schema = SchemaSampler.sample(hadoopConf, path, inputFormat);
-      } catch(InterruptedException e) {
-	      throw new IOException(e);
-      }
+				schema = SchemaSampler.sample(hadoopConf, path, inputFormat);
+			} catch(InterruptedException e) {
+				throw new IOException(e);
+			}
 		}
-		return addFile(new TableInput(inputFormat, schema,
+		return addFile(new TableInput(inputFormat, specificContext, schema,
 		    (recordProcessor == null) ? new IdentityRecordProcessor() : recordProcessor, path));
 	}
 
@@ -284,6 +348,13 @@ public class TableBuilder {
 			throw new TableBuilderException("No schema for table: Can't build a Table without a Schema.");
 		}
 
+		if(tableName != null) {
+			// Schema name and table name may actually differ:
+			// This might happen when sampling the schema from some custom InputFormat.
+			// E.g. a Hive table - we might want to rename it here for importing it more than once.
+			this.schema = new Schema(tableName, schema.getFields());
+		}
+		
 		Field[] partitionBySchemaFields = null;
 		if(!isReplicated) { // Check that partition field is good
 			// Check that is present in schema

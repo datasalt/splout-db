@@ -351,7 +351,7 @@ public class TablespaceGenerator implements Serializable {
 							tableTuple.set(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD, shardId);
 							collector.write(tableTuple);
 						}
-					});
+					}, inputFile.getSpecificHadoopInputFormatContext());
 				}
 			}
 			tableSpecs.add(table.getTableSpec());
@@ -410,7 +410,7 @@ public class TablespaceGenerator implements Serializable {
 								collector.write(tableTuple);
 							}
 						}
-					});
+					}, inputFile.getSpecificHadoopInputFormatContext());
 				}
 			}
 			tableSpecs.add(table.getTableSpec());

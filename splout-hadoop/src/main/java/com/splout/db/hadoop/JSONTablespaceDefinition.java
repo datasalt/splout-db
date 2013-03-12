@@ -30,8 +30,6 @@ import org.apache.hadoop.fs.Path;
 import com.datasalt.pangool.io.Fields;
 import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.tuplemr.OrderBy;
-import com.datasalt.pangool.tuplemr.mapred.lib.input.CascadingTupleInputFormat;
-import com.datasalt.pangool.tuplemr.mapred.lib.input.HCatTupleInputFormat;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleTextInputFormat;
 import com.splout.db.hadoop.TableBuilder.TableBuilderException;
 import com.splout.db.hadoop.TablespaceBuilder.TablespaceBuilderException;
@@ -74,7 +72,7 @@ public class JSONTablespaceDefinition {
 			schema = new Schema(table.getName(), Fields.parse(table.getSchema()));
 			tableBuilder = new TableBuilder(schema);
 		} else {
-			tableBuilder = new TableBuilder(hadoopConf);
+			tableBuilder = new TableBuilder(table.getName(), hadoopConf);
 		}
 
 		for(String index : table.getIndexes()) {
@@ -108,13 +106,13 @@ public class JSONTablespaceDefinition {
 			if(specs == null) {
 				specs = new TextInputSpecs(); // default specs (tabulated file)
 			}
-			if(tableInput.getPaths() == null || tableInput.getPaths().size() == 0) {
-				throw new IllegalArgumentException("All table inputs must have input paths.");
+			if(!tableInput.getInputType().equals(InputType.HIVE) && tableInput.getPaths() == null
+			    || tableInput.getPaths().size() == 0) {
+				throw new IllegalArgumentException("All table inputs except HIVE must have input paths.");
 			}
 
-			for(String file : tableInput.getPaths()) {
-
-				if(tableInput.getInputType().equals(InputType.TEXT)) {
+			if(tableInput.getInputType().equals(InputType.TEXT)) {
+				for(String file : tableInput.getPaths()) {
 					// Text file - like in SimpleGeneratorCMD, need a Pangool schema for parsing it
 					if(schema == null) {
 						throw new IllegalArgumentException(
@@ -134,30 +132,28 @@ public class JSONTablespaceDefinition {
 						tableBuilder.addCSVTextFile(file, specs.getSeparatorChar(), specs.getQuotesChar(),
 						    specs.getEscapeChar(), specs.isSkipHeader(), specs.isStrictQuotes(),
 						    specs.getNullString());
-
 					}
-				} else if(tableInput.getInputType().equals(InputType.TUPLE)) {
+				}
+			} else if(tableInput.getInputType().equals(InputType.TUPLE)) {
+				for(String file : tableInput.getPaths()) {
 					// Pangool Tuple file
 					tableBuilder.addTupleFile(new Path(file));
-				} else if(tableInput.getInputType().equals(InputType.CASCADING)) {
+				}
+			} else if(tableInput.getInputType().equals(InputType.CASCADING)) {
+				for(String file : tableInput.getPaths()) {
 					// Cascading Tuple file
 					if(tableInput.getCascadingColumns() == null) {
 						throw new IllegalArgumentException(
 						    "Comma-separated column names (property cascadingColumns) must be specified when using InputType = CASCADING.");
 					}
-					CascadingTupleInputFormat.setSerializations(hadoopConf);
-					tableBuilder
-					    .addCustomInputFormatFile(new Path(file), new CascadingTupleInputFormat(table.getName(),
-					        tableInput.getCascadingColumns().split(",")));
-				} else if(tableInput.getInputType().equals(InputType.HIVE)) {
-					if(tableInput.getHiveDbName() == null || tableInput.getHiveTableName() == null) {
-						throw new IllegalArgumentException(
-						    "hiveDbName and hiveTableName properties must be specified when using InputType = HIVE.");
-					}
-					tableBuilder.addCustomInputFormatFile(new Path(file),
-					    new HCatTupleInputFormat(tableInput.getHiveDbName(), tableInput.getHiveTableName(),
-					        hadoopConf));
+					tableBuilder.addCascadingTable(new Path(file), tableInput.getCascadingColumns().split(","));
 				}
+			} else if(tableInput.getInputType().equals(InputType.HIVE)) {
+				if(tableInput.getHiveDbName() == null || tableInput.getHiveTableName() == null) {
+					throw new IllegalArgumentException(
+					    "hiveDbName and hiveTableName properties must be specified when using InputType = HIVE.");
+				}
+				tableBuilder.addHiveTable(tableInput.getHiveDbName(), tableInput.getHiveTableName());
 			}
 		}
 

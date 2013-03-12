@@ -226,7 +226,7 @@ public class TupleSampler implements Serializable {
 							    }
 						    }
 					    }
-				    });
+				    }, inputFile.getSpecificHadoopInputFormatContext());
 			}
 		}
 		// Set output path

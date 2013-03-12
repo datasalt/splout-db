@@ -22,6 +22,8 @@ package com.splout.db.hadoop;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.HashMap;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -47,14 +49,15 @@ public class TestTablespaceGeneratorJavaScript {
 	public void test() {
 		System.out.println(System.getProperty("java.library.path"));
 	}
-	
+
 	@Test
 	public void simpleTest() throws Exception {
 		Runtime.getRuntime().exec("rm -rf " + INPUT);
 		Runtime.getRuntime().exec("rm -rf " + OUTPUT);
-		
+
 		Configuration conf = new Configuration();
-    TupleFile.Writer writer = new TupleFile.Writer(FileSystem.get(conf), conf, new Path(INPUT), theSchema1);
+		TupleFile.Writer writer = new TupleFile.Writer(FileSystem.get(conf), conf, new Path(INPUT),
+		    theSchema1);
 
 		writer.append(TestTablespaceGenerator.getTuple("aa1", "value1"));
 		writer.append(TestTablespaceGenerator.getTuple("aa2", "value2"));
@@ -70,24 +73,27 @@ public class TestTablespaceGeneratorJavaScript {
 		TablespaceBuilder builder = new TablespaceBuilder();
 		builder.setNPartitions(3);
 		TableBuilder tableBuilder = new TableBuilder(theSchema1);
-		tableBuilder.addFile(new TableInput(new TupleInputFormat(), theSchema1, new IdentityRecordProcessor(), new Path(INPUT)));
+		tableBuilder.addFile(new TableInput(new TupleInputFormat(), new HashMap<String, String>(),
+		    theSchema1, new IdentityRecordProcessor(), new Path(INPUT)));
 		// Partition by a javascript that returns the first two characters
 		tableBuilder
 		    .partitionByJavaScript("function partition(record) { var str = record.get('id').toString(); return str.substring(0, 2); }");
 		builder.add(tableBuilder.build());
 
-		TablespaceGenerator viewGenerator = new TablespaceGenerator(builder.build(), new Path(OUTPUT), this.getClass());
+		TablespaceGenerator viewGenerator = new TablespaceGenerator(builder.build(), new Path(OUTPUT),
+		    this.getClass());
 		viewGenerator.generateView(conf, SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions());
-		
+
 		PartitionMap partitionMap = JSONSerDe.deSer(
-		    HadoopUtils.fileToString(FileSystem.getLocal(conf), new Path(OUTPUT, "partition-map")), PartitionMap.class);
-		
+		    HadoopUtils.fileToString(FileSystem.getLocal(conf), new Path(OUTPUT, "partition-map")),
+		    PartitionMap.class);
+
 		assertEquals(null, partitionMap.getPartitionEntries().get(0).getMin());
 		assertEquals("ab", partitionMap.getPartitionEntries().get(0).getMax());
-		
+
 		assertEquals("ab", partitionMap.getPartitionEntries().get(1).getMin());
 		assertEquals("bb", partitionMap.getPartitionEntries().get(1).getMax());
-		
+
 		assertEquals("bb", partitionMap.getPartitionEntries().get(2).getMin());
 		assertEquals(null, partitionMap.getPartitionEntries().get(2).getMax());
 

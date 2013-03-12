@@ -20,6 +20,8 @@ package com.splout.db.hadoop;
  * #L%
  */
 
+import java.util.Map;
+
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.InputFormat;
@@ -37,8 +39,9 @@ public class TableInput {
 	private final Path[] paths;
 	private final Schema fileSchema;
 	private final RecordProcessor recordProcessor;
+	private final Map<String, String> specificHadoopInputFormatContext;
 	
-	public TableInput(InputFormat<ITuple, NullWritable> format, Schema fileSchema, RecordProcessor recordProcessor, Path... paths) {
+	TableInput(InputFormat<ITuple, NullWritable> format, Map<String, String> specificHadoopInputFormatContext, Schema fileSchema, RecordProcessor recordProcessor, Path... paths) {
 		if(format == null) {
 			throw new IllegalArgumentException("Input format can't be null");
 		}
@@ -55,6 +58,7 @@ public class TableInput {
 		this.fileSchema = fileSchema;
 		this.recordProcessor = recordProcessor;
 		this.paths = paths;
+		this.specificHadoopInputFormatContext = specificHadoopInputFormatContext;
 	}
 
 	public InputFormat<ITuple, NullWritable> getFormat() {
@@ -68,5 +72,8 @@ public class TableInput {
   }
 	public RecordProcessor getRecordProcessor() {
   	return recordProcessor;
+  }
+	public Map<String, String> getSpecificHadoopInputFormatContext() {
+  	return specificHadoopInputFormatContext;
   }
 }

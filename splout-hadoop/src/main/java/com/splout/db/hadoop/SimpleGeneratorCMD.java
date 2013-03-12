@@ -37,8 +37,6 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.datasalt.pangool.io.Fields;
 import com.datasalt.pangool.io.Schema;
-import com.datasalt.pangool.tuplemr.mapred.lib.input.CascadingTupleInputFormat;
-import com.datasalt.pangool.tuplemr.mapred.lib.input.HCatTupleInputFormat;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleTextInputFormat;
 import com.datasalt.pangool.utils.HadoopUtils;
 import com.splout.db.common.SploutHadoopConfiguration;
@@ -58,7 +56,7 @@ public class SimpleGeneratorCMD implements Tool {
 	@Parameter(required = true, names = { "-t", "--table" }, description = "The table name.")
 	private String tablename;
 
-	@Parameter(required = true, names = { "-i", "--input" }, description = "Input path/glob containing data to use. If you are running the process from Hadoop, relative paths would use the Hadoop filesystem. Use full qualified URIs instead if you want other behaviour.")
+	@Parameter(names = { "-i", "--input" }, description = "Input path/glob containing data to use. If you are running the process from Hadoop, relative paths would use the Hadoop filesystem. Use full qualified URIs instead if you want other behaviour.")
 	private String input;
 
 	@Parameter(required = true, names = { "-o", "--output" }, description = "Output path where the view will be saved. If you are running the process from Hadoop, relative paths would use the Hadoop filesystem. Use full qualified URIs instead if you want other behaviour.")
@@ -155,6 +153,13 @@ public class SimpleGeneratorCMD implements Tool {
 			return -1;
 		}
 
+		// all input types except Hive require input paths
+		if(!this.inputType.equals(InputType.HIVE) && this.input == null) {
+			System.err.println("Input path must be provided.");
+			jComm.usage();
+			return -1;
+		}
+
 		// validate we have all needed args for Cascading integration
 		if(this.inputType.equals(InputType.CASCADING) && this.cascadingColumns == null) {
 			System.err
@@ -179,10 +184,9 @@ public class SimpleGeneratorCMD implements Tool {
 			schema = new Schema(tablename, Fields.parse(this.schema));
 			tableBuilder = new TableBuilder(schema);
 		} else {
-			tableBuilder = new TableBuilder(conf);
+			tableBuilder = new TableBuilder(tablename, conf);
 		}
 
-		Path inputPath = new Path(input);
 		Path out = new Path(output, tablespace);
 		FileSystem outFs = out.getFileSystem(getConf());
 		HadoopUtils.deleteIfExists(outFs, out);
@@ -211,6 +215,7 @@ public class SimpleGeneratorCMD implements Tool {
 		TablespaceBuilder builder = new TablespaceBuilder();
 
 		if(inputType.equals(InputType.TEXT)) {
+			Path inputPath = new Path(input);
 			if(fixedWidth == null) {
 				// CSV
 				tableBuilder.addCSVTextFile(inputPath, separator, quotes, escape, skipHeading, strictQuotes,
@@ -221,16 +226,15 @@ public class SimpleGeneratorCMD implements Tool {
 			}
 		} else if(inputType.equals(InputType.TUPLE)) {
 			// Pangool Tuple file
+			Path inputPath = new Path(input);
 			tableBuilder.addTupleFile(inputPath);
 		} else if(inputType.equals(InputType.CASCADING)) {
 			// Cascading Tuple file
-			CascadingTupleInputFormat.setSerializations(conf);
-			tableBuilder.addCustomInputFormatFile(inputPath, new CascadingTupleInputFormat(tablename,
-			    cascadingColumns.split(",")));
+			Path inputPath = new Path(input);
+			tableBuilder.addCascadingTable(inputPath, cascadingColumns.split(","));
 		} else if(inputType.equals(InputType.HIVE)) {
 			// Hive table
-			tableBuilder.addCustomInputFormatFile(inputPath, new HCatTupleInputFormat(hiveDbName,
-			    hiveTableName, conf));
+			tableBuilder.addHiveTable(hiveDbName, hiveTableName);
 		}
 
 		String[] strPartitionByFields = this.partitionByFields.split(",");
