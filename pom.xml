@@ -12,7 +12,7 @@
 
 	<groupId>com.splout.db</groupId>
 	<artifactId>splout-top-level</artifactId>
-	<version>0.2.2</version>
+	<version>0.2.3-SNAPSHOT</version>
 
 	<modules>
 		<module>splout-resources</module>
