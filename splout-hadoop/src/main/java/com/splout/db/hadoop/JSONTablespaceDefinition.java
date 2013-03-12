@@ -106,8 +106,8 @@ public class JSONTablespaceDefinition {
 			if(specs == null) {
 				specs = new TextInputSpecs(); // default specs (tabulated file)
 			}
-			if(!tableInput.getInputType().equals(InputType.HIVE) && tableInput.getPaths() == null
-			    || tableInput.getPaths().size() == 0) {
+			if(!tableInput.getInputType().equals(InputType.HIVE) 
+					&& (tableInput.getPaths() == null || tableInput.getPaths().size() == 0)) {
 				throw new IllegalArgumentException("All table inputs except HIVE must have input paths.");
 			}
 

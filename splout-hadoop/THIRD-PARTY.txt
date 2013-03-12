@@ -6,7 +6,7 @@ Lists of 96 third-party dependencies.
      (The Apache Software License, Version 2.0) cascading-hadoop (cascading:cascading-hadoop:2.2.0-wip-15 - http://cascading.org/)
      (The Apache Software License, Version 2.0) sqlite4java (com.almworks.sqlite4java:sqlite4java:0.282 - http://code.google.com/p/sqlite4java)
      (The Apache Software License, Version 2.0) JCommander (com.beust:jcommander:1.30 - http://beust.com/jcommander)
-     (The Apache Software License, Version 2.0) Pangool Core (com.datasalt.pangool:pangool-core:0.60.1-SNAPSHOT - http://pangool.net/pangool-core)
+     (The Apache Software License, Version 2.0) Pangool Core (com.datasalt.pangool:pangool-core:0.60.2-SNAPSHOT - http://pangool.net/pangool-core)
      (The Apache Software License, Version 2.0) Google HTTP Client Library for Java (com.google.api.client:google-api-client:1.4.1-beta - http://code.google.com/p/google-api-java-client/google-api-client)
      (The Apache Software License, Version 2.0) FindBugs-jsr305 (com.google.code.findbugs:jsr305:1.3.9 - http://findbugs.sourceforge.net/)
      (The Apache Software License, Version 2.0) Gson (com.google.code.gson:gson:1.6 - http://code.google.com/p/google-gson/)
