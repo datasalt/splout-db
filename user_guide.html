@@ -82,7 +82,12 @@ Rollback: Splout can "rollback" previous versions if they are kept in the local 
 </ul></div>
 <h3 id="_table_definitions">Table definitions</h3><div style="clear:left"></div>
 <div class="paragraph"><p>A table schema&#8217;s is defined the same way a <a href="http://pangool.net/userguide/schemas.html">Pangool Tuple schema</a> is defined. However, the data types are adjusted to match <a href="http://www.sqlite.org/datatype3.html">those which are compatible with SQLite</a>.
-The following table shows the correspondence between a Pangool type and the underlying SQLite type used:</p></div>
+Nullable fields can be declared the same way than Pangool&#8217;s nullable fields are (since Pangool 0.60.0) - by using the ? character. The following line shows a Pangool schema declaration with 4 fields, one of them nullable:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><tt>customerid:string,date:string,departmentid:string,payment:int?</tt></pre>
+</div></div>
+<div class="paragraph"><p>The following table shows the correspondence between a Pangool type and the underlying SQLite type used:</p></div>
 <div class="tableblock">
 <table rules="all"
 width="100%"
@@ -374,9 +379,10 @@ then leveraged by sampling processes to equitatively distribute data among parti
 <div class="paragraph"><p>The output of these processes is usually a set of binary SQLite ".db" files and a partition map which specifies how queries should be routed to these files. Then, a "deployer" process
 is used to distribute these files to the Splout cluster. The "deployer" can also make the same file replicate several times in order to have fail-over replication.</p></div>
 <h3 id="_command_line_tools">Command line tools</h3><div style="clear:left"></div>
-<div class="paragraph"><p>The command line tools have been developed to ease the most common use cases. They only work with textual (CSV or fixed-width) files at this moment.
+<div class="paragraph"><p>The command line tools have been developed to ease the most common use cases.
 There are two "generator" tools that are responsible for launching a Hadoop process that will balance and index the input files,
 and there is one "deployer" tool that is able to deploy the result of any of the generators to an alive Splout cluster.</p></div>
+<div class="paragraph"><p>The tools allow to process either textual files (CSV or fixed-width), Cascading binary files, Hive tables and Pangool Tuple files.</p></div>
 <h4 id="_simple_generator">Simple generator</h4>
 <div class="paragraph"><p>The "Simple generator" allows us to seamlessly index and deploy a single tablespace made up by a single table, which is a very common use case.
 By invoking the tool with no parameters we obtain an explanation of all possible parameters. We will see a few examples of how to use this tool:</p></div>
@@ -564,14 +570,34 @@ cellspacing="0" cellpadding="4">
 <td align="left" valign="top"><p class="table"><strong>Explanation</strong></p></td>
 </tr>
 <tr>
-<td align="left" valign="top"><p class="table">inputSpecs</p></td>
-<td align="left" valign="top"><p class="table"><a href="#TextInputSpecs">TextInputSpecs</a></p></td>
-<td align="left" valign="top"><p class="table">Specifies how to parse the text file.</p></td>
-</tr>
-<tr>
 <td align="left" valign="top"><p class="table">paths</p></td>
 <td align="left" valign="top"><p class="table">array of string</p></td>
 <td align="left" valign="top"><p class="table">List of paths that will be used for creating this table.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table">inputType</p></td>
+<td align="left" valign="top"><p class="table">InputType</p></td>
+<td align="left" valign="top"><p class="table">Optional property. Type of input that will be added, by default, TEXT. Possible values are: TUPLE, CASCADING, HIVE.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table">inputSpecs</p></td>
+<td align="left" valign="top"><p class="table"><a href="#TextInputSpecs">TextInputSpecs</a></p></td>
+<td align="left" valign="top"><p class="table">Optional property. When using inputType = TEXT, specifies how to parse the text file.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table">cascadingColumns</p></td>
+<td align="left" valign="top"><p class="table">string</p></td>
+<td align="left" valign="top"><p class="table">Optional property. When using inputType = CASCADING, specify here a comma-separated list of column names. These names will be used when parsing the Cascading binary file.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table">hiveTableName</p></td>
+<td align="left" valign="top"><p class="table">string</p></td>
+<td align="left" valign="top"><p class="table">Optional property. When using inputType = HIVE, specify here the name of the Hive table to import.</p></td>
+</tr>
+<tr>
+<td align="left" valign="top"><p class="table">hiveDbName</p></td>
+<td align="left" valign="top"><p class="table">string</p></td>
+<td align="left" valign="top"><p class="table">Optional property. When using inputType = HIVE, specify here the name of the Hive database from where the table will be imported.</p></td>
 </tr>
 </tbody>
 </table>
@@ -635,7 +661,7 @@ cellspacing="0" cellpadding="4">
 For the common case of deploying only one tablespace, you can use straight command-line parameters:</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><tt>hadoop jar splout-hadoop-*-SNAPSHOT-hadoop.jar deploy -r 2 -root my-generated-tablespace -tn mytablespace -q http://localhost:4412</tt></pre>
+<pre><tt>hadoop jar splout-hadoop-*-hadoop.jar deploy -r 2 -root my-generated-tablespace -tn mytablespace -q http://localhost:4412</tt></pre>
 </div></div>
 <div class="paragraph"><p>The above line will deploy binary files generated in "my-generated-tablespace" folder using replication 2. The deployed tablespace will be named "mytablespace" and it will be deployed to the alive Splout cluster using the local QNode address at port 4412.
 The corresponding expected file tree for this example would have been the following:</p></div>
@@ -659,7 +685,7 @@ hdfs://.../my-generated-tablespace/store</tt></pre>
 <div class="paragraph"><p>For deploying more than one tablespace atomically and with the same replication factor, you can also use command-line parameters:</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><tt>hadoop jar splout-hadoop-*-SNAPSHOT-hadoop.jar deploy -r 2 -root my-root-folder -ts mytablespace1 -ts mytablespace2 -ts mytablespace3 -q http://localhost:4412</tt></pre>
+<pre><tt>hadoop jar splout-hadoop-*-hadoop.jar deploy -r 2 -root my-root-folder -ts mytablespace1 -ts mytablespace2 -ts mytablespace3 -q http://localhost:4412</tt></pre>
 </div></div>
 <div class="paragraph"><p>In this case we will deploy 3 tablespaces at the same time: mytablespace1, mytablespace2 and mytablespace3. The "root" parameter is a parent folder that contains the specified subfolders, and the tablespaces will be named after the folder name. So in this case the file tree structure is the following:</p></div>
 <div class="literalblock">
@@ -711,7 +737,7 @@ cellspacing="0" cellpadding="4">
 <div class="paragraph"><p>In this case, we can just pass the configuration file like shown below, taking into account that the file must be present in the local file system:</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><tt>hadoop jar splout-hadoop-*-SNAPSHOT-hadoop.jar -c my-config.json -q http://localhost:4412</tt></pre>
+<pre><tt>hadoop jar splout-hadoop-*-hadoop.jar -c my-config.json -q http://localhost:4412</tt></pre>
 </div></div>
 <h3 id="_hadoop_java_api">Hadoop Java API</h3><div style="clear:left"></div>
 <div class="paragraph"><p>All the command-line tools use the underlying Java API that we have implemented for Splout. You can also use this Java API directly in your Java project and you can have access to more advanced features such as specifying custom partitioning functions, record processing functions and such.</p></div>
@@ -1618,6 +1644,6 @@ You can control the data colocation policy with "insertionOrderBy" as explained 
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2013-02-19 17:44:19 CEST
+Last updated 2013-03-12 10:50:11 CEST
 </div>
 </div>
