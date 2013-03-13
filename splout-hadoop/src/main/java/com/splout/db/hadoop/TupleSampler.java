@@ -122,7 +122,8 @@ public class TupleSampler implements Serializable {
 			List<InputSplit> splits = new ArrayList<InputSplit>();
 			Map<InputSplit, InputFormat<ITuple, NullWritable>> splitToFormat = new HashMap<InputSplit, InputFormat<ITuple, NullWritable>>();
 			Map<InputSplit, RecordProcessor> recordProcessorPerSplit = new HashMap<InputSplit, RecordProcessor>();
-
+			Map<InputSplit, Map<String, String>> specificHadoopConfMap = new HashMap<InputSplit, Map<String, String>>();
+			
 			// Iterate over all {@link TableInput} and collect information about the InputSplits derived from them
 			for(TableInput tableFile : inputFiles) {
 				Job job = new Job(hadoopConf);
@@ -133,7 +134,17 @@ public class TupleSampler implements Serializable {
 				}
 				job.setInputFormatClass(FileInputFormat.class);
 
+				if(tableFile.getSpecificHadoopInputFormatContext() != null) {
+					for(Map.Entry<String, String> specificHadoopConf : tableFile
+					    .getSpecificHadoopInputFormatContext().entrySet()) {
+						job.getConfiguration().set(specificHadoopConf.getKey(), specificHadoopConf.getValue());
+					}
+				}
+
 				for(InputSplit split : tableFile.getFormat().getSplits(job)) {
+					if(tableFile.getSpecificHadoopInputFormatContext() != null) {
+						specificHadoopConfMap.put(split, tableFile.getSpecificHadoopInputFormatContext());
+					}
 					splitToFormat.put(split, tableFile.getFormat());
 					recordProcessorPerSplit.put(split, tableFile.getRecordProcessor());
 					splits.add(split);
@@ -149,7 +160,7 @@ public class TupleSampler implements Serializable {
 				try {
 					DefaultSamplingOptions defOptions = (DefaultSamplingOptions) options;
 					// Default sampling method
-					defaultSampling(tableSchema, sampleSize, hadoopConf, outFile, splits, splitToFormat,
+					defaultSampling(tableSchema, sampleSize, hadoopConf, outFile, splits, splitToFormat, specificHadoopConfMap,
 					    recordProcessorPerSplit, defOptions.getMaxSplitsToVisit());
 				} catch(ClassCastException e) {
 					throw new RuntimeException("Invalid options class: " + options.getClass() + " Expected:"
@@ -273,6 +284,7 @@ public class TupleSampler implements Serializable {
 	private void defaultSampling(Schema tableSchema, long sampleSize, Configuration hadoopConf,
 	    Path outFile, List<InputSplit> splits,
 	    Map<InputSplit, InputFormat<ITuple, NullWritable>> splitToFormat,
+	    Map<InputSplit, Map<String, String>> specificHadoopConf,
 	    Map<InputSplit, RecordProcessor> recordProcessorPerSplit, int maxSplitsToVisit)
 	    throws IOException, InterruptedException {
 
@@ -303,6 +315,11 @@ public class TupleSampler implements Serializable {
 			TaskAttemptID attemptId = new TaskAttemptID(new TaskID(), 1);
 			TaskAttemptContext attemptContext = new TaskAttemptContext(hadoopConf, attemptId);
 			InputSplit split = splits.get(sampleStep * i);
+			if(specificHadoopConf.get(split) != null) {
+				for(Map.Entry<String, String> specificConf: specificHadoopConf.get(split).entrySet()) {
+					attemptContext.getConfiguration().set(specificConf.getKey(), specificConf.getValue());
+				}
+			}
 			logger.info("Sampling split: " + split);
 			RecordReader<ITuple, NullWritable> reader = splitToFormat.get(split).createRecordReader(split,
 			    attemptContext);
