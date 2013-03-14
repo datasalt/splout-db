@@ -84,10 +84,9 @@ public class TableBuilder {
 	// the Hadoop conf can be provided as an alternative to the Schema to be able to sample it from the input files in
 	// case the input files are not Textual
 	private Configuration hadoopConf;
-	
+
 	/**
-	 * Fixed schema constructor: for example, if we use textual files.
-	 * The table name is extracted from the Schema name.
+	 * Fixed schema constructor: for example, if we use textual files. The table name is extracted from the Schema name.
 	 */
 	public TableBuilder(final Schema schema) {
 		this(null, schema);
@@ -102,7 +101,7 @@ public class TableBuilder {
 			    "Explicit table schema can't be null - please use the other constructors for implicit Schema discovering.");
 		}
 		this.tableName = tableName;
-		this.schema = schema;	
+		this.schema = schema;
 	}
 
 	/**
@@ -180,12 +179,14 @@ public class TableBuilder {
 
 	public TableBuilder addHiveTable(String dbName, String tableName) throws IOException {
 		if(hadoopConf == null) {
-			throw new IllegalArgumentException("Can't use this method if the builder hasn't been instantiated with a Hadoop conf. object!");
+			throw new IllegalArgumentException(
+			    "Can't use this method if the builder hasn't been instantiated with a Hadoop conf. object!");
 		}
 		return addHiveTable(dbName, tableName, hadoopConf);
 	}
-	
-	public TableBuilder addHiveTable(String dbName, String tableName, Configuration conf) throws IOException {
+
+	public TableBuilder addHiveTable(String dbName, String tableName, Configuration conf)
+	    throws IOException {
 		if(hadoopConf == null) {
 			throw new IllegalArgumentException(
 			    "Hadoop configuration can't be null - please provide a valid one.");
@@ -193,24 +194,31 @@ public class TableBuilder {
 		HCatTupleInputFormat inputFormat = new HCatTupleInputFormat(dbName, tableName, conf);
 		Map<String, String> specificContext = new HashMap<String, String>();
 		specificContext.put("mapreduce.lib.hcat.job.info", conf.get("mapreduce.lib.hcat.job.info"));
-		specificContext.put("mapreduce.lib.hcatoutput.hive.conf", conf.get("mapreduce.lib.hcatoutput.hive.conf"));
-		addCustomInputFormatFile(new Path("hive/" + dbName + "/" + this.tableName), inputFormat, specificContext, new IdentityRecordProcessor());
+		specificContext.put("mapreduce.lib.hcatoutput.hive.conf",
+		    conf.get("mapreduce.lib.hcatoutput.hive.conf"));
+		addCustomInputFormatFile(new Path("hive/" + dbName + "/" + this.tableName), inputFormat,
+		    specificContext, new IdentityRecordProcessor());
 		return this;
 	}
-	
+
 	public TableBuilder addCascadingTable(Path path, String[] columnNames) throws IOException {
 		if(hadoopConf == null) {
-			throw new IllegalArgumentException("Can't use this method if the builder hasn't been instantiated with a Hadoop conf. object!");
+			throw new IllegalArgumentException(
+			    "Can't use this method if the builder hasn't been instantiated with a Hadoop conf. object!");
 		}
 		return addCascadingTable(path, columnNames, hadoopConf);
 	}
-	
-	public TableBuilder addCascadingTable(Path inputPath, String[] columnNames, Configuration conf) throws IOException {
+
+	public TableBuilder addCascadingTable(Path inputPath, String[] columnNames, Configuration conf)
+	    throws IOException {
 		CascadingTupleInputFormat.setSerializations(conf);
-		return addCustomInputFormatFile(inputPath, new CascadingTupleInputFormat(tableName,
-		    columnNames));
+		if(tableName == null) {
+			throw new IllegalArgumentException(
+			    "A table name should have been provided by constructor for using this method.");
+		}
+		return addCustomInputFormatFile(inputPath, new CascadingTupleInputFormat(tableName, columnNames));
 	}
-	
+
 	public TableBuilder addCustomInputFormatFile(Path path, InputFormat<ITuple, NullWritable> inputFormat)
 	    throws IOException {
 		return addCustomInputFormatFile(path, inputFormat, null);
@@ -354,7 +362,7 @@ public class TableBuilder {
 			// E.g. a Hive table - we might want to rename it here for importing it more than once.
 			this.schema = new Schema(tableName, schema.getFields());
 		}
-		
+
 		Field[] partitionBySchemaFields = null;
 		if(!isReplicated) { // Check that partition field is good
 			// Check that is present in schema
