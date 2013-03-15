@@ -825,10 +825,12 @@ e.g. "native" in your destination application distribution. You can do that with
 For example, you may choose to narrow your input Tuple and emit a subset of it, modify some field by decoding its content, and so on. The RecordProcessor may also act as a filter. If "null" is returned, the input Tuple would have been filtered out from the generation process.</p></div>
 <div class="paragraph"><p>The <a href="https://github.com/datasalt/splout-db/blob/master/splout-hadoop/src/main/java/com/splout/db/examples/PageCountsRecordProcessor.java">pagecounts example RecordProcessor</a> is a good example.</p></div>
 <div class="paragraph"><p><a href="user_guide.html"> &gt; Back to table of contents</a></p></div>
-<h3 id="_integration_with_other_tools">Integration with other tools</h3><div style="clear:left"></div>
-<div class="paragraph"><p>It is possible to use the splout-hadoop API to import data directly from Hive, Cascading, Pig or Pangool. We will see an overview
-of such functionality in this section, together with some practical examples.</p></div>
-<h4 id="_hive">Hive</h4>
+</div>
+<h2 id="_integration_with_other_tools">Integration with other tools</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>It is possible to use the splout-hadoop API to import data directly from Hive, Cascading, Pig or Pangool.
+We will see an overview of such functionality in this section, together with some practical examples.</p></div>
+<h3 id="_integration_with_hive">Integration with Hive</h3><div style="clear:left"></div>
 <div class="paragraph"><p>For importing tables using the "simple-generate" tool we can use arguments "-hdb" and "-htn" for indicating the Hive database and the
 Hive table we want to import. We will need to specify that the input type is "HIVE" through "-it" property and add the rest of
 parameters needed (number of partitions, partitioning columns, output folder, table name and tablespace name). Note how
@@ -868,7 +870,7 @@ the input type and the Hive database and table names. Note how we don&#8217;t ne
 <div class="paragraph"><p>When using the Java API, we can add Hive table inputs with methods addHiveTable() from <a href="apidocs/splout-hadoop/com/splout/db/hadoop/TableBuilder.html">TableBuilder</a>.</p></div>
 <div class="paragraph"><p>Keep in mind that if you are using Hive with default embedded Derby database you can&#8217;t import Hive tables while you have another
 session opened in Hive at the same time, as the import process will try to connect to it too.</p></div>
-<h4 id="_cascading">Cascading</h4>
+<h3 id="_integration_with_cascading">Integration with Cascading</h3><div style="clear:left"></div>
 <div class="paragraph"><p>Splout SQL can import binary Cascading files directly without needing to convert them to text. For that we just need to specify
 the input path where the output of the Cascading process is, and a list of comma-separated column names. The type of each column
 will be automatically discovered from the binary Cascading file.</p></div>
@@ -925,10 +927,10 @@ Keep in mind that in order to have this functionality in your Java project you w
   &lt;/repository&gt;
   ...</tt></pre>
 </div></div>
-<h4 id="_pangool">Pangool</h4>
+<h3 id="_integration_with_pangool">Integration with Pangool</h3><div style="clear:left"></div>
 <div class="paragraph"><p>Binary Pangool Tuple files can be imported directly using inputType "TUPLE". Both the types and the column names will be read from
 those files so we need to do nothing special besides indicating the inputType and the input path.</p></div>
-<h4 id="_pig">Pig</h4>
+<h3 id="_integration_with_pig">Integration with Pig</h3><div style="clear:left"></div>
 <div class="paragraph"><p>We can import data from Pig by storing it as Pangool Tuple files. For that we need to obtain the pangool-core JAR. We can download
 it from <a href="http://search.maven.org/#search%7Cga%7C1%7Cpangool">Maven Central</a> if we don&#8217;t have it somewhere else. We then register the JAR in our Pig sessiona s follows:</p></div>
 <div class="literalblock">
@@ -1780,6 +1782,6 @@ You can control the data colocation policy with "insertionOrderBy" as explained 
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2013-03-15 12:25:41 CEST
+Last updated 2013-03-15 16:42:30 CEST
 </div>
 </div>

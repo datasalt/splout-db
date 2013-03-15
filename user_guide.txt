@@ -404,13 +404,13 @@ The https://github.com/datasalt/splout-db/blob/master/splout-hadoop/src/main/jav
 link:user_guide.html[ > Back to table of contents]
 
 Integration with other tools
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------
 
-It is possible to use the splout-hadoop API to import data directly from Hive, Cascading, Pig or Pangool. We will see an overview
-of such functionality in this section, together with some practical examples.
+It is possible to use the splout-hadoop API to import data directly from Hive, Cascading, Pig or Pangool. 
+We will see an overview of such functionality in this section, together with some practical examples.
 
-Hive
-^^^^
+Integration with Hive
+~~~~~~~~~~~~~~~~~~~~~
 
 For importing tables using the "simple-generate" tool we can use arguments "-hdb" and "-htn" for indicating the Hive database and the
 Hive table we want to import. We will need to specify that the input type is "HIVE" through "-it" property and add the rest of 
@@ -449,8 +449,8 @@ When using the Java API, we can add Hive table inputs with methods addHiveTable(
 Keep in mind that if you are using Hive with default embedded Derby database you can't import Hive tables while you have another
 session opened in Hive at the same time, as the import process will try to connect to it too.
 
-Cascading
-^^^^^^^^^
+Integration with Cascading
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Splout SQL can import binary Cascading files directly without needing to convert them to text. For that we just need to specify
 the input path where the output of the Cascading process is, and a list of comma-separated column names. The type of each column
@@ -503,14 +503,14 @@ Which you can get from Conjar's Maven repo:
    </repository>
    ...
    
-Pangool
-^^^^^^^
+Integration with Pangool
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 Binary Pangool Tuple files can be imported directly using inputType "TUPLE". Both the types and the column names will be read from
 those files so we need to do nothing special besides indicating the inputType and the input path.
 
-Pig
-^^^
+Integration with Pig
+~~~~~~~~~~~~~~~~~~~~
 
 We can import data from Pig by storing it as Pangool Tuple files. For that we need to obtain the pangool-core JAR. We can download
 it from link:http://search.maven.org/#search%7Cga%7C1%7Cpangool[Maven Central] if we don't have it somewhere else. We then register the JAR in our Pig sessiona s follows:
