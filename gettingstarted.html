@@ -188,11 +188,9 @@ bin/splout-service.sh dnode stop
   that information between tablespaces will be consistent. Whichever of the following command performs
   the deploy of the tablespaces.</p>
 
-<pre><tt>hadoop jar splout-*-hadoop.jar deploy -root database-files -ts world-pby-continent-region -ts
-  world-pby-country -r 2 -q http://localhost:4412
-  hadoop jar splout-*-hadoop.jar deploy --config-file examples/world/deployment.json --qnode
-  http://localhost:4412
-</tt></pre>
+<pre><tt>hadoop jar splout-*-hadoop.jar deploy -root database-files -ts world-pby-continent-region -ts world-pby-country -r 2 -q http://localhost:4412</tt></pre>
+
+<pre><tt>hadoop jar splout-*-hadoop.jar deploy --config-file examples/world/deployment.json --qnode http://localhost:4412</tt></pre>
 
 <p>Now both tablespaces should be present at Splout SQL. Have a look to the console.</p>
 
