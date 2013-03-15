@@ -82,12 +82,7 @@ Rollback: Splout can "rollback" previous versions if they are kept in the local 
 </ul></div>
 <h3 id="_table_definitions">Table definitions</h3><div style="clear:left"></div>
 <div class="paragraph"><p>A table schema&#8217;s is defined the same way a <a href="http://pangool.net/userguide/schemas.html">Pangool Tuple schema</a> is defined. However, the data types are adjusted to match <a href="http://www.sqlite.org/datatype3.html">those which are compatible with SQLite</a>.
-Nullable fields can be declared the same way than Pangool&#8217;s nullable fields are (since Pangool 0.60.0) - by using the ? character. The following line shows a Pangool schema declaration with 4 fields, one of them nullable:</p></div>
-<div class="literalblock">
-<div class="content">
-<pre><tt>customerid:string,date:string,departmentid:string,payment:int?</tt></pre>
-</div></div>
-<div class="paragraph"><p>The following table shows the correspondence between a Pangool type and the underlying SQLite type used:</p></div>
+The following table shows the correspondence between a Pangool type and the underlying SQLite type used:</p></div>
 <div class="tableblock">
 <table rules="all"
 width="100%"
@@ -513,7 +508,7 @@ cellspacing="0" cellpadding="4">
 <tr>
 <td align="left" valign="top"><p class="table">schema</p></td>
 <td align="left" valign="top"><p class="table">string</p></td>
-<td align="left" valign="top"><p class="table">The in-line Pangool schema that defines the structure of this table.</p></td>
+<td align="left" valign="top"><p class="table">The in-line Pangool schema that defines the structure of this table. This property is optional when using input types other than TEXT - the schema will be automatically discovered from input files.</p></td>
 </tr>
 <tr>
 <td align="left" valign="top"><p class="table">partitionFields</p></td>
@@ -758,7 +753,7 @@ in <a href="https://github.com/datasalt/splout-hadoop-starter/blob/master/pom.xm
     &lt;version&gt;1.4&lt;/version&gt;
     &lt;configuration&gt;
       &lt;resourceBundles&gt;
-        &lt;resourceBundle&gt;com.splout.db:splout-resources:0.2.1&lt;/resourceBundle&gt;
+        &lt;resourceBundle&gt;com.splout.db:splout-resources:0.2.2&lt;/resourceBundle&gt;
       &lt;/resourceBundles&gt;
     &lt;/configuration&gt;
    &lt;executions&gt;
@@ -830,6 +825,147 @@ e.g. "native" in your destination application distribution. You can do that with
 For example, you may choose to narrow your input Tuple and emit a subset of it, modify some field by decoding its content, and so on. The RecordProcessor may also act as a filter. If "null" is returned, the input Tuple would have been filtered out from the generation process.</p></div>
 <div class="paragraph"><p>The <a href="https://github.com/datasalt/splout-db/blob/master/splout-hadoop/src/main/java/com/splout/db/examples/PageCountsRecordProcessor.java">pagecounts example RecordProcessor</a> is a good example.</p></div>
 <div class="paragraph"><p><a href="user_guide.html"> &gt; Back to table of contents</a></p></div>
+<h3 id="_integration_with_other_tools">Integration with other tools</h3><div style="clear:left"></div>
+<div class="paragraph"><p>It is possible to use the splout-hadoop API to import data directly from Hive, Cascading, Pig or Pangool. We will see an overview
+of such functionality in this section, together with some practical examples.</p></div>
+<h4 id="_hive">Hive</h4>
+<div class="paragraph"><p>For importing tables using the "simple-generate" tool we can use arguments "-hdb" and "-htn" for indicating the Hive database and the
+Hive table we want to import. We will need to specify that the input type is "HIVE" through "-it" property and add the rest of
+parameters needed (number of partitions, partitioning columns, output folder, table name and tablespace name). Note how
+we don&#8217;t need to specify input paths anymore as the input is read directly from Hive.</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><tt>hadoop jar splout-hadoop-*-hadoop.jar simple-generate -it HIVE -hdb default -htn mentions -o out-hive-simple -pby mentioner -p 2 -t mentions_of_me -tb hive_simple_example</tt></pre>
+</div></div>
+<div class="paragraph"><p>Or we can use the "generate" tool. For that we can create a JSON tablespace descriptor like the example one. We specify
+the input type and the Hive database and table names. Note how we don&#8217;t need to specify input paths.</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><tt>{
+        "name": "hive_simple_example",
+        "nPartitions": 2,
+        "partitionedTables": [{
+                "name": "mentions_of_me",
+                "partitionFields": "mentioned",
+                "tableInputs": [{
+                        "inputType": "HIVE",
+                        "hiveTableName": "mentions",
+                        "hiveDbName": "default"
+                }]
+        }]
+}</tt></pre>
+</div></div>
+<div class="paragraph"><p>We can then execute the JSON descriptor tablespace generation with the "generate" tool as usual:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><tt>hadoop jar splout-*-hadoop.jar generate -tf file:///`pwd`/hive_simple_example.json -o out-hive-simple</tt></pre>
+</div></div>
+<div class="paragraph"><p>And finally, with either methods, we can deploy the generated database as usual:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><tt>hadoop jar splout-hadoop-*-hadoop.jar deploy -root out-hive-simple -ts hive_simple_example -q http://localhost:4412</tt></pre>
+</div></div>
+<div class="paragraph"><p>When using the Java API, we can add Hive table inputs with methods addHiveTable() from <a href="apidocs/splout-hadoop/com/splout/db/hadoop/TableBuilder.html">TableBuilder</a>.</p></div>
+<div class="paragraph"><p>Keep in mind that if you are using Hive with default embedded Derby database you can&#8217;t import Hive tables while you have another
+session opened in Hive at the same time, as the import process will try to connect to it too.</p></div>
+<h4 id="_cascading">Cascading</h4>
+<div class="paragraph"><p>Splout SQL can import binary Cascading files directly without needing to convert them to text. For that we just need to specify
+the input path where the output of the Cascading process is, and a list of comma-separated column names. The type of each column
+will be automatically discovered from the binary Cascading file.</p></div>
+<div class="paragraph"><p>For importing a Cascading table using the "simple-generate" tool we can use argument "-cc" for indicating the comma-separated column
+names, together with CASCADING in "-it" argument, and the rest of arguments as usual. See the following example:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><tt>hadoop jar splout-hadoop-*-hadoop.jar simple-generate -i out-clogs-analytics -it CASCADING -cc "day,month,year,user,category,count" -o out-cascading-simple -pby user -p 2 -t analytics -tb cascading_simple_example</tt></pre>
+</div></div>
+<div class="paragraph"><p>Or we can use the "generate" tool. For that we can write a JSON descriptor as follows:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><tt>{
+        "name": "cascading_simple_example",
+        "nPartitions": 2,
+        "partitionedTables": [{
+                "name": "analytics",
+                "partitionFields": "user",
+                "tableInputs": [{
+                        "inputType": "CASCADING",
+                        "cascadingColumns": "day,month,year,user,category,count",
+                        "paths": [ "out-clogs-analytics" ]
+                }]
+        }]
+}</tt></pre>
+</div></div>
+<div class="paragraph"><p>We can then execute the JSON descriptor tablespace generation with the "generate" tool as usual:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><tt>hadoop jar splout-*-hadoop.jar generate -tf file:///`pwd`/cascading_simple_example.json -o out-cascading-simple</tt></pre>
+</div></div>
+<div class="paragraph"><p>And finally, with either methods, we can then deploy the generated database as usual:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><tt>hadoop jar splout-hadoop-*-hadoop.jar deploy -root out-cascading-simple -ts cascading_simple_example -q http://localhost:4412</tt></pre>
+</div></div>
+<div class="paragraph"><p>When using the Java API, we can add Cascading table inputs with methods addCascadingTable() from <a href="apidocs/splout-hadoop/com/splout/db/hadoop/TableBuilder.html">TableBuilder</a>.
+Keep in mind that in order to have this functionality in your Java project you will need to explicitly import the appropriated Maven dependency:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><tt>&lt;dependency&gt;
+  &lt;groupId&gt;cascading&lt;/groupId&gt;
+  &lt;artifactId&gt;cascading-hadoop&lt;/artifactId&gt;
+  &lt;version&gt;2.2.0-wip-15&lt;/version&gt;
+&lt;/dependency&gt;</tt></pre>
+</div></div>
+<div class="paragraph"><p>Which you can get from Conjar&#8217;s Maven repo:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><tt>&lt;repositories&gt;
+  &lt;repository&gt;
+    &lt;id&gt;conjars.org&lt;/id&gt;
+    &lt;url&gt;http://conjars.org/repo&lt;/url&gt;
+  &lt;/repository&gt;
+  ...</tt></pre>
+</div></div>
+<h4 id="_pangool">Pangool</h4>
+<div class="paragraph"><p>Binary Pangool Tuple files can be imported directly using inputType "TUPLE". Both the types and the column names will be read from
+those files so we need to do nothing special besides indicating the inputType and the input path.</p></div>
+<h4 id="_pig">Pig</h4>
+<div class="paragraph"><p>We can import data from Pig by storing it as Pangool Tuple files. For that we need to obtain the pangool-core JAR. We can download
+it from <a href="http://search.maven.org/#search%7Cga%7C1%7Cpangool">Maven Central</a> if we don&#8217;t have it somewhere else. We then register the JAR in our Pig sessiona s follows:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><tt>REGISTER /.../path-to-pangool-core-jar/.../pangool-core-0.60.2.jar;</tt></pre>
+</div></div>
+<div class="paragraph"><p>And we can save any output as:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><tt>STORE cntd INTO 'pig-wordcount-result' USING com.datasalt.pangool.pig.PangoolStoreFunc('pigwordcount', 'word', 'count');</tt></pre>
+</div></div>
+<div class="paragraph"><p>Note how the first argument to the StoreFunc is the table name, and the rest are column names.
+The following example executes a simple word-count task in Pig and saves the output as a binary Pangool Tuple file.
+We will use an input file called <em>mary</em> with the following content:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><tt>Mary had a little lamb
+its fleece was white as snow
+and everywhere that Mary went
+the lamb was sure to go.</tt></pre>
+</div></div>
+<div class="paragraph"><p>This is the script code:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><tt>REGISTER /.../path-to-pangool-core-jar/.../pangool-core-0.60.2.jar;
+a = LOAD 'mary' as (line);
+words = FOREACH a GENERATE flatten(TOKENIZE(line)) AS word;
+grpd = GROUP words BY word;
+cntd  = FOREACH grpd GENERATE group, COUNT(words);
+STORE cntd INTO 'pig-wordcount-result' USING com.datasalt.pangool.pig.PangoolStoreFunc('pigwordcount', 'word', 'count');</tt></pre>
+</div></div>
+<div class="paragraph"><p>We can then import the resulting binary file as a normal Pangool Tuple file, for example with the "simple-generate" tool:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><tt>hadoop jar splout-hadoop-*-hadoop.jar simple-generate -i pig-wordcount-result -it TUPLE -o out-pig-simple -pby word -p 2 -t wordcount -tb pig_simple_example
+hadoop jar splout-hadoop-*-hadoop.jar deploy -root out-pig-simple -ts pig_simple_example -q http://localhost:4412</tt></pre>
+</div></div>
 </div>
 <h2 id="RESTAPI">REST API</h2>
 <div class="sectionbody">
@@ -1644,6 +1780,6 @@ You can control the data colocation policy with "insertionOrderBy" as explained 
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2013-03-12 10:50:11 CEST
+Last updated 2013-03-15 12:25:41 CEST
 </div>
 </div>

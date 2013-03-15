@@ -31,6 +31,19 @@ title: Splout SQL F.A.Q.
 </dl>
 
 <dl>
+  <dt>Can I import data directly from Hive into Splout SQL?</dt>
+  <dd>Yes, since release 0.2.2 it is possible to integrate Hive directly with Splout SQL. It is also possible 
+  to do the same with Cascading or Pig. Please read the <a href='user_guide.html#_integration_with_other_tools'>
+  user guide, section Integration with other tools</a>.
+  </dd>
+</dl>
+
+<dl>
+  <dt>I am experiencing slow queries, why?</dt>
+  <dd>Splout SQL is optimized for indexing data according to custom needs. You can create arbitrary indexes and 
+  colocate data at insertion time for minimizing disk seeks. Please read the <a href='user_guide.html#_tips_troubleshooting'>Troubleshooting section of the user guide</a>.
+  </dd>
+<dl>
   <dt>Can a DNode use more than one disk for storing data?</dt>
   <dd>Currently a DNode's working directory is fixed to be in a single disk location, however, there is
     nothing that prevents you from installing two DNode services in the same machine, as long as you

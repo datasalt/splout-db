@@ -347,7 +347,7 @@ in https://github.com/datasalt/splout-hadoop-starter/blob/master/pom.xml[the spl
      <version>1.4</version>
      <configuration>
        <resourceBundles>
-         <resourceBundle>com.splout.db:splout-resources:0.2.1</resourceBundle>
+         <resourceBundle>com.splout.db:splout-resources:0.2.2</resourceBundle>
        </resourceBundles>
      </configuration>
     <executions>
@@ -402,6 +402,147 @@ For example, you may choose to narrow your input Tuple and emit a subset of it, 
 The https://github.com/datasalt/splout-db/blob/master/splout-hadoop/src/main/java/com/splout/db/examples/PageCountsRecordProcessor.java[pagecounts example RecordProcessor] is a good example.
 
 link:user_guide.html[ > Back to table of contents]
+
+Integration with other tools
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+It is possible to use the splout-hadoop API to import data directly from Hive, Cascading, Pig or Pangool. We will see an overview
+of such functionality in this section, together with some practical examples.
+
+Hive
+^^^^
+
+For importing tables using the "simple-generate" tool we can use arguments "-hdb" and "-htn" for indicating the Hive database and the
+Hive table we want to import. We will need to specify that the input type is "HIVE" through "-it" property and add the rest of 
+parameters needed (number of partitions, partitioning columns, output folder, table name and tablespace name). Note how 
+we don't need to specify input paths anymore as the input is read directly from Hive.
+
+ hadoop jar splout-hadoop-*-hadoop.jar simple-generate -it HIVE -hdb default -htn mentions -o out-hive-simple -pby mentioner -p 2 -t mentions_of_me -tb hive_simple_example
+
+Or we can use the "generate" tool. For that we can create a JSON tablespace descriptor like the example one. We specify
+the input type and the Hive database and table names. Note how we don't need to specify input paths.
+
+ {
+	 "name": "hive_simple_example",
+	 "nPartitions": 2,
+	 "partitionedTables": [{
+		 "name": "mentions_of_me",
+		 "partitionFields": "mentioned",
+	    	 "tableInputs": [{
+			 "inputType": "HIVE",
+			 "hiveTableName": "mentions",
+			 "hiveDbName": "default"
+		 }]	
+	 }]
+ }
+ 
+We can then execute the JSON descriptor tablespace generation with the "generate" tool as usual:
+
+ hadoop jar splout-*-hadoop.jar generate -tf file:///`pwd`/hive_simple_example.json -o out-hive-simple
+
+And finally, with either methods, we can deploy the generated database as usual:
+
+ hadoop jar splout-hadoop-*-hadoop.jar deploy -root out-hive-simple -ts hive_simple_example -q http://localhost:4412
+
+When using the Java API, we can add Hive table inputs with methods addHiveTable() from link:apidocs/splout-hadoop/com/splout/db/hadoop/TableBuilder.html[TableBuilder].
+
+Keep in mind that if you are using Hive with default embedded Derby database you can't import Hive tables while you have another
+session opened in Hive at the same time, as the import process will try to connect to it too.
+
+Cascading
+^^^^^^^^^
+
+Splout SQL can import binary Cascading files directly without needing to convert them to text. For that we just need to specify
+the input path where the output of the Cascading process is, and a list of comma-separated column names. The type of each column
+will be automatically discovered from the binary Cascading file.
+
+For importing a Cascading table using the "simple-generate" tool we can use argument "-cc" for indicating the comma-separated column
+names, together with CASCADING in "-it" argument, and the rest of arguments as usual. See the following example:
+
+ hadoop jar splout-hadoop-*-hadoop.jar simple-generate -i out-clogs-analytics -it CASCADING -cc "day,month,year,user,category,count" -o out-cascading-simple -pby user -p 2 -t analytics -tb cascading_simple_example
+
+Or we can use the "generate" tool. For that we can write a JSON descriptor as follows:
+
+ {
+	 "name": "cascading_simple_example",
+	 "nPartitions": 2,
+	 "partitionedTables": [{
+		 "name": "analytics",
+		 "partitionFields": "user",
+		 "tableInputs": [{
+			 "inputType": "CASCADING",
+			 "cascadingColumns": "day,month,year,user,category,count",
+			 "paths": [ "out-clogs-analytics" ]
+		 }]
+	 }]
+ }
+ 
+We can then execute the JSON descriptor tablespace generation with the "generate" tool as usual:
+
+ hadoop jar splout-*-hadoop.jar generate -tf file:///`pwd`/cascading_simple_example.json -o out-cascading-simple
+
+And finally, with either methods, we can then deploy the generated database as usual:
+
+ hadoop jar splout-hadoop-*-hadoop.jar deploy -root out-cascading-simple -ts cascading_simple_example -q http://localhost:4412
+
+When using the Java API, we can add Cascading table inputs with methods addCascadingTable() from link:apidocs/splout-hadoop/com/splout/db/hadoop/TableBuilder.html[TableBuilder].
+Keep in mind that in order to have this functionality in your Java project you will need to explicitly import the appropriated Maven dependency:
+
+ <dependency>
+   <groupId>cascading</groupId>
+   <artifactId>cascading-hadoop</artifactId>
+   <version>2.2.0-wip-15</version>
+ </dependency>
+
+Which you can get from Conjar's Maven repo:
+
+ <repositories>
+   <repository>
+     <id>conjars.org</id>
+     <url>http://conjars.org/repo</url>
+   </repository>
+   ...
+   
+Pangool
+^^^^^^^
+
+Binary Pangool Tuple files can be imported directly using inputType "TUPLE". Both the types and the column names will be read from
+those files so we need to do nothing special besides indicating the inputType and the input path.
+
+Pig
+^^^
+
+We can import data from Pig by storing it as Pangool Tuple files. For that we need to obtain the pangool-core JAR. We can download
+it from link:http://search.maven.org/#search%7Cga%7C1%7Cpangool[Maven Central] if we don't have it somewhere else. We then register the JAR in our Pig sessiona s follows:
+
+ REGISTER /.../path-to-pangool-core-jar/.../pangool-core-0.60.2.jar;
+
+And we can save any output as:
+
+ STORE cntd INTO 'pig-wordcount-result' USING com.datasalt.pangool.pig.PangoolStoreFunc('pigwordcount', 'word', 'count');
+ 
+Note how the first argument to the StoreFunc is the table name, and the rest are column names.
+The following example executes a simple word-count task in Pig and saves the output as a binary Pangool Tuple file.
+We will use an input file called 'mary' with the following content:
+
+ Mary had a little lamb
+ its fleece was white as snow
+ and everywhere that Mary went
+ the lamb was sure to go. 
+
+This is the script code:
+
+ REGISTER /.../path-to-pangool-core-jar/.../pangool-core-0.60.2.jar;
+ a = LOAD 'mary' as (line);
+ words = FOREACH a GENERATE flatten(TOKENIZE(line)) AS word;
+ grpd = GROUP words BY word;
+ cntd  = FOREACH grpd GENERATE group, COUNT(words);
+ STORE cntd INTO 'pig-wordcount-result' USING com.datasalt.pangool.pig.PangoolStoreFunc('pigwordcount', 'word', 'count');
+ 
+We can then import the resulting binary file as a normal Pangool Tuple file, for example with the "simple-generate" tool:
+
+ hadoop jar splout-hadoop-*-hadoop.jar simple-generate -i pig-wordcount-result -it TUPLE -o out-pig-simple -pby word -p 2 -t wordcount -tb pig_simple_example
+ hadoop jar splout-hadoop-*-hadoop.jar deploy -root out-pig-simple -ts pig_simple_example -q http://localhost:4412
 
 [[RESTAPI]]
 REST API
