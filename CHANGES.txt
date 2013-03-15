@@ -1,7 +1,12 @@
 Splout SQL Change Log
 =====================
 
-(Development)
+(DEVELOPMENT 0.2.3-SNAPSHOT)
+
+Splout SQL 0.2.2
+
+NEW FEATURES
+ - 2013-03-15 - Integration with Hive, Cascading and Pig.
 
 IMPROVEMENTS
  - 2013-02-06 - #12: Automatic replica balancing to avoid under-replicated partitions (high availability). Disabled by default, experimental new feature.
