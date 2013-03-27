@@ -39,17 +39,18 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 
 import com.datasalt.pangool.io.ITuple;
 import com.datasalt.pangool.io.Schema;
+import com.datasalt.pangool.utils.TaskAttemptContextFactory;
 
 /**
- * Small piece of code that can sample a Pangool Schema from an arbitrary InputFormat<ITuple, NullWritable>.
- * It just reads the first Tuple and reads the Schema from it.
+ * Small piece of code that can sample a Pangool Schema from an arbitrary InputFormat<ITuple, NullWritable>. It just
+ * reads the first Tuple and reads the Schema from it.
  */
 public class SchemaSampler {
 
 	private final static Log log = LogFactory.getLog(SchemaSampler.class);
-	
-	public static Schema sample(Configuration conf, Path input, InputFormat<ITuple, NullWritable> inputFormat)
-	    throws IOException, InterruptedException {
+
+	public static Schema sample(Configuration conf, Path input,
+	    InputFormat<ITuple, NullWritable> inputFormat) throws IOException, InterruptedException {
 		Schema schema = null;
 
 		// sample schema from input path given the provided InputFormat
@@ -63,15 +64,20 @@ public class SchemaSampler {
 		}
 		InputSplit inputSplit = inputSplits.get(0);
 		TaskAttemptID attemptId = new TaskAttemptID(new TaskID(), 1);
-		TaskAttemptContext attemptContext = new TaskAttemptContext(conf, attemptId);
+		TaskAttemptContext attemptContext;
+		try {
+			attemptContext = TaskAttemptContextFactory.get(conf, attemptId);
+		} catch(Exception e) {
+			throw new IOException(e);
+		}
 
 		RecordReader<ITuple, NullWritable> rReader = inputFormat.createRecordReader(inputSplit,
 		    attemptContext);
 		rReader.initialize(inputSplit, attemptContext);
 
 		if(!rReader.nextKeyValue()) {
-			throw new IOException(
-			    "Can't read first record of first input split of the given path [" + input + "].");
+			throw new IOException("Can't read first record of first input split of the given path [" + input
+			    + "].");
 		}
 
 		// finally get the sample schema

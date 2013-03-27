@@ -6,7 +6,8 @@
 # Environment variables:
 #
 # SPLOUT_HOME		Where Splout Server installation is. PWD by default.
-# HADOOP_HOME		Where Hadoop is installed
+# HADOOP_HOME		(Hadoop 1.0) Where Hadoop is installed
+# $HADOOP_COMMON_HOME, $HADOOP_HDFS_HOME, $HADOOP_MAPRED_HOME	(Hadoop 2.0) Installation of Hadoop 2.0 (YARN)
 # SPLOUT_PID_DIR		Where PID file is stored. SPLOUT_HOME by default.
 # SPLOUT_LOG_DIR		Where Standard out / err output file is stored. SPLOUT_HOME/logs by default.
 #	
@@ -37,21 +38,6 @@ if [ "$SPLOUT_LOG_DIR" = "" ]; then
 fi
 
 JAVA_LIBRARY_PATH=${SPLOUT_HOME}/native
-
-if [ "$HADOOP_HOME" = "" ]; then
-        echo "Required HADOOP_HOME environmental variable not configured."
-        exit 1
-else
-        # Prepend HADOOP_HOME/conf for being able to fetch from HDFS
-        # We also prepend ONLY the Hadoop core JAR and the minimun number of jars 
-        # for avoiding RPC mismatch problems
-        HADOOP_JARS="$HADOOP_HOME/hadoop-*.jar $HADOOP_HOME/lib/guava-*.jar"
-        for f in $HADOOP_JARS
-        do
-                HADOOP_JAR_CS="$HADOOP_JAR_CS:$f"
-        done
-        CLASSPATH=${CLASSPATH}$HADOOP_JAR_CS:$HADOOP_HOME/conf:$SPLOUT_HOME/*:$SPLOUT_HOME/lib/*
-fi
 
 rotate_log ()
 {
@@ -86,6 +72,71 @@ case $service in
 	;;
 	(*)
 esac
+
+if [ "$startStop" == "start" ]; then
+	if [ -z "$HADOOP_HOME" ]; then
+		if [ -z "$HADOOP_MAPRED_HOME" ]; then
+	        echo "Required HADOOP_HOME for Hadoop 1.0 or HADOOP_MAPRED_HOME for Hadoop 2.0 environmental variable not configured."
+	        exit 1
+	    else
+	    	echo "Using defined Hadoop 2.0 environment variable HADOOP_MAPRED_HOME"
+	    fi
+	else 
+		if [ -z "$HADOOP_MAPRED_HOME" ]; then
+			echo "Using defined Hadoop 1.0 environment variable $HADOOP_HOME." 
+		else
+			echo "Both HADOOP_HOME and HADOOP_MAPRED_HOME are defined which may lead to inconsistencies in the classpath. Please use one or the other, but not both."
+			exit 1
+		fi
+	fi
+	
+	# Hadoop 1.0
+	if [ "$HADOOP_HOME" ]; then
+		echo "Loading appropriate jars from HADOOP_HOME: $HADOOP_HOME"
+		HADOOP_JARS="$HADOOP_HOME/hadoop-*.jar $HADOOP_HOME/lib/guava-*.jar"
+		for f in $HADOOP_JARS
+		do
+		        HADOOP_JAR_CS="$HADOOP_JAR_CS:$f"
+		done
+		CLASSPATH=${CLASSPATH}:$HADOOP_JAR_CS:$HADOOP_HOME/conf
+	fi
+	# Hadoop 2.0
+	if [ "$HADOOP_MAPRED_HOME" ]; then
+		echo "Loading appropriate jars from HADOOP_MAPRED_HOME: $HADOOP_MAPRED_HOME"
+		HADOOP_JARS="$HADOOP_MAPRED_HOME/hadoop-*.jar $HADOOP_MAPRED_HOME/lib/guava-*.jar"
+		for f in $HADOOP_JARS
+		do
+		        HADOOP_JAR_CS="$HADOOP_JAR_CS:$f"
+		done
+		CLASSPATH=${CLASSPATH}:$HADOOP_JAR_CS:$HADOOP_MAPRED_HOME/conf
+		if [ "$HADOOP_COMMON_HOME" ]; then
+			echo "Loading appropriate jars from HADOOP_COMMON_HOME: $HADOOP_COMMON_HOME"
+			HADOOP_JARS="$HADOOP_COMMON_HOME/hadoop-*.jar $HADOOP_COMMON_HOME/lib/hadoop-*.jar"
+			for f in $HADOOP_JARS
+			do
+			        HADOOP_JAR_CS="$HADOOP_JAR_CS:$f"
+			done
+			CLASSPATH=${CLASSPATH}:$HADOOP_JAR_CS
+		else
+			echo "HADOOP_COMMON_HOME is not defined, Splout may not behave well if not being able to load all libraries from a YARN installation. Please fix your environment."
+			exit 1
+		fi
+		if [ "$HADOOP_HDFS_HOME" ]; then
+			echo "Loading appropriate jars from HADOOP_HDFS_HOME: $HADOOP_HDFS_HOME"
+			HADOOP_JARS="$HADOOP_HDFS_HOME/hadoop-*.jar $HADOOP_HDFS_HOME/lib/commons-cli*.jar $HADOOP_HDFS_HOME/lib/protobuf*.jar"
+			for f in $HADOOP_JARS
+			do
+			        HADOOP_JAR_CS="$HADOOP_JAR_CS:$f"
+			done
+			CLASSPATH=${CLASSPATH}:$HADOOP_JAR_CS
+		else
+			echo "HADOOP_HDFS_HOME is not defined, Splout may not behave well if not being able to load all libraries from a YARN installation. Please fix your environment."
+			exit 1
+		fi
+	fi
+	CLASSPATH=${CLASSPATH}:$SPLOUT_HOME/*:$SPLOUT_HOME/lib/*
+fi
+
 case $startStop in
 
   (start)

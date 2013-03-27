@@ -20,8 +20,7 @@ package com.splout.db;
  * #L%
  */
 
-import org.apache.hadoop.util.ProgramDriver;
-
+import com.datasalt.pangool.PangoolDriver;
 import com.splout.db.benchmark.BenchmarkStoreTool;
 import com.splout.db.benchmark.BenchmarkTool;
 import com.splout.db.hadoop.DeployerCMD;
@@ -30,7 +29,7 @@ import com.splout.db.hadoop.DeployerCMD;
  * Driver to run different Splout tools
  * TODO Merge with the other Driver?
  */
-public class ToolsDriver extends ProgramDriver {
+public class ToolsDriver extends PangoolDriver {
 
 	public ToolsDriver() throws Throwable {
 		addClass("benchmark-store", BenchmarkStoreTool.class, "Creates a dataset to be used for benchmarking");

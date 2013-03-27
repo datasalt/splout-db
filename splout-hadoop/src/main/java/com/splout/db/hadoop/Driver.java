@@ -1,5 +1,11 @@
 package com.splout.db.hadoop;
 
+import com.datasalt.pangool.PangoolDriver;
+import com.splout.db.benchmark.BenchmarkStoreTool;
+import com.splout.db.benchmark.IdentityJob;
+import com.splout.db.examples.PageCountsExample;
+import com.splout.db.integration.HadoopIntegrationTest;
+
 /*
  * #%L
  * Splout SQL Hadoop library
@@ -20,17 +26,11 @@ package com.splout.db.hadoop;
  * #L%
  */
 
-import org.apache.hadoop.util.ProgramDriver;
-
-import com.splout.db.benchmark.BenchmarkStoreTool;
-import com.splout.db.benchmark.IdentityJob;
-import com.splout.db.examples.PageCountsExample;
-import com.splout.db.integration.HadoopIntegrationTest;
 
 /**
  * Hadoop's Driver - add here any Hadoop programs that could be run by default with the Splout JAR.
  */
-public class Driver extends ProgramDriver {
+public class Driver extends PangoolDriver {
 
 	public Driver() throws Throwable {
 		super();

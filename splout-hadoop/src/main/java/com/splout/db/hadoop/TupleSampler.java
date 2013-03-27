@@ -20,14 +20,15 @@ package com.splout.db.hadoop;
  * #L%
  */
 
-import com.datasalt.pangool.io.ITuple;
-import com.datasalt.pangool.io.Schema;
-import com.datasalt.pangool.io.Tuple;
-import com.datasalt.pangool.io.TupleFile;
-import com.datasalt.pangool.tuplemr.MapOnlyJobBuilder;
-import com.datasalt.pangool.tuplemr.TupleMRException;
-import com.datasalt.pangool.tuplemr.mapred.MapOnlyMapper;
-import com.splout.db.common.PartitionMap;
+import java.io.IOException;
+import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -35,17 +36,26 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.mapreduce.*;
+import org.apache.hadoop.mapreduce.Counter;
+import org.apache.hadoop.mapreduce.InputFormat;
+import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.RecordReader;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.TaskAttemptID;
+import org.apache.hadoop.mapreduce.TaskID;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.mockito.Mockito;
 
-import java.io.IOException;
-import java.io.Serializable;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.datasalt.pangool.io.ITuple;
+import com.datasalt.pangool.io.Schema;
+import com.datasalt.pangool.io.Tuple;
+import com.datasalt.pangool.io.TupleFile;
+import com.datasalt.pangool.tuplemr.MapOnlyJobBuilder;
+import com.datasalt.pangool.tuplemr.TupleMRException;
+import com.datasalt.pangool.tuplemr.mapred.MapOnlyMapper;
+import com.datasalt.pangool.utils.TaskAttemptContextFactory;
+import com.splout.db.common.PartitionMap;
 
 /**
  * This class samples a list of {@link TableInput} files that produce a certain Table Schema. There are two sampling
@@ -123,7 +133,7 @@ public class TupleSampler implements Serializable {
 			Map<InputSplit, InputFormat<ITuple, NullWritable>> splitToFormat = new HashMap<InputSplit, InputFormat<ITuple, NullWritable>>();
 			Map<InputSplit, RecordProcessor> recordProcessorPerSplit = new HashMap<InputSplit, RecordProcessor>();
 			Map<InputSplit, Map<String, String>> specificHadoopConfMap = new HashMap<InputSplit, Map<String, String>>();
-			
+
 			// Iterate over all {@link TableInput} and collect information about the InputSplits derived from them
 			for(TableInput tableFile : inputFiles) {
 				Job job = new Job(hadoopConf);
@@ -160,8 +170,8 @@ public class TupleSampler implements Serializable {
 				try {
 					DefaultSamplingOptions defOptions = (DefaultSamplingOptions) options;
 					// Default sampling method
-					defaultSampling(tableSchema, sampleSize, hadoopConf, outFile, splits, splitToFormat, specificHadoopConfMap,
-					    recordProcessorPerSplit, defOptions.getMaxSplitsToVisit());
+					defaultSampling(tableSchema, sampleSize, hadoopConf, outFile, splits, splitToFormat,
+					    specificHadoopConfMap, recordProcessorPerSplit, defOptions.getMaxSplitsToVisit());
 				} catch(ClassCastException e) {
 					throw new RuntimeException("Invalid options class: " + options.getClass() + " Expected:"
 					    + DefaultSamplingOptions.class);
@@ -286,7 +296,9 @@ public class TupleSampler implements Serializable {
 	    Map<InputSplit, InputFormat<ITuple, NullWritable>> splitToFormat,
 	    Map<InputSplit, Map<String, String>> specificHadoopConf,
 	    Map<InputSplit, RecordProcessor> recordProcessorPerSplit, int maxSplitsToVisit)
-	    throws IOException, InterruptedException {
+	    throws IOException, InterruptedException, IllegalArgumentException, SecurityException,
+	    ClassNotFoundException, InstantiationException, IllegalAccessException, InvocationTargetException,
+	    NoSuchMethodException {
 
 		// Instantiate the writer we will write samples to
 		FileSystem fs = FileSystem.get(outFile.toUri(), hadoopConf);
@@ -313,10 +325,11 @@ public class TupleSampler implements Serializable {
 		// Take N samples from different parts of the input
 		for(int i = 0; i < samples; ++i) {
 			TaskAttemptID attemptId = new TaskAttemptID(new TaskID(), 1);
-			TaskAttemptContext attemptContext = new TaskAttemptContext(hadoopConf, attemptId);
+
+			TaskAttemptContext attemptContext = TaskAttemptContextFactory.get(hadoopConf, attemptId);
 			InputSplit split = splits.get(sampleStep * i);
 			if(specificHadoopConf.get(split) != null) {
-				for(Map.Entry<String, String> specificConf: specificHadoopConf.get(split).entrySet()) {
+				for(Map.Entry<String, String> specificConf : specificHadoopConf.get(split).entrySet()) {
 					attemptContext.getConfiguration().set(specificConf.getKey(), specificConf.getValue());
 				}
 			}
