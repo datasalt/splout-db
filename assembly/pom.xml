@@ -24,8 +24,64 @@
 		</license>
 	</licenses>
 
+
 	<name>Splout SQL Assembly</name>
 	<description>Splout module just to build the distribution assembly</description>
+
+
+    <profiles>
+        <profile>
+            <id>mr1</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <postfix.mapreduce.version>mr1</postfix.mapreduce.version>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>com.splout.db</groupId>
+                    <artifactId>splout-hadoop</artifactId>
+                    <version>${project.parent.version}</version>
+                    <type>tar.gz</type>
+                    <classifier>pre-full-distro</classifier>
+                </dependency>
+
+                <dependency>
+                    <groupId>com.splout.db</groupId>
+                    <artifactId>splout-server</artifactId>
+                    <version>${project.parent.version}</version>
+                    <type>tar.gz</type>
+                    <classifier>pre-full-distro</classifier>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>mr2</id>
+            <properties>
+                <postfix.mapreduce.version>mr2</postfix.mapreduce.version>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>com.splout.db</groupId>
+                    <artifactId>splout-hadoop</artifactId>
+                    <version>${project.parent.version}</version>
+                    <type>tar.gz</type>
+                    <classifier>pre-full-distro-mr2</classifier>
+                </dependency>
+
+                <dependency>
+                    <groupId>com.splout.db</groupId>
+                    <artifactId>splout-server</artifactId>
+                    <version>${project.parent.version}</version>
+                    <type>tar.gz</type>
+                    <classifier>pre-full-distro-mr2</classifier>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
+
 	<build>
 		<plugins>
 			<plugin>
@@ -35,7 +91,8 @@
 					<descriptors>
 						<descriptor>src/main/assembly/distro.xml</descriptor>
 					</descriptors>
-					<appendAssemblyId>false</appendAssemblyId>
+					<appendAssemblyId>true</appendAssemblyId>
+                    <classifier>${postfix.mapreduce.version}</classifier>
 				</configuration>
 				<executions>
 					<execution>
@@ -49,24 +106,6 @@
 			</plugin>
 		</plugins>
 	</build>
-
-	<dependencies>
-		<dependency>
-			<groupId>com.splout.db</groupId>
-			<artifactId>splout-hadoop</artifactId>
-			<version>${project.parent.version}</version>
-			<type>tar.gz</type>
-			<classifier>pre-full-distro</classifier>			
-		</dependency>
-		
-		<dependency>
-			<groupId>com.splout.db</groupId>
-			<artifactId>splout-server</artifactId>
-			<version>${project.parent.version}</version>
-			<type>tar.gz</type>
-			<classifier>pre-full-distro</classifier>								
-		</dependency>		
-	</dependencies>
 
 </project>
 

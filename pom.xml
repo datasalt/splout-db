@@ -1,298 +1,214 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-	<!-- POM Relationships -->
+    <!-- POM Relationships -->
 
-	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<groupId>org.sonatype.oss</groupId>
-		<artifactId>oss-parent</artifactId>
-		<version>7</version>
-	</parent>
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>7</version>
+    </parent>
 
-	<groupId>com.splout.db</groupId>
-	<artifactId>splout-top-level</artifactId>
-	<version>0.2.3-SNAPSHOT</version>
+    <groupId>com.splout.db</groupId>
+    <artifactId>splout-top-level</artifactId>
+    <version>0.2.3-SNAPSHOT</version>
 
-	<modules>
-		<module>splout-resources</module>
-		<module>splout-server</module>
-		<module>splout-hadoop</module>
-		<module>splout-commons</module>
-		<module>splout-javaclient</module>
-		<module>assembly</module>
-	</modules>
+    <modules>
+        <module>splout-resources</module>
+        <module>splout-server</module>
+        <module>splout-hadoop</module>
+        <module>splout-commons</module>
+        <module>splout-javaclient</module>
+        <module>assembly</module>
+    </modules>
 
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<jackson.version>1.7.9</jackson.version>
-		<hadoop.1.version>0.20.2</hadoop.1.version>
-		<hadoop.2.version>2.0.0-alpha</hadoop.2.version>
-	</properties>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <jackson.version>1.7.9</jackson.version>
+        <hadoop.1.version>0.20.2</hadoop.1.version>
+        <hadoop.2.version>2.0.0-alpha</hadoop.2.version>
+    </properties>
 
-	<dependencies />
+    <dependencies/>
 
-	<profiles>
-    		<profile>
-    			<id>hadoop-2</id>
-    		 	<activation>
-      				<property>
-        				<name>hadoop.version</name>
-        				<value>2.0</value>
-		    		</property>
-    			</activation>
-    			<dependencies>
-    				<dependency>
-					<groupId>org.apache.hadoop</groupId>
-					<artifactId>hadoop-mapreduce-client-core</artifactId>
-					<version>${hadoop.2.version}</version>
-					<scope>provided</scope>
-				</dependency>
-				<dependency>
-					<groupId>org.apache.hadoop</groupId>
-					<artifactId>hadoop-mapreduce-client-jobclient</artifactId>
-					<version>${hadoop.2.version}</version>
-					<scope>provided</scope>
-				</dependency>
-				<dependency>
-					<groupId>org.apache.hadoop</groupId>
-					<artifactId>hadoop-common</artifactId>
-					<version>${hadoop.2.version}</version>
-					<scope>provided</scope>
-				</dependency>
-				<dependency>
-					<groupId>org.apache.hadoop</groupId>
-					<artifactId>hadoop-hdfs</artifactId>
-					<version>${hadoop.2.version}</version>
-					<scope>provided</scope>
-				</dependency>
-				<!-- Copied from Pig dependencies, unit test fails otherwise -->
-				<dependency>
-					<groupId>com.google.protobuf</groupId>
-					<artifactId>protobuf-java</artifactId>
-					<version>2.4.0a</version>
-					<scope>provided</scope>
-				</dependency>
-			</dependencies>
-    		</profile>
-    	
-		<profile>
-    			<id>hadoop-1</id>
-	    	 	<activation>
-      				<property>
-        				<name>hadoop.version</name>
-        				<value>1.0</value>
-      				</property>
-       				<activeByDefault>true</activeByDefault>
-     			</activation>
-     			<dependencies>
-     			 	<dependency>
-        	    		<groupId>org.apache.hadoop</groupId>
-        			        <artifactId>hadoop-core</artifactId>
-         				<version>${hadoop.1.version}</version>
-		                	<scope>provided</scope>
-					    <exclusions>
-						<exclusion>
-						    <!-- Excluded because license incompatibility (splout-server) -->
-						    <artifactId>servlet-api</artifactId>
-						    <groupId>org.mortbay.jetty</groupId>
-						</exclusion>
-						<exclusion>
-						    <!-- Excluded because license incompatibility (splout-server) -->
-						    <artifactId>servlet-api-2.5</artifactId>
-						    <groupId>org.mortbay.jetty</groupId>
-						</exclusion>
-						<exclusion>
-						    <!-- Excluded because license incompatibility (splout-server) -->
-						    <groupId>org.eclipse.jdt</groupId>
-						    <artifactId>core</artifactId>
-						</exclusion>
-						<exclusion>
-						    <!-- Excluded because it's not needed and it gives problems under Amazon
-								  AMI -->
-						    <groupId>org.mortbay.jetty</groupId>
-						    <artifactId>jsp-api-2.1</artifactId>
-						</exclusion>
-						<exclusion>
-						    <!-- Excluded because it's not needed and it gives problems under Amazon
-								  AMI -->
-						    <groupId>org.mortbay.jetty</groupId>
-						    <artifactId>jsp-2.1</artifactId>
-						</exclusion>
-						<exclusion>
-						    <!-- Excluded because it's not needed and it gives problems under Amazon
-								  AMI -->
-						    <groupId>tomcat</groupId>
-						    <artifactId>jasper-runtime</artifactId>
-						</exclusion>
-						<exclusion>
-						    <!-- Excluded because it's not needed and it gives problems under Amazon
-								  AMI -->
-						    <groupId>tomcat</groupId>
-						    <artifactId>jasper-compiler</artifactId>
-						</exclusion>
-					    </exclusions>
-            			</dependency>
-			</dependencies>     		
-	    	</profile>
-   	</profiles>
+    <profiles>
+        <profile>
+            <id>mr1</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <postfix.mapreduce.version></postfix.mapreduce.version>
+            </properties>
+        </profile>
 
-	<!-- Build Settings -->
+        <profile>
+            <id>mr2</id>
+            <properties>
+                <postfix.mapreduce.version>-mr2</postfix.mapreduce.version>
+            </properties>
+        </profile>
+    </profiles>
 
-	<packaging>pom</packaging>
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-eclipse-plugin</artifactId>
-				<version>2.9</version>
-				<configuration>
-					<projectNameTemplate>[artifactId]</projectNameTemplate>
-					<manifest />
-					<downloadSources>true</downloadSources>
-					<downloadJavadocs>true</downloadJavadocs>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<configuration>
-					<source>1.6</source>
-					<target>1.6</target>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.12</version>
-				<configuration>
-					<includes>
-						<!-- Naming convention for JUnit tests -->
-						<include>**/Test**</include>
-					</includes>
-					<excludes>
-						<!-- A few innner classes are not to be tested -->
-						<exclude>**/*$*</exclude>
-					</excludes>
-					<enableAssertions>false</enableAssertions>
-					<!-- some IPC tests hang if not run in a separate JVM -->
-					<forkMode>always</forkMode>
-					<!-- TestSpecificCompiler instantiates a Java compiler to test output 
-						results, this does not work with a manifest-only-jar to set the classpath 
-						for the javac. This may cause problems on some platforms. See http://maven.apache.org/plugins/maven-surefire-plugin/examples/class-loading.html 
-						for more information. -->
-					<useManifestOnlyJar>false</useManifestOnlyJar>
-					<!-- configures unit test standard error and standard out to go to a 
-						file per test rather than the console. -->
-					<redirectTestOutputToFile>true</redirectTestOutputToFile>
-					<failIfNoTests>false</failIfNoTests>
-				</configuration>
-			</plugin>
-		</plugins>
-		<pluginManagement>
-			<plugins>
-				<plugin>
-					<groupId>com.soebes.maven.plugins.dmg</groupId>
-					<artifactId>doxygen-maven-plugin</artifactId>
-					<version>1.0.1</version>
-				</plugin>
-			</plugins>
-		</pluginManagement>
-	</build>
 
-	<!-- ////////////// -->
+    <!-- Build Settings -->
 
-	<!-- Project Information -->
+    <packaging>pom</packaging>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-eclipse-plugin</artifactId>
+                <version>2.9</version>
+                <configuration>
+                    <projectNameTemplate>[artifactId]</projectNameTemplate>
+                    <manifest/>
+                    <downloadSources>true</downloadSources>
+                    <downloadJavadocs>true</downloadJavadocs>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.12</version>
+                <configuration>
+                    <includes>
+                        <!-- Naming convention for JUnit tests -->
+                        <include>**/Test**</include>
+                    </includes>
+                    <excludes>
+                        <!-- A few innner classes are not to be tested -->
+                        <exclude>**/*$*</exclude>
+                    </excludes>
+                    <enableAssertions>false</enableAssertions>
+                    <!-- some IPC tests hang if not run in a separate JVM -->
+                    <forkMode>always</forkMode>
+                    <!-- TestSpecificCompiler instantiates a Java compiler to test output
+                        results, this does not work with a manifest-only-jar to set the classpath
+                        for the javac. This may cause problems on some platforms. See http://maven.apache.org/plugins/maven-surefire-plugin/examples/class-loading.html
+                        for more information. -->
+                    <useManifestOnlyJar>false</useManifestOnlyJar>
+                    <!-- configures unit test standard error and standard out to go to a
+                        file per test rather than the console. -->
+                    <redirectTestOutputToFile>true</redirectTestOutputToFile>
+                    <failIfNoTests>false</failIfNoTests>
+                </configuration>
+            </plugin>
+        </plugins>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>com.soebes.maven.plugins.dmg</groupId>
+                    <artifactId>doxygen-maven-plugin</artifactId>
+                    <version>1.0.1</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 
-	<name>Splout </name>
-	<!-- <url></url> -->
-	<description>Splout - A richer database spout for Hadoop</description>
-	<inceptionYear>2012</inceptionYear>
-	<organization>
-		<name>Datasalt Systems S.L.</name>
-		<url>http://www.datasalt.com</url>
-	</organization>
-	<developers>
-		<developer>
-			<id>ivan</id>
-			<name>Ivan De Prado</name>
-			<email>ivan@datasalt.com</email>
-			<organization>Datasalt Systems S.L.</organization>
-			<organizationUrl>http://www.datasalt.com</organizationUrl>
-			<roles>
-				<role>developer</role>
-			</roles>
-			<timezone>+1</timezone>
-		</developer>
-		<developer>
-			<id>pere</id>
-			<name>Pere Ferrera</name>
-			<email>pere@datasalt.com</email>
-			<organization>Datasalt Systems S.L.</organization>
-			<organizationUrl>http://www.datasalt.com</organizationUrl>
-			<roles>
-				<role>developer</role>
-			</roles>
-			<timezone>+1</timezone>
-		</developer>
-	</developers>
+    <!-- ////////////// -->
 
-	<!-- Build Environment -->
+    <!-- Project Information -->
 
-	<!-- Environment Information -->
+    <name>Splout</name>
+    <!-- <url></url> -->
+    <description>Splout - A richer database spout for Hadoop</description>
+    <inceptionYear>2012</inceptionYear>
+    <organization>
+        <name>Datasalt Systems S.L.</name>
+        <url>http://www.datasalt.com</url>
+    </organization>
+    <developers>
+        <developer>
+            <id>ivan</id>
+            <name>Ivan De Prado</name>
+            <email>ivan@datasalt.com</email>
+            <organization>Datasalt Systems S.L.</organization>
+            <organizationUrl>http://www.datasalt.com</organizationUrl>
+            <roles>
+                <role>developer</role>
+            </roles>
+            <timezone>+1</timezone>
+        </developer>
+        <developer>
+            <id>pere</id>
+            <name>Pere Ferrera</name>
+            <email>pere@datasalt.com</email>
+            <organization>Datasalt Systems S.L.</organization>
+            <organizationUrl>http://www.datasalt.com</organizationUrl>
+            <roles>
+                <role>developer</role>
+            </roles>
+            <timezone>+1</timezone>
+        </developer>
+    </developers>
 
-        <mailingLists>
-            <mailingList>
-                <name>Splout SQL User List</name>
-                <post>sploutdb-users@googlegroups.com</post>
-                <archive>https://groups.google.com/forum/?fromgroups#!forum/sploutdb-users</archive>
-            </mailingList>
+    <!-- Build Environment -->
 
-            <mailingList>
-                <name>Splout SQL Developers List</name>
-                <post>sploutdb-dev@googlegroups.com</post>
-                <archive>https://groups.google.com/forum/?fromgroups#!forum/sploutdb-dev</archive>
-            </mailingList>
-        </mailingLists>
+    <!-- Environment Information -->
 
-        <issueManagement>
-            <system>github</system>
-            <url>https://github.com/datasalt/splout-db/</url>
-        </issueManagement>
+    <mailingLists>
+        <mailingList>
+            <name>Splout SQL User List</name>
+            <post>sploutdb-users@googlegroups.com</post>
+            <archive>https://groups.google.com/forum/?fromgroups#!forum/sploutdb-users</archive>
+        </mailingList>
 
-        <ciManagement>
-            <system>Jenkins CI</system>
-            <url>http://clinker.datasalt.com/jenkins/view/Splout-db/</url>
-        </ciManagement>
+        <mailingList>
+            <name>Splout SQL Developers List</name>
+            <post>sploutdb-dev@googlegroups.com</post>
+            <archive>https://groups.google.com/forum/?fromgroups#!forum/sploutdb-dev</archive>
+        </mailingList>
+    </mailingLists>
 
-	<scm>
-		<url>https://github.com/datasalt/splout-db</url>
-		<connection>scm:git:git://github.com/datasalt/splout-db.git</connection>
-		<developerConnection>scm:git:git@github.com:datasalt/splout-db.git</developerConnection>
-	</scm>
+    <issueManagement>
+        <system>github</system>
+        <url>https://github.com/datasalt/splout-db/</url>
+    </issueManagement>
 
-	<!-- Maven Environment -->
+    <ciManagement>
+        <system>Jenkins CI</system>
+        <url>http://clinker.datasalt.com/jenkins/view/Splout-db/</url>
+    </ciManagement>
 
-	<repositories> 
-		<repository> 
-			<id>datasalt-snapshots</id> 
-			<name>Datasalt Snapshot Repository</name> 
-			<url>http://clinker.datasalt.com/nexus/content/groups/public-snapshots</url> 
-			<releases> 
-				<enabled>false</enabled> 
-			</releases> 
-			<snapshots> 
-				<enabled>true</enabled> 
-			</snapshots> 
-		</repository> 
-	</repositories>
+    <scm>
+        <url>https://github.com/datasalt/splout-db</url>
+        <connection>scm:git:git://github.com/datasalt/splout-db.git</connection>
+        <developerConnection>scm:git:git@github.com:datasalt/splout-db.git</developerConnection>
+    </scm>
 
-	<pluginRepositories />
+    <!-- Maven Environment -->
 
-        <distributionManagement>
-            <snapshotRepository>
-                <id>datasalt-snapshots</id>
-                <url>http://clinker.datasalt.com/nexus/content/repositories/snapshots</url>
-            </snapshotRepository>
-        </distributionManagement>
+    <repositories>
+        <repository>
+            <id>datasalt-snapshots</id>
+            <name>Datasalt Snapshot Repository</name>
+            <url>http://clinker.datasalt.com/nexus/content/groups/public-snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <pluginRepositories/>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>datasalt-snapshots</id>
+            <url>http://clinker.datasalt.com/nexus/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
 </project>

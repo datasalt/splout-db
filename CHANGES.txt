@@ -1,7 +1,16 @@
 Splout SQL Change Log
 =====================
 
-(DEVELOPMENT 0.2.3-SNAPSHOT)
+(DEVELOPMENT 0.2.4-SNAPSHOT)
+
+Splout SQL 0.2.3
+
+NEW FEATURES
+
+ - 2013-04-05 - MapReduce 2 integration. Now YARN is supported. Two versions
+                are compiled: one compatible with mapreduce 1 (mr1) and the
+                other compatible with mapreduce 2 (mr2). Use the maven
+                profile mr2 (-Pmr2) to create binaries for MapReduce 2.
 
 Splout SQL 0.2.2
 

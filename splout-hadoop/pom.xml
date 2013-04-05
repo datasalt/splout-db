@@ -26,8 +26,191 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<pangool.version>0.60.3-SNAPSHOT</pangool.version>
+		<pangool.version>0.60.3</pangool.version>
 	</properties>
+
+    <profiles>
+        <profile>
+            <id>mr1</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <dependencies>
+                <!-- Pangool: Hadoop made easy -->
+                <dependency>
+                    <groupId>com.datasalt.pangool</groupId>
+                    <artifactId>pangool-core</artifactId>
+                    <version>${pangool.version}</version>
+                    <exclusions>
+                        <exclusion>
+                            <!-- Excluded because license incompatibility -->
+                            <artifactId>servlet-api</artifactId>
+                            <groupId>org.mortbay.jetty</groupId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.apache.commons</groupId>
+                            <artifactId>commons-io</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>javax.servlet</groupId>
+                            <artifactId>servlet-api</artifactId>
+                        </exclusion>
+                        <!-- Excluded because it gives problems with some Hadoop versions -->
+                        <exclusion>
+                            <groupId>org.slf4j</groupId>
+                            <artifactId>slf4j-log4j12</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.slf4j</groupId>
+                            <artifactId>jcl-over-slf4j</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.slf4j</groupId>
+                            <artifactId>slf4j-jdk14</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-core</artifactId>
+                    <version>${hadoop.1.version}</version>
+                    <scope>provided</scope>
+                    <exclusions>
+                        <exclusion>
+                            <!-- Excluded because license incompatibility (splout-server) -->
+                            <artifactId>servlet-api</artifactId>
+                            <groupId>org.mortbay.jetty</groupId>
+                        </exclusion>
+                        <exclusion>
+                            <!-- Excluded because license incompatibility (splout-server) -->
+                            <artifactId>servlet-api-2.5</artifactId>
+                            <groupId>org.mortbay.jetty</groupId>
+                        </exclusion>
+                        <exclusion>
+                            <!-- Excluded because license incompatibility (splout-server) -->
+                            <groupId>org.eclipse.jdt</groupId>
+                            <artifactId>core</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <!-- Excluded because it's not needed and it gives problems under Amazon
+                                  AMI -->
+                            <groupId>org.mortbay.jetty</groupId>
+                            <artifactId>jsp-api-2.1</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <!-- Excluded because it's not needed and it gives problems under Amazon
+                                  AMI -->
+                            <groupId>org.mortbay.jetty</groupId>
+                            <artifactId>jsp-2.1</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <!-- Excluded because it's not needed and it gives problems under Amazon
+                                  AMI -->
+                            <groupId>tomcat</groupId>
+                            <artifactId>jasper-runtime</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <!-- Excluded because it's not needed and it gives problems under Amazon
+                                  AMI -->
+                            <groupId>tomcat</groupId>
+                            <artifactId>jasper-compiler</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>mr2</id>
+            <dependencies>
+                <!-- Pangool: Hadoop made easy -->
+                <dependency>
+                    <groupId>com.datasalt.pangool</groupId>
+                    <artifactId>pangool-core</artifactId>
+                    <version>${pangool.version}</version>
+                    <classifier>mr2</classifier>
+                    <exclusions>
+                        <exclusion>
+                            <!-- Excluded because license incompatibility -->
+                            <artifactId>servlet-api</artifactId>
+                            <groupId>org.mortbay.jetty</groupId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.apache.commons</groupId>
+                            <artifactId>commons-io</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>javax.servlet</groupId>
+                            <artifactId>servlet-api</artifactId>
+                        </exclusion>
+                        <!-- Excluded because it gives problems with some Hadoop versions -->
+                        <exclusion>
+                            <groupId>org.slf4j</groupId>
+                            <artifactId>slf4j-log4j12</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.slf4j</groupId>
+                            <artifactId>jcl-over-slf4j</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.slf4j</groupId>
+                            <artifactId>slf4j-jdk14</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-mapreduce-client-core</artifactId>
+                    <version>${hadoop.2.version}</version>
+                    <scope>provided</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-mapreduce-client-jobclient</artifactId>
+                    <version>${hadoop.2.version}</version>
+                    <scope>provided</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-common</artifactId>
+                    <version>${hadoop.2.version}</version>
+                    <scope>provided</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-hdfs</artifactId>
+                    <version>${hadoop.2.version}</version>
+                    <scope>provided</scope>
+                </dependency>
+                <!-- Copied from Pig dependencies, unit test fails otherwise -->
+                <dependency>
+                    <groupId>com.google.protobuf</groupId>
+                    <artifactId>protobuf-java</artifactId>
+                    <version>2.4.0a</version>
+                    <scope>provided</scope>
+                </dependency>
+            </dependencies>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <artifactId>maven-jar-plugin</artifactId>
+                            <executions>
+                                <execution>
+                                    <id>default-jar</id>
+                                    <configuration>
+                                        <classifier>mr2</classifier>
+                                    </configuration>
+                                </execution>
+                            </executions>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+    </profiles>
 
 	<build>
 		<sourceDirectory>src/main/java</sourceDirectory>
@@ -200,7 +383,6 @@
 				<configuration>
 					<descriptors>
 						<descriptor>src/main/assembly/hadoop-job.xml</descriptor>
-						<descriptor>src/main/assembly/distro.xml</descriptor>
 						<descriptor>src/main/assembly/pre-full-distro.xml</descriptor>
 					</descriptors>
 					<archive>
@@ -342,41 +524,6 @@
 			<groupId>commons-collections</groupId>
 			<artifactId>commons-collections</artifactId>
 			<version>3.2.1</version>
-		</dependency>
-
-		<!-- Pangool: Hadoop made easy -->
-		<dependency>
-			<groupId>com.datasalt.pangool</groupId>
-			<artifactId>pangool-core</artifactId>
-			<version>${pangool.version}</version>
-			<exclusions>
-				<exclusion>
-					<!-- Excluded because license incompatibility -->
-					<artifactId>servlet-api</artifactId>
-					<groupId>org.mortbay.jetty</groupId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.apache.commons</groupId>
-					<artifactId>commons-io</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>javax.servlet</groupId>
-					<artifactId>servlet-api</artifactId>
-				</exclusion>
-				<!-- Excluded because it gives problems with some Hadoop versions -->
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-log4j12</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>jcl-over-slf4j</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-jdk14</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 
 		<!-- jets3t -->
