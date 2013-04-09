@@ -5,13 +5,13 @@
     <parent>
         <groupId>com.splout.db</groupId>
         <artifactId>splout-top-level</artifactId>
-        <version>0.2.3</version>
+        <version>0.2.4-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <groupId>com.splout.db</groupId>
     <artifactId>splout-javaclient</artifactId>
-    <version>0.2.3</version>
+    <version>0.2.4-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>Splout SQL Java client</name>
@@ -157,7 +157,7 @@
         <dependency>
             <groupId>com.splout.db</groupId>
             <artifactId>splout-commons</artifactId>
-            <version>0.2.3</version>
+            <version>0.2.4-SNAPSHOT</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.google.guava</groupId>
