@@ -21,6 +21,8 @@ package com.splout.db.hadoop;
  */
 
 import com.datasalt.pangool.io.*;
+import com.datasalt.pangool.tuplemr.Criteria;
+import com.datasalt.pangool.tuplemr.OrderBy;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat;
 import com.datasalt.pangool.utils.test.AbstractHadoopTestLibrary;
 import com.splout.db.common.PartitionEntry;
@@ -204,6 +206,7 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary implement
     tBuilder = new TableBuilder(new Schema("dummy", theSchema1.getFields()));
     tBuilder.addTupleFile(new Path(INPUT + 2));
     tBuilder.partitionBy("id");
+    tBuilder.insertionSortOrder(new OrderBy().add("id", Criteria.Order.ASC));
     builder.add(tBuilder.build());
 
     TablespaceGenerator viewGenerator = new TablespaceGenerator(builder.build(), new Path(OUTPUT), this.getClass());
