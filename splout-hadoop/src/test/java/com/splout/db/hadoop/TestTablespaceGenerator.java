@@ -198,6 +198,7 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary implement
     } else {
       tBuilder.partitionBy("id");
     }
+    tBuilder.insertionSortOrder(new OrderBy().add("id", Criteria.Order.ASC));
     builder.add(tBuilder.build());
     builder.setNPartitions(1);
 
@@ -206,7 +207,6 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary implement
     tBuilder = new TableBuilder(new Schema("dummy", theSchema1.getFields()));
     tBuilder.addTupleFile(new Path(INPUT + 2));
     tBuilder.partitionBy("id");
-    tBuilder.insertionSortOrder(new OrderBy().add("id", Criteria.Order.ASC));
     builder.add(tBuilder.build());
 
     TablespaceGenerator viewGenerator = new TablespaceGenerator(builder.build(), new Path(OUTPUT), this.getClass());
