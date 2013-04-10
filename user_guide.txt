@@ -16,6 +16,7 @@ Download
 
 Download the latest release from http://search.maven.org/#browse%7C-1327466356[Maven central]. You will find two kinds
 of release files:
+
 - The ones with "mr1" in the name should be used for Hadoop 0.20.X and 1.X versions.
 - The ones with "mr2" in the name should be used for Hadoop 2.X and YARN.
 
@@ -26,7 +27,7 @@ Hadoop < 2.X (0.20.X, 1.X)
 
 You must have HADOOP_HOME environment variable defined in your system. Splout will load the libraries from your Hadoop distribution in runtime.
 
-Hadoop < 2.X (0.20.X, 1.X)
+Hadoop >= 2.X
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You must have HADOOP_COMMON_HOME, HADOOP_HDFS_HOME, HADOOP_MAPRED_HOME environment variables defined in your system. Splout will load the libraries from your Hadoop distribution in runtime.
