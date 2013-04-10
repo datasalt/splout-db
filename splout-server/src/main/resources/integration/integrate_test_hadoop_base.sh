@@ -84,7 +84,7 @@ sleep 60
 
 echo "Running integration test..."
 cd $SPLOUT_HOME
-$HADOOP_HOME/bin/hadoop jar splout-hadoop-*-SNAPSHOT-hadoop.jar integrationtest -i examples/pagecounts/pagecounts-sample/pagecounts-20090430-230000-sample
+$HADOOP_HOME/bin/hadoop jar splout-hadoop-*-hadoop*.jar integrationtest -i examples/pagecounts/pagecounts-sample/pagecounts-20090430-230000-sample
 
 # Stop Splout
 
