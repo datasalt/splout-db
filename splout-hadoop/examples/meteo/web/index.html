@@ -250,7 +250,8 @@ drawMeteoSerie(slice());
 
 // Autosuggest function
 function suggestStation(query, callback) {
-$.getJSON(sploutURL + '/api/query/meteo-pby-stn-wban?key=any&sql=' + 'select name from stations where name like "' + query + '%25" limit 20;' + '&callback=?',
+$.getJSON(sploutURL + '/api/query/meteo-pby-stn-wban?key=any&sql=' +
+encodeURIComponent('select name from stations where name like "' + query + '%" limit 20;') + '&callback=?',
 function(data) {
 var suggestions = [];
 $.each(data.result, function(i, data) {
