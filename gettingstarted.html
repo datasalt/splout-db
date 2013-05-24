@@ -13,12 +13,14 @@ title: Getting started with Splout SQL
 <ul>
   <li>Java >= 1.6</li>
   <li><a href='http://www.apache.org/dyn/closer.cgi/hadoop/common/' target='_blank'>Hadoop stable or
-    previous versions of it</a> installed on your machine. HADOOP_HOME must be defined.
+    previous versions of it</a> installed on your machine. <strong>HADOOP_HOME</strong> must be defined for Hadoop &lt; 2.X
+    and <strong>HADOOP_COMMON_HOME, HADOOP_HDFS_HOME, HADOOP_MAPRED_HOME</strong> for Hadoop &gt;= 2.X.
   </li>
 </ul>
 
 <p>You can <a href='http://search.maven.org/#browse%7C-1327466356' target='_blank'>download a release
-  of Splout from Maven Central</a>. After that, you just need to decompress it.</p>
+  of Splout from Maven Central</a>. Download versions with <strong>mr2</strong> in the name if you are using Hadoop &gt;= 2.X (YARN).
+  After that, you just need to decompress it.</p>
 
 <h3 id="running">Running a local cluster</h3>
 
@@ -57,7 +59,7 @@ bin/splout-service.sh dnode stop
 <p>Load the table city from the CSV file city.csv and use the country_code field to partition it into 4
   partitions:</p>
 
-<pre><tt>hadoop jar splout-*-hadoop.jar simple-generate --input examples/world/city.csv --output
+<pre><tt>hadoop jar splout-*-hadoop*.jar simple-generate --input examples/world/city.csv --output
   database-files --tablespace city_pby_country_code --table city --separator , --escape \\ --quotes
   \"\"\" --nullstring \\N --schema
   "id:int,name:string,country_code:string,district:string,population:int" --partitionby country_code
@@ -67,7 +69,7 @@ bin/splout-service.sh dnode stop
 <p>Finally, deploy the results into Splout, using replication 2. That is, there will be 2 replicas per
   each partition:</p>
 
-<pre><tt>hadoop jar splout-*-hadoop.jar deploy --root database-files --tablespaces city_pby_country_code
+<pre><tt>hadoop jar splout-*-hadoop*.jar deploy --root database-files --tablespaces city_pby_country_code
   --replication 2 --qnode http://localhost:4412
 </tt></pre>
 
@@ -174,7 +176,7 @@ bin/splout-service.sh dnode stop
   <strong>world-pby-country.json</strong> and <strong>world-pby-continent-region.json</strong></p>
 <p>Launch the following command to create both tablespaces:</p>
 
-<pre><tt>hadoop jar splout-*-hadoop.jar generate --output database-files --tablespacefile
+<pre><tt>hadoop jar splout-*-hadoop*.jar generate --output database-files --tablespacefile
   examples/world/world-pby-country.json --tablespacefile examples/world/world-pby-continent-region.json
 </tt></pre>
 
@@ -188,9 +190,9 @@ bin/splout-service.sh dnode stop
   that information between tablespaces will be consistent. Whichever of the following command performs
   the deploy of the tablespaces.</p>
 
-<pre><tt>hadoop jar splout-*-hadoop.jar deploy -root database-files -ts world-pby-continent-region -ts world-pby-country -r 2 -q http://localhost:4412</tt></pre>
+<pre><tt>hadoop jar splout-*-hadoop*.jar deploy -root database-files -ts world-pby-continent-region -ts world-pby-country -r 2 -q http://localhost:4412</tt></pre>
 
-<pre><tt>hadoop jar splout-*-hadoop.jar deploy --config-file examples/world/deployment.json --qnode http://localhost:4412</tt></pre>
+<pre><tt>hadoop jar splout-*-hadoop*.jar deploy --config-file examples/world/deployment.json --qnode http://localhost:4412</tt></pre>
 
 <p>Now both tablespaces should be present at Splout SQL. Have a look to the console.</p>
 
