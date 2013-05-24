@@ -412,6 +412,12 @@ We will see an overview of such functionality in this section, together with som
 Integration with Hive
 ~~~~~~~~~~~~~~~~~~~~~
 
+Note: For using Hive with Splout, it is recommended to add Hive conf/ and lib/ folder to the HADOOP_CLASSPATH environment variable:
+
+ export HADOOP_CLASSPATH=$HADOOP_CLASSPATH:$HIVE_HOME/conf:$HIVE_HOME/lib/*
+
+In this way, Splout will be able to locate the appropriate Hive metastore and sample the Schema of Hive tables implicitly.
+
 For importing tables using the "simple-generate" tool we can use arguments "-hdb" and "-htn" for indicating the Hive database and the
 Hive table we want to import. We will need to specify that the input type is "HIVE" through "-it" property and add the rest of 
 parameters needed (number of partitions, partitioning columns, output folder, table name and tablespace name). Note how 
@@ -449,6 +455,11 @@ When using the Java API, we can add Hive table inputs with methods addHiveTable(
 Keep in mind that if you are using Hive with default embedded Derby database you can't import Hive tables while you have another
 session opened in Hive at the same time, as the import process will try to connect to it too.
 
+Note: When using advanced Hive features such as the OCRInputFormat, it is also needed to add the hive-exec JAR via "-libjars", so that
+Mappers and Reducers can understand this native format:
+
+ hadoop jar splout-*-hadoop.jar generate -libjars $HIVE_HOME/lib/hive-exec-0.11.0.jar <rest-of-commands-here>
+ 
 Integration with Cascading
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
