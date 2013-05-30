@@ -234,29 +234,6 @@ public class TupleSQLite4JavaOutputFormat extends FileOutputFormat<ITuple, NullW
 		// This method is called one time per each partition
 		private void initSql(int partition) throws IOException {
 
-			if(!FileSystem.get(conf).equals(FileSystem.getLocal(conf))) {
-				// This is a trick for not having to use the DistributedCache:
-				// "The child-jvm always has its current working directory added to the java.library.path and LD_LIBRARY_PATH"
-				// (from http://hadoop.apache.org/docs/mapreduce/r0.22.0/mapred_tutorial.html#Task+Execution+%26+Environment)
-				// So we bundle the native libs in the JAR and copy them to the working directory
-				String[] mapRedLocalDirs = conf.get("mapred.local.dir").split(",");
-				for(String mapRedLocaLDir : mapRedLocalDirs) {
-					LOG.info("Mapred local dir: " + mapRedLocaLDir);
-					File[] nativeLibs = new File(mapRedLocaLDir + "/../jars").listFiles();
-					LOG.info("Examining: " + (mapRedLocaLDir + "/../jars"));
-					if(nativeLibs != null) {
-						for(File nativeLib : nativeLibs) {
-							if((nativeLib + "").contains("sqlite")) {
-								FileUtils.copyFile(nativeLib, new File(".", nativeLib.getName()));
-							}
-						}
-						LOG.info("Found native libraries in : " + Arrays.toString(nativeLibs)
-						    + ", copied to task work directory.");
-						break;
-					}
-				}
-			}
-
 			Path outPath = FileOutputFormat.getOutputPath(context);
 			fs = outPath.getFileSystem(conf);
 			Path perm = new Path(FileOutputFormat.getOutputPath(context), partition + ".db");
