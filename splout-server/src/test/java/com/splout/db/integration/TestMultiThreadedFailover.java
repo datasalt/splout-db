@@ -142,7 +142,7 @@ public class TestMultiThreadedFailover extends BaseIntegrationTest {
 						try {
 							while(true) {
 								int randomDNode = Math.abs(random.nextInt()) % N_DNODES;
-								QueryStatus status = client.query(TABLESPACE, (randomDNode * 10) + "", "SELECT * FROM "
+								QueryStatus status = client.query(TABLESPACE, ((randomDNode * 10) - 1) + "", "SELECT * FROM "
 								    + TABLE + ";", null);
 								log.info("Query status -> " + status);
 								assertEquals(1, status.getResult().size());

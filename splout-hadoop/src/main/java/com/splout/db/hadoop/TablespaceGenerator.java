@@ -232,6 +232,7 @@ public class TablespaceGenerator implements Serializable {
 				try {
 					key = getPartitionByKey(tuple, table.getTableSpec(), jsEngine);
 				} catch(Throwable e) {
+					reader.close();
 					throw new RuntimeException(e);
 				}
 				keys.add(key);

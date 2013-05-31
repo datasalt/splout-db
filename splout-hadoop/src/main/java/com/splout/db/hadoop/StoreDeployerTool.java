@@ -111,7 +111,7 @@ public class StoreDeployerTool {
       deployRequests[tIndex].setData_uri(new Path(absoluteOutPath, "store").toUri().toString());
       deployRequests[tIndex].setPartitionMap(partitionMap.getPartitionEntries());
 
-      // If rep>dnodes, imposible to reach this level of replication
+      // If rep > dnodes, impossible to reach this level of replication
       int repFactor = tablespace.getReplication();
       if (dnodes.size() < repFactor) {
         log.warn("WARNING: Replication factor " + repFactor + " for tablespace " + tablespace.getTablespace() + " is bigger than the number of serving DNodes. Adjusting replication factor to " + dnodes.size());
