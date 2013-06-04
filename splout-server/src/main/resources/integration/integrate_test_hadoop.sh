@@ -4,7 +4,7 @@
 
 # Stable Apache 
 
-export HADOOP_REPO="http://mirror.arcor-online.net/www.apache.org/hadoop/common/stable/"
+export HADOOP_REPO="http://archive.apache.org/dist/hadoop/core/hadoop-1.0.4/"
 export HADOOP_FILE="hadoop-1.0.4"
 export HADOOP_EXT=".tar.gz"
 
