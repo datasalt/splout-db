@@ -3,6 +3,10 @@ Splout SQL Change Log
 
 (DEVELOPMENT 0.2.4-SNAPSHOT)
 
+BUG FIXES
+
+ - 2013-06-04 - Better handling of temporary folders at TupleSQLite4JavaOutputFormat. Eliminated the collision possibilities.
+
 Splout SQL 0.2.3
 
 NEW FEATURES
