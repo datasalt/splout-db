@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 
@@ -42,6 +44,8 @@ import com.splout.db.hadoop.TablespaceBuilder.TablespaceBuilderException;
  */
 public class JSONTablespaceDefinition {
 
+	private final static Log log = LogFactory.getLog(JSONTablespaceDefinition.class);
+	
 	private String name;
 	private int nPartitions;
 	private List<JSONTableDefinition> partitionedTables;
@@ -65,12 +69,26 @@ public class JSONTablespaceDefinition {
 			throw new IllegalArgumentException("Table must have some table inputs.");
 		}
 
+		// First we look to see if there is any HIVE or CASCADING tableInputs
+		// So we can instantiate the TableBuilder in one way or another (explicit / implicit schema).
+		boolean implicitSchema = false;
+		for(JSONTableInputDefinition tableInput : table.getTableInputs()) {
+			if(tableInput.getInputType().equals(InputType.HIVE) || tableInput.getInputType().equals(InputType.CASCADING)) {
+				implicitSchema = true; break;
+			}
+		}
+		
 		TableBuilder tableBuilder;
 		Schema schema = null;
 
 		if(table.getSchema() != null) {
-			schema = new Schema(table.getName(), Fields.parse(table.getSchema()));
-			tableBuilder = new TableBuilder(schema);
+			if(implicitSchema) {
+				tableBuilder = new TableBuilder(table.getName(), hadoopConf);
+				log.warn("Ignoring explicit schema declaration in tablespace descriptor as there are other implicit schema input sources (HIVE; CASCADING)");
+			} else {
+				schema = new Schema(table.getName(), Fields.parse(table.getSchema()));
+				tableBuilder = new TableBuilder(schema);
+			}
 		} else {
 			tableBuilder = new TableBuilder(table.getName(), hadoopConf);
 		}
@@ -95,10 +113,6 @@ public class JSONTablespaceDefinition {
 		}
 		if(table.getFinalStatements().size() != 0) {
 			tableBuilder.finalSQL(table.getFinalStatements().toArray(new String[0]));
-		}
-
-		if(table.getInsertionOrderBy() != null) {
-			tableBuilder.insertionSortOrder(OrderBy.parse(table.getInsertionOrderBy()));
 		}
 
 		for(JSONTableInputDefinition tableInput : table.getTableInputs()) {
@@ -155,6 +169,10 @@ public class JSONTablespaceDefinition {
 				}
 				tableBuilder.addHiveTable(tableInput.getHiveDbName(), tableInput.getHiveTableName());
 			}
+		}
+
+		if(table.getInsertionOrderBy() != null) {
+			tableBuilder.insertionSortOrder(OrderBy.parse(table.getInsertionOrderBy()));
 		}
 
 		if(isReplicateAll) {

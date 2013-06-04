@@ -235,6 +235,7 @@ public class TupleSQLite4JavaOutputFormat extends FileOutputFormat<ITuple, NullW
 		// This method is called one time per each partition
 		private void initSql(int partition) throws IOException {
 
+<<<<<<< HEAD
 			if(!FileSystem.get(conf).equals(FileSystem.getLocal(conf))) {
 				// This is a trick for not having to use the DistributedCache:
 				// "The child-jvm always has its current working directory added to the java.library.path and LD_LIBRARY_PATH"
@@ -273,6 +274,15 @@ public class TupleSQLite4JavaOutputFormat extends FileOutputFormat<ITuple, NullW
       Path temp = conf.getLocalPath("mapred.local.dir",
           "splout_task_" + context.getTaskAttemptID() + '.' + FILE_SEQUENCE.incrementAndGet());
 
+=======
+			Path outPath = FileOutputFormat.getOutputPath(context);
+			fs = outPath.getFileSystem(conf);
+			Path perm = new Path(FileOutputFormat.getOutputPath(context), partition + ".db");
+			Path temp = conf.getLocalPath("mapred.local.dir",
+			    partition + "." + FILE_SEQUENCE.incrementAndGet());
+			fs.delete(perm, true); // delete old, if any
+			fs.delete(temp, true); // delete old, if any
+>>>>>>> 521762d35b4781c1eed271812d51e820f7eb50d6
 			Path local = fs.startLocalOutput(perm, temp);
 			//
 			try {

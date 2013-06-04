@@ -207,6 +207,33 @@ public class TestPartitionMap {
 	}
 	
 	@Test
+	public void testNullKey() {
+		List<PartitionEntry> entries = new ArrayList<PartitionEntry>();
+		PartitionEntry entry = new PartitionEntry();
+		entry.setMin(null);
+		entry.setMax("");
+		entry.setShard(0);
+		entries.add(entry);
+		
+		//
+		entry = new PartitionEntry();
+		entry.setMin("");
+		entry.setMax("foo");
+		entry.setShard(1);
+		entries.add(entry);
+		
+		//
+		entry = new PartitionEntry();
+		entry.setMin("foo");
+		entry.setMax(null);
+		entry.setShard(2);
+		entries.add(entry);
+		
+		PartitionMap map = new PartitionMap(entries);
+		System.out.println(map.findPartition("foo"));
+	}
+	
+	@Test
 	public void test() throws JSONSerDeException {
 		List<PartitionEntry> entries = new ArrayList<PartitionEntry>();
 		PartitionEntry entry = new PartitionEntry();

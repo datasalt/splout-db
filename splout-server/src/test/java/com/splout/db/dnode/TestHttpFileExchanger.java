@@ -117,6 +117,8 @@ public class TestHttpFileExchanger {
 		
 		assertEquals(0, exchanger.getCurrentTransfers().size());
 		assertEquals(1, failed.get());
+		
+		writer.close();
 	}
 	
 	@Test

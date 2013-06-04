@@ -99,7 +99,7 @@ public class PartitionMap implements Serializable {
 
 	/**
 	 * Given a min and a max key, return all the partitions that impact this range. The semantics of the search are such
-	 * that all partitions P will be returned such that P.max > minKey and P.min <= maxKey
+	 * that all partitions P will be returned such that P.max >= minKey and P.min < maxKey
 	 * <p>
 	 * Note that (null, null) is a valid input to this method and will be interpreted as the whole key range, regardless
 	 * of the key type (that's why we use null for representing opened ranges).
@@ -111,12 +111,12 @@ public class PartitionMap implements Serializable {
 			boolean minMatches = true;
 			boolean maxMatches = true;
 			if(entry.getMax() != null && minKey != null) {
-				if(entry.getMax().compareTo(minKey) <= 0) {
+				if(entry.getMax().compareTo(minKey) < 0) {
 					minMatches = false;
 				}
 			}
 			if(entry.getMin() != null && maxKey != null) {
-				if((entry.getMin()).compareTo(maxKey) > 0) {
+				if((entry.getMin()).compareTo(maxKey) >= 0) {
 					maxMatches = false;
 				}
 			}
@@ -129,7 +129,7 @@ public class PartitionMap implements Serializable {
 
 	/**
 	 * Given a key, return the partition that it belongs to, or {@link #NO_PARTITION} if none matches. Mathematically,
-	 * partitions match [min, max).
+	 * partitions match (min, max].
 	 */
 	public int findPartition(String keyObj) {
 		if(keyObj == null) {
@@ -140,12 +140,12 @@ public class PartitionMap implements Serializable {
 			boolean minMatches = true;
 			boolean maxMatches = true;
 			if(entry.getMin() != null) {
-				if((entry.getMin()).compareTo(keyObj) > 0) {
+				if((entry.getMin()).compareTo(keyObj) >= 0) {
 					minMatches = false;
 				}
 			}
 			if(entry.getMax() != null) {
-				if((entry.getMax()).compareTo(keyObj) <= 0) {
+				if((entry.getMax()).compareTo(keyObj) < 0) {
 					maxMatches = false;
 				}
 			}

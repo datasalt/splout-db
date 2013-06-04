@@ -108,7 +108,7 @@ public class TupleSampler implements Serializable {
 
 		public DefaultSamplingOptions() {
 			super();
-			setMaxSplitsToVisit(10);
+			setMaxSplitsToVisit(1000);
 		}
 
 		public int getMaxSplitsToVisit() {
@@ -302,14 +302,17 @@ public class TupleSampler implements Serializable {
 
 		// Instantiate the writer we will write samples to
 		FileSystem fs = FileSystem.get(outFile.toUri(), hadoopConf);
-		TupleFile.Writer writer = new TupleFile.Writer(fs, hadoopConf, outFile,
-		    NullableSchema.nullableSchema(tableSchema));
 
 		if(splits.size() == 0) {
 			throw new IllegalArgumentException("There are no splits to sample from!");
 		}
-		logger.info("Sampling from input splits > " + splits);
+
+		TupleFile.Writer writer = new TupleFile.Writer(fs, hadoopConf, outFile,
+		    NullableSchema.nullableSchema(tableSchema));
+
+		logger.info("Default sampling options, max splits to visit: " + maxSplitsToVisit + ", samples to take: " + sampleSize + ", total number of splits: " + splits.size());
 		int samples = Math.min(maxSplitsToVisit, splits.size());
+		samples = Math.min((int) sampleSize, samples);
 		long recordsPerSample = sampleSize / samples;
 		int sampleStep = splits.size() / samples;
 

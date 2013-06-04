@@ -6,6 +6,7 @@ Splout SQL Change Log
 BUG FIXES
 
  - 2013-06-04 - Better handling of temporary folders at TupleSQLite4JavaOutputFormat. Eliminated the collision possibilities.
+ - 2013-05-24 - Solved small issues with Hive+Splout integration 1) Explicit schema is now ignored and warned instead of crashing 2) Insertion order by works instead of crashing.
 
 Splout SQL 0.2.3
 

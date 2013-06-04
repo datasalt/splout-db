@@ -117,6 +117,9 @@ public class BaseIntegrationTest {
 			repEntry.setNodes(Arrays.asList(new String[] { dNodes.get(i).getAddress(), dNodes.get(j).getAddress() }));
 			replicationEntries.add(repEntry);
 		}
+		// A valid partition map is complete: first min is null and last max is null.
+		partitions.get(0).setMin(null);
+		partitions.get(partitions.size() - 1).setMax(null);
 		return new Tablespace(new PartitionMap(partitions), new ReplicationMap(replicationEntries), 0l, 0l);
 	}
 	
