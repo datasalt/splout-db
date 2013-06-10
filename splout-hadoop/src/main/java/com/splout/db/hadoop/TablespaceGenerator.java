@@ -135,6 +135,8 @@ public class TablespaceGenerator implements Serializable {
 			partitionMap = PartitionMap.oneShardOpenedMap();
 		}
 
+		Log.info("Calculated partition map: " + partitionMap);
+		
 		writeOutputMetadata(conf);
 
 		TupleMRBuilder builder = createMRBuilder(nPartitions, conf);
@@ -240,6 +242,7 @@ public class TablespaceGenerator implements Serializable {
 			reader.close();
 		}
 
+		Log.info(keys.size() + " total keys sampled.");
 		// 1.2 Sort them using default comparators
 		Collections.sort(keys);
 

@@ -263,13 +263,14 @@ public class TupleSampler implements Serializable {
 		}
 
 		FileSystem outFs = outReservoirPath.getFileSystem(hadoopConf);
-		// Instantiate the writer we will write samples to
-		TupleFile.Writer writer = new TupleFile.Writer(outFs, hadoopConf, outputPath,
-		    NullableSchema.nullableSchema(tableSchema));
 
 		if(outFs.listStatus(outReservoirPath) == null) {
 			throw new IOException("Output folder not created: the Job failed!");
 		}
+
+		// Instantiate the writer we will write samples to
+		TupleFile.Writer writer = new TupleFile.Writer(outFs, hadoopConf, outputPath,
+		    NullableSchema.nullableSchema(tableSchema));
 
 		// Aggregate the output into a single file for being consistent with the other sampling methods
 		for(FileStatus fileStatus : outFs.listStatus(outReservoirPath)) {
@@ -339,7 +340,8 @@ public class TupleSampler implements Serializable {
 			logger.info("Sampling split: " + split);
 			RecordReader<ITuple, NullWritable> reader = splitToFormat.get(split).createRecordReader(split,
 			    attemptContext);
-			reader.initialize(split, attemptContext);
+			reader.initialize(split, attemptContext);			
+
 			RecordProcessor processor = recordProcessorPerSplit.get(split);
 			while(reader.nextKeyValue()) {
 				//
