@@ -37,6 +37,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import java.io.File;
@@ -234,13 +235,21 @@ public class TupleSQLite4JavaOutputFormat extends FileOutputFormat<ITuple, NullW
 		// This method is called one time per each partition
 		private void initSql(int partition) throws IOException {
 
-			Path outPath = FileOutputFormat.getOutputPath(context);
-			fs = outPath.getFileSystem(conf);
-			Path perm = new Path(FileOutputFormat.getOutputPath(context), partition + ".db");
-			Path temp = conf.getLocalPath("mapred.local.dir",
-			    partition + "." + FILE_SEQUENCE.incrementAndGet());
-			fs.delete(perm, true); // delete old, if any
-			fs.delete(temp, true); // delete old, if any
+      // HDFS final location of the generated partition file. It will be
+      // loaded to the temporary folder in the HDFS than finally will be
+      // committed by the OutputCommitter to the proper location.
+      FileOutputCommitter committer =
+          (FileOutputCommitter) getOutputCommitter(context);
+      Path perm = new Path(committer.getWorkPath(), partition + ".db");
+      fs = perm.getFileSystem(context.getConfiguration());
+
+      // Make a task unique name that contains the actual index output name to
+      // make debugging simpler
+      // Note: if using JVM reuse, the sequence number will not be reset for a
+      // new task using the jvm
+      Path temp = conf.getLocalPath("mapred.local.dir",
+          "splout_task_" + context.getTaskAttemptID() + '.' + FILE_SEQUENCE.incrementAndGet());
+
 			Path local = fs.startLocalOutput(perm, temp);
 			//
 			try {

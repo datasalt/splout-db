@@ -56,7 +56,7 @@ import com.splout.db.hadoop.TableSpec.FieldIndex;
 import com.splout.db.hadoop.TupleSQLite4JavaOutputFormat.TupleSQLiteOutputFormatException;
 
 @SuppressWarnings("serial")
-public class TestTupleSQLiteOutputFormat implements Serializable {
+public class TestTupleSQLite4JavaOutputFormat implements Serializable {
 
 	public final static String INPUT1 = "in1-" + TestSQLiteOutputFormat.class.getName();
 	public final static String INPUT2 = "in2-" + TestSQLiteOutputFormat.class.getName();
