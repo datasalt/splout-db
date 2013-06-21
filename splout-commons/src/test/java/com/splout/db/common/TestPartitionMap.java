@@ -38,7 +38,7 @@ public class TestPartitionMap {
 	protected PartitionMap testPartitionMap() {
 		List<PartitionEntry> entries = new ArrayList<PartitionEntry>();
 		PartitionEntry entry = new PartitionEntry();
-		entry.setMin("a");
+		entry.setMin(null);
 		entry.setMax("c");
 		entry.setShard(0);
 		entries.add(entry);
@@ -157,34 +157,31 @@ public class TestPartitionMap {
 		
 		PartitionMap partitionMap = new PartitionMap(entries);
 		
-		assertEquals(100 / 50, partitionMap.findPartition(String.format("%05d", 100)));
-		assertEquals(200 / 50, partitionMap.findPartition(String.format("%05d", 200)));
-		assertEquals(300 / 50, partitionMap.findPartition(String.format("%05d", 300)));
+		assertEquals(100 / 50 - 1, partitionMap.findPartition(String.format("%05d", 100)));
+		assertEquals(200 / 50 - 1, partitionMap.findPartition(String.format("%05d", 200)));
+		assertEquals(300 / 50 - 1, partitionMap.findPartition(String.format("%05d", 300)));
   }
   
 	@Test
 	public void testNormalQuery() {
 		PartitionMap map = testPartitionMap();
-		assertEquals(0, map.findPartition("a"));
+		assertEquals(0, map.findPartition("c"));
 		assertEquals(0, map.findPartition("b"));
 		assertEquals(0, map.findPartition("aa"));
 		assertEquals(1, map.findPartition("d"));
 		assertEquals(2, map.findPartition("g"));
 		assertEquals(3, map.findPartition("n"));
-		assertEquals(4, map.findPartition("x"));
+		assertEquals(3, map.findPartition("x"));
 		assertEquals(4, map.findPartition("xxxxxxxxxxx"));
-		assertEquals(PartitionMap.NO_PARTITION, map.findPartition("5"));
-		
-		map.getPartitionEntries().get(0).setMin(null); // open to -Infinity
 		assertEquals(0, map.findPartition("5"));
-
 	}
 
 	@Test
 	public void testRangeQuery() {
 		PartitionMap map = testPartitionMap();
 		List<Integer> partitions = map.findPartitions("c", "n");
-		assertEquals(3, partitions.size());
+		assertEquals(4, partitions.size());
+		assertTrue(partitions.contains(0));
 		assertTrue(partitions.contains(1));
 		assertTrue(partitions.contains(2));
 		assertTrue(partitions.contains(3));
@@ -197,12 +194,14 @@ public class TestPartitionMap {
 		assertTrue(partitions.contains(3));
 				
 		partitions = map.findPartitions("m", "xx");
-		assertEquals(2, partitions.size());
+		assertEquals(3, partitions.size());
+		assertTrue(partitions.contains(2));
 		assertTrue(partitions.contains(3));
 		assertTrue(partitions.contains(4));
 
 		partitions = map.findPartitions("x", "xxxx");
-		assertEquals(1, partitions.size());
+		assertEquals(2, partitions.size());
+		assertTrue(partitions.contains(3));
 		assertTrue(partitions.contains(4));
 	}
 	

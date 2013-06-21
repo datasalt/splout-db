@@ -98,31 +98,22 @@ public class PartitionMap implements Serializable {
 	}
 
 	/**
-	 * Given a min and a max key, return all the partitions that impact this range. The semantics of the search are such
-	 * that all partitions P will be returned such that P.max >= minKey and P.min < maxKey
+	 * Given a min and a max key, return all the partitions that impact this range, min and max inclusive.
 	 * <p>
 	 * Note that (null, null) is a valid input to this method and will be interpreted as the whole key range, regardless
 	 * of the key type (that's why we use null for representing opened ranges).
 	 */
 	public List<Integer> findPartitions(String minKey, String maxKey) {
 		List<Integer> partitions = new ArrayList<Integer>();
-		for(PartitionEntry entry : partitionEntries) {
-			// We assume (-Infinity, Infinity) matching since nulls represent Infinity for any type <T>
-			boolean minMatches = true;
-			boolean maxMatches = true;
-			if(entry.getMax() != null && minKey != null) {
-				if(entry.getMax().compareTo(minKey) < 0) {
-					minMatches = false;
-				}
-			}
-			if(entry.getMin() != null && maxKey != null) {
-				if((entry.getMin()).compareTo(maxKey) >= 0) {
-					maxMatches = false;
-				}
-			}
-			if(minMatches && maxMatches) {
-				partitions.add(entry.getShard());
-			}
+		int minPartitionIndex = 0, maxPartitionIndex = partitionEntries.size() - 1;
+		if(minKey != null) {
+			minPartitionIndex = findPartition(minKey);
+		}
+		if(maxKey != null) {
+			maxPartitionIndex = findPartition(maxKey);
+		}
+		for(int i = minPartitionIndex; i <= maxPartitionIndex; i++) {
+			partitions.add(partitionEntries.get(i).getShard());
 		}
 		return partitions;
 	}

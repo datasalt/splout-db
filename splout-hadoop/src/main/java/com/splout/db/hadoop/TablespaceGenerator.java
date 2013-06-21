@@ -258,7 +258,7 @@ public class TablespaceGenerator implements Serializable {
 			if(min != null) {
 				entry.setMin(min);
 			}
-			int keyIndex = (i + 1) * offset;
+			int keyIndex = i * offset;
 			if(keyIndex < keys.size()) {
 				entry.setMax(keys.get(keyIndex));
 			}

@@ -20,15 +20,16 @@ package com.splout.db.hadoop;
  * #L%
  */
 
-import com.almworks.sqlite4java.SQLiteConnection;
-import com.almworks.sqlite4java.SQLiteException;
-import com.almworks.sqlite4java.SQLiteStatement;
-import com.datasalt.pangool.io.ITuple;
-import com.datasalt.pangool.io.Schema.Field;
-import com.splout.db.common.HeartBeater;
-import com.splout.db.hadoop.SQLiteOutputFormat.SQLRecordWriter;
-import com.splout.db.hadoop.TableSpec.FieldIndex;
-import org.apache.commons.io.FileUtils;
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -40,11 +41,14 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
+import com.almworks.sqlite4java.SQLiteConnection;
+import com.almworks.sqlite4java.SQLiteException;
+import com.almworks.sqlite4java.SQLiteStatement;
+import com.datasalt.pangool.io.ITuple;
+import com.datasalt.pangool.io.Schema.Field;
+import com.splout.db.common.HeartBeater;
+import com.splout.db.hadoop.SQLiteOutputFormat.SQLRecordWriter;
+import com.splout.db.hadoop.TableSpec.FieldIndex;
 
 /**
  * An OutputFormat that accepts Pangool's Tuples and writes to a sqlite4Java SQLite file. The Tuples that are written to

@@ -89,12 +89,12 @@ public class TestTablespaceGeneratorJavaScript {
 		    PartitionMap.class);
 
 		assertEquals(null, partitionMap.getPartitionEntries().get(0).getMin());
-		assertEquals("ab", partitionMap.getPartitionEntries().get(0).getMax());
+		assertEquals("aa", partitionMap.getPartitionEntries().get(0).getMax());
 
-		assertEquals("ab", partitionMap.getPartitionEntries().get(1).getMin());
-		assertEquals("bb", partitionMap.getPartitionEntries().get(1).getMax());
+		assertEquals("aa", partitionMap.getPartitionEntries().get(1).getMin());
+		assertEquals("ab", partitionMap.getPartitionEntries().get(1).getMax());
 
-		assertEquals("bb", partitionMap.getPartitionEntries().get(2).getMin());
+		assertEquals("ab", partitionMap.getPartitionEntries().get(2).getMin());
 		assertEquals(null, partitionMap.getPartitionEntries().get(2).getMax());
 
 		Runtime.getRuntime().exec("rm -rf " + INPUT);

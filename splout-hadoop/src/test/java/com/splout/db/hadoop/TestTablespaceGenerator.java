@@ -87,18 +87,18 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary implement
 		assertEquals(4, partitionMap.size());
 		
 		assertEquals(null, partitionMap.get(0).getMin());
-		assertEquals("id2", partitionMap.get(0).getMax());
+		assertEquals("id1", partitionMap.get(0).getMax());
 		assertEquals(0, (int) partitionMap.get(0).getShard());
 		
-		assertEquals("id2", partitionMap.get(1).getMin());
-		assertEquals("id5", partitionMap.get(1).getMax());
+		assertEquals("id1", partitionMap.get(1).getMin());
+		assertEquals("id2", partitionMap.get(1).getMax());
 		assertEquals(1, (int) partitionMap.get(1).getShard());
 
-		assertEquals("id5", partitionMap.get(2).getMin());
-		assertEquals("id7", partitionMap.get(2).getMax());
+		assertEquals("id2", partitionMap.get(2).getMin());
+		assertEquals("id5", partitionMap.get(2).getMax());
 		assertEquals(2, (int) partitionMap.get(2).getShard());
 
-		assertEquals("id7", partitionMap.get(3).getMin());
+		assertEquals("id5", partitionMap.get(3).getMin());
 		assertEquals(null, partitionMap.get(3).getMax());
 		assertEquals(3, (int) partitionMap.get(3).getShard());
 

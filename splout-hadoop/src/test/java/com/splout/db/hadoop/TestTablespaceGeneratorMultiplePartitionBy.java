@@ -92,7 +92,7 @@ public class TestTablespaceGeneratorMultiplePartitionBy {
 		tablespaceBuilder.add(paymentsBuilder.build());
 		tablespaceBuilder.add(logsBuilder.build());
 		
-		tablespaceBuilder.setNPartitions(4);
+		tablespaceBuilder.setNPartitions(3);
 		
 		TablespaceSpec tablespace = tablespaceBuilder.build();
 		
@@ -106,7 +106,7 @@ public class TestTablespaceGeneratorMultiplePartitionBy {
 		List totalLogs = new ArrayList();
 		List distinctKeys = new ArrayList();
 		
-		for(int i = 0; i < 4; i++) {
+		for(int i = 0; i < 3; i++) {
 			SQLiteJDBCManager manager = new SQLiteJDBCManager(TEST_OUTPUT + "/store/" + i + ".db", 10);
 			List list;
 			list = JSONSerDe.deSer(manager.query("SELECT * FROM payments;", 100), ArrayList.class);
