@@ -383,8 +383,12 @@ public class DNodeHandler implements IDNodeHandler {
 						// remove references to binary SQLite files in ECache
 						// so that space in disk is immediately available
 						String dbKey = version.getTablespace() + "_" + version.getVersion() + "_" + partition.getName();
-						dbCache.remove(dbKey);
-						log.info("-- Removing references from ECache: " + dbKey); 
+						synchronized(dbCache) {
+							if(dbCache.get(dbKey) != null) {
+								dbCache.remove(dbKey);
+								log.info("-- Removing references from ECache: " + dbKey); 
+							}
+						}
 					}
 				}
 			}
@@ -741,7 +745,7 @@ public class DNodeHandler implements IDNodeHandler {
 			log.info("Going to remove " + version + " as I have been told to do so.");
 			try {
 				deleteLocalVersion(version);
-			} catch(IOException e) {
+			} catch(Throwable e) {
 				unexpectedException(e);
 				throw new DNodeException(EXCEPTION_UNEXPECTED, e.getMessage());
 			}
