@@ -376,6 +376,18 @@ public class DNodeHandler implements IDNodeHandler {
 		File tablespaceFolder = new File(dataFolder, version.getTablespace());
 		File versionFolder = new File(tablespaceFolder, version.getVersion() + "");
 		if(versionFolder.exists()) {
+			File[] partitions = versionFolder.listFiles();
+			if(partitions != null) {
+				for(File partition: partitions) {
+					if(partition.isDirectory()) {
+						// remove references to binary SQLite files in ECache
+						// so that space in disk is immediately available
+						String dbKey = version.getTablespace() + "_" + version.getVersion() + "_" + partition.getName();
+						dbCache.remove(dbKey);
+						log.info("-- Removing references from ECache: " + dbKey); 
+					}
+				}
+			}
 			FileUtils.deleteDirectory(versionFolder);
 			log.info("-- Successfully removed " + versionFolder);
 		} else {
