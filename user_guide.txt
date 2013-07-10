@@ -163,7 +163,7 @@ It is fairly easy to install Splout in a distributed environment. By default, Sp
 
 .Distributed configurations
 |=======================
-| Multicast | "hz.join.method=aws", Activated by default. | Optionally, "hz.multicast.group", "hz.multicast.port" can be used for fine-tuning the configuration.
+| Multicast | "hz.join.method=multicast", Activated by default. | Optionally, "hz.multicast.group", "hz.multicast.port" can be used for fine-tuning the configuration.
 | TCP/IP | "hz.join.method=tcp", "hz.tcp.cluster=192.168.1.3,192.168.1.4" | Only hosts specified in the comma-separated list will be considered for membership.
 | AWS | "hz.join.method=aws", "hz.aws.key=KEY", "hz.aws.secret=SECRET" | Using the provided credentials, active hosts in AWS will be considered for membership. The list of hosts can be narrowed by specifying a security group in " hz.aws.security.group"
 |=======================
