@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * SQL Wrapper for querying SQLite by using sqlite4java (http://code.google.com/p/sqlite4java).
@@ -47,6 +48,9 @@ public class SQLite4JavaManager implements ISQLiteManager {
 	
 	// If present, will monitor long-running queries and kill them if needed
 	private TimeoutThread timeoutThread = null;
+	
+	// Will save all opened connections from different Threads so we can close them all
+	private CopyOnWriteArrayList<SQLiteConnection> allOpenedConnections = new CopyOnWriteArrayList<SQLiteConnection>();
 	
 	ThreadLocal<SQLiteConnection> db = new ThreadLocal<SQLiteConnection>() {
 
@@ -64,10 +68,14 @@ public class SQLite4JavaManager implements ISQLiteManager {
 					}
 				}
 			} catch(SQLiteException e) {
+				if(conn != null && conn.isOpen()) {
+					conn.dispose();
+				}
 				e.printStackTrace();
 				return null;
 			}
       log.info("New SQLite connection open with " + dbFile);
+			allOpenedConnections.add(conn);
 			return conn;
 		}
 	};
@@ -136,7 +144,9 @@ public class SQLite4JavaManager implements ISQLiteManager {
 
 	@Override
 	public void close() {
-		db.get().dispose();
+		for(SQLiteConnection conn: allOpenedConnections) {
+			conn.dispose();
+		}
 	}
 
 	@Override
