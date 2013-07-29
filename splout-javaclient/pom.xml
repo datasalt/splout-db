@@ -157,7 +157,7 @@
         <dependency>
             <groupId>com.splout.db</groupId>
             <artifactId>splout-commons</artifactId>
-            <version>0.2.5-SNAPSHOT</version>
+            <version>${project.parent.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.google.guava</groupId>
