@@ -5,13 +5,13 @@
     <parent>
         <groupId>com.splout.db</groupId>
         <artifactId>splout-top-level</artifactId>
-        <version>0.2.4-SNAPSHOT</version>
+        <version>0.2.4</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <groupId>com.splout.db</groupId>
     <artifactId>splout-javaclient</artifactId>
-    <version>0.2.4-SNAPSHOT</version>
+    <version>0.2.4</version>
     <packaging>jar</packaging>
 
     <name>Splout SQL Java client</name>
