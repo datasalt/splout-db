@@ -26,8 +26,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
@@ -49,6 +51,7 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.almworks.sqlite4java.SQLiteConnection;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.hazelcast.core.EntryEvent;
@@ -406,6 +409,20 @@ public class DNodeHandler implements IDNodeHandler {
 	public String sqlQuery(String tablespace, long version, int partition, String query)
 	    throws DNodeException {
 
+		String t = Thread.currentThread().getName();
+		Set<SQLiteConnection> pendingClose = SQLite4JavaManager.CLEAN_UP_AFTER_YOURSELF.get(t);
+		// Because SQLiteConnection can only be closed by owner Thread, here we need to check if we 
+		// have some pending connections to close...
+		if(pendingClose != null && pendingClose.size() > 0) {
+			Iterator<SQLiteConnection> it = pendingClose.iterator();
+			while(it.hasNext()) {
+				SQLiteConnection conn = it.next();
+				log.info("-- Closed a connection pending diposal: " + conn.getDatabaseFile());
+				conn.dispose();
+				it.remove();
+			}
+		}
+		
 		try {
 			try {
 				performanceTool.startQuery();

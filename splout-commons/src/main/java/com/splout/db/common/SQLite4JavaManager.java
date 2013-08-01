@@ -20,21 +20,25 @@ package com.splout.db.common;
  * #L%
  */
 
-import com.almworks.sqlite4java.SQLiteConnection;
-import com.almworks.sqlite4java.SQLiteException;
-import com.almworks.sqlite4java.SQLiteStatement;
-import com.splout.db.common.JSONSerDe.JSONSerDeException;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.io.File;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.almworks.sqlite4java.SQLiteConnection;
+import com.almworks.sqlite4java.SQLiteException;
+import com.almworks.sqlite4java.SQLiteStatement;
+import com.splout.db.common.JSONSerDe.JSONSerDeException;
 
 /**
  * SQL Wrapper for querying SQLite by using sqlite4java (http://code.google.com/p/sqlite4java).
@@ -49,8 +53,17 @@ public class SQLite4JavaManager implements ISQLiteManager {
 	// If present, will monitor long-running queries and kill them if needed
 	private TimeoutThread timeoutThread = null;
 	
-	// Will save all opened connections from different Threads so we can close them all
-	private CopyOnWriteArrayList<SQLiteConnection> allOpenedConnections = new CopyOnWriteArrayList<SQLiteConnection>();
+	public static class ThreadAndConnection {
+	
+		String threadName;
+		SQLiteConnection conn;
+	}
+	
+	// Will save all opened connections from different Threads so we can close them all afterwards
+	private CopyOnWriteArrayList<ThreadAndConnection> allOpenedConnections = new CopyOnWriteArrayList<ThreadAndConnection>();
+	// Expired connections go to this central/static trash so each thread can check if it has something to close...
+	// As SQLiteConnections can only be used and closed by the SAME THREAD that created them, this is the only feasible solution I came up with.
+	public static ConcurrentHashMap<String, Set<SQLiteConnection>> CLEAN_UP_AFTER_YOURSELF = new ConcurrentHashMap<String, Set<SQLiteConnection>>();
 	
 	ThreadLocal<SQLiteConnection> db = new ThreadLocal<SQLiteConnection>() {
 
@@ -75,7 +88,14 @@ public class SQLite4JavaManager implements ISQLiteManager {
 				return null;
 			}
       log.info("New SQLite connection open with " + dbFile);
-			allOpenedConnections.add(conn);
+      ThreadAndConnection tConn = new ThreadAndConnection();
+      tConn.threadName = Thread.currentThread().getName();
+      tConn.conn = conn;
+      if(CLEAN_UP_AFTER_YOURSELF.get(tConn.threadName) == null) {
+      	// Initialize the connection trash so we can always check it without NPE risks
+      	CLEAN_UP_AFTER_YOURSELF.put(tConn.threadName, new HashSet<SQLiteConnection>());
+      }
+			allOpenedConnections.add(tConn);
 			return conn;
 		}
 	};
@@ -144,8 +164,14 @@ public class SQLite4JavaManager implements ISQLiteManager {
 
 	@Override
 	public void close() {
-		for(SQLiteConnection conn: allOpenedConnections) {
-			conn.dispose();
+		String thisThread = Thread.currentThread().getName();
+		for(ThreadAndConnection tConn: allOpenedConnections) {
+			if(thisThread.equals(tConn.threadName)) {
+				log.info("-- Closing my own connection to: " + tConn.conn.getDatabaseFile());
+				tConn.conn.dispose();
+			} else { // needs to be closed at some point by the owner
+				CLEAN_UP_AFTER_YOURSELF.get(tConn.threadName).add(tConn.conn);
+			}
 		}
 	}
 
