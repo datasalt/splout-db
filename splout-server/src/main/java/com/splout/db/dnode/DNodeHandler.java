@@ -414,12 +414,14 @@ public class DNodeHandler implements IDNodeHandler {
 		// Because SQLiteConnection can only be closed by owner Thread, here we need to check if we 
 		// have some pending connections to close...
 		if(pendingClose != null && pendingClose.size() > 0) {
-			Iterator<SQLiteConnection> it = pendingClose.iterator();
-			while(it.hasNext()) {
-				SQLiteConnection conn = it.next();
-				log.info("-- Closed a connection pending diposal: " + conn.getDatabaseFile());
-				conn.dispose();
-				it.remove();
+			synchronized(pendingClose) {
+				Iterator<SQLiteConnection> it = pendingClose.iterator();
+				while(it.hasNext()) {
+					SQLiteConnection conn = it.next();
+					log.info("-- Closed a connection pending diposal: " + conn.getDatabaseFile());
+					conn.dispose();
+					it.remove();
+				}
 			}
 		}
 		

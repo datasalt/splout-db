@@ -170,7 +170,10 @@ public class SQLite4JavaManager implements ISQLiteManager {
 				log.info("-- Closing my own connection to: " + tConn.conn.getDatabaseFile());
 				tConn.conn.dispose();
 			} else { // needs to be closed at some point by the owner
-				CLEAN_UP_AFTER_YOURSELF.get(tConn.threadName).add(tConn.conn);
+				Set<SQLiteConnection> set = CLEAN_UP_AFTER_YOURSELF.get(tConn.threadName);
+				synchronized(set) { // just in case the owner of the set is iterating over it
+					CLEAN_UP_AFTER_YOURSELF.get(tConn.threadName).add(tConn.conn);
+				}
 			}
 		}
 	}
