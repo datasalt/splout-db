@@ -14,7 +14,7 @@ For running Splout SQL, the underlying system must have the following:
 Download
 ~~~~~~~~
 
-Download the latest release from http://search.maven.org/#browse%7C-1223220159[Maven central]. Current production-ready recommended version is 0.2.4. You will find two kinds
+Download the latest release from http://search.maven.org/#browse%7C-1223220128[Maven central]. Current production-ready recommended version is 0.2.5. You will find two kinds
 of release files:
 
 - The ones with "mr1" in the name should be used for Hadoop 0.20.X and 1.X versions.
