@@ -80,7 +80,7 @@ public class SimpleGeneratorCMD implements Tool {
 	@Parameter(required = true, names = { "-pby", "--partitionby" }, description = "The field or fields to partition the table by. Comma-sepparated if there is more than one.")
 	private String partitionByFields;
 
-	@Parameter(names = { "-idx", "--index" }, description = "The additional fields to index - (fields used to partitioning are always indexed). More than one allowed. Comma-sepparated in the case of a multifield index.")
+	@Parameter(names = { "-idx", "--index" }, description = "The fields to index. More than one allowed. Comma-sepparated in the case of a multifield index.")
 	private List<String> indexes = new ArrayList<String>();
 
 	@Parameter(required = true, names = { "-p", "--partitions" }, description = "The number of partitions to create for the view.")
