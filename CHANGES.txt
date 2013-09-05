@@ -3,6 +3,10 @@ Splout SQL Change Log
 
 (DEVELOPMENT 0.2.6-SNAPSHOT)
 
+BUG FIXES
+
+ - 2013-09-05 - splout-service.sh adapted to run properly with packages from  Cloudera
+
 Splout SQL 0.2.5
 
 BUG FIXES
