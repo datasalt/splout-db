@@ -49,7 +49,8 @@ public class QueryServlet extends BaseServlet {
 		String partition = req.getParameter("partition");
 		
 		resp.setHeader("content-type", "application/json;charset=UTF-8");
-
+		resp.setCharacterEncoding("UTF-8");
+		
 		String key = null;
 		if(keys != null) {
 			key = "";
