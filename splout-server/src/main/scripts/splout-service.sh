@@ -113,7 +113,7 @@ if [ "$startStop" == "start" ]; then
 	# Hadoop 2.0
 	if [ "$HADOOP_MAPRED_HOME" ]; then
 		echo "Loading appropriate jars from HADOOP_MAPRED_HOME: $HADOOP_MAPRED_HOME"
-		HADOOP_JARS="$HADOOP_MAPRED_HOME/share/hadoop/mapred/hadoop-*.jar"
+		HADOOP_JARS="$HADOOP_MAPRED_HOME/hadoop-*.jar $HADOOP_MAPRED_HOME/lib/guava-*.jar $HADOOP_HDFS_HOME/lib/commons-cli*.jar $HADOOP_HDFS_HOME/lib/protobuf*.jar"
 		for f in $HADOOP_JARS
 		do
 		        HADOOP_JAR_CS="$HADOOP_JAR_CS:$f"
@@ -121,7 +121,7 @@ if [ "$startStop" == "start" ]; then
 		CLASSPATH=${CLASSPATH}:$HADOOP_JAR_CS:$HADOOP_MAPRED_HOME/conf
 		if [ "$HADOOP_COMMON_HOME" ]; then
 			echo "Loading appropriate jars from HADOOP_COMMON_HOME: $HADOOP_COMMON_HOME"
-			HADOOP_JARS="$HADOOP_COMMON_HOME/share/hadoop/common/hadoop-*.jar $HADOOP_COMMON_HOME/share/hadoop/common/lib/hadoop-*.jar $HADOOP_MAPRED_HOME/share/hadoop/lib/guava-*.jar"
+			HADOOP_JARS="$HADOOP_COMMON_HOME/hadoop-*.jar $HADOOP_MAPRED_HOME/lib/guava-*.jar $HADOOP_HDFS_HOME/lib/commons-cli*.jar $HADOOP_HDFS_HOME/lib/protobuf*.jar"
 			for f in $HADOOP_JARS
 			do
 			        HADOOP_JAR_CS="$HADOOP_JAR_CS:$f"
@@ -133,7 +133,7 @@ if [ "$startStop" == "start" ]; then
 		fi
 		if [ "$HADOOP_HDFS_HOME" ]; then
 			echo "Loading appropriate jars from HADOOP_HDFS_HOME: $HADOOP_HDFS_HOME"
-			HADOOP_JARS="$HADOOP_HDFS_HOME/share/hadoop/hdfs/hadoop-*.jar $HADOOP_HDFS_HOME/share/hadoop/hdfs/lib/commons-cli*.jar $HADOOP_HDFS_HOME/share/hadoop/hdfs/lib/protobuf*.jar"
+			HADOOP_JARS="$HADOOP_HDFS_HOME/hadoop-*.jar $HADOOP_MAPRED_HOME/lib/guava-*.jar $HADOOP_HDFS_HOME/lib/commons-cli*.jar $HADOOP_HDFS_HOME/lib/protobuf*.jar"
 			for f in $HADOOP_JARS
 			do
 			        HADOOP_JAR_CS="$HADOOP_JAR_CS:$f"
