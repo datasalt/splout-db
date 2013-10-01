@@ -369,7 +369,6 @@ public class TablespaceGenerator implements Serializable {
 			fields.add(Field.create(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD, Type.INT));
 			final Schema tableSchema = new Schema(table.getTableSpec().getSchema().getName(), fields);
 			schemaCounter++;
-			fields.add(Field.createTupleField("tuple", NullableSchema.nullableSchema(tableSchema)));
 			builder.addIntermediateSchema(NullableSchema.nullableSchema(tableSchema));
 			// For each input file for the Table we add an input and a TupleMapper
 			for(TableInput inputFile : table.getFiles()) {
