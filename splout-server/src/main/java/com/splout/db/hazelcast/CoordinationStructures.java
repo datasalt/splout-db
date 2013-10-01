@@ -129,8 +129,8 @@ public class CoordinationStructures {
 	}
 	
 	/**
-	 *  Map<String, String> that keeps the registry of which DNodes are available currently.
-	 *  Related with {@link DistributedRegistry}
+	 * Map<String, String> that keeps the registry of which DNodes are available currently.
+	 * Related with {@link DistributedRegistry}
 	 */
 	public IMap<String, DNodeInfo> getDNodes() {
 		return hz.getMap(CoordinationStructures.DNODES);
@@ -150,7 +150,7 @@ public class CoordinationStructures {
 	}
 
 	/**
-	 * Return a {@link ICountDownLatch} used to know when a deploy
+	 * Returns a {@link ICountDownLatch} used to know when a deploy
 	 * process has finished. The version is used to compose the 
 	 * name of the latch, so make it unique for each deployment.
 	 */
@@ -159,7 +159,7 @@ public class CoordinationStructures {
 	}
 	
 	/**
-	 * Return a map used as panel tu publish errors of deployments
+	 * Returns a map used as panel to publish errors of deployments
 	 * on DNodes. The key is the DNode id. QNode is informed
 	 * on errors in DNodes using this map.
 	 */

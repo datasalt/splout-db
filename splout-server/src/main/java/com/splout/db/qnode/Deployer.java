@@ -137,6 +137,13 @@ public class Deployer extends QNodeHandlerModule {
 					}
 				} while(!finished);
 
+				// It's still possible that the deploy failed so let's check it again
+				if(checkForFailure()) {
+					explainErrors();
+					abortDeploy(dnodes, version);
+					return;
+				}
+				
 				log.info("All DNodes performed the deploy of version [" + version
 				    + "]. Publishing tablespaces...");
 
