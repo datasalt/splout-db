@@ -63,6 +63,9 @@ public class DeployRollbackServlet extends BaseServlet {
 		while((line = reader.readLine()) != null) {
 			postBody.append(line);
 		}
+		
+		resp.setHeader("content-type", "application/json;charset=UTF-8");
+		resp.setCharacterEncoding("UTF-8");
 
 		String action = req.getParameter("action");
 		String response = null;

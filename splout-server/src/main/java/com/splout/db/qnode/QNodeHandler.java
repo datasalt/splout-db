@@ -24,6 +24,7 @@ package com.splout.db.qnode;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -61,6 +62,8 @@ import com.splout.db.qnode.QNodeHandlerContext.TablespaceVersionInfoException;
 import com.splout.db.qnode.Querier.QuerierException;
 import com.splout.db.qnode.beans.DeployInfo;
 import com.splout.db.qnode.beans.DeployRequest;
+import com.splout.db.qnode.beans.DeployStatus;
+import com.splout.db.qnode.beans.DeploymentsStatus;
 import com.splout.db.qnode.beans.ErrorQueryStatus;
 import com.splout.db.qnode.beans.QNodeStatus;
 import com.splout.db.qnode.beans.QueryStatus;
@@ -536,6 +539,26 @@ public class QNodeHandler implements IQNodeHandler {
 				context.returnDNodeClientToPool(dnode, client, renew);
 			}
 		}
+	}
+
+	/**
+	 * Returns an overview of what happened with all deployments so far.
+	 * There is a short status associated with each deploy, and there is a set of detailed log messages as well. 
+	 */
+	@Override
+	public DeploymentsStatus deploymentsStatus() throws Exception {
+		DeploymentsStatus status = new DeploymentsStatus();
+		status.setDeployHistory(new HashMap<Long, DeployStatus>());
+		status.getDeployHistory().putAll(coord.getDeploymentsStatusPanel());
+		status.setDeployLogs(new HashMap<Long, List<String>>());
+		for(Map.Entry<Long, DeployStatus> deployEntry : status.getDeployHistory().entrySet()) {
+			long deployVersion = deployEntry.getKey();
+			List<String> logsPerDeploy = new ArrayList<String>();
+			logsPerDeploy.addAll(coord.getDeployLogPanel(deployVersion));
+			Collections.sort(logsPerDeploy);
+			status.getDeployLogs().put(deployVersion, logsPerDeploy);
+		}
+		return status;
 	}
 
 	@Override

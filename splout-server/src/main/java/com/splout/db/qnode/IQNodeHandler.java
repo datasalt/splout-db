@@ -31,6 +31,7 @@ import com.splout.db.common.Tablespace;
 import com.splout.db.dnode.beans.DNodeSystemStatus;
 import com.splout.db.qnode.beans.DeployInfo;
 import com.splout.db.qnode.beans.DeployRequest;
+import com.splout.db.qnode.beans.DeploymentsStatus;
 import com.splout.db.qnode.beans.QNodeStatus;
 import com.splout.db.qnode.beans.QueryStatus;
 import com.splout.db.qnode.beans.StatusMessage;
@@ -49,6 +50,8 @@ public interface IQNodeHandler {
 	public DeployInfo deploy(List<DeployRequest> deployReq) throws Exception;
 	public StatusMessage rollback(List<SwitchVersionRequest> rollbackRequest) throws Exception;
 	public QNodeStatus overview() throws Exception;
+	public DeploymentsStatus deploymentsStatus() throws Exception;
+	
 	public List<String> getDNodeList() throws Exception;
 	public Set<String> tablespaces() throws Exception;
 	public Map<Long, Tablespace> allTablespaceVersions(String tablespace) throws Exception;

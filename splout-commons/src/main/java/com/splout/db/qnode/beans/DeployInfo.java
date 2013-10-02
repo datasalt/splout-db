@@ -23,8 +23,8 @@ package com.splout.db.qnode.beans;
 import com.splout.db.common.BaseBean;
 
 /**
- * If a deployment is in progress, this bean is serialized as JSON in a file in ZooKeeper so that any QNode can know that there is a deploy in progress and at what time it started, etc.
- * This bean is also returned for the deploy() method in QNode.
+ * This bean is returned in the deploy() method in QNode. It allows the user to track a deploy, as the version number is
+ * returned.
  */
 public class DeployInfo extends BaseBean {
 
@@ -33,13 +33,13 @@ public class DeployInfo extends BaseBean {
 	private Long version;
 
 	public DeployInfo() {
-		
+
 	}
-	
+
 	public DeployInfo(String error) {
 		this.error = error;
 	}
-	
+
 	public String getStartedAt() {
 		return startedAt;
 	}
@@ -55,12 +55,12 @@ public class DeployInfo extends BaseBean {
 	public void setVersion(Long version) {
 		this.version = version;
 	}
-	
+
 	public String getError() {
-  	return error;
-  }
+		return error;
+	}
 
 	public void setError(String error) {
-  	this.error = error;
-  }
+		this.error = error;
+	}
 }

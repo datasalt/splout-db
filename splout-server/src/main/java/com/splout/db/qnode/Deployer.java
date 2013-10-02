@@ -49,6 +49,7 @@ import com.splout.db.hazelcast.CoordinationStructures;
 import com.splout.db.hazelcast.TablespaceVersion;
 import com.splout.db.qnode.beans.DeployInfo;
 import com.splout.db.qnode.beans.DeployRequest;
+import com.splout.db.qnode.beans.DeployStatus;
 import com.splout.db.qnode.beans.QueryStatus;
 import com.splout.db.qnode.beans.SwitchVersionRequest;
 import com.splout.db.thrift.DNodeService;
@@ -123,7 +124,7 @@ public class Deployer extends QNodeHandlerModule {
 						// If any of the DNodes failed, then we cancel the deployment.
 						if(checkForFailure()) {
 							explainErrors();
-							abortDeploy(dnodes, version);
+							abortDeploy(dnodes, "One or more DNodes failed", version);
 							return;
 						}
 						// Let's see if we reached the timeout.
@@ -131,7 +132,7 @@ public class Deployer extends QNodeHandlerModule {
 						if(waitSeconds > timeoutSeconds && timeoutSeconds >= 0) {
 							log.warn("Deploy of version [" + version + "] timed out. Reached [" + waitSeconds
 							    + "] seconds.");
-							abortDeploy(dnodes, version);
+							abortDeploy(dnodes, "Timeout reached", version);
 							return;
 						}
 					}
@@ -140,7 +141,7 @@ public class Deployer extends QNodeHandlerModule {
 				// It's still possible that the deploy failed so let's check it again
 				if(checkForFailure()) {
 					explainErrors();
-					abortDeploy(dnodes, version);
+					abortDeploy(dnodes, "One or more DNodes failed.", version);
 					return;
 				}
 				
@@ -155,22 +156,23 @@ public class Deployer extends QNodeHandlerModule {
 					    "Unexisting version after deploying this version. Sounds like a bug.", e);
 				}
 
-				log.info("Deploy of version [" + version + "] Finished PROPERLY. :-)");
-
 				// After a deploy we must synchronize tablespace versions to see if we have to remove some.
 				context.synchronizeTablespaceVersions();
 				// If some replicas are under-replicated, start a balancing process
 				context.maybeBalance();
 				
+				log.info("Deploy of version [" + version + "] Finished PROPERLY. :-)");
+				context.getCoordinationStructures().logDeployMessage(version, "Deploy of version [" + version + "] finished properly.");
+				context.getCoordinationStructures().getDeploymentsStatusPanel().put(version, DeployStatus.FINISHED);
 			} catch(MemberLeftException e) {
 				log.error("Error while deploying version [" + version + "]", e);
-				abortDeploy(dnodes, version);
+				abortDeploy(dnodes, e.getMessage(), version);
 			} catch(InstanceDestroyedException e) {
 				log.error("Error while deploying version [" + version + "]", e);
-				abortDeploy(dnodes, version);
+				abortDeploy(dnodes, e.getMessage(), version);
 			} catch(InterruptedException e) {
 				log.error("Error while deploying version [" + version + "]", e);
-				abortDeploy(dnodes, version);
+				abortDeploy(dnodes, e.getMessage(), version);
 			} catch(Throwable t) {
 				t.printStackTrace();
 				throw new RuntimeException(t);
@@ -193,14 +195,17 @@ public class Deployer extends QNodeHandlerModule {
 		}
 
 		/**
-		 * Log DNodes errors in deployment
+		 * Log DNodes errors in deployment.
+		 * We log both to the QNode logger and to Hazelcast so the info is persisted in the session.
 		 */
 		private void explainErrors() {
 			IMap<String, String> deployErrorPanel = context.getCoordinationStructures().getDeployErrorPanel(
 			    version);
 			String msg = "Deployment of version [" + version + "] failed in DNode[";
 			for(Entry<String, String> entry : deployErrorPanel.entrySet()) {
-				log.error(msg + entry.getKey() + "] - it failed with the error [" + entry.getValue() + "]");
+				String fMsg = msg + entry.getKey() + "] - it failed with the error [" + entry.getValue() + "]";
+				log.error(fMsg);
+				context.getCoordinationStructures().logDeployMessage(version, fMsg);
 			}
 		}
 
@@ -247,6 +252,15 @@ public class Deployer extends QNodeHandlerModule {
 		// A new unique version number is generated.
 		long version = context.getCoordinationStructures().uniqueVersionId();
 
+		Set<String> tablespaces = new HashSet<String>();
+		for(DeployRequest request: deployRequests) {
+			tablespaces.add(request.getTablespace());
+		}
+		
+		Date startTime = new Date();
+		context.getCoordinationStructures().logDeployMessage(version, "Deploy [" + version + "] for tablespaces " + tablespaces + " started.");
+		context.getCoordinationStructures().getDeploymentsStatusPanel().put(version, DeployStatus.ONGOING);
+		
 		// Generate the list of actions per DNode
 		Map<String, List<DeployAction>> actionsPerDNode = generateDeployActionsPerDNode(deployRequests,
 		    version);
@@ -270,8 +284,9 @@ public class Deployer extends QNodeHandlerModule {
 				}
 				client.deploy(actionPerDNode.getValue(), version);
 			} catch(Exception e) {
-				log.error("Error sending deploy actions to DNode [" + actionPerDNode.getKey() + "]", e);
-				abortDeploy(new ArrayList<String>(actionsPerDNode.keySet()), version);
+				String errorMsg = "Error sending deploy actions to DNode [" + actionPerDNode.getKey() + "]";
+				log.error(errorMsg, e);
+				abortDeploy(new ArrayList<String>(actionsPerDNode.keySet()), errorMsg, version);
 				DeployInfo errDeployInfo = new DeployInfo();
 				errDeployInfo.setError("Error connecting to DNode " + actionPerDNode.getKey());
 				return errDeployInfo;
@@ -288,7 +303,7 @@ public class Deployer extends QNodeHandlerModule {
 
 		DeployInfo deployInfo = new DeployInfo();
 		deployInfo.setVersion(version);
-		deployInfo.setStartedAt(SimpleDateFormat.getInstance().format(new Date()));
+		deployInfo.setStartedAt(SimpleDateFormat.getInstance().format(startTime));
 		return deployInfo;
 	}
 
@@ -297,7 +312,7 @@ public class Deployer extends QNodeHandlerModule {
 	 * 
 	 * @throws InterruptedException
 	 */
-	public void abortDeploy(List<String> dnodes, long version) {
+	public void abortDeploy(List<String> dnodes, String deployerErrorMessage, long version) {
 		for(String dnode : dnodes) {
 			DNodeService.Client client = null;
 			boolean renew = false;
@@ -317,6 +332,8 @@ public class Deployer extends QNodeHandlerModule {
 				}
 			}
 		}
+		context.getCoordinationStructures().logDeployMessage(version, "Deploy failed due to: " + deployerErrorMessage);
+		context.getCoordinationStructures().getDeploymentsStatusPanel().put(version, DeployStatus.FAILED);
 		CoordinationStructures.DEPLOY_IN_PROGRESS.decrementAndGet();
 	}
 
