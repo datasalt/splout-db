@@ -33,6 +33,7 @@ import com.hazelcast.core.ISet;
 import com.hazelcast.core.IdGenerator;
 import com.splout.db.qnode.Deployer;
 import com.splout.db.qnode.ReplicaBalancer;
+import com.splout.db.qnode.beans.DeployInfo;
 import com.splout.db.qnode.beans.DeployStatus;
 
 /**
@@ -63,9 +64,11 @@ public class CoordinationStructures {
 	// A Panel to put basic state information about deployments: ongoing / finished / failed. Key is version, value is
 	// state.
 	public static final String DEPLOYMENTS_STATUS_PANEL = "com.splout.db.deployments.statusPanel";
-	// A log panel where we add all info related to a deployment. This is a prefix, and the version is used
-	// as a postfix. Key is log message, value is nothing.
+	// A log panel where we add log messages related to a deployment. This is a prefix, and the version is used
+	// as a postfix.
 	public static final String GLOBAL_DEPLOY_LOG_PANEL = "com.splout.db.deployments.logPanel-";
+	// A panel where a deploy configuration and some basic info like starting time is persisted.
+	public static final String GLOBAL_DEPLOY_INFO_PANEL = "com.splout.db.deployments.infoPanel";
 	// Version generator. Generates unique version id across the cluster
 	public static final String VERSION_GENERATOR = "com.splout.db.versionGenerator";
 	// Key for #getDNodeReplicaBalanceActionsSet()
@@ -80,7 +83,7 @@ public class CoordinationStructures {
 	public static final AtomicInteger DEPLOY_IN_PROGRESS = new AtomicInteger(0);
 
 	private final static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss SSS");
-	
+
 	public CoordinationStructures(HazelcastInstance hz) {
 		this.hz = hz;
 	}
@@ -180,6 +183,13 @@ public class CoordinationStructures {
 	}
 
 	/**
+	 * A Panel where the basic info and configuration of a deployment can be persisted.
+	 */
+	public IMap<Long, DeployInfo> getDeployInfoPanel() {
+		return hz.getMap(GLOBAL_DEPLOY_INFO_PANEL);
+	}
+	
+	/**
 	 * Returns a Set used as panel to publish log information of deployments. If {@link #getDeployErrorPanel(long)} can be
 	 * thought of as a "standardError", this would be a general "standardOut" logging facility for deployment processes.
 	 * The one publishing info here will normally be the {@link Deployer}.
@@ -193,7 +203,6 @@ public class CoordinationStructures {
 	 * date.
 	 */
 	public void logDeployMessage(long version, String logMessage) {
-		hz.getSet(GLOBAL_DEPLOY_LOG_PANEL + version).add(
-				dateFormat.format(new Date()) + " - " + logMessage);
+		hz.getSet(GLOBAL_DEPLOY_LOG_PANEL + version).add(dateFormat.format(new Date()) + " - " + logMessage);
 	}
 }

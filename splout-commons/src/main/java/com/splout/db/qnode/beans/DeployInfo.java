@@ -20,17 +20,23 @@ package com.splout.db.qnode.beans;
  * #L%
  */
 
+import java.io.Serializable;
+import java.util.List;
+
 import com.splout.db.common.BaseBean;
 
 /**
  * This bean is returned in the deploy() method in QNode. It allows the user to track a deploy, as the version number is
  * returned.
  */
-public class DeployInfo extends BaseBean {
+@SuppressWarnings("serial")
+public class DeployInfo extends BaseBean implements Serializable {
 
 	private String error;
 	private String startedAt;
 	private Long version;
+	private List<String> dataURIs;
+	private List<String> tablespacesDeployed;
 
 	public DeployInfo() {
 
@@ -63,4 +69,20 @@ public class DeployInfo extends BaseBean {
 	public void setError(String error) {
 		this.error = error;
 	}
+
+	public List<String> getDataURIs() {
+  	return dataURIs;
+  }
+
+	public void setDataURIs(List<String> dataURIs) {
+  	this.dataURIs = dataURIs;
+  }
+
+	public List<String> getTablespacesDeployed() {
+  	return tablespacesDeployed;
+  }
+
+	public void setTablespacesDeployed(List<String> tablespacesDeployed) {
+  	this.tablespacesDeployed = tablespacesDeployed;
+  }
 }

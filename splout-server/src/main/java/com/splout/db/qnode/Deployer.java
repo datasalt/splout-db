@@ -248,16 +248,26 @@ public class Deployer extends QNodeHandlerModule {
 	 * @throws InterruptedException
 	 */
 	public DeployInfo deploy(List<DeployRequest> deployRequests) throws InterruptedException {
+		DeployInfo deployInfo = new DeployInfo();
 
 		// A new unique version number is generated.
 		long version = context.getCoordinationStructures().uniqueVersionId();
-
-		Set<String> tablespaces = new HashSet<String>();
+		deployInfo.setVersion(version);
+		
+		List<String> tablespaces = new ArrayList<String>();
+		List<String> dataURIs = new ArrayList<String>();
+		
 		for(DeployRequest request: deployRequests) {
 			tablespaces.add(request.getTablespace());
+			dataURIs.add(request.getData_uri());
 		}
 		
+		deployInfo.setTablespacesDeployed(tablespaces);
+		deployInfo.setDataURIs(dataURIs);
+		
 		Date startTime = new Date();
+		deployInfo.setStartedAt(SimpleDateFormat.getInstance().format(startTime));
+		
 		context.getCoordinationStructures().logDeployMessage(version, "Deploy [" + version + "] for tablespaces " + tablespaces + " started.");
 		context.getCoordinationStructures().getDeploymentsStatusPanel().put(version, DeployStatus.ONGOING);
 		
@@ -287,9 +297,9 @@ public class Deployer extends QNodeHandlerModule {
 				String errorMsg = "Error sending deploy actions to DNode [" + actionPerDNode.getKey() + "]";
 				log.error(errorMsg, e);
 				abortDeploy(new ArrayList<String>(actionsPerDNode.keySet()), errorMsg, version);
-				DeployInfo errDeployInfo = new DeployInfo();
-				errDeployInfo.setError("Error connecting to DNode " + actionPerDNode.getKey());
-				return errDeployInfo;
+				deployInfo.setError("Error connecting to DNode " + actionPerDNode.getKey());
+				context.getCoordinationStructures().getDeployInfoPanel().put(version, deployInfo);
+				return deployInfo;
 			} finally {
 				context.returnDNodeClientToPool(actionPerDNode.getKey(), client, renew);
 			}
@@ -301,9 +311,7 @@ public class Deployer extends QNodeHandlerModule {
 		        .getLong(QNodeProperties.DEPLOY_SECONDS_TO_CHECK_ERROR), context.getConfig().getBoolean(
 		        QNodeProperties.REPLICA_BALANCE_ENABLE)));
 
-		DeployInfo deployInfo = new DeployInfo();
-		deployInfo.setVersion(version);
-		deployInfo.setStartedAt(SimpleDateFormat.getInstance().format(startTime));
+		context.getCoordinationStructures().getDeployInfoPanel().put(version, deployInfo);
 		return deployInfo;
 	}
 

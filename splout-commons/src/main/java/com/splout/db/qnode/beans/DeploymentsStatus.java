@@ -21,7 +21,6 @@ package com.splout.db.qnode.beans;
  */
 
 import java.util.List;
-import java.util.Map;
 
 import com.splout.db.common.BaseBean;
 
@@ -31,21 +30,26 @@ import com.splout.db.common.BaseBean;
  */
 public class DeploymentsStatus extends BaseBean {
 
-	// A basic map with the deploy history: Which deploys failed, which not... 
-	private Map<Long, DeployStatus> deployHistory;
-	// For each deployment, a list of messages associated with it
-	private Map<Long, List<String>> deployLogs;
+	private List<DeploymentStatus> finishedDeployments;
+	private List<DeploymentStatus> ongoingDeployments;
+	private List<DeploymentStatus> failedDeployments;
 	
-	public Map<Long, DeployStatus> getDeployHistory() {
-  	return deployHistory;
+	public List<DeploymentStatus> getFinishedDeployments() {
+  	return finishedDeployments;
   }
-	public void setDeployHistory(Map<Long, DeployStatus> deployHistory) {
-  	this.deployHistory = deployHistory;
+	public void setFinishedDeployments(List<DeploymentStatus> finishedDeployments) {
+  	this.finishedDeployments = finishedDeployments;
   }
-	public Map<Long, List<String>> getDeployLogs() {
-  	return deployLogs;
+	public List<DeploymentStatus> getOngoingDeployments() {
+  	return ongoingDeployments;
   }
-	public void setDeployLogs(Map<Long, List<String>> deployLogs) {
-  	this.deployLogs = deployLogs;
+	public void setOngoingDeployments(List<DeploymentStatus> ongoingDeployments) {
+  	this.ongoingDeployments = ongoingDeployments;
+  }
+	public List<DeploymentStatus> getFailedDeployments() {
+  	return failedDeployments;
+  }
+	public void setFailedDeployments(List<DeploymentStatus> failedDeployments) {
+  	this.failedDeployments = failedDeployments;
   }
 }
