@@ -54,13 +54,13 @@
 			<div class="accordion-heading">
 			<a class="accordion-toggle collapsed" data-toggle="collapse"
 							data-parent="#deployments{$P.id}" href="#deploymentsCollapse{$T.deployment$index}{$P.id}">
-							{$T.deployment.date}</a>
+							{$T.deployment.date} - {$T.deployment.tablespacesDeployed}</a>
 					</div>
 					<div id="deploymentsCollapse{$T.deployment$index}{$P.id}" class="accordion-body collapse"
 						style="height: 0px;">
 						<div class="accordion-inner">
 							<dl class="dl-horizontal well">
-								<dt>Tablespaces deployed:<dt>
+								<dt>Deployed tablespaces:<dt>
 								<dd>{$T.deployment.tablespacesDeployed}</dd>
 								<dt>Data URIs:</dt>
 								<dd>{$T.deployment.dataURIs}</dd>

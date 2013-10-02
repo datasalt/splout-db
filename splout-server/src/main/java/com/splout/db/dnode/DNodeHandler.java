@@ -40,6 +40,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.Element;
@@ -525,6 +526,42 @@ public class DNodeHandler implements IDNodeHandler {
 									lastDeployTimedout.set(false);
 									log.info("Starting deploy actions [" + deployActions + "]");
 									long start = System.currentTimeMillis();
+									long totalSize = 0;
+									
+									// Ask for the total size of the deployment first.
+									for(DeployAction action : deployActions) {
+										long plusSize = fetcher.sizeOf(action.getDataURI());
+										if(plusSize == Fetcher.SIZE_UNKNOWN) {
+											totalSize = Fetcher.SIZE_UNKNOWN;
+											break;
+										}
+										totalSize += plusSize;
+									}
+									
+									final long totalKnownSize = totalSize;
+									final long startTime = System.currentTimeMillis(); 
+									final AtomicLong bytesSoFar = new AtomicLong(0l);
+									
+									Fetcher.Reporter reporter = new Fetcher.Reporter() {
+										@Override
+                    public void progress(long consumed) {
+											long now = System.currentTimeMillis();
+											long totalSoFar = bytesSoFar.addAndGet(consumed);
+											double bytesPerSec = totalSoFar / ((double)((now - startTime) / 1000));
+											String msg = "Fetched [" + totalSoFar + "] bytes so far ";
+											if(totalKnownSize != Fetcher.SIZE_UNKNOWN) {
+												 msg += "(out of [" + totalKnownSize + "] bytes) ";
+											}
+											msg += "- Current deployment speed is [" + bytesPerSec + "] bytes per sec.";
+											if(totalKnownSize != Fetcher.SIZE_UNKNOWN) {
+												long missingSize = (totalKnownSize - totalSoFar);
+												long remainingSecs = (long) (missingSize / bytesPerSec);
+												msg += " Estimated remaining time is [" + remainingSecs + "] secs.";
+											}
+											log.info(msg);
+                    }
+									};
+									
 									for(DeployAction action : deployActions) {
 										// 1- Store metadata
 										File metadataFile = getLocalMetadataFile(action.getTablespace(),
@@ -536,7 +573,7 @@ public class DNodeHandler implements IDNodeHandler {
 										writer.write(action.getMetadata());
 										writer.close();
 										// 2- Call the fetcher for fetching
-										File fetchedContent = fetcher.fetch(action.getDataURI());
+										File fetchedContent = fetcher.fetch(action.getDataURI(), reporter);
 										// If we reach this point then the fetch has been OK
 										File dbFolder = getLocalStorageFolder(action.getTablespace(), action.getPartition(),
 										    version);
