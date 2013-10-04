@@ -351,7 +351,7 @@ public class Fetcher {
 		} else if(uriStr.startsWith("s3")) {
 			return -1; // NotYetImplemented
 		} else if(uriStr.startsWith("hdfs")) {
-			return FileSystem.get(hadoopConf).getContentSummary(new Path(uriStr)).getSpaceConsumed();
+			return FileSystem.get(hadoopConf).getContentSummary(new Path(uriStr)).getLength();
 		} else {
 			throw new IllegalArgumentException("Scheme not recognized or non-absolute URI provided: " + uri);
 		}

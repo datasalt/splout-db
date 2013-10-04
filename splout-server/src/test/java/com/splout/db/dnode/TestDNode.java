@@ -39,7 +39,6 @@ import org.junit.Test;
 import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.SploutConfiguration;
 import com.splout.db.common.TestUtils;
-import com.splout.db.dnode.Fetcher.Reporter;
 import com.splout.db.dnode.beans.DNodeSystemStatus;
 import com.splout.db.thrift.DNodeService;
 import com.splout.db.thrift.DeployAction;
