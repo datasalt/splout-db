@@ -69,6 +69,10 @@ public class CoordinationStructures {
 	public static final String GLOBAL_DEPLOY_LOG_PANEL = "com.splout.db.deployments.logPanel-";
 	// A panel where a deploy configuration and some basic info like starting time is persisted.
 	public static final String GLOBAL_DEPLOY_INFO_PANEL = "com.splout.db.deployments.infoPanel";
+	// A panel where each DNode can log the speed / progress of the Deploy on its side. This is a prefix, and the version
+	// is used
+	// as a postfix.
+	public static final String GLOBAL_DEPLOY_SPEED_PANEL = "com.splout.db.deployments.speedPanel-";
 	// Version generator. Generates unique version id across the cluster
 	public static final String VERSION_GENERATOR = "com.splout.db.versionGenerator";
 	// Key for #getDNodeReplicaBalanceActionsSet()
@@ -176,6 +180,25 @@ public class CoordinationStructures {
 	}
 
 	/**
+	 * Returns a map used as panel to publish the speed / progress of each DNode. The key is the DNode id. The value is a
+	 * string message.
+	 */
+	public IMap<String, String> getDeploySpeedPanel(long version) {
+		return hz.getMap(GLOBAL_DEPLOY_SPEED_PANEL + version);
+	}
+
+	/**
+	 * Shortcut method that can be used by DNodes to log the progress of a deploy. It uses a map so it makes sure only one
+	 * message per DNode is kept. This is convenient since each DNode may report progress every few minutes so we don't
+	 * end up with a huge list of messages. The rest of the deploy history is logged in another map (see
+	 * {@link #logDeployMessage(long, String)})
+	 */
+	public void logDeploySpeed(long version, String dnode, String message) {
+		hz.getMap(GLOBAL_DEPLOY_SPEED_PANEL + version).put(dnode,
+		    dateFormat.format(new Date()) + " - " + message);
+	}
+
+	/**
 	 * A Panel to put state information about deployments: ongoing / finished / failed, etc.
 	 */
 	public IMap<Long, DeployStatus> getDeploymentsStatusPanel() {
@@ -188,7 +211,7 @@ public class CoordinationStructures {
 	public IMap<Long, DeployInfo> getDeployInfoPanel() {
 		return hz.getMap(GLOBAL_DEPLOY_INFO_PANEL);
 	}
-	
+
 	/**
 	 * Returns a Set used as panel to publish log information of deployments. If {@link #getDeployErrorPanel(long)} can be
 	 * thought of as a "standardError", this would be a general "standardOut" logging facility for deployment processes.

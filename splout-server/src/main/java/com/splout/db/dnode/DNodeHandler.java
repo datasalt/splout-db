@@ -382,15 +382,16 @@ public class DNodeHandler implements IDNodeHandler {
 		if(versionFolder.exists()) {
 			File[] partitions = versionFolder.listFiles();
 			if(partitions != null) {
-				for(File partition: partitions) {
+				for(File partition : partitions) {
 					if(partition.isDirectory()) {
 						// remove references to binary SQLite files in ECache
 						// so that space in disk is immediately available
-						String dbKey = version.getTablespace() + "_" + version.getVersion() + "_" + partition.getName();
+						String dbKey = version.getTablespace() + "_" + version.getVersion() + "_"
+						    + partition.getName();
 						synchronized(dbCache) {
 							if(dbCache.get(dbKey) != null) {
 								dbCache.remove(dbKey);
-								log.info("-- Removing references from ECache: " + dbKey); 
+								log.info("-- Removing references from ECache: " + dbKey);
 							}
 						}
 					}
@@ -412,7 +413,7 @@ public class DNodeHandler implements IDNodeHandler {
 
 		String t = Thread.currentThread().getName();
 		Set<SQLiteConnection> pendingClose = SQLite4JavaManager.CLEAN_UP_AFTER_YOURSELF.get(t);
-		// Because SQLiteConnection can only be closed by owner Thread, here we need to check if we 
+		// Because SQLiteConnection can only be closed by owner Thread, here we need to check if we
 		// have some pending connections to close...
 		if(pendingClose != null && pendingClose.size() > 0) {
 			synchronized(pendingClose) {
@@ -425,7 +426,7 @@ public class DNodeHandler implements IDNodeHandler {
 				}
 			}
 		}
-		
+
 		try {
 			try {
 				performanceTool.startQuery();
@@ -527,7 +528,7 @@ public class DNodeHandler implements IDNodeHandler {
 									log.info("Starting deploy actions [" + deployActions + "]");
 									long start = System.currentTimeMillis();
 									long totalSize = 0;
-									
+
 									// Ask for the total size of the deployment first.
 									for(DeployAction action : deployActions) {
 										long plusSize = fetcher.sizeOf(action.getDataURI());
@@ -537,31 +538,49 @@ public class DNodeHandler implements IDNodeHandler {
 										}
 										totalSize += plusSize;
 									}
-									
-									final long totalKnownSize = totalSize;
-									final long startTime = System.currentTimeMillis(); 
+
+									final double totalKnownSize = totalSize / (1024d * 1024d);
+									final long startTime = System.currentTimeMillis();
 									final AtomicLong bytesSoFar = new AtomicLong(0l);
-									
+
 									Fetcher.Reporter reporter = new Fetcher.Reporter() {
 										@Override
-                    public void progress(long consumed) {
+										public void progress(long consumed) {
 											long now = System.currentTimeMillis();
-											long totalSoFar = bytesSoFar.addAndGet(consumed);
-											double bytesPerSec = totalSoFar / ((double)((now - startTime) / 1000));
-											String msg = "Fetched [" + totalSoFar + "] bytes so far ";
+											double totalSoFar = bytesSoFar.addAndGet(consumed) / (1024d * 1024d);
+											double secondsSoFar = (now - startTime) / 1000d;
+											double mBytesPerSec = totalSoFar / secondsSoFar;
+											
+											String msg = "[" + whoAmI() + " progress/speed report]: Fetched ["
+											    + String.format("%.3f", totalSoFar) + "] MBs so far ";
 											if(totalKnownSize != Fetcher.SIZE_UNKNOWN) {
-												 msg += "(out of [" + totalKnownSize + "] bytes) ";
+												msg += "(out of [" + String.format("%.3f", totalKnownSize) + "] MBs) ";
 											}
-											msg += "- Current deployment speed is [" + bytesPerSec + "] bytes per sec.";
+											msg += "- Current deployment speed is [" + String.format("%.3f", mBytesPerSec)
+											    + "] MB/s.";
+											// Add a report of the estimated remaining time if we can
 											if(totalKnownSize != Fetcher.SIZE_UNKNOWN) {
-												long missingSize = (totalKnownSize - totalSoFar);
-												long remainingSecs = (long) (missingSize / bytesPerSec);
-												msg += " Estimated remaining time is [" + remainingSecs + "] secs.";
+												double missingSize = (totalKnownSize - totalSoFar);
+												long remainingSecs = (long) (missingSize / mBytesPerSec);
+												String timeRemaining = "";
+												if(remainingSecs > 3600) { // hours, minutes and secs
+													int hours = (int) (remainingSecs / 3600);
+													int restOfSeconds = (int) (remainingSecs % 3600);
+													timeRemaining = hours + " hours and " + (int) (restOfSeconds / 60)
+													    + " minutes and " + (restOfSeconds % 60) + " seconds";
+												} else if(remainingSecs > 60) { // minutes and secs
+													timeRemaining = (int) (remainingSecs / 60) + " minutes and "
+													    + (remainingSecs % 60) + " seconds";
+												} else { // secs
+													timeRemaining = remainingSecs + " seconds";
+												}
+												msg += " Estimated remaining time is [" + timeRemaining + "].";
 											}
 											log.info(msg);
-                    }
+											coord.logDeploySpeed(version, whoAmI(), msg);
+										}
 									};
-									
+
 									for(DeployAction action : deployActions) {
 										// 1- Store metadata
 										File metadataFile = getLocalMetadataFile(action.getTablespace(),

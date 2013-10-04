@@ -573,6 +573,7 @@ public class QNodeHandler implements IQNodeHandler {
 
 			List<String> logsPerDeploy = new ArrayList<String>();
 			logsPerDeploy.addAll(coord.getDeployLogPanel(deployVersion));
+			logsPerDeploy.addAll(coord.getDeploySpeedPanel(deployVersion).values());
 			Collections.sort(logsPerDeploy);
 			dStatus.setLogMessages(logsPerDeploy);
 			

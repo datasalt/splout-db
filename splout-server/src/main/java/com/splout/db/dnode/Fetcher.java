@@ -65,9 +65,10 @@ public class Fetcher {
 	private String secretKey;
 	private int downloadBufferSize;
 	private int bytesPerSecThrottle;
+	private long bytesToReportProgress;
 
 	private Configuration hadoopConf;
-	
+
 	public final static int SIZE_UNKNOWN = -1;
 
 	public Fetcher(SploutConfiguration config) {
@@ -76,6 +77,7 @@ public class Fetcher {
 		secretKey = config.getString(FetcherProperties.S3_SECRET_KEY, null);
 		downloadBufferSize = config.getInt(FetcherProperties.DOWNLOAD_BUFFER);
 		bytesPerSecThrottle = config.getInt(FetcherProperties.BYTES_PER_SEC_THROTTLE);
+		bytesToReportProgress = config.getLong(FetcherProperties.BYTES_TO_REPORT_PROGRESS);
 		String fsName = config.getString(FetcherProperties.HADOOP_FS_NAME);
 		hadoopConf = new Configuration();
 		if(fsName != null) {
@@ -105,12 +107,12 @@ public class Fetcher {
 		}
 		toDir.mkdirs();
 		Path toPath = new Path(toFile.getCanonicalPath());
-		
+
 		FileSystem fS = fromPath.getFileSystem(hadoopConf);
 		FileSystem tofS = FileSystem.getLocal(hadoopConf);
 
 		Throttler throttler = new Throttler((double) bytesPerSecThrottle);
-		
+
 		for(FileStatus fStatus : fS.globStatus(fromPath)) {
 			log.info("Copying " + fStatus.getPath() + " to " + toPath);
 			long bytesSoFar = 0;
@@ -125,6 +127,10 @@ public class Fetcher {
 				bytesSoFar += nRead;
 				oS.write(buffer, 0, nRead);
 				throttler.incrementAndThrottle(nRead);
+				if(bytesSoFar >= bytesToReportProgress) {
+					reporter.progress(bytesSoFar);
+					bytesSoFar = 0l;
+				}
 			}
 
 			if(reporter != null) {
@@ -134,24 +140,23 @@ public class Fetcher {
 			oS.close();
 			iS.close();
 		}
-		
-		
+
 		return toDir;
 	}
 
 	/**
-	 * An interface that can be implemented to receive progress about fetching.
-	 * The Fetcher will use it when provided.
+	 * An interface that can be implemented to receive progress about fetching. The Fetcher will use it when provided.
 	 **/
 	public static interface Reporter {
 
 		/**
-		 * This method is called periodically to report progress made.
-		 * The reported consumed bytes are an incremental measure, not a total measure. 
+		 * This method is called periodically to report progress made. The reported consumed bytes are an incremental
+		 * measure, not a total measure. In other words, "consumed" is not the total consumed bytes since the beginning of
+		 * the fetching, but the total "consumed" bytes since the last call to progress.
 		 */
 		public void progress(long consumed);
 	}
-	
+
 	/**
 	 * Implements basic throttling capabilities.
 	 */
@@ -215,7 +220,7 @@ public class Fetcher {
 			if(path.startsWith("/")) {
 				path = path.substring(1, path.length());
 			}
-			
+
 			for(S3Object object : s3Service.listObjects(new S3Bucket(bucketName), path, "")) {
 				long bytesSoFar = 0;
 
@@ -240,6 +245,10 @@ public class Fetcher {
 					bytesSoFar += nRead;
 					writer.write(buffer, 0, nRead);
 					throttler.incrementAndThrottle(nRead);
+					if(bytesSoFar >= bytesToReportProgress) {
+						reporter.progress(bytesSoFar);
+						bytesSoFar = 0l;
+					}
 				}
 
 				if(reporter != null) {
@@ -250,7 +259,7 @@ public class Fetcher {
 				iS.close();
 				done = true;
 			}
-			
+
 			if(!done) {
 				throw new IOException("Bucket is empty! " + bucketName + " path: " + path);
 			}
@@ -286,13 +295,14 @@ public class Fetcher {
 
 		FileInputStream iS = null;
 		FileOutputStream oS = null;
-		
+
 		try {
 			iS = new FileInputStream(sourceFile);
-			oS = new FileOutputStream(destFile); 
+			oS = new FileOutputStream(destFile);
 			source = iS.getChannel();
 			destination = oS.getChannel();
 			long bytesSoFar = 0;
+			long reportingBytesSoFar = 0;
 			long size = source.size();
 
 			int transferred = 0;
@@ -302,13 +312,18 @@ public class Fetcher {
 				// This is done on purpose for being able to implement Throttling.
 				transferred = (int) destination.transferFrom(source, bytesSoFar, downloadBufferSize);
 				bytesSoFar += transferred;
+				reportingBytesSoFar += transferred;
 				throttler.incrementAndThrottle(transferred);
+				if(reportingBytesSoFar >= bytesToReportProgress) {
+					reporter.progress(reportingBytesSoFar);
+					reportingBytesSoFar = 0l;
+				}
 			}
-			
+
 			if(reporter != null) {
-				reporter.progress(bytesSoFar);
+				reporter.progress(reportingBytesSoFar);
 			}
-			
+
 		} finally {
 			if(iS != null) {
 				iS.close();
@@ -331,7 +346,8 @@ public class Fetcher {
 	public long sizeOf(String uriStr) throws IOException, URISyntaxException {
 		URI uri = new URI(uriStr);
 		if(uriStr.startsWith("file:")) {
-			return FileUtils.sizeOfDirectory(new File(uri));
+			File f = new File(uri);
+			return f.isDirectory() ? FileUtils.sizeOfDirectory(f) : f.length();
 		} else if(uriStr.startsWith("s3")) {
 			return -1; // NotYetImplemented
 		} else if(uriStr.startsWith("hdfs")) {
@@ -340,14 +356,14 @@ public class Fetcher {
 			throw new IllegalArgumentException("Scheme not recognized or non-absolute URI provided: " + uri);
 		}
 	}
-	
+
 	/**
 	 * This is the main method that accepts a URI string and delegates the fetching to the appropriate private method.
 	 */
 	public File fetch(String uriStr) throws IOException, URISyntaxException {
 		return fetch(uriStr, null);
 	}
-	
+
 	/**
 	 * This is the main method that accepts a URI string and delegates the fetching to the appropriate private method.
 	 */
