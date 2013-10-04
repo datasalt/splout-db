@@ -39,6 +39,7 @@ import org.junit.Test;
 import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.SploutConfiguration;
 import com.splout.db.common.TestUtils;
+import com.splout.db.dnode.Fetcher.Reporter;
 import com.splout.db.dnode.beans.DNodeSystemStatus;
 import com.splout.db.thrift.DNodeService;
 import com.splout.db.thrift.DeployAction;
@@ -81,7 +82,7 @@ public class TestDNode {
 		DNodeHandler dHandler = new DNodeHandler(new Fetcher(testConfig) {
 			
 			@Override
-			public File fetch(String uriStr) throws IOException, URISyntaxException {
+			public File fetch(String uriStr, Reporter reporter) throws IOException, URISyntaxException {
 				try {
 	        Thread.sleep(5000);
 	        return null;
