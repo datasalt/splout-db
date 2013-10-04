@@ -551,10 +551,20 @@ public class DNodeHandler implements IDNodeHandler {
 											double secondsSoFar = (now - startTime) / 1000d;
 											double mBytesPerSec = totalSoFar / secondsSoFar;
 											
-											String msg = "[" + whoAmI() + " progress/speed report]: Fetched ["
-											    + String.format("%.3f", totalSoFar) + "] MBs so far ";
+											String msg = "[" + whoAmI() + " progress/speed report]: Fetched [";
+											if(totalSoFar > 999) {
+												msg += String.format("%.3f", (totalSoFar / 1024d)) + "] GBs so far ";
+											} else {
+												msg += String.format("%.3f", totalSoFar) + "] MBs so far ";
+											}
+											  
 											if(totalKnownSize != Fetcher.SIZE_UNKNOWN) {
-												msg += "(out of [" + String.format("%.3f", totalKnownSize) + "] MBs) ";
+												msg += "(out of [";
+												if(totalKnownSize > 999) {
+													msg += String.format("%.3f", (totalKnownSize / 1024d)) + "] GBs) ";														
+												} else {
+													msg += String.format("%.3f", totalKnownSize) + "] MBs) ";	
+												}
 											}
 											msg += "- Current deployment speed is [" + String.format("%.3f", mBytesPerSec)
 											    + "] MB/s.";
