@@ -1,5 +1,5 @@
 
-Lists of 42 third-party dependencies.
+Lists of 43 third-party dependencies.
      (The Apache Software License, Version 2.0) sqlite4java (com.almworks.sqlite4java:sqlite4java:0.282 - http://code.google.com/p/sqlite4java)
      (The Apache Software License, Version 2.0) JCommander (com.beust:jcommander:1.27 - http://beust.com/jcommander)
      (The Apache Software License, Version 2.0) Jackson-annotations (com.fasterxml.jackson.core:jackson-annotations:2.1.1 - http://wiki.fasterxml.com/JacksonHome)
@@ -41,5 +41,6 @@ Lists of 42 third-party dependencies.
      (Apache License version 2.0) (Eclipse Public License - Version 1.0) Jetty Server (org.mortbay.jetty:jetty:6.1.26 - http://www.eclipse.org/jetty/jetty-parent/project/modules/jetty)
      (Apache License version 2.0) (Eclipse Public License - Version 1.0) Jetty Utilities (org.mortbay.jetty:jetty-util:6.1.26 - http://www.eclipse.org/jetty/jetty-parent/project/jetty-util)
      (MIT License) SLF4J API Module (org.slf4j:slf4j-api:1.6.0 - http://www.slf4j.org)
+     (MIT License) SLF4J LOG4J-12 Binding (org.slf4j:slf4j-log4j12:1.6.0 - http://www.slf4j.org)
      (The Apache Software License, Version 2.0) SQLite JDBC (org.xerial:sqlite-jdbc:3.7.2 - http://www.xerial.org/maven/repository/site/xerial/sqlite-jdbc)
      (Apache Software License, version 1.1) (Indiana University Extreme! Lab Software License, vesion 1.1.1) (Public Domain) MXP1: Xml Pull Parser 3rd Edition (XPP3) (xpp3:xpp3:1.1.4c - http://www.extreme.indiana.edu/xgws/xsoap/xpp/mxp1/)
