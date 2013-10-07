@@ -12,14 +12,15 @@
 # 
 # For Hadoop 1.0:
 # ---------------
-# HADOOP_HOME		
+# HADOOP_HOME
+# SPLOUT_HADOOP_CONF_DIR	Optionally, specify the Hadoop configuration folder. Will default to $HADOOP_HOME/conf
 #
-# For Hadoop 2.0 (YARN):
+# For Hadoop 2.0 (YARN / CDH4MR1):
 # ----------------------
-# HADOOP_COMMON_HOME 
-# HADOOP_HDFS_HOME 
-# HADOOP_MAPRED_HOME	
-#
+# SPLOUT_HADOOP_COMMON_HOME	Where the hadoop-common-*.jar can be found.
+# SPLOUT_HADOOP_HDFS_HOME	Where the hadoop-mapreduce-client-*.jar can be found.
+# SPLOUT_HADOOP_MAPRED_HOME	Where the hadoop-common-*.jar can be found.
+# SPLOUT_HADOOP_CONF_DIR	Optionally, specify the Hadoop configuration folder (e.g. /etc/hadoop/conf)
 #	
 
 CLASSPATH=""
@@ -85,17 +86,17 @@ esac
 
 if [ "$startStop" == "start" ]; then
 	if [ -z "$HADOOP_HOME" ]; then
-	    if [ -z "$HADOOP_MAPRED_HOME" ]; then
-	        echo "Required env variables not found: HADOOP_HOME for Hadoop 1.0 or HADOOP_MAPRED_HOME, HADOOP_HDFS_HOME & HADOOP_COMMON_HOME for Hadoop 2.0."
+	    if [ -z "$SPLOUT_HADOOP_MAPRED_HOME" ]; then
+	        echo "Required env variables not found: HADOOP_HOME for Hadoop 1.0 or SPLOUT_HADOOP_MAPRED_HOME, SPLOUT_HADOOP_HDFS_HOME & SPLOUT_HADOOP_COMMON_HOME for Hadoop 2.0."
 	        exit 1
 	    else
-	    	echo "Using defined Hadoop 2.0 environment variable HADOOP_MAPRED_HOME"
+	    	echo "Using defined Hadoop 2.0 environment variable SPLOUT_HADOOP_MAPRED_HOME"
 	    fi
 	else 
-		if [ -z "$HADOOP_MAPRED_HOME" ] && [ -z "$HADOOP_HDFS_HOME" ] && [ -z "$HADOOP_COMMON_HOME" ] ; then
+		if [ -z "$SPLOUT_HADOOP_MAPRED_HOME" ] && [ -z "$SPLOUT_HADOOP_HDFS_HOME" ] && [ -z "$SPLOUT_HADOOP_COMMON_HOME" ] ; then
 			echo "Using defined Hadoop 1.0 environment variable HADOOP_HOME: $HADOOP_HOME." 
 		else
-			echo "Both HADOOP_HOME and (HADOOP_MAPRED_HOME or HADOOP_HDFS_HOME or HADOOP_COMMON_HOME) are defined which may lead to inconsistencies in the classpath. Please use one or the other, but not both."
+			echo "Both HADOOP_HOME and (SPLOUT_HADOOP_MAPRED_HOME or SPLOUT_HADOOP_HDFS_HOME or SPLOUT_HADOOP_COMMON_HOME) are defined which may lead to inconsistencies in the classpath. Please use one or the other, but not both."
 			exit 1
 		fi
 	fi
@@ -111,38 +112,43 @@ if [ "$startStop" == "start" ]; then
 		CLASSPATH=${CLASSPATH}:$HADOOP_JAR_CS:$HADOOP_HOME/conf
 	fi
 	# Hadoop 2.0
-	if [ "$HADOOP_MAPRED_HOME" ]; then
-		echo "Loading appropriate jars from HADOOP_MAPRED_HOME: $HADOOP_MAPRED_HOME"
-		HADOOP_JARS="$HADOOP_MAPRED_HOME/hadoop-*.jar $HADOOP_MAPRED_HOME/lib/guava-*.jar $HADOOP_HDFS_HOME/lib/commons-cli*.jar $HADOOP_HDFS_HOME/lib/protobuf*.jar"
+	if [ "$SPLOUT_HADOOP_MAPRED_HOME" ]; then
+		echo "Loading appropriate jars from SPLOUT_HADOOP_MAPRED_HOME: $SPLOUT_HADOOP_MAPRED_HOME"
+		HADOOP_JARS="$SPLOUT_HADOOP_MAPRED_HOME/hadoop-*.jar $SPLOUT_HADOOP_MAPRED_HOME/lib/guava-*.jar $SPLOUT_HADOOP_HDFS_HOME/lib/commons-cli*.jar $SPLOUT_HADOOP_HDFS_HOME/lib/protobuf*.jar"
 		for f in $HADOOP_JARS
 		do
 		        HADOOP_JAR_CS="$HADOOP_JAR_CS:$f"
 		done
-		CLASSPATH=${CLASSPATH}:$HADOOP_JAR_CS:$HADOOP_MAPRED_HOME/conf
-		if [ "$HADOOP_COMMON_HOME" ]; then
-			echo "Loading appropriate jars from HADOOP_COMMON_HOME: $HADOOP_COMMON_HOME"
-			HADOOP_JARS="$HADOOP_COMMON_HOME/hadoop-*.jar $HADOOP_MAPRED_HOME/lib/guava-*.jar $HADOOP_HDFS_HOME/lib/commons-cli*.jar $HADOOP_HDFS_HOME/lib/protobuf*.jar"
+		CLASSPATH=${CLASSPATH}:$HADOOP_JAR_CS:$SPLOUT_HADOOP_MAPRED_HOME/conf
+		if [ "$SPLOUT_HADOOP_COMMON_HOME" ]; then
+			echo "Loading appropriate jars from SPLOUT_HADOOP_COMMON_HOME: $SPLOUT_HADOOP_COMMON_HOME"
+			HADOOP_JARS="$SPLOUT_HADOOP_COMMON_HOME/hadoop-*.jar $SPLOUT_HADOOP_COMMON_HOME/lib/hadoop-*.jar"
 			for f in $HADOOP_JARS
 			do
 			        HADOOP_JAR_CS="$HADOOP_JAR_CS:$f"
 			done
 			CLASSPATH=${CLASSPATH}:$HADOOP_JAR_CS
 		else
-			echo "HADOOP_COMMON_HOME is not defined, Splout may not behave well if not being able to load all libraries from a YARN installation. Please fix your environment."
+			echo "SPLOUT_HADOOP_COMMON_HOME is not defined, Splout may not behave well if not being able to load all libraries from a YARN installation. Please fix your environment."
 			exit 1
 		fi
-		if [ "$HADOOP_HDFS_HOME" ]; then
-			echo "Loading appropriate jars from HADOOP_HDFS_HOME: $HADOOP_HDFS_HOME"
-			HADOOP_JARS="$HADOOP_HDFS_HOME/hadoop-*.jar $HADOOP_MAPRED_HOME/lib/guava-*.jar $HADOOP_HDFS_HOME/lib/commons-cli*.jar $HADOOP_HDFS_HOME/lib/protobuf*.jar"
+		if [ "$SPLOUT_HADOOP_HDFS_HOME" ]; then
+			echo "Loading appropriate jars from SPLOUT_HADOOP_HDFS_HOME: $SPLOUT_HADOOP_HDFS_HOME"
+			HADOOP_JARS="$SPLOUT_HADOOP_HDFS_HOME/hadoop-*.jar"
 			for f in $HADOOP_JARS
 			do
 			        HADOOP_JAR_CS="$HADOOP_JAR_CS:$f"
 			done
 			CLASSPATH=${CLASSPATH}:$HADOOP_JAR_CS
 		else
-			echo "HADOOP_HDFS_HOME is not defined, Splout may not behave well if not being able to load all libraries from a YARN installation. Please fix your environment."
+			echo "SPLOUT_HADOOP_HDFS_HOME is not defined, Splout may not behave well if not being able to load all libraries from a YARN installation. Please fix your environment."
 			exit 1
 		fi
+	fi
+
+	if [ "$SPLOUT_HADOOP_CONF_DIR" ]; then
+		echo "Adding specified Hadoop config folder to classpath: $SPLOUT_HADOOP_CONF_DIR"
+		CLASSPATH=${CLASSPATH}:${SPLOUT_HADOOP_CONF_DIR}
 	fi
 
 	# SPLOUT_CLASSPATH
