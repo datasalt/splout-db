@@ -266,7 +266,7 @@ public class Deployer extends QNodeHandlerModule {
 		deployInfo.setDataURIs(dataURIs);
 		
 		Date startTime = new Date();
-		deployInfo.setStartedAt(SimpleDateFormat.getInstance().format(startTime));
+		deployInfo.setStartedAt(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(startTime));
 		
 		context.getCoordinationStructures().logDeployMessage(version, "Deploy [" + version + "] for tablespaces " + tablespaces + " started.");
 		context.getCoordinationStructures().getDeploymentsStatusPanel().put(version, DeployStatus.ONGOING);
