@@ -53,9 +53,12 @@ public class JDBCManager implements EngineManager {
 		config.setUsername(userName);
 		config.setPassword(password);
 		config.setPartitionCount(1);
+		config.setDefaultAutoCommit(false);
 
 		connectionPool = new BoneCP(config); // setup the connection pool
 	}
+	
+	
 	
 	/**
 	 * The contract of this function is to return a JSON-ized ArrayList of JSON Objects which in Java are represented as

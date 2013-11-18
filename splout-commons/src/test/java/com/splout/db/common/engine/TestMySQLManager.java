@@ -9,7 +9,8 @@ public class TestMySQLManager extends SQLManagerTester {
 		EmbeddedMySQL mysql = new EmbeddedMySQL();
 		mysql.start(true);
 		try {
-			final MySQLManager jdbcManager = new MySQLManager(mysql.getConfig(), "test", 10);
+			// this only works with a pool of 1 connection, because the tester issues BEGIN / COMMIT with query() engine method
+			final MySQLManager jdbcManager = new MySQLManager(mysql.getConfig(), "test", 1);
 			basicTest(jdbcManager);
 			jdbcManager.close();
 
@@ -23,7 +24,8 @@ public class TestMySQLManager extends SQLManagerTester {
 		EmbeddedMySQL mysql = new EmbeddedMySQL();
 		mysql.start(true);
 		try {
-			final MySQLManager jdbcManager = new MySQLManager(mysql.getConfig(), "test", 10);
+			// this only works with a pool of 1 connection, because the tester issues BEGIN / COMMIT with query() engine method
+			final MySQLManager jdbcManager = new MySQLManager(mysql.getConfig(), "test", 1);
 			querySizeLimitingTest(jdbcManager);
 		} finally {
 			mysql.stop();

@@ -23,6 +23,7 @@ package com.splout.db.common.engine;
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,6 +32,7 @@ import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.google.common.io.Files;
 import com.mysql.management.MysqldResource;
 import com.mysql.management.MysqldResourceI;
 
@@ -125,8 +127,15 @@ public class EmbeddedMySQL {
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public void start(boolean deleteFilesIfExist) throws IOException {
+	public void start(boolean deleteFilesIfExist) throws IOException, InterruptedException {
 		if(deleteFilesIfExist && config.residentFolder.exists()) {
+			File pidFile = new File(config.residentFolder, "data/MysqldResource.pid");
+			if(pidFile.exists()) {
+				// Issue "kill -9" if process is still alive
+				String pid  = Files.toString(pidFile, Charset.defaultCharset());
+				log.info("Killing existing process: " + pid);
+				Runtime.getRuntime().exec("kill -9 " + pid).waitFor();
+			}
 			log.info("Deleting contents of: " + config.residentFolder);
 			FileUtils.deleteDirectory(config.residentFolder);
 		}

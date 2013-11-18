@@ -69,7 +69,7 @@ public class TestEmbeddedMySQL {
 	}
 
 	@Test
-	public void test() throws ClassNotFoundException, SQLException, IOException {
+	public void test() throws ClassNotFoundException, SQLException, IOException, InterruptedException {
 		EmbeddedMySQL mysql = new EmbeddedMySQL();
 		mysql.start(true);
 		Connection conn = null;
