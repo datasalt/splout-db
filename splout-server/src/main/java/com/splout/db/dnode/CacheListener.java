@@ -29,8 +29,8 @@ import net.sf.ehcache.event.CacheEventListener;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.splout.db.common.SQLite4JavaManager;
-import com.splout.db.common.SQLiteJDBCManager;
+import com.splout.db.common.engine.SQLite4JavaManager;
+import com.splout.db.common.engine.SQLiteJDBCManager;
 
 /**
  * An EHCache event listener that calls a finalization method in the value of the Cache which is a {@link SQLiteJDBCManager}

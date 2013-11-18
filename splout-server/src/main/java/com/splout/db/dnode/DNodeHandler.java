@@ -26,10 +26,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
@@ -52,7 +50,6 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.almworks.sqlite4java.SQLiteConnection;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.hazelcast.core.EntryEvent;
@@ -63,7 +60,8 @@ import com.hazelcast.core.ICountDownLatch;
 import com.splout.db.benchmark.PerformanceTool;
 import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
-import com.splout.db.common.SQLite4JavaManager;
+import com.splout.db.common.engine.EngineManager;
+import com.splout.db.common.engine.SQLite4JavaManager;
 import com.splout.db.common.SploutConfiguration;
 import com.splout.db.common.ThriftReader;
 import com.splout.db.common.ThriftWriter;
@@ -384,7 +382,7 @@ public class DNodeHandler implements IDNodeHandler {
 			if(partitions != null) {
 				for(File partition : partitions) {
 					if(partition.isDirectory()) {
-						// remove references to binary SQLite files in ECache
+						// remove references to engine in ECache
 						// so that space in disk is immediately available
 						String dbKey = version.getTablespace() + "_" + version.getVersion() + "_"
 						    + partition.getName();
@@ -411,22 +409,6 @@ public class DNodeHandler implements IDNodeHandler {
 	public String sqlQuery(String tablespace, long version, int partition, String query)
 	    throws DNodeException {
 
-		String t = Thread.currentThread().getName();
-		Set<SQLiteConnection> pendingClose = SQLite4JavaManager.CLEAN_UP_AFTER_YOURSELF.get(t);
-		// Because SQLiteConnection can only be closed by owner Thread, here we need to check if we
-		// have some pending connections to close...
-		if(pendingClose != null && pendingClose.size() > 0) {
-			synchronized(pendingClose) {
-				Iterator<SQLiteConnection> it = pendingClose.iterator();
-				while(it.hasNext()) {
-					SQLiteConnection conn = it.next();
-					log.info("-- Closed a connection pending diposal: " + conn.getDatabaseFile());
-					conn.dispose();
-					it.remove();
-				}
-			}
-		}
-
 		try {
 			try {
 				performanceTool.startQuery();
@@ -445,7 +427,7 @@ public class DNodeHandler implements IDNodeHandler {
 						// Currently using first ".db" file but in the future there might be some convention
 						for(String file : dbFolder.list()) {
 							if(file.endsWith(".db")) {
-								// Create new EHCache item value with a {@link SQLite4JavaManager}
+								// Create new EHCache item value with a {@link EngineManager}
 								File metadata = getLocalMetadataFile(tablespace, partition, version);
 								ThriftReader reader = new ThriftReader(metadata);
 								PartitionMetadata partitionMetadata = (PartitionMetadata) reader
@@ -463,7 +445,7 @@ public class DNodeHandler implements IDNodeHandler {
 				}
 				if(dbPoolInCache != null) {
 					// Query the {@link SQLite4JavaManager} and return
-					String result = ((SQLite4JavaManager) dbPoolInCache.getObjectValue()).query(query,
+					String result = ((EngineManager) dbPoolInCache.getObjectValue()).query(query,
 					    maxResultsPerQuery);
 					long time = performanceTool.endQuery();
 					log.info("serving query [" + tablespace + "]" + " [" + version + "] [" + partition + "] ["

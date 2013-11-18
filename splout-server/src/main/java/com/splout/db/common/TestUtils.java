@@ -31,6 +31,8 @@ import org.apache.thrift.transport.TTransportException;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
+import com.splout.db.common.engine.SQLiteJDBCManager;
+import com.splout.db.common.engine.EngineManager.EngineException;
 import com.splout.db.dnode.DNode;
 import com.splout.db.dnode.DNodeProperties;
 import com.splout.db.dnode.FetcherProperties;
@@ -50,9 +52,10 @@ public class TestUtils {
 	/**
 	 * Creates a simple database with two columns: one integer (a) and one string (b). It also insertes one default row
 	 * from parameters a, b.
+	 * @throws EngineException 
 	 */
 	public static void createFooDatabase(String where, int a, String b) throws SQLException, JSONSerDeException,
-	    ClassNotFoundException {
+	    ClassNotFoundException, EngineException {
 		File dbFolder = new File(where);
 		dbFolder.mkdir();
 		final SQLiteJDBCManager manager = new SQLiteJDBCManager(where + "/" + "foo.db", 10);

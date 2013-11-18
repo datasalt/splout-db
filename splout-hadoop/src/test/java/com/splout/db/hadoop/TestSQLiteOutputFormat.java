@@ -44,8 +44,8 @@ import com.datasalt.pangool.tuplemr.TupleMRBuilder;
 import com.datasalt.pangool.tuplemr.TupleMRException;
 import com.datasalt.pangool.tuplemr.TupleMapper;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.HadoopInputFormat;
-import com.splout.db.common.JSONSerDe.JSONSerDeException;
-import com.splout.db.common.SQLiteJDBCManager;
+import com.splout.db.common.engine.SQLiteJDBCManager;
+import com.splout.db.common.engine.EngineManager.EngineException;
 
 @SuppressWarnings("serial")
 public class TestSQLiteOutputFormat implements Serializable {
@@ -54,8 +54,7 @@ public class TestSQLiteOutputFormat implements Serializable {
 	public final static String OUTPUT = "out-" + TestSQLiteOutputFormat.class.getName();
 
 	@Test
-	public void test() throws IOException, TupleMRException, InterruptedException, ClassNotFoundException, SQLException,
-	    JSONSerDeException {
+	public void test() throws IOException, TupleMRException, InterruptedException, ClassNotFoundException, EngineException, SQLException {
 		Runtime.getRuntime().exec("rm -rf " + INPUT).waitFor();
 		Runtime.getRuntime().exec("rm -rf " + OUTPUT).waitFor();
 

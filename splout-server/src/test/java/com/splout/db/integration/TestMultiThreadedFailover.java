@@ -36,9 +36,9 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.splout.db.common.SQLiteJDBCManager;
 import com.splout.db.common.SploutClient;
 import com.splout.db.common.Tablespace;
+import com.splout.db.common.engine.SQLiteJDBCManager;
 import com.splout.db.dnode.TestCommands;
 import com.splout.db.qnode.QNode;
 import com.splout.db.qnode.beans.QueryStatus;

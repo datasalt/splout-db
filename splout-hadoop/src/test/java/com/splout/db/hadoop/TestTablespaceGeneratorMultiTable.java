@@ -42,7 +42,7 @@ import com.datasalt.pangool.io.Fields;
 import com.datasalt.pangool.io.Schema;
 import com.google.common.io.Files;
 import com.splout.db.common.JSONSerDe;
-import com.splout.db.common.SQLiteJDBCManager;
+import com.splout.db.common.engine.SQLiteJDBCManager;
 import com.splout.db.hadoop.TupleSampler.SamplingType;
 
 public class TestTablespaceGeneratorMultiTable {

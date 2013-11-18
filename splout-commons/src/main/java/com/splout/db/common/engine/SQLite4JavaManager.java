@@ -1,4 +1,4 @@
-package com.splout.db.common;
+package com.splout.db.common.engine;
 
 /*
  * #%L
@@ -21,11 +21,11 @@ package com.splout.db.common;
  */
 
 import java.io.File;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,12 +38,14 @@ import org.apache.commons.logging.LogFactory;
 import com.almworks.sqlite4java.SQLiteConnection;
 import com.almworks.sqlite4java.SQLiteException;
 import com.almworks.sqlite4java.SQLiteStatement;
+import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
+import com.splout.db.common.TimeoutThread;
 
 /**
  * SQL Wrapper for querying SQLite by using sqlite4java (http://code.google.com/p/sqlite4java).
  */
-public class SQLite4JavaManager implements ISQLiteManager {
+public class SQLite4JavaManager implements EngineManager {
 
 	private final static Log log = LogFactory.getLog(SQLite4JavaManager.class);
 	
@@ -115,17 +117,34 @@ public class SQLite4JavaManager implements ISQLiteManager {
 	}
 	
 	@Override
-	public String exec(String query) throws SQLException, JSONSerDeException {
+	public String exec(String query) throws EngineException {
 		try {
 			db.get().exec(query);
 			return "[{ \"status\": \"OK\" }]";
 		} catch(SQLiteException e) {
-			throw new SQLException(e);
+			throw new EngineException(new SQLException(e));
 		}
 	}
 
 	@Override
-	public String query(String query, int maxResults) throws SQLException, JSONSerDeException {
+	public String query(String query, int maxResults) throws EngineException {
+
+		String t = Thread.currentThread().getName();
+		Set<SQLiteConnection> pendingClose = SQLite4JavaManager.CLEAN_UP_AFTER_YOURSELF.get(t);
+		// Because SQLiteConnection can only be closed by owner Thread, here we need to check if we
+		// have some pending connections to close...
+		if(pendingClose != null && pendingClose.size() > 0) {
+			synchronized(pendingClose) {
+				Iterator<SQLiteConnection> it = pendingClose.iterator();
+				while(it.hasNext()) {
+					SQLiteConnection conn = it.next();
+					log.info("-- Closed a connection pending diposal: " + conn.getDatabaseFile());
+					conn.dispose();
+					it.remove();
+				}
+			}
+		}
+
 		SQLiteStatement st = null;
 		try {
 			SQLiteConnection conn = db.get();
@@ -154,8 +173,12 @@ public class SQLite4JavaManager implements ISQLiteManager {
 			}
 			return JSONSerDe.ser(list);
 		} catch(SQLiteException e) {
-			throw new SQLException(e);
-		} finally {
+			throw new EngineException(new SQLException(e));
+		} catch(JSONSerDeException e) {
+			throw new EngineException(e);
+		} catch(SQLException e) {
+			throw new EngineException(e);
+    } finally {
 			if(st != null) {
 				st.dispose();
 			}
@@ -176,10 +199,5 @@ public class SQLite4JavaManager implements ISQLiteManager {
 				}
 			}
 		}
-	}
-
-	@Override
-	public Connection getConnectionFromPool() throws SQLException {
-		throw new RuntimeException("Not implemented");
 	}
 }

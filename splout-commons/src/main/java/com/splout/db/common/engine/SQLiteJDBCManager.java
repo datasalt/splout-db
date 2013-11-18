@@ -1,4 +1,4 @@
-package com.splout.db.common;
+package com.splout.db.common.engine;
 
 /*
  * #%L
@@ -20,19 +20,18 @@ package com.splout.db.common;
  * #L%
  */
 
-import java.sql.Connection;
 import java.sql.SQLException;
 
-import com.splout.db.common.JSONSerDe.JSONSerDeException;
-
 /**
- * Contract for implementing several SQL interfaces. We have implemented two for SQLite and we finally use only one in production.
- * This interface may be removed in the future.
+ * SQL Wrapper for querying SQLite through a connection pool using BoneCP (<a
+ * href="http://jolbox.com">http://jolbox.com/</a>).
  */
-public interface ISQLiteManager {
+public class SQLiteJDBCManager extends JDBCManager {
 
-	public String exec(String query) throws SQLException, JSONSerDeException;
-	public String query(String query, int maxResults) throws SQLException, JSONSerDeException;
-	public void close();
-	public Connection getConnectionFromPool() throws SQLException;
+	public final static String DRIVER = "org.sqlite.JDBC";
+	
+	public SQLiteJDBCManager(String dbFile, int nConnections) throws SQLException, ClassNotFoundException {
+		super(DRIVER, "jdbc:sqlite:" + dbFile, nConnections, "foo", "foo");
+	}
+
 }

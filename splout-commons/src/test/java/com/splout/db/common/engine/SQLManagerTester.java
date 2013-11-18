@@ -1,4 +1,4 @@
-package com.splout.db.common;
+package com.splout.db.common.engine;
 
 /*
  * #%L
@@ -22,7 +22,6 @@ package com.splout.db.common;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.File;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Map;
@@ -30,18 +29,18 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.junit.Test;
-
+import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
+import com.splout.db.common.engine.EngineManager.EngineException;
 
-public class TestSQLiteJDBCManager {
-
-	public static String TEST_DB_1 = TestSQLiteJDBCManager.class.getName() + ".1.db";
-	public static String TEST_DB_2 = TestSQLiteJDBCManager.class.getName() + ".2.db";
+/**
+ * Generic tester logic for any EngineManager that implements SQL.
+ */
+public class SQLManagerTester {
 
 	@SuppressWarnings("rawtypes")
-	public void basicTest(final ISQLiteManager manager) throws SQLException, JSONSerDeException,
-	    InterruptedException {
+	public void basicTest(final EngineManager manager) throws
+	    InterruptedException, EngineException, JSONSerDeException {
 
 		manager.query("DROP TABLE IF EXISTS t;", 100);
 		manager.query("CREATE TABLE t (a INT, b TEXT);", 100);
@@ -59,7 +58,7 @@ public class TestSQLiteJDBCManager {
 
 		String json = manager.query("SELECT COUNT(*) FROM t;", 100);
 		ArrayList results = JSONSerDe.deSer(json, ArrayList.class);
-		assertEquals(((Map) results.get(0)).get("COUNT(*)"), 1000);
+		assertEquals(((Map) results.get(0)).get("COUNT(*)"), nWrites);
 
 		final AtomicBoolean failed = new AtomicBoolean(false);
 		
@@ -88,27 +87,8 @@ public class TestSQLiteJDBCManager {
 		manager.exec("DROP TABLE t;");
 	}
 
-	@Test
-	public void test() throws Exception {
-		File dbFile = new File(TEST_DB_1);
-		if(dbFile.exists()) {
-			dbFile.delete();
-		}
-
-		final SQLite4JavaManager sqlite4Java = new SQLite4JavaManager(TEST_DB_1, null);
-		basicTest(sqlite4Java);
-		sqlite4Java.close();
-		dbFile.delete();
-
-		final SQLiteJDBCManager jdbcManager = new SQLiteJDBCManager(TEST_DB_1, 1);
-		basicTest(jdbcManager);
-		jdbcManager.close();
-
-		dbFile.delete();
-	}
-
-	public void querySizeLimitingTest(final ISQLiteManager manager) throws SQLException,
-	    ClassNotFoundException, JSONSerDeException {
+	public void querySizeLimitingTest(final EngineManager manager) throws SQLException,
+	    ClassNotFoundException, JSONSerDeException, EngineException {
 		manager.query("DROP TABLE IF EXISTS t;", 100);
 		manager.query("CREATE TABLE t (a INT, b TEXT);", 100);
 
@@ -127,38 +107,21 @@ public class TestSQLiteJDBCManager {
 		try {
 			JSONSerDe.deSer(manager.query("SELECT * FROM t;", 100), ArrayList.class);
 			throw new AssertionError("Exception was not thrown but it was expected (query hard limit)");
-		} catch(SQLException e) {
+		} catch(EngineException e) {
 		}
 
 		// Query with hard limit = 10
 		try {
 			JSONSerDe.deSer(manager.query("SELECT * FROM t;", 10), ArrayList.class);
 			throw new AssertionError("Exception was not thrown but it was expected (query hard limit)");
-		} catch(SQLException e) {
+		} catch(EngineException e) {
 		}
 
 		// Query with hard limit = 1
 		try {
 			JSONSerDe.deSer(manager.query("SELECT * FROM t;", 1), ArrayList.class);
 			throw new AssertionError("Exception was not thrown but it was expected (query hard limit)");
-		} catch(SQLException e) {
+		} catch(EngineException e) {
 		}
-	}
-
-	@Test
-	public void testQuerySizeLimiting() throws SQLException, ClassNotFoundException, JSONSerDeException {
-		File dbFile = new File(TEST_DB_2);
-		if(dbFile.exists()) {
-			dbFile.delete();
-		}
-		final SQLiteJDBCManager manager = new SQLiteJDBCManager(TEST_DB_2, 1);
-		querySizeLimitingTest(manager);
-		manager.close();
-		dbFile.delete();
-
-		final SQLite4JavaManager sqlite4Java = new SQLite4JavaManager(TEST_DB_2, null);
-		querySizeLimitingTest(sqlite4Java);
-		sqlite4Java.close();
-		dbFile.delete();
 	}
 }

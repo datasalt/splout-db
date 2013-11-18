@@ -1,4 +1,24 @@
-package com.splout.db.engine;
+package com.splout.db.common.engine;
+
+/*
+ * #%L
+ * Splout SQL commons
+ * %%
+ * Copyright (C) 2012 - 2013 Datasalt Systems S.L.
+ * %%
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * #L%
+ */
 
 import java.io.File;
 import java.io.IOException;
@@ -6,6 +26,7 @@ import java.net.ServerSocket;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -69,7 +90,11 @@ public class EmbeddedMySQL {
 		public String getUser() {
 			return user;
 		}
-
+		
+		public String getLocalJDBCConnection(String dbName) {
+			return "jdbc:mysql://localhost:" + port + "/" + dbName;
+		}
+		
 		@Override
 		public String toString() {
 			return ReflectionToStringBuilder.toString(this);
@@ -83,6 +108,10 @@ public class EmbeddedMySQL {
 		this(new EmbeddedMySQLConfig());
 	}
 	
+	public EmbeddedMySQLConfig getConfig() {
+	  return config;
+  }
+	
 	public EmbeddedMySQL(EmbeddedMySQLConfig config) {
 		this.config = config;
 	}
@@ -94,13 +123,13 @@ public class EmbeddedMySQL {
 			log.warn("Nothing to stop.");
 		}
 	}
-	
-	public String getLocalConnection(String dbName) {
-		return "jdbc:mysql://localhost:" + config.port + "/" + dbName;
-	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public void start() {
+	public void start(boolean deleteFilesIfExist) throws IOException {
+		if(deleteFilesIfExist && config.residentFolder.exists()) {
+			log.info("Deleting contents of: " + config.residentFolder);
+			FileUtils.deleteDirectory(config.residentFolder);
+		}
 		log.info("Using config: " + config);
 		MysqldResource mysqldResource = new MysqldResource(config.residentFolder);
 		Map database_options = new HashMap();

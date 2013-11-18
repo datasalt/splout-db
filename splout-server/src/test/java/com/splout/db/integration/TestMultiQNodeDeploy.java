@@ -30,10 +30,10 @@ import java.util.Random;
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 
-import com.splout.db.common.SQLiteJDBCManager;
 import com.splout.db.common.SploutClient;
 import com.splout.db.common.SploutConfiguration;
 import com.splout.db.common.Tablespace;
+import com.splout.db.common.engine.SQLiteJDBCManager;
 import com.splout.db.qnode.beans.QueryStatus;
 
 /**

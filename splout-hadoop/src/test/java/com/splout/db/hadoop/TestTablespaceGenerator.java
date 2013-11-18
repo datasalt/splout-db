@@ -26,7 +26,7 @@ import com.datasalt.pangool.tuplemr.OrderBy;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat;
 import com.datasalt.pangool.utils.test.AbstractHadoopTestLibrary;
 import com.splout.db.common.PartitionEntry;
-import com.splout.db.common.SQLiteJDBCManager;
+import com.splout.db.common.engine.SQLiteJDBCManager;
 import com.splout.db.hadoop.TupleSampler.SamplingType;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;

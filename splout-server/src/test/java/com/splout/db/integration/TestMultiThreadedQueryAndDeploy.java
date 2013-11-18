@@ -41,11 +41,11 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.splout.db.common.SQLiteJDBCManager;
 import com.splout.db.common.SploutClient;
 import com.splout.db.common.SploutConfiguration;
 import com.splout.db.common.Tablespace;
 import com.splout.db.common.TestUtils;
+import com.splout.db.common.engine.SQLiteJDBCManager;
 import com.splout.db.hazelcast.CoordinationStructures;
 import com.splout.db.hazelcast.TablespaceVersion;
 import com.splout.db.qnode.QNode;

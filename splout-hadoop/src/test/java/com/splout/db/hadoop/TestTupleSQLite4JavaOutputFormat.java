@@ -51,7 +51,8 @@ import com.datasalt.pangool.tuplemr.TupleMapper;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.HadoopInputFormat;
 import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
-import com.splout.db.common.SQLiteJDBCManager;
+import com.splout.db.common.engine.SQLiteJDBCManager;
+import com.splout.db.common.engine.EngineManager.EngineException;
 import com.splout.db.hadoop.TableSpec.FieldIndex;
 import com.splout.db.hadoop.TupleSQLite4JavaOutputFormat.TupleSQLiteOutputFormatException;
 
@@ -105,7 +106,7 @@ public class TestTupleSQLite4JavaOutputFormat implements Serializable {
 	@SuppressWarnings("rawtypes")
   @Test
 	public void test() throws IOException, TupleMRException, InterruptedException, ClassNotFoundException, SQLException,
-	    JSONSerDeException, TupleSQLiteOutputFormatException {
+	    JSONSerDeException, TupleSQLiteOutputFormatException, EngineException {
 
 		Runtime.getRuntime().exec("rm -rf " + OUTPUT);
 
