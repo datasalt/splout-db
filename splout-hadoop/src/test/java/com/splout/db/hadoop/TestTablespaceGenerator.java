@@ -20,26 +20,34 @@ package com.splout.db.hadoop;
  * #L%
  */
 
-import com.datasalt.pangool.io.*;
-import com.datasalt.pangool.tuplemr.Criteria;
-import com.datasalt.pangool.tuplemr.OrderBy;
-import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat;
-import com.datasalt.pangool.utils.test.AbstractHadoopTestLibrary;
-import com.splout.db.common.PartitionEntry;
-import com.splout.db.common.engine.SQLiteJDBCManager;
-import com.splout.db.hadoop.TupleSampler.SamplingType;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.junit.Test;
+
+import com.datasalt.pangool.io.Fields;
+import com.datasalt.pangool.io.ITuple;
+import com.datasalt.pangool.io.Schema;
+import com.datasalt.pangool.io.Tuple;
+import com.datasalt.pangool.io.TupleFile;
+import com.datasalt.pangool.io.Utf8;
+import com.datasalt.pangool.tuplemr.Criteria;
+import com.datasalt.pangool.tuplemr.OrderBy;
+import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat;
+import com.datasalt.pangool.utils.test.AbstractHadoopTestLibrary;
+import com.splout.db.common.PartitionEntry;
+import com.splout.db.common.engine.SQLite4JavaManager;
+import com.splout.db.hadoop.TupleSampler.SamplingType;
 
 @SuppressWarnings({ "rawtypes", "serial" })
 public class TestTablespaceGenerator extends AbstractHadoopTestLibrary implements Serializable  {
@@ -124,7 +132,7 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary implement
 		TablespaceGenerator viewGenerator = new TablespaceGenerator(tablespace, new Path(OUTPUT), this.getClass());
 		viewGenerator.generateView(conf, SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions());
 		
-		SQLiteJDBCManager manager = new SQLiteJDBCManager(OUTPUT + "/store/0.db", 10);
+		SQLite4JavaManager manager = new SQLite4JavaManager(OUTPUT + "/store/0.db", null);
     String results = manager.query("SELECT * FROM schema2;", 100);
 		assertTrue(results.contains("null"));
 
@@ -212,7 +220,7 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary implement
     TablespaceGenerator viewGenerator = new TablespaceGenerator(builder.build(), new Path(OUTPUT), this.getClass());
     viewGenerator.generateView(conf, SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions());
 
-    SQLiteJDBCManager manager = new SQLiteJDBCManager(OUTPUT + "/store/0.db", 10);
+    SQLite4JavaManager manager = new SQLite4JavaManager(OUTPUT + "/store/0.db", null);
     String results = manager.query("SELECT * FROM schema1;", TUPLES_TO_GENERATE+1);
 
     System.out.println(results);

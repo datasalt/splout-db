@@ -31,8 +31,8 @@ import org.apache.thrift.transport.TTransportException;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
-import com.splout.db.common.engine.SQLiteJDBCManager;
 import com.splout.db.common.engine.EngineManager.EngineException;
+import com.splout.db.common.engine.SQLite4JavaManager;
 import com.splout.db.dnode.DNode;
 import com.splout.db.dnode.DNodeProperties;
 import com.splout.db.dnode.FetcherProperties;
@@ -58,7 +58,7 @@ public class TestUtils {
 	    ClassNotFoundException, EngineException {
 		File dbFolder = new File(where);
 		dbFolder.mkdir();
-		final SQLiteJDBCManager manager = new SQLiteJDBCManager(where + "/" + "foo.db", 10);
+		final SQLite4JavaManager manager = new SQLite4JavaManager(where + "/" + "foo.db", null);
 		manager.query("DROP TABLE IF EXISTS t;", 100);
 		manager.query("CREATE TABLE t (a INT, b TEXT);", 100);
 		manager.query("INSERT INTO t (a, b) VALUES (" + a + ", \"" + b + "\")", 100);

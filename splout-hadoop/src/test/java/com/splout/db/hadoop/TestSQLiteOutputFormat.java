@@ -44,8 +44,8 @@ import com.datasalt.pangool.tuplemr.TupleMRBuilder;
 import com.datasalt.pangool.tuplemr.TupleMRException;
 import com.datasalt.pangool.tuplemr.TupleMapper;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.HadoopInputFormat;
-import com.splout.db.common.engine.SQLiteJDBCManager;
 import com.splout.db.common.engine.EngineManager.EngineException;
+import com.splout.db.common.engine.SQLite4JavaManager;
 
 @SuppressWarnings("serial")
 public class TestSQLiteOutputFormat implements Serializable {
@@ -97,7 +97,7 @@ public class TestSQLiteOutputFormat implements Serializable {
 
 		// Assert that the DB has been created successfully
 
-		SQLiteJDBCManager manager = new SQLiteJDBCManager(OUTPUT + "/0.db", 10);
+		SQLite4JavaManager manager = new SQLite4JavaManager(OUTPUT + "/0.db", null);
 		assertTrue(manager.query("SELECT foobar2 FROM foo WHERE foobar1 LIKE \"foo1\";", 100).contains("foobar2\":10"));
 		assertTrue(manager.query("SELECT foobar2 FROM foo WHERE foobar1 LIKE \"foo2\";", 100).contains("foobar2\":20"));
 		assertTrue(manager.query("SELECT foobar2 FROM foo WHERE foobar1 LIKE \"foo3\";", 100).contains("foobar2\":30"));

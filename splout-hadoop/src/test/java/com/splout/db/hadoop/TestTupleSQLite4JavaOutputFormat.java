@@ -51,8 +51,8 @@ import com.datasalt.pangool.tuplemr.TupleMapper;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.HadoopInputFormat;
 import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
-import com.splout.db.common.engine.SQLiteJDBCManager;
 import com.splout.db.common.engine.EngineManager.EngineException;
+import com.splout.db.common.engine.SQLite4JavaManager;
 import com.splout.db.hadoop.TableSpec.FieldIndex;
 import com.splout.db.hadoop.TupleSQLite4JavaOutputFormat.TupleSQLiteOutputFormatException;
 
@@ -190,7 +190,7 @@ public class TestTupleSQLite4JavaOutputFormat implements Serializable {
 
 		// Assert that the DB has been created successfully
 
-		SQLiteJDBCManager manager = new SQLiteJDBCManager(OUTPUT + "/0.db", 10);
+		SQLite4JavaManager manager = new SQLite4JavaManager(OUTPUT + "/0.db", null);
 		List list = JSONSerDe.deSer(manager.query("SELECT * FROM schema1;", 100), ArrayList.class);
 		assertEquals(6, list.size());
 		list = JSONSerDe.deSer(manager.query("SELECT * FROM schema2;", 100), ArrayList.class);
