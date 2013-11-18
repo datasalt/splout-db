@@ -34,8 +34,10 @@ import com.splout.db.common.JSONSerDe.JSONSerDeException;
 import com.splout.db.common.PartitionEntry;
 import com.splout.db.common.PartitionMap;
 import com.splout.db.common.Tablespace;
-import com.splout.db.hadoop.TupleSQLite4JavaOutputFormat.TupleSQLiteOutputFormatException;
 import com.splout.db.hadoop.TupleSampler.TupleSamplerException;
+import com.splout.db.hadoop.engine.TupleSQLite4JavaOutputFormat;
+import com.splout.db.hadoop.engine.TupleSQLite4JavaOutputFormat.TupleSQLiteOutputFormatException;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;

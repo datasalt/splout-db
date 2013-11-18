@@ -55,7 +55,7 @@ import com.splout.db.common.PartitionEntry;
 import com.splout.db.common.PartitionMap;
 import com.splout.db.common.SploutHadoopConfiguration;
 import com.splout.db.hadoop.TableSpec;
-import com.splout.db.hadoop.TupleSQLite4JavaOutputFormat;
+import com.splout.db.hadoop.engine.TupleSQLite4JavaOutputFormat;
 
 /**
  * Distributed map-only job that creates an arbitrarily big database for being used by {@link BenchmarkTool}. It doesn't

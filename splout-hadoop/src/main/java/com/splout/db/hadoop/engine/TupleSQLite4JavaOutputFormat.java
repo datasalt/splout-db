@@ -1,4 +1,4 @@
-package com.splout.db.hadoop;
+package com.splout.db.hadoop.engine;
 
 /*
  * #%L
@@ -47,7 +47,7 @@ import com.almworks.sqlite4java.SQLiteStatement;
 import com.datasalt.pangool.io.ITuple;
 import com.datasalt.pangool.io.Schema.Field;
 import com.splout.db.common.HeartBeater;
-import com.splout.db.hadoop.SQLiteOutputFormat.SQLRecordWriter;
+import com.splout.db.hadoop.TableSpec;
 import com.splout.db.hadoop.TableSpec.FieldIndex;
 
 /**

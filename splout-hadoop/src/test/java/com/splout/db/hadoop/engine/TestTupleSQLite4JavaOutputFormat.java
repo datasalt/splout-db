@@ -1,4 +1,4 @@
-package com.splout.db.hadoop;
+package com.splout.db.hadoop.engine;
 
 /*
  * #%L
@@ -53,15 +53,18 @@ import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
 import com.splout.db.common.engine.EngineManager.EngineException;
 import com.splout.db.common.engine.SQLite4JavaManager;
+import com.splout.db.hadoop.NullableSchema;
+import com.splout.db.hadoop.TableSpec;
 import com.splout.db.hadoop.TableSpec.FieldIndex;
-import com.splout.db.hadoop.TupleSQLite4JavaOutputFormat.TupleSQLiteOutputFormatException;
+import com.splout.db.hadoop.engine.TupleSQLite4JavaOutputFormat;
+import com.splout.db.hadoop.engine.TupleSQLite4JavaOutputFormat.TupleSQLiteOutputFormatException;
 
 @SuppressWarnings("serial")
 public class TestTupleSQLite4JavaOutputFormat implements Serializable {
 
-	public final static String INPUT1 = "in1-" + TestSQLiteOutputFormat.class.getName();
-	public final static String INPUT2 = "in2-" + TestSQLiteOutputFormat.class.getName();
-	public final static String OUTPUT = "out-" + TestSQLiteOutputFormat.class.getName();
+	public final static String INPUT1 = "in1-" + TestTupleSQLite4JavaOutputFormat.class.getName();
+	public final static String INPUT2 = "in2-" + TestTupleSQLite4JavaOutputFormat.class.getName();
+	public final static String OUTPUT = "out-" + TestTupleSQLite4JavaOutputFormat.class.getName();
 	
 	@Test
 	public void testPreSQL() throws Exception {
