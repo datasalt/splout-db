@@ -1,5 +1,5 @@
 
-Lists of 43 third-party dependencies.
+Lists of 46 third-party dependencies.
      (The Apache Software License, Version 2.0) sqlite4java (com.almworks.sqlite4java:sqlite4java:0.282 - http://code.google.com/p/sqlite4java)
      (The Apache Software License, Version 2.0) JCommander (com.beust:jcommander:1.27 - http://beust.com/jcommander)
      (The Apache Software License, Version 2.0) Jackson-annotations (com.fasterxml.jackson.core:jackson-annotations:2.1.1 - http://wiki.fasterxml.com/JacksonHome)
@@ -28,6 +28,9 @@ Lists of 43 third-party dependencies.
      (Common Development and Distribution License (CDDL) v1.0) JavaBeans Activation Framework (JAF) (javax.activation:activation:1.1 - http://java.sun.com/products/javabeans/jaf/index.jsp)
      (Common Development and Distribution License (CDDL) v1.0) JavaMail API (javax.mail:mail:1.4 - https://glassfish.dev.java.net/javaee5/mail/)
      (The Apache Software License, Version 2.0) Apache Log4j (log4j:log4j:1.2.15 - http://logging.apache.org:80/log4j/1.2/)
+     (The GNU General Public License, Version 2) MySQL java connector (mysql:mysql-connector-java:5.1.17 - http://dev.mysql.com/usingmysql/java/)
+     (GNU GENERAL PUBLIC LICENSE) MySQL Connector/MXJ (mysql:mysql-connector-mxj:5.0.12 - http://dev.mysql.com/doc/refman/5.1/en/connector-mxj.html)
+     (GNU GENERAL PUBLIC LICENSE) MySQL Connector/MXJ (mysql:mysql-connector-mxj-db-files:5.0.12 - http://dev.mysql.com/doc/refman/5.1/en/connector-mxj.html)
      (Apache License, Version 2.0) An open source Java toolkit for Amazon S3 (net.java.dev.jets3t:jets3t:0.7.1 - http://jets3t.s3.amazonaws.com/index.html)
      (The Apache Software License, Version 2.0) Ehcache Core (net.sf.ehcache:ehcache-core:2.5.1 - http://ehcache.org)
      (Apache License) HttpClient (org.apache.httpcomponents:httpclient:4.0.1 - http://hc.apache.org/httpcomponents-client)

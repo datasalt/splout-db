@@ -20,23 +20,13 @@ package com.splout.db.hadoop;
  * #L%
  */
 
-import com.datasalt.pangool.io.ITuple;
-import com.datasalt.pangool.io.Schema;
-import com.datasalt.pangool.io.Schema.Field;
-import com.datasalt.pangool.io.Schema.Field.Type;
-import com.datasalt.pangool.io.Tuple;
-import com.datasalt.pangool.io.TupleFile;
-import com.datasalt.pangool.tuplemr.Criteria.Order;
-import com.datasalt.pangool.tuplemr.Criteria.SortElement;
-import com.datasalt.pangool.tuplemr.*;
-import com.splout.db.common.JSONSerDe;
-import com.splout.db.common.JSONSerDe.JSONSerDeException;
-import com.splout.db.common.PartitionEntry;
-import com.splout.db.common.PartitionMap;
-import com.splout.db.common.Tablespace;
-import com.splout.db.hadoop.TupleSampler.TupleSamplerException;
-import com.splout.db.hadoop.engine.TupleSQLite4JavaOutputFormat;
-import com.splout.db.hadoop.engine.TupleSQLite4JavaOutputFormat.TupleSQLiteOutputFormatException;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -46,13 +36,28 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.mortbay.log.Log;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import com.datasalt.pangool.io.ITuple;
+import com.datasalt.pangool.io.Schema;
+import com.datasalt.pangool.io.Schema.Field;
+import com.datasalt.pangool.io.Tuple;
+import com.datasalt.pangool.io.TupleFile;
+import com.datasalt.pangool.tuplemr.Criteria.Order;
+import com.datasalt.pangool.tuplemr.Criteria.SortElement;
+import com.datasalt.pangool.tuplemr.IdentityTupleReducer;
+import com.datasalt.pangool.tuplemr.OrderBy;
+import com.datasalt.pangool.tuplemr.TupleMRBuilder;
+import com.datasalt.pangool.tuplemr.TupleMRException;
+import com.datasalt.pangool.tuplemr.TupleMapper;
+import com.datasalt.pangool.tuplemr.TupleReducer;
+import com.splout.db.common.JSONSerDe;
+import com.splout.db.common.JSONSerDe.JSONSerDeException;
+import com.splout.db.common.PartitionEntry;
+import com.splout.db.common.PartitionMap;
+import com.splout.db.common.Tablespace;
+import com.splout.db.hadoop.TupleSampler.TupleSamplerException;
+import com.splout.db.hadoop.engine.SQLite4JavaOutputFormat;
+import com.splout.db.hadoop.engine.SploutSQLOutputFormat;
+import com.splout.db.hadoop.engine.SploutSQLOutputFormat.SploutSQLOutputFormatException;
 
 /**
  * A process that generates the SQL data stores needed for deploying a tablespace in Splout, giving a file set table
@@ -68,7 +73,7 @@ import java.util.List;
  * the list of sampled keys and outputPath + / + {@link #OUT_STORE} for the folder containing the generated SQL store.
  * <p>
  * For creating the store we first sample the input dataset with {@link TupleSampler} and then execute a Hadoop job that
- * distributes the data accordingly. The Hadoop job will use {@link TupleSQLite4JavaOutputFormat}.
+ * distributes the data accordingly. The Hadoop job will use {@link SQLite4JavaOutputFormat}.
  */
 @SuppressWarnings({ "serial", "rawtypes" })
 public class TablespaceGenerator implements Serializable {
@@ -278,7 +283,7 @@ public class TablespaceGenerator implements Serializable {
 	 * Create TupleMRBuilder for launching generation Job.
 	 */
 	protected TupleMRBuilder createMRBuilder(final int nPartitions, Configuration conf)
-	    throws TupleMRException, TupleSQLiteOutputFormatException {
+	    throws TupleMRException, SploutSQLOutputFormatException {
 		TupleMRBuilder builder = new TupleMRBuilder(conf, "Splout View Builder");
 
 		List<TableSpec> tableSpecs = new ArrayList<TableSpec>();
@@ -289,7 +294,7 @@ public class TablespaceGenerator implements Serializable {
 		for(Table table : tablespace.getPartitionedTables()) {
 			List<Field> fields = new ArrayList<Field>();
 			fields.addAll(table.getTableSpec().getSchema().getFields());
-			fields.add(Field.create(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD, Type.INT));
+			fields.add(SploutSQLOutputFormat.getPartitionField());
 			final Schema tableSchema = new Schema(table.getTableSpec().getSchema().getName(), fields);
 			final TableSpec tableSpec = table.getTableSpec();
 			schemaCounter++;
@@ -354,7 +359,7 @@ public class TablespaceGenerator implements Serializable {
 							for(Field field : processedTuple.getSchema().getFields()) {
 								tableTuple.set(field.getName(), processedTuple.get(field.getName()));
 							}
-							tableTuple.set(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD, shardId);
+							tableTuple.set(SploutSQLOutputFormat.PARTITION_TUPLE_FIELD, shardId);
 							collector.write(tableTuple);
 						}
 					}, inputFile.getSpecificHadoopInputFormatContext());
@@ -368,7 +373,7 @@ public class TablespaceGenerator implements Serializable {
 		for(final Table table : tablespace.getReplicateAllTables()) {
 			List<Field> fields = new ArrayList<Field>();
 			fields.addAll(table.getTableSpec().getSchema().getFields());
-			fields.add(Field.create(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD, Type.INT));
+			fields.add(SploutSQLOutputFormat.getPartitionField());
 			final Schema tableSchema = new Schema(table.getTableSpec().getSchema().getName(), fields);
 			schemaCounter++;
 			builder.addIntermediateSchema(NullableSchema.nullableSchema(tableSchema));
@@ -411,7 +416,7 @@ public class TablespaceGenerator implements Serializable {
 
 							// Send the data of the replicated table to all partitions!
 							for(int i = 0; i < nPartitions; i++) {
-								tableTuple.set(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD, i);
+								tableTuple.set(SploutSQLOutputFormat.PARTITION_TUPLE_FIELD, i);
 								collector.write(tableTuple);
 							}
 						}
@@ -422,11 +427,11 @@ public class TablespaceGenerator implements Serializable {
 		}
 
 		// Group by partition
-		builder.setGroupByFields(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD);
+		builder.setGroupByFields(SploutSQLOutputFormat.PARTITION_TUPLE_FIELD);
 
 		if(schemaCounter == 1) {
 			OrderBy orderBy = new OrderBy();
-			orderBy.add(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD, Order.ASC);
+			orderBy.add(SploutSQLOutputFormat.PARTITION_TUPLE_FIELD, Order.ASC);
 			// The only table we have, check if it has specific order by
 			OrderBy specificOrderBy = tablespace.getPartitionedTables().get(0).getTableSpec()
 			    .getInsertionOrderBy();
@@ -438,7 +443,7 @@ public class TablespaceGenerator implements Serializable {
 			builder.setOrderBy(orderBy);
 		} else { // > 1
 			// More than one schema: set common order by
-			builder.setOrderBy(OrderBy.parse(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD + ":asc")
+			builder.setOrderBy(OrderBy.parse(SploutSQLOutputFormat.PARTITION_TUPLE_FIELD + ":asc")
 			    .addSchemaOrder(Order.ASC));
 			// And then as many particular order bys as needed - ....
 			for(Table partitionedTable : tablespace.getPartitionedTables()) {
@@ -463,8 +468,11 @@ public class TablespaceGenerator implements Serializable {
 
 		builder.setJarByClass(callingClass);
 		// Define the output format - Tuple to SQL
-		OutputFormat outputFormat = new TupleSQLite4JavaOutputFormat(batchSize,
+		OutputFormat outputFormat = new SQLite4JavaOutputFormat(batchSize,
 		    tableSpecs.toArray(new TableSpec[0]));
+		
+//		OutputFormat outputFormat = new MySQLOutputFormat(batchSize, nPartitions, tableSpecs.toArray(new TableSpec[0]));
+		
 		builder.setOutput(new Path(outputPath, OUT_STORE), outputFormat, ITuple.class, NullWritable.class);
 		// #reducers = #partitions by default
 		builder.getConf().setInt("mapred.reduce.tasks", nPartitions);

@@ -48,10 +48,10 @@ public class EmbeddedMySQL {
 
 	public static class EmbeddedMySQLConfig {
 
-		final static int DEFAULT_PORT = 4567;
-		final static String DEFAULT_USER = "splout";
-		final static String DEFAULT_PASS = "splout";
-		final static File DEFAULT_RESIDENT_FOLDER = new File(System.getProperty("java.io.tmpdir"),
+		public final static int DEFAULT_PORT = 4567;
+		public final static String DEFAULT_USER = "splout";
+		public final static String DEFAULT_PASS = "splout";
+		public final static File DEFAULT_RESIDENT_FOLDER = new File(System.getProperty("java.io.tmpdir"),
 		    "mysql-splout");
 
 		final int port;
@@ -93,8 +93,11 @@ public class EmbeddedMySQL {
 			return user;
 		}
 		
+		/**
+		 * Normal JDBC connection string to localhost with "createDatabaseIfNotExist"
+		 */
 		public String getLocalJDBCConnection(String dbName) {
-			return "jdbc:mysql://localhost:" + port + "/" + dbName;
+			return "jdbc:mysql://localhost:" + port + "/" + dbName + "?createDatabaseIfNotExist=true";
 		}
 		
 		@Override
@@ -120,7 +123,10 @@ public class EmbeddedMySQL {
 
 	public void stop() {
 		if(resource != null) {
-			resource.shutdown();
+			if(resource.isRunning()) {
+				resource.shutdown();
+				resource = null;
+			}
 		} else {
 			log.warn("Nothing to stop.");
 		}

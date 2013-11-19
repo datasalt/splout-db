@@ -55,7 +55,8 @@ import com.splout.db.common.PartitionEntry;
 import com.splout.db.common.PartitionMap;
 import com.splout.db.common.SploutHadoopConfiguration;
 import com.splout.db.hadoop.TableSpec;
-import com.splout.db.hadoop.engine.TupleSQLite4JavaOutputFormat;
+import com.splout.db.hadoop.engine.SQLite4JavaOutputFormat;
+import com.splout.db.hadoop.engine.SploutSQLOutputFormat;
 
 /**
  * Distributed map-only job that creates an arbitrarily big database for being used by {@link BenchmarkTool}. It doesn't
@@ -158,7 +159,7 @@ public class BenchmarkStoreTool implements Tool, Serializable {
 		HadoopUtils.stringToFile(outFs, new Path(out, "partition-map"), JSONSerDe.ser(partitionMap));
 
 		List<Field> fields = new ArrayList<Field>();
-		fields.add(Field.create(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD, Type.INT));
+		fields.add(Field.create(SploutSQLOutputFormat.PARTITION_TUPLE_FIELD, Type.INT));
 		fields.addAll(Fields.parse("key:int, value:string"));
 		final Schema schema = new Schema(tablename, fields);
 
@@ -178,7 +179,7 @@ public class BenchmarkStoreTool implements Tool, Serializable {
 		MapOnlyJobBuilder job = new MapOnlyJobBuilder(conf);
 		TableSpec tableSpec = new TableSpec(schema, schema.getFields().get(1));
 		
-		job.setOutput(new Path(out, "store"), new TupleSQLite4JavaOutputFormat(1000000, tableSpec), ITuple.class,
+		job.setOutput(new Path(out, "store"), new SQLite4JavaOutputFormat(1000000, tableSpec), ITuple.class,
 		    NullWritable.class);
 		job.addInput(input, new HadoopInputFormat(TextInputFormat.class), new MapOnlyMapper<LongWritable, Text, ITuple, NullWritable>() {
 
@@ -189,7 +190,7 @@ public class BenchmarkStoreTool implements Tool, Serializable {
 
 				String[] partitionRange = value.toString().split("\t");
 				Integer partition = Integer.parseInt(partitionRange[0]);
-				metaTuple.set(TupleSQLite4JavaOutputFormat.PARTITION_TUPLE_FIELD, partition);
+				metaTuple.set(SploutSQLOutputFormat.PARTITION_TUPLE_FIELD, partition);
 				String[] minMax = partitionRange[1].split(":");
 				Integer min = Integer.parseInt(minMax[0]);
 				Integer max = Integer.parseInt(minMax[1]);

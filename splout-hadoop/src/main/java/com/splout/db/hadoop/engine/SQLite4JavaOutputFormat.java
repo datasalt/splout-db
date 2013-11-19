@@ -22,11 +22,7 @@ package com.splout.db.hadoop.engine;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -39,7 +35,6 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import com.almworks.sqlite4java.SQLiteConnection;
 import com.almworks.sqlite4java.SQLiteException;
@@ -48,7 +43,6 @@ import com.datasalt.pangool.io.ITuple;
 import com.datasalt.pangool.io.Schema.Field;
 import com.splout.db.common.HeartBeater;
 import com.splout.db.hadoop.TableSpec;
-import com.splout.db.hadoop.TableSpec.FieldIndex;
 
 /**
  * An OutputFormat that accepts Pangool's Tuples and writes to a sqlite4Java SQLite file. The Tuples that are written to
@@ -57,35 +51,21 @@ import com.splout.db.hadoop.TableSpec.FieldIndex;
  * <p>
  * The different schemas that will be given to this OutputFormat are defined in the constructor by providing a
  * {@link TableSpec}. These TableSpec also contains information such as pre-SQL or post-SQL statements but most notably
- * contain a Schema so that a CREATE TABLE can be derived automatically from it. Note that the Schema provided to 
+ * contain a Schema so that a CREATE TABLE can be derived automatically from it. Note that the Schema provided to
  * TableSpec doesn't need to contain a "_partition" field or be nullable.
  */
 @SuppressWarnings("serial")
-public class TupleSQLite4JavaOutputFormat extends FileOutputFormat<ITuple, NullWritable> implements
-    Serializable {
+public class SQLite4JavaOutputFormat extends SploutSQLOutputFormat {
 
-	public final static String PARTITION_TUPLE_FIELD = "_partition";
+	public static Log LOG = LogFactory.getLog(SQLite4JavaOutputFormat.class);
 
-	public static Log LOG = LogFactory.getLog(TupleSQLite4JavaOutputFormat.class);
-	private int batchSize;
-
-	/**
-	 * Exception that is thrown if the Output Format cannot be instantiated because the specified parameters are
-	 * inconsistent or invalid. The reason is the message of the Exception, and it may optionally wrap another Exception.
-	 */
-	public static class TupleSQLiteOutputFormatException extends Exception {
-
-		public TupleSQLiteOutputFormatException(String cause) {
-			super(cause);
-		}
-
-		public TupleSQLiteOutputFormatException(String cause, Exception e) {
-			super(cause, e);
-		}
+	public SQLite4JavaOutputFormat(int batchSize, TableSpec... dbSpecs)
+	    throws SploutSQLOutputFormatException {
+		super(batchSize, dbSpecs);
 	}
 
 	// Given a {@link TableSpec}, returns the appropriated SQL CREATE TABLE...
-	private static String getCreateTable(TableSpec tableSpec) throws TupleSQLiteOutputFormatException {
+	public String getCreateTable(TableSpec tableSpec) throws SploutSQLOutputFormatException {
 		String createTable = "CREATE TABLE " + tableSpec.getSchema().getName() + " (";
 		for(Field field : tableSpec.getSchema().getFields()) {
 			if(field.getName().equals(PARTITION_TUPLE_FIELD)) {
@@ -116,90 +96,14 @@ public class TupleSQLite4JavaOutputFormat extends FileOutputFormat<ITuple, NullW
 				createTable += "INTEGER, ";
 				break;
 			default:
-				throw new TupleSQLiteOutputFormatException("Unsupported field type: " + field.getType());
+				throw new SploutSQLOutputFormatException("Unsupported field type: " + field.getType());
 			}
 		}
 		createTable = createTable.substring(0, createTable.length() - 2);
 		return createTable += ");";
 	}
 
-	// Get all the CREATE TABLE... for a list of {@link TableSpec}
-	protected static String[] getCreateTables(TableSpec... tableSpecs)
-	    throws TupleSQLiteOutputFormatException {
-    List<String> createTables = new ArrayList<String>();
-    // First the initSQL provided by user
-    for(TableSpec tableSpec : tableSpecs) {
-      if(tableSpec.getInitialSQL() != null) {
-        createTables.addAll(Arrays.asList(tableSpec.getInitialSQL()));
-      }
-    }
-    // CREATE TABLE statements
-		for(TableSpec tableSpec : tableSpecs) {
-			createTables.add(getCreateTable(tableSpec));
-		}
-    // Add user preInsertsSQL if exists just after the CREATE TABLE's
-		for(TableSpec tableSpec : tableSpecs) {
-			if(tableSpec.getPreInsertsSQL() != null) {
-				createTables.addAll(Arrays.asList(tableSpec.getPreInsertsSQL()));
-			}
-		}
-		return createTables.toArray(new String[0]);
-	}
-
-	// Get a list of CREATE INDEX... Statements for a {@link TableSpec} list.
-	protected static String[] getCreateIndexes(TableSpec... tableSpecs)
-	    throws TupleSQLiteOutputFormatException {
-		List<String> createIndexes = new ArrayList<String>();
-    // Add user postInsertsSQL if exists just before the CREATE INDEX statements
-    for(TableSpec tableSpec : tableSpecs) {
-      if(tableSpec.getPostInsertsSQL() != null) {
-        createIndexes.addAll(Arrays.asList(tableSpec.getPostInsertsSQL()));
-      }
-    }
-    for(TableSpec tableSpec : tableSpecs) {
-			for(FieldIndex index : tableSpec.getIndexes()) {
-				for(Field field : index.getIndexFields()) {
-					if(!tableSpec.getSchema().getFields().contains(field)) {
-						throw new TupleSQLiteOutputFormatException("Field to index (" + index
-						    + ") not contained in input schema (" + tableSpec.getSchema() + ")");
-					}
-				}
-				// The following code is able to create indexes for one field or for multiple fields
-				String createIndex = "CREATE INDEX idx_" + tableSpec.getSchema().getName() + "_";
-				for(Field field : index.getIndexFields()) {
-					createIndex += field.getName();
-				}
-				createIndex += " ON " + tableSpec.getSchema().getName() + "(";
-				for(Field field : index.getIndexFields()) {
-					createIndex += field.getName() + ", ";
-				}
-				createIndex = createIndex.substring(0, createIndex.length() - 2) + ");";
-				createIndexes.add(createIndex);
-			}
-		}
-    // Add user finalSQL if exists just after the CREATE INDEX statements
-		for(TableSpec tableSpec : tableSpecs) {
-			if(tableSpec.getFinalSQL() != null) {
-				createIndexes.addAll(Arrays.asList(tableSpec.getFinalSQL()));
-			}
-		}
-		return createIndexes.toArray(new String[0]);
-	}
-
-	private String[] preSQL, postSQL;
 	private static AtomicLong FILE_SEQUENCE = new AtomicLong(0);
-
-	/**
-	 * This OutputFormat receives a list of {@link TableSpec}. These are the different tables that will be created. They
-	 * will be identified by Pangool Tuples. The batch size is the number of SQL statements to execute before a COMMIT.
-	 */
-	public TupleSQLite4JavaOutputFormat(int batchSize, TableSpec... dbSpec)
-	    throws TupleSQLiteOutputFormatException {
-		// Generate create tables and create index statements
-		preSQL = getCreateTables(dbSpec);
-		postSQL = getCreateIndexes(dbSpec);
-		this.batchSize = batchSize;
-	}
 
 	@Override
 	public RecordWriter<ITuple, NullWritable> getRecordWriter(TaskAttemptContext context)
@@ -239,20 +143,19 @@ public class TupleSQLite4JavaOutputFormat extends FileOutputFormat<ITuple, NullW
 		// This method is called one time per each partition
 		private void initSql(int partition) throws IOException {
 
-      // HDFS final location of the generated partition file. It will be
-      // loaded to the temporary folder in the HDFS than finally will be
-      // committed by the OutputCommitter to the proper location.
-      FileOutputCommitter committer =
-          (FileOutputCommitter) getOutputCommitter(context);
-      Path perm = new Path(committer.getWorkPath(), partition + ".db");
-      fs = perm.getFileSystem(context.getConfiguration());
+			// HDFS final location of the generated partition file. It will be
+			// loaded to the temporary folder in the HDFS than finally will be
+			// committed by the OutputCommitter to the proper location.
+			FileOutputCommitter committer = (FileOutputCommitter) getOutputCommitter(context);
+			Path perm = new Path(committer.getWorkPath(), partition + ".db");
+			fs = perm.getFileSystem(context.getConfiguration());
 
-      // Make a task unique name that contains the actual index output name to
-      // make debugging simpler
-      // Note: if using JVM reuse, the sequence number will not be reset for a
-      // new task using the jvm
-      Path temp = conf.getLocalPath("mapred.local.dir",
-          "splout_task_" + context.getTaskAttemptID() + '.' + FILE_SEQUENCE.incrementAndGet());
+			// Make a task unique name that contains the actual index output name to
+			// make debugging simpler
+			// Note: if using JVM reuse, the sequence number will not be reset for a
+			// new task using the jvm
+			Path temp = conf.getLocalPath("mapred.local.dir", "splout_task_" + context.getTaskAttemptID()
+			    + '.' + FILE_SEQUENCE.incrementAndGet());
 
 			Path local = fs.startLocalOutput(perm, temp);
 			//
@@ -271,23 +174,22 @@ public class TupleSQLite4JavaOutputFormat extends FileOutputFormat<ITuple, NullW
 				SQLiteStatement st = conn.prepare("PRAGMA temp_store_directory");
 				st.step();
 				LOG.info("Changed temp_store_directory to: " + st.columnString(0));
-        // journal_mode=OFF speeds up insertions
-        conn.exec("PRAGMA journal_mode=OFF");
-        /* page_size is one of of the most important parameters for speed up indexation.
-         * SQLite performs a merge sort for sorting data before inserting it in an index.
-         * The buffer SQLites uses for sorting has a size equals to
-         * page_size * SQLITE_DEFAULT_TEMP_CACHE_SIZE. Unfortunately, SQLITE_DEFAULT_TEMP_CACHE_SIZE
-         * is a compilation parameter. That is then fixed to the sqlite4java library used. We have
-         * recompiled that library to increase SQLITE_DEFAULT_TEMP_CACHE_SIZE (up to 32000 at
-         * the point of writing this lines), so, at runtime the unique way to change the buffer size
-         * used for sorting is change the page_size. page_size must be changed BEFORE CREATE
-         * STATEMENTS, otherwise it won't have effect. page_size should be a multiple of
-         * the sector size (1024 on linux) in order to be efficient.
-         **/
-        conn.exec("PRAGMA page_size=8192;");
-        connCache.put(partition, conn);
+				// journal_mode=OFF speeds up insertions
+				conn.exec("PRAGMA journal_mode=OFF");
+				/*
+				 * page_size is one of of the most important parameters for speed up indexation. SQLite performs a merge sort
+				 * for sorting data before inserting it in an index. The buffer SQLites uses for sorting has a size equals to
+				 * page_size * SQLITE_DEFAULT_TEMP_CACHE_SIZE. Unfortunately, SQLITE_DEFAULT_TEMP_CACHE_SIZE is a compilation
+				 * parameter. That is then fixed to the sqlite4java library used. We have recompiled that library to increase
+				 * SQLITE_DEFAULT_TEMP_CACHE_SIZE (up to 32000 at the point of writing this lines), so, at runtime the unique
+				 * way to change the buffer size used for sorting is change the page_size. page_size must be changed BEFORE
+				 * CREATE STATEMENTS, otherwise it won't have effect. page_size should be a multiple of the sector size (1024 on
+				 * linux) in order to be efficient.
+				 */
+				conn.exec("PRAGMA page_size=8192;");
+				connCache.put(partition, conn);
 				// Init transaction
-				for(String sql : preSQL) {
+				for(String sql : getPreSQL()) {
 					LOG.info("Executing: " + sql);
 					conn.exec(sql);
 				}
@@ -361,13 +263,14 @@ public class TupleSQLite4JavaOutputFormat extends FileOutputFormat<ITuple, NullW
 							break;
 						}
 					}
-					count++; tupleCount++;
+					count++;
+					tupleCount++;
 				}
 				pS.step();
 				pS.reset();
 
 				records++;
-				if(records == batchSize) {
+				if(records == getBatchSize()) {
 					SQLiteConnection conn = connCache.get(partition);
 					conn.exec("COMMIT");
 					conn.exec("BEGIN");
@@ -388,9 +291,9 @@ public class TupleSQLite4JavaOutputFormat extends FileOutputFormat<ITuple, NullW
 					LOG.info("Closing SQL connection [" + entry.getKey() + "]");
 					//
 					entry.getValue().exec("COMMIT");
-					if(postSQL != null) {
+					if(getPostSQL() != null) {
 						LOG.info("Executing end SQL statements.");
-						for(String sql : postSQL) {
+						for(String sql : getPostSQL()) {
 							LOG.info("Executing: " + sql);
 							entry.getValue().exec(sql);
 						}
