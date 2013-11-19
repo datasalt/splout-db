@@ -30,6 +30,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.FileFilterUtils;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -43,6 +46,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
 import com.datasalt.pangool.io.ITuple;
 import com.datasalt.pangool.io.Schema.Field;
 import com.datasalt.pangool.io.Schema.Field.Type;
+import com.splout.db.common.CompressorUtil;
 import com.splout.db.common.HeartBeater;
 import com.splout.db.common.engine.EmbeddedMySQL;
 import com.splout.db.common.engine.EmbeddedMySQL.EmbeddedMySQLConfig;
@@ -56,7 +60,7 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat {
 
 	public static String STRING_FIELD_SIZE_PROP = "com.splout.db.hadoop.engine.MySQLOutputFormat.string.field.size";
 	public static String GENERATED_DB_NAME = "splout";
-	
+
 	// Keep track of all opened mysqlds so we can kill them in any case
 	private Map<Integer, EmbeddedMySQL> mySQLs = new HashMap<Integer, EmbeddedMySQL>();
 	private int nPartitions; // to know how many mysqlds we need to instantiate
@@ -160,7 +164,7 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat {
 			// loaded to the temporary folder in the HDFS than finally will be
 			// committed by the OutputCommitter to the proper location.
 			FileOutputCommitter committer = (FileOutputCommitter) getOutputCommitter(context);
-			Path perm = new Path(committer.getWorkPath(), partition + "");
+			Path perm = committer.getWorkPath();
 			fs = perm.getFileSystem(context.getConfiguration());
 
 			// Make a task unique name that contains the actual index output name to
@@ -193,12 +197,13 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat {
 				int port = BASE_MYSQL_PORT + taskId * (nPartitions * maxAttempts) + attemptId * nPartitions
 				    + partition;
 
-				LOG.info("Going to instantiate a MySQLD in: " + local + ", port [" + port + "] (partition: "
+				File mysqlDir = new File(local.toString());
+				LOG.info("Going to instantiate a MySQLD in: " + mysqlDir + ", port [" + port + "] (partition: "
 				    + partition + ", taskid: " + taskId + ", attemptId: " + attemptId + ", maxAttempts: "
 				    + maxAttempts + ")");
 
 				EmbeddedMySQLConfig config = new EmbeddedMySQLConfig(port, EmbeddedMySQLConfig.DEFAULT_USER,
-				    EmbeddedMySQLConfig.DEFAULT_PASS, new File(local.toString()), null);
+				    EmbeddedMySQLConfig.DEFAULT_PASS, mysqlDir, null);
 				EmbeddedMySQL mySQL = new EmbeddedMySQL(config);
 				mySQL.start(true);
 				mySQLs.put(partition, mySQL);
@@ -309,6 +314,19 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat {
 					// close the mysqls before copying files (so mysql.sock disappears!)
 					for(Map.Entry<Integer, EmbeddedMySQL> msql : mySQLs.entrySet()) {
 						msql.getValue().stop();
+						File resident = msql.getValue().getConfig().getResidentFolder();
+						File zipDest = new File(resident, msql.getKey() + ".db");
+						// Create a "partition.db" zip with the needed files.
+						CompressorUtil.createZip(
+						    resident,
+						    zipDest,
+						    new WildcardFileFilter(new String[] { "ib*", "*.frm" }),
+						    FileFilterUtils.or(FileFilterUtils.nameFileFilter("data"),
+						        FileFilterUtils.nameFileFilter("splout")));
+						// Delete all files except the generated zip "partition.db"
+						FileUtils.deleteDirectory(new File(resident, "bin"));
+						FileUtils.deleteDirectory(new File(resident, "data"));
+						FileUtils.deleteDirectory(new File(resident, "share"));
 					}
 					// Hadoop - completeLocalOutput()
 					fs.completeLocalOutput(permPool.get(entry.getKey()), tempPool.get(entry.getKey()));
