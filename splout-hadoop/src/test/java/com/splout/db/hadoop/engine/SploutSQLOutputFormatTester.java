@@ -14,6 +14,7 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 import com.datasalt.pangool.io.Fields;
