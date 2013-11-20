@@ -272,7 +272,7 @@ public class TablespaceGenerator implements Serializable {
 		List<PartitionEntry> partitionEntries = new ArrayList<PartitionEntry>();
 		int offset = keys.size() / nPartitions;
 		String min = null;
-		for(int i = 0; i < nPartitions; i++) {
+		for(int i = 1; i <= nPartitions; i++) {
 			PartitionEntry entry = new PartitionEntry();
 			if(min != null) {
 				entry.setMin(min);

@@ -25,7 +25,7 @@ public class OutputFormatFactory {
 		if(tablespace.getEngine().equals(Engine.SQLITE)) {
 			oF = new SQLite4JavaOutputFormat(batchSize,	tbls);
 		} else if(tablespace.getEngine().equals(Engine.MYSQL)) {
-			oF = new MySQLOutputFormat(batchSize, tablespace.getnPartitions(), tbls);
+			oF = new MySQLOutputFormat(batchSize, tbls);
 		} else {
 			throw new IllegalArgumentException("Engine not supported: " + tablespace.getEngine());
 		}

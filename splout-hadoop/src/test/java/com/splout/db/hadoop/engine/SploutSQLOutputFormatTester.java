@@ -110,7 +110,7 @@ public class SploutSQLOutputFormatTester implements Serializable {
 		if(outputFormatClass.getName().equals(SQLite4JavaOutputFormat.class.getName())) {
 			outputFormat = new SQLite4JavaOutputFormat(100000, table1, table2);			
 		} else if(outputFormatClass.getName().equals(MySQLOutputFormat.class.getName())) {
-			outputFormat = new MySQLOutputFormat(100000, 1, table1, table2);
+			outputFormat = new MySQLOutputFormat(100000, table1, table2);
 		}
 		
 		builder.setTupleReducer(new IdentityTupleReducer());

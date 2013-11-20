@@ -49,8 +49,8 @@ import com.datasalt.pangool.io.Schema.Field.Type;
 import com.splout.db.common.CompressorUtil;
 import com.splout.db.common.HeartBeater;
 import com.splout.db.engine.EmbeddedMySQL;
-import com.splout.db.engine.MySQLManager;
 import com.splout.db.engine.EmbeddedMySQL.EmbeddedMySQLConfig;
+import com.splout.db.engine.MySQLManager;
 import com.splout.db.hadoop.TableSpec;
 
 @SuppressWarnings("serial")
@@ -63,12 +63,9 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat {
 
 	// Keep track of all opened mysqlds so we can kill them in any case
 	private Map<Integer, EmbeddedMySQL> mySQLs = new HashMap<Integer, EmbeddedMySQL>();
-	private int nPartitions; // to know how many mysqlds we need to instantiate
 
-	public MySQLOutputFormat(int batchSize, int nPartitions, TableSpec... dbSpec)
-	    throws SploutSQLOutputFormatException {
+	public MySQLOutputFormat(int batchSize, TableSpec... dbSpec) throws SploutSQLOutputFormatException {
 		super(batchSize, dbSpec);
-		this.nPartitions = nPartitions;
 	}
 
 	@Override
@@ -126,7 +123,6 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat {
 	}
 
 	private static AtomicLong FILE_SEQUENCE = new AtomicLong(0);
-	private static int BASE_MYSQL_PORT = EmbeddedMySQLConfig.DEFAULT_PORT; //
 
 	/**
 	 * A RecordWriter that accepts an Int(Partition), a Tuple and delegates to a {@link SQLRecordWriter} converting the
@@ -177,8 +173,9 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat {
 			// Final "partition".db file that will be uploaded to HDFS
 			fs.startLocalOutput(perm, new Path(temp, partition + ".db"));
 			// Local folder where MySQL will be instantiated
-			Path mysqlDb = fs.startLocalOutput(new Path(committer.getWorkPath(), partition + ""), new Path(temp, partition + ""));
-			
+			Path mysqlDb = fs.startLocalOutput(new Path(committer.getWorkPath(), partition + ""), new Path(
+			    temp, partition + ""));
+
 			//
 			try {
 				permPool.put(partition, perm);
@@ -187,22 +184,10 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat {
 
 				// temp files to File(".") ?
 
-				// Here we try to define a unique, deterministic port for every possible task to instantiate a MySQLd:
-				// How many attempts will we have at most?
-				// http://hadoop.apache.org/docs/r1.0.4/mapred-default.html
-				int maxAttempts = Math.max(context.getConfiguration().getInt("mapred.map.max.attempts", 4),
-				    context.getConfiguration().getInt("mapred.reduce.max.attempts", 4));
-				// What is the number of task?
-				int taskId = context.getTaskAttemptID().getTaskID().getId();
-				// What is the number of attempt?
-				int attemptId = context.getTaskAttemptID().getId();
-				int port = BASE_MYSQL_PORT + taskId * (nPartitions * maxAttempts) + attemptId * nPartitions
-				    + partition;
-
+				int port = EmbeddedMySQL.getNextAvailablePort();
 				File mysqlDir = new File(mysqlDb.toString());
 				LOG.info("Going to instantiate a MySQLD in: " + mysqlDir + ", port [" + port + "] (partition: "
-				    + partition + ", taskid: " + taskId + ", attemptId: " + attemptId + ", maxAttempts: "
-				    + maxAttempts + ")");
+				    + partition + ")");
 
 				EmbeddedMySQLConfig config = new EmbeddedMySQLConfig(port, EmbeddedMySQLConfig.DEFAULT_USER,
 				    EmbeddedMySQLConfig.DEFAULT_PASS, mysqlDir, null);

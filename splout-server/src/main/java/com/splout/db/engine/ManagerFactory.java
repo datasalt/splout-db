@@ -1,8 +1,6 @@
 package com.splout.db.engine;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,20 +64,8 @@ public class ManagerFactory {
 		} else if(engine.equals(Engine.MYSQL)) {
 			File mysqlFolder = new File(dbFolder, "mysql");
 
-			// Look for next available port
-			int port = EmbeddedMySQLConfig.DEFAULT_PORT;
-			boolean free = true;
-			do {
-				try {
-					ServerSocket socket = new ServerSocket(port);
-					socket.close();
-					free = true;
-				} catch(IOException e) {
-					free = false;
-					port++;
-				}
-			} while(!free);
-
+			int port = EmbeddedMySQL.getNextAvailablePort();
+			
 			EmbeddedMySQLConfig config = new EmbeddedMySQLConfig(port, EmbeddedMySQLConfig.DEFAULT_USER,
 			    EmbeddedMySQLConfig.DEFAULT_PASS, mysqlFolder, null);
 			EmbeddedMySQL mySQL = new EmbeddedMySQL(config);

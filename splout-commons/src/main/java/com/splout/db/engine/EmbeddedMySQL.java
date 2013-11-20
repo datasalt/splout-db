@@ -135,6 +135,23 @@ public class EmbeddedMySQL {
 		}
 	}
 
+	public static int getNextAvailablePort() {
+		// Look for next available port
+		int port = EmbeddedMySQLConfig.DEFAULT_PORT;
+		boolean free = true;
+		do {
+			try {
+				ServerSocket socket = new ServerSocket(port);
+				socket.close();
+				free = true;
+			} catch(IOException e) {
+				free = false;
+				port++;
+			}
+		} while(!free);
+		return port;
+	}
+	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public void start(boolean deleteFilesIfExist) throws IOException, InterruptedException {
 		if(deleteFilesIfExist && config.residentFolder.exists()) {
