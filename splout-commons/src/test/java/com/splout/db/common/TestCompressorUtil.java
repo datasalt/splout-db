@@ -29,6 +29,8 @@ public class TestCompressorUtil {
 		
 		CompressorUtil.uncompress(compressed, uncompFoo);
 		
+		assertTrue(compressed.exists());
+		
 		assertTrue(uncompFoo.exists());
 		assertTrue(uncompFoo.isDirectory());
 		assertTrue(new File(uncompFoo, "foo1").exists());

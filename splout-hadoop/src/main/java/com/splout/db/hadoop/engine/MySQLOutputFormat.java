@@ -164,7 +164,7 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat {
 			// loaded to the temporary folder in the HDFS than finally will be
 			// committed by the OutputCommitter to the proper location.
 			FileOutputCommitter committer = (FileOutputCommitter) getOutputCommitter(context);
-			Path perm = committer.getWorkPath();
+			Path perm = new Path(committer.getWorkPath(), partition + ".db");
 			fs = perm.getFileSystem(context.getConfiguration());
 
 			// Make a task unique name that contains the actual index output name to
@@ -174,13 +174,15 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat {
 			Path temp = conf.getLocalPath("mapred.local.dir", "splout_task_" + context.getTaskAttemptID()
 			    + '.' + FILE_SEQUENCE.incrementAndGet());
 
+			// Final "partition".db file that will be uploaded to HDFS
+			fs.startLocalOutput(perm, new Path(temp, partition + ".db"));
 			// Local folder where MySQL will be instantiated
-			Path local = fs.startLocalOutput(perm, temp);
-
+			Path mysqlDb = fs.startLocalOutput(new Path(committer.getWorkPath(), partition + ""), new Path(temp, partition + ""));
+			
 			//
 			try {
 				permPool.put(partition, perm);
-				tempPool.put(partition, temp);
+				tempPool.put(partition, new Path(temp, partition + ".db"));
 				LOG.info("Initializing SQL connection [" + partition + "]");
 
 				// temp files to File(".") ?
@@ -197,7 +199,7 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat {
 				int port = BASE_MYSQL_PORT + taskId * (nPartitions * maxAttempts) + attemptId * nPartitions
 				    + partition;
 
-				File mysqlDir = new File(local.toString());
+				File mysqlDir = new File(mysqlDb.toString());
 				LOG.info("Going to instantiate a MySQLD in: " + mysqlDir + ", port [" + port + "] (partition: "
 				    + partition + ", taskid: " + taskId + ", attemptId: " + attemptId + ", maxAttempts: "
 				    + maxAttempts + ")");
@@ -311,24 +313,27 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat {
 					}
 					st.close();
 					conn.close();
-					// close the mysqls before copying files (so mysql.sock disappears!)
-					for(Map.Entry<Integer, EmbeddedMySQL> msql : mySQLs.entrySet()) {
-						msql.getValue().stop();
-						File resident = msql.getValue().getConfig().getResidentFolder();
-						File zipDest = new File(resident, msql.getKey() + ".db");
-						// Create a "partition.db" zip with the needed files.
-						CompressorUtil.createZip(
-						    resident,
-						    zipDest,
-						    new WildcardFileFilter(new String[] { "ib*", "*.frm" }),
-						    FileFilterUtils.or(FileFilterUtils.nameFileFilter("data"),
-						        FileFilterUtils.nameFileFilter("splout")));
-						// Delete all files except the generated zip "partition.db"
-						FileUtils.deleteDirectory(new File(resident, "bin"));
-						FileUtils.deleteDirectory(new File(resident, "data"));
-						FileUtils.deleteDirectory(new File(resident, "share"));
-					}
+					// close MySQL before copying files (so mysql.sock disappears!)
+					EmbeddedMySQL msql = mySQLs.get(entry.getKey());
+
+					msql.stop();
+					File resident = msql.getConfig().getResidentFolder();
+					File zipDest = new File(resident.getParentFile(), entry.getKey() + ".db");
+
+					// Create a "partition.db" zip with the needed files.
+					CompressorUtil.createZip(
+					    resident,
+					    zipDest,
+					    new WildcardFileFilter(new String[] { "ib*", "*.frm" }),
+					    FileFilterUtils.or(FileFilterUtils.nameFileFilter("data"),
+					        FileFilterUtils.nameFileFilter("splout")));
+					// Delete all files except the generated zip "partition.db"
+					FileUtils.deleteDirectory(new File(resident, "bin"));
+					FileUtils.deleteDirectory(new File(resident, "data"));
+					FileUtils.deleteDirectory(new File(resident, "share"));
+
 					// Hadoop - completeLocalOutput()
+
 					fs.completeLocalOutput(permPool.get(entry.getKey()), tempPool.get(entry.getKey()));
 				}
 			} catch(Exception e) {

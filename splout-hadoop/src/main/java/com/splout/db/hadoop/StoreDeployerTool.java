@@ -108,7 +108,7 @@ public class StoreDeployerTool {
       
       String engine = Engine.getDefault().toString();
       // New : load the engine id used in the generation tool, if exists ( to maintain backwards compatibility )
-      Path engineId = new Path(tablespaceOut, TablespaceGenerator.OUT_PARTITION_MAP);
+      Path engineId = new Path(tablespaceOut, TablespaceGenerator.OUT_ENGINE);
       if(sourceFs.exists(engineId)) {
       	engine = HadoopUtils.fileToString(sourceFs, engineId);
       	log.info("Using generated engine id: " + engine);
