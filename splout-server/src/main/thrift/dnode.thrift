@@ -10,7 +10,8 @@ struct PartitionMetadata {
   2: string maxKey,
   3: i32 nReplicas,
   4: i64 deploymentDate,
-  5: optional list<string> initStatements
+  5: optional list<string> initStatements,
+  6: optional string engineId
 }
 
 struct DeployAction {

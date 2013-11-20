@@ -54,7 +54,9 @@ import com.splout.db.common.JSONSerDe.JSONSerDeException;
 import com.splout.db.common.PartitionEntry;
 import com.splout.db.common.PartitionMap;
 import com.splout.db.common.Tablespace;
+import com.splout.db.common.engine.Engine;
 import com.splout.db.hadoop.TupleSampler.TupleSamplerException;
+import com.splout.db.hadoop.engine.MySQLOutputFormat;
 import com.splout.db.hadoop.engine.SQLite4JavaOutputFormat;
 import com.splout.db.hadoop.engine.SploutSQLOutputFormat;
 import com.splout.db.hadoop.engine.SploutSQLOutputFormat.SploutSQLOutputFormatException;
@@ -71,6 +73,7 @@ import com.splout.db.hadoop.engine.SploutSQLOutputFormat.SploutSQLOutputFormatEx
  * The output of the process is a Splout deployable path with a {@link PartitionMap} . The format of the output is:
  * outputPath + / + {@link #OUT_PARTITION_MAP} for the partition map, outputPath + / + {@link #OUT_SAMPLED_INPUT} for
  * the list of sampled keys and outputPath + / + {@link #OUT_STORE} for the folder containing the generated SQL store.
+ * outputPath + / + {@link #OUT_ENGINE} is a file with the {@link Engine} id used to generate the tablespace.
  * <p>
  * For creating the store we first sample the input dataset with {@link TupleSampler} and then execute a Hadoop job that
  * distributes the data accordingly. The Hadoop job will use {@link SQLite4JavaOutputFormat}.
@@ -123,6 +126,7 @@ public class TablespaceGenerator implements Serializable {
 	public final static String OUT_PARTITION_MAP = "partition-map";
 	public final static String OUT_INIT_STATEMENTS = "init-statements";
 	public final static String OUT_STORE = "store";
+	public final static String OUT_ENGINE = "engine";
 
 	/**
 	 * This is the public method which has to be called when using this class as an API. Business logic has been split in
@@ -164,6 +168,7 @@ public class TablespaceGenerator implements Serializable {
 	protected void writeOutputMetadata(Configuration conf) throws IOException, JSONSerDeException {
 		FileSystem fileSystem = outputPath.getFileSystem(conf);
 
+		// Write the Partition map
 		Path partitionMapPath = new Path(outputPath, OUT_PARTITION_MAP);
 		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fileSystem.create(
 		    partitionMapPath, true)));
@@ -177,6 +182,13 @@ public class TablespaceGenerator implements Serializable {
 			writer.write(JSONSerDe.ser(tablespace.getInitStatements()));
 			writer.close();
 		}
+		
+		// Write the Engine ID so we know what we are deploying exactly afterwards
+		Path enginePath = new Path(outputPath, OUT_ENGINE);
+		writer = new BufferedWriter(new OutputStreamWriter(fileSystem.create(
+				enginePath, true)));
+		writer.write(tablespace.getEngine().toString());
+		writer.close();
 	}
 
 	/**
@@ -467,11 +479,18 @@ public class TablespaceGenerator implements Serializable {
 		}
 
 		builder.setJarByClass(callingClass);
-		// Define the output format - Tuple to SQL
-		OutputFormat outputFormat = new SQLite4JavaOutputFormat(batchSize,
-		    tableSpecs.toArray(new TableSpec[0]));
+		// Define the output format
 		
-//		OutputFormat outputFormat = new MySQLOutputFormat(batchSize, nPartitions, tableSpecs.toArray(new TableSpec[0]));
+		OutputFormat outputFormat;
+		TableSpec[] tbls = tableSpecs.toArray(new TableSpec[0]);
+		
+		if(tablespace.getEngine().equals(Engine.SQLITE)) {
+			outputFormat = new SQLite4JavaOutputFormat(batchSize,	tbls);
+		} else if(tablespace.getEngine().equals(Engine.MYSQL)) {
+			outputFormat = new MySQLOutputFormat(batchSize, nPartitions, tbls);
+		} else {
+			throw new IllegalArgumentException("Engine not supported: " + tablespace.getEngine());
+		}
 		
 		builder.setOutput(new Path(outputPath, OUT_STORE), outputFormat, ITuple.class, NullWritable.class);
 		// #reducers = #partitions by default

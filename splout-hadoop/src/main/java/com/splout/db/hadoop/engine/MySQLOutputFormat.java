@@ -185,7 +185,7 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat {
 
 				// temp files to File(".") ?
 
-				// Here we try to define a unique por for every possible task to instantiate a MySQLd:
+				// Here we try to define a unique, deterministic port for every possible task to instantiate a MySQLd:
 				// How many attempts will we have at most?
 				// http://hadoop.apache.org/docs/r1.0.4/mapred-default.html
 				int maxAttempts = Math.max(context.getConfiguration().getInt("mapred.map.max.attempts", 4),

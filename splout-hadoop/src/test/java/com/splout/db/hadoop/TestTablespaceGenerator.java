@@ -24,8 +24,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 
@@ -45,7 +47,9 @@ import com.datasalt.pangool.tuplemr.Criteria;
 import com.datasalt.pangool.tuplemr.OrderBy;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat;
 import com.datasalt.pangool.utils.test.AbstractHadoopTestLibrary;
+import com.google.common.io.Files;
 import com.splout.db.common.PartitionEntry;
+import com.splout.db.common.engine.Engine;
 import com.splout.db.common.engine.SQLite4JavaManager;
 import com.splout.db.hadoop.TupleSampler.SamplingType;
 
@@ -110,6 +114,11 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary implement
 		assertEquals(null, partitionMap.get(3).getMax());
 		assertEquals(3, (int) partitionMap.get(3).getShard());
 
+		// assert the engine id has been written too
+		File engineIdFile = new File(OUTPUT + "/" + TablespaceGenerator.OUT_ENGINE);
+		assertTrue(engineIdFile.exists());
+		assertEquals(Engine.getDefault().toString(), Files.toString(engineIdFile, Charset.defaultCharset()));
+		
     trash(INPUT, OUTPUT);
 	}
 	

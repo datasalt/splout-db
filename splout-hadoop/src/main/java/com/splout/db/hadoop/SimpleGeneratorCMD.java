@@ -40,6 +40,7 @@ import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleTextInputFormat;
 import com.datasalt.pangool.utils.HadoopUtils;
 import com.splout.db.common.SploutHadoopConfiguration;
+import com.splout.db.common.engine.Engine;
 import com.splout.db.hadoop.TupleSampler.SamplingType;
 
 /**
@@ -110,6 +111,9 @@ public class SimpleGeneratorCMD implements Tool {
 	@Parameter(names = { "-st", "--samplingType" }, description = "It can be used to specify the sampling method to use. Currently, DEFAULT is very simple and fast, but might not be accurate. RESERVOIR executes a map-only Pangool Job before generation but it is more accurate.")
 	private SamplingType samplingType = SamplingType.DEFAULT;
 
+	@Parameter(names = { "-e", "--engine" }, description = "Specify the engine to be used for generating the tablespace.")
+	private String engine = null;
+
 	public static class CharConverter implements IStringConverter<Character> {
 
 		@Override
@@ -176,6 +180,17 @@ public class SimpleGeneratorCMD implements Tool {
 			return -1;
 		}
 
+		Engine eng = Engine.getDefault();
+		if(engine != null) {
+			try {
+				eng = Engine.valueOf(engine);
+			} catch(Exception e) {
+				System.err
+		    	.println("Unrecognized / unsupported engine, please use one of: " + Engine.supportedEngines());
+				return -1;
+			}
+		}
+		
 		TableBuilder tableBuilder;
 
 		Schema schema = null;
@@ -206,13 +221,16 @@ public class SimpleGeneratorCMD implements Tool {
 				try {
 					fixedWidth[i] = new Integer(posStr[i]);
 				} catch(NumberFormatException e) {
-					System.out.println("Wrongly formed fixed with field list: [" + fixedWidthFields + "]. "
+					System.err.println("Wrongly formed fixed with field list: [" + fixedWidthFields + "]. "
 					    + posStr[i] + " does not look as a number.");
+					return -1;
 				}
 			}
 		}
 
 		TablespaceBuilder builder = new TablespaceBuilder();
+		builder.setEngine(eng);
+		log.info("Using engine: " + eng);
 
 		if(inputType.equals(InputType.TEXT)) {
 			Path inputPath = new Path(input);

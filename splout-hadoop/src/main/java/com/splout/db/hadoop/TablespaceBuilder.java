@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.datasalt.pangool.io.Schema.Field;
+import com.splout.db.common.engine.Engine;
 
 /**
  * This class is the main entry point for generating Splout views. Here we will use a Builder for adding the mapping
@@ -51,6 +52,8 @@ public class TablespaceBuilder {
 	
 	// How to partition the Tablespace
 	private int nPartitions = -1;
+	
+	private Engine engine = Engine.getDefault();
 
 	/**
 	 * Add a new table to the builder - use a string table identifier for this. The method will return a bean that we can
@@ -76,6 +79,10 @@ public class TablespaceBuilder {
 		this.nPartitions = nPartitions;
 	}
 
+	public void setEngine(Engine engine) {
+		this.engine = engine;
+	}
+	
 	/**
 	 * Exception that is thrown if a Tablespace cannot be built because there is missing data or inconsistent data has
 	 * been specified. The reason is specified as the message of the Exception.
@@ -148,9 +155,9 @@ public class TablespaceBuilder {
 		}
 
 		if(initStatements == null) {
-			return new TablespaceSpec(partitionedTables, replicatedTables, nPartitions, null);
+			return new TablespaceSpec(partitionedTables, replicatedTables, nPartitions, null, engine);
 		} else {
-			return new TablespaceSpec(partitionedTables, replicatedTables, nPartitions, Arrays.asList(initStatements));			
+			return new TablespaceSpec(partitionedTables, replicatedTables, nPartitions, Arrays.asList(initStatements), engine);			
 		}
 	}
 }
