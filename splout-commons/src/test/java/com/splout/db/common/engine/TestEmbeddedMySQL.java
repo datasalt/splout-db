@@ -33,6 +33,8 @@ import org.junit.Test;
 
 import com.google.common.io.Files;
 import com.mysql.management.util.QueryUtil;
+import com.splout.db.engine.EmbeddedMySQL;
+import com.splout.db.engine.MySQLManager;
 
 public class TestEmbeddedMySQL {
 

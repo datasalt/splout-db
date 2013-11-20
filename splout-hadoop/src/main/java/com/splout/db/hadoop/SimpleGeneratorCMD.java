@@ -40,7 +40,7 @@ import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleTextInputFormat;
 import com.datasalt.pangool.utils.HadoopUtils;
 import com.splout.db.common.SploutHadoopConfiguration;
-import com.splout.db.common.engine.Engine;
+import com.splout.db.engine.Engine;
 import com.splout.db.hadoop.TupleSampler.SamplingType;
 
 /**

@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.datasalt.pangool.io.Schema.Field;
-import com.splout.db.common.engine.Engine;
+import com.splout.db.engine.Engine;
 
 /**
  * This class is the main entry point for generating Splout views. Here we will use a Builder for adding the mapping

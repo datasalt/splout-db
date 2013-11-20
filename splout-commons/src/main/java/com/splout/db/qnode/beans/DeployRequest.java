@@ -31,6 +31,7 @@ import com.splout.db.common.ReplicationEntry;
  */
 public class DeployRequest extends BaseBean {
 
+	String engine;
 	String tablespace;
 	String data_uri;
 	List<String> initStatements;
@@ -76,5 +77,13 @@ public class DeployRequest extends BaseBean {
 
 	public void setInitStatements(List<String> initStatements) {
   	this.initStatements = initStatements;
+  }
+	
+	public void setEngine(String engine) {
+	  this.engine = engine;
+  }
+	
+	public String getEngine() {
+	  return engine;
   }
 }

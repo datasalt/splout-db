@@ -84,6 +84,9 @@ public class DeployRollbackServlet extends BaseServlet {
 						throw new IllegalArgumentException(
 						    "Invalid deploy request with non-coherent replication / partition maps [" + request + "]");
 					}
+					if(request.getEngine() == null) {
+						throw new IllegalArgumentException("Invalid deploy request with null engine id received");
+					}
 				}
 				response = JSONSerDe.ser(qNodeHandler.deploy(deployReq));
 			} else if(action.equals(ACTION_ROLLBACK)) {

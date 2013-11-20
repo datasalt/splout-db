@@ -45,7 +45,7 @@ import com.splout.db.common.SploutClient;
 import com.splout.db.common.SploutConfiguration;
 import com.splout.db.common.Tablespace;
 import com.splout.db.common.TestUtils;
-import com.splout.db.common.engine.SQLite4JavaManager;
+import com.splout.db.engine.SQLite4JavaManager;
 import com.splout.db.hazelcast.CoordinationStructures;
 import com.splout.db.hazelcast.TablespaceVersion;
 import com.splout.db.qnode.QNode;

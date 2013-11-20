@@ -35,7 +35,7 @@ import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.io.Schema.Field;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleTextInputFormat;
 import com.google.common.collect.ImmutableList;
-import com.splout.db.common.engine.Engine;
+import com.splout.db.engine.Engine;
 import com.splout.db.hadoop.TableSpec.FieldIndex;
 
 /**

@@ -33,7 +33,7 @@ import org.junit.Test;
 import com.splout.db.common.SploutClient;
 import com.splout.db.common.SploutConfiguration;
 import com.splout.db.common.Tablespace;
-import com.splout.db.common.engine.SQLite4JavaManager;
+import com.splout.db.engine.SQLite4JavaManager;
 import com.splout.db.qnode.beans.QueryStatus;
 
 /**

@@ -60,15 +60,14 @@ import com.hazelcast.core.ICountDownLatch;
 import com.splout.db.benchmark.PerformanceTool;
 import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
-import com.splout.db.common.engine.EngineManager;
-import com.splout.db.common.engine.SQLite4JavaManager;
 import com.splout.db.common.SploutConfiguration;
 import com.splout.db.common.ThriftReader;
 import com.splout.db.common.ThriftWriter;
-import com.splout.db.common.TimeoutThread;
 import com.splout.db.dnode.beans.BalanceFileReceivingProgress;
 import com.splout.db.dnode.beans.DNodeStatusResponse;
 import com.splout.db.dnode.beans.DNodeSystemStatus;
+import com.splout.db.engine.EngineManager;
+import com.splout.db.engine.ManagerFactory;
 import com.splout.db.hazelcast.CoordinationStructures;
 import com.splout.db.hazelcast.DNodeInfo;
 import com.splout.db.hazelcast.DistributedRegistry;
@@ -128,11 +127,11 @@ public class DNodeHandler implements IDNodeHandler {
 	private long absoluteSlowQueryLimit;
 	private long slowQueries = 0;
 
-	// This thread will interrupt long-running queries
-	private TimeoutThread timeoutThread;
-
 	// This map will hold all the current balance file transactions being done
 	private ConcurrentHashMap<String, BalanceFileReceivingProgress> balanceActionsStateMap = new ConcurrentHashMap<String, BalanceFileReceivingProgress>();
+
+	// The factory we will use to instantiate managers for each partition associated with an {@link Engine}
+	private ManagerFactory factory;
 
 	public DNodeHandler(Fetcher fetcher) {
 		this.fetcher = fetcher;
@@ -320,8 +319,8 @@ public class DNodeHandler implements IDNodeHandler {
 		maxResultsPerQuery = config.getInt(DNodeProperties.MAX_RESULTS_PER_QUERY);
 		int maxCachePools = config.getInt(DNodeProperties.EH_CACHE_N_ELEMENTS);
 		absoluteSlowQueryLimit = config.getLong(DNodeProperties.SLOW_QUERY_ABSOLUTE_LIMIT);
-		timeoutThread = new TimeoutThread(config.getLong(DNodeProperties.MAX_QUERY_TIME));
-		timeoutThread.start();
+		factory = new ManagerFactory();
+		factory.init(config);
 		// We create a Cache for holding SQL connection pools to different tablespace versions
 		// http://stackoverflow.com/questions/2583429/how-to-differentiate-between-time-to-live-and-time-to-idle-in-ehcache
 		dbCache = new Cache("dbCache", maxCachePools, false, false, Integer.MAX_VALUE, evictionSeconds);
@@ -424,50 +423,43 @@ public class DNodeHandler implements IDNodeHandler {
 							throw new DNodeException(EXCEPTION_ORDINARY, "Requested tablespace (" + tablespace
 							    + ") + version (" + version + ") is not available.");
 						}
-						// Currently using first ".db" file but in the future there might be some convention
-						for(String file : dbFolder.list()) {
-							if(file.endsWith(".db")) {
-								// Create new EHCache item value with a {@link EngineManager}
-								File metadata = getLocalMetadataFile(tablespace, partition, version);
-								ThriftReader reader = new ThriftReader(metadata);
-								PartitionMetadata partitionMetadata = (PartitionMetadata) reader
-								    .read(new PartitionMetadata());
-								reader.close();
-								SQLite4JavaManager manager = new SQLite4JavaManager(dbFolder + "/" + file,
-								    partitionMetadata.getInitStatements());
-								manager.setTimeoutThread(timeoutThread);
-								dbPoolInCache = new Element(dbKey, manager);
-								dbCache.put(dbPoolInCache);
-								break;
-							}
+						// Create new EHCache item value with a {@link EngineManager}
+						File metadata = getLocalMetadataFile(tablespace, partition, version);
+						ThriftReader reader = new ThriftReader(metadata);
+						PartitionMetadata partitionMetadata = (PartitionMetadata) reader
+						    .read(new PartitionMetadata());
+						reader.close();
+
+						try {
+							EngineManager manager = factory.getManagerIn(dbFolder, partitionMetadata);
+							dbPoolInCache = new Element(dbKey, manager);
+							dbCache.put(dbPoolInCache);
+						} catch(Exception e) {
+							log.warn(e);
+							throw new DNodeException(EXCEPTION_ORDINARY,
+							    "Error (" + e.getMessage() + ") instantiating a manager for a data partition");
 						}
 					}
 				}
-				if(dbPoolInCache != null) {
-					// Query the {@link SQLite4JavaManager} and return
-					String result = ((EngineManager) dbPoolInCache.getObjectValue()).query(query,
-					    maxResultsPerQuery);
-					long time = performanceTool.endQuery();
-					log.info("serving query [" + tablespace + "]" + " [" + version + "] [" + partition + "] ["
-					    + query + "] time [" + time + "] OK.");
-					// double prob = performanceTool.getHistogram().getLeftAccumulatedProbability(time);
-					// if(prob > 0.95) {
-					// // slow query!
-					// log.warn("[SLOW QUERY] Query time over 95 percentil: [" + query + "] time [" + time + "]");
-					// slowQueries++;
-					// }
-					if(time > absoluteSlowQueryLimit) {
-						// slow query!
-						log.warn("[SLOW QUERY] Query time over absolute slow query time (" + absoluteSlowQueryLimit
-						    + ") : [" + query + "] time [" + time + "]");
-						slowQueries++;
-					}
-					return result;
-				} else {
-					throw new DNodeException(
-					    EXCEPTION_ORDINARY,
-					    "Deployed folder doesn't contain a .db file - This shouldn't happen. This means there is a bug or inconsistency in the deploy process.");
+				// Query the {@link SQLite4JavaManager} and return
+				String result = ((EngineManager) dbPoolInCache.getObjectValue())
+				    .query(query, maxResultsPerQuery);
+				long time = performanceTool.endQuery();
+				log.info("serving query [" + tablespace + "]" + " [" + version + "] [" + partition + "] ["
+				    + query + "] time [" + time + "] OK.");
+				// double prob = performanceTool.getHistogram().getLeftAccumulatedProbability(time);
+				// if(prob > 0.95) {
+				// // slow query!
+				// log.warn("[SLOW QUERY] Query time over 95 percentil: [" + query + "] time [" + time + "]");
+				// slowQueries++;
+				// }
+				if(time > absoluteSlowQueryLimit) {
+					// slow query!
+					log.warn("[SLOW QUERY] Query time over absolute slow query time (" + absoluteSlowQueryLimit
+					    + ") : [" + query + "] time [" + time + "]");
+					slowQueries++;
 				}
+				return result;
 			} catch(Throwable e) {
 				unexpectedException(e);
 				throw new DNodeException(EXCEPTION_UNEXPECTED, e.getMessage());
@@ -532,20 +524,20 @@ public class DNodeHandler implements IDNodeHandler {
 											double totalSoFar = bytesSoFar.addAndGet(consumed) / (1024d * 1024d);
 											double secondsSoFar = (now - startTime) / 1000d;
 											double mBytesPerSec = totalSoFar / secondsSoFar;
-											
+
 											String msg = "[" + whoAmI() + " progress/speed report]: Fetched [";
 											if(totalSoFar > 999) {
 												msg += String.format("%.3f", (totalSoFar / 1024d)) + "] GBs so far ";
 											} else {
 												msg += String.format("%.3f", totalSoFar) + "] MBs so far ";
 											}
-											  
+
 											if(totalKnownSize != Fetcher.SIZE_UNKNOWN) {
 												msg += "(out of [";
 												if(totalKnownSize > 999) {
-													msg += String.format("%.3f", (totalKnownSize / 1024d)) + "] GBs) ";														
+													msg += String.format("%.3f", (totalKnownSize / 1024d)) + "] GBs) ";
 												} else {
-													msg += String.format("%.3f", totalKnownSize) + "] MBs) ";	
+													msg += String.format("%.3f", totalKnownSize) + "] MBs) ";
 												}
 											}
 											msg += "- Current deployment speed is [" + String.format("%.3f", mBytesPerSec)
@@ -772,7 +764,7 @@ public class DNodeHandler implements IDNodeHandler {
 	public void stop() throws Exception {
 		dbCache.dispose();
 		deployThread.shutdownNow();
-		timeoutThread.interrupt();
+		factory.close();
 		httpExchanger.close();
 		hz.getLifecycleService().shutdown();
 	}

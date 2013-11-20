@@ -31,7 +31,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
-import com.splout.db.common.engine.EngineManager.EngineException;
+import com.splout.db.engine.EngineManager;
+import com.splout.db.engine.EngineManager.EngineException;
 
 /**
  * Generic tester logic for any EngineManager that implements SQL.

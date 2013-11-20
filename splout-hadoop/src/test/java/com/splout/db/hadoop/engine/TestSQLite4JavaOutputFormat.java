@@ -32,7 +32,7 @@ import com.datasalt.pangool.io.Fields;
 import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.io.Schema.Field;
 import com.splout.db.common.JSONSerDe;
-import com.splout.db.common.engine.SQLite4JavaManager;
+import com.splout.db.engine.SQLite4JavaManager;
 import com.splout.db.hadoop.TableSpec;
 import com.splout.db.hadoop.TableSpec.FieldIndex;
 

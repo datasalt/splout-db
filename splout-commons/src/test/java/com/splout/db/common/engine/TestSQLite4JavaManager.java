@@ -26,7 +26,8 @@ import java.sql.SQLException;
 import org.junit.Test;
 
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
-import com.splout.db.common.engine.EngineManager.EngineException;
+import com.splout.db.engine.SQLite4JavaManager;
+import com.splout.db.engine.EngineManager.EngineException;
 
 public class TestSQLite4JavaManager extends SQLManagerTester {
 

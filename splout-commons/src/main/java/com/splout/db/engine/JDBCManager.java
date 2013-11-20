@@ -1,4 +1,4 @@
-package com.splout.db.common.engine;
+package com.splout.db.engine;
 
 /*
  * #%L
@@ -37,6 +37,9 @@ import com.jolbox.bonecp.BoneCPConfig;
 import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
 
+/**
+ * Generic JDBC Manager which can be reused by any engine which is JDBC-compliant.
+ */
 public class JDBCManager implements EngineManager {
 	
 	private final static Log log = LogFactory.getLog(JDBCManager.class);
@@ -57,8 +60,6 @@ public class JDBCManager implements EngineManager {
 
 		connectionPool = new BoneCP(config); // setup the connection pool
 	}
-	
-	
 	
 	/**
 	 * The contract of this function is to return a JSON-ized ArrayList of JSON Objects which in Java are represented as
@@ -104,7 +105,7 @@ public class JDBCManager implements EngineManager {
 
 	// -------- //
 
-	private static List<HashMap<String, Object>> convertResultSetToList(ResultSet rs, int maxResults)
+	public static List<HashMap<String, Object>> convertResultSetToList(ResultSet rs, int maxResults)
 	    throws SQLException {
 		ResultSetMetaData md = rs.getMetaData();
 		int columns = md.getColumnCount();

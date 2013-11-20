@@ -49,8 +49,8 @@ import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat;
 import com.datasalt.pangool.utils.test.AbstractHadoopTestLibrary;
 import com.google.common.io.Files;
 import com.splout.db.common.PartitionEntry;
-import com.splout.db.common.engine.Engine;
-import com.splout.db.common.engine.SQLite4JavaManager;
+import com.splout.db.engine.Engine;
+import com.splout.db.engine.SQLite4JavaManager;
 import com.splout.db.hadoop.TupleSampler.SamplingType;
 
 @SuppressWarnings({ "rawtypes", "serial" })

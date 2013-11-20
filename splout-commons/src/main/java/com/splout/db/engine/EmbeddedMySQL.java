@@ -1,4 +1,4 @@
-package com.splout.db.common.engine;
+package com.splout.db.engine;
 
 /*
  * #%L
@@ -121,6 +121,9 @@ public class EmbeddedMySQL {
 		this.config = config;
 	}
 
+	/**
+	 * It's ok to call this multiple times (redundant times will be ignored). 
+	 */
 	public void stop() {
 		if(resource != null) {
 			if(resource.isRunning()) {

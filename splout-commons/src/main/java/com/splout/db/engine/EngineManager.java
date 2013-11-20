@@ -1,4 +1,5 @@
-package com.splout.db.common.engine;
+package com.splout.db.engine;
+
 
 /*
  * #%L
@@ -20,25 +21,33 @@ package com.splout.db.common.engine;
  * #L%
  */
 
-
 /**
  * Contract for implementing several engine interfaces.
  */
 public interface EngineManager {
-	
+
 	@SuppressWarnings("serial")
-  public static class EngineException extends Exception {
-		
+	public static class EngineException extends Exception {
+
 		public EngineException(Throwable underlying) {
 			super(underlying);
 		}
-		
+
 		public EngineException(String message, Throwable underlying) {
 			super(message, underlying);
 		}
 	}
 
+	/**
+	 * SQL command, returning JSON object status result. This is implementation-dependent with no particular constraints.
+	 */
 	public String exec(String query) throws EngineException;
+
+	/**
+	 * SQL query, returning JSON result (see {@link JDBCManager.#convertResultSetToList(java.sql.ResultSet, int)}) as an
+	 * example. This should be implementation-independent. It should return a JSONized List<Map<String, Object>>.
+	 */
 	public String query(String query, int maxResults) throws EngineException;
+
 	public void close() throws EngineException;
 }

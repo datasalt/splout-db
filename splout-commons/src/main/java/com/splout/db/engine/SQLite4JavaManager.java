@@ -1,4 +1,4 @@
-package com.splout.db.common.engine;
+package com.splout.db.engine;
 
 /*
  * #%L

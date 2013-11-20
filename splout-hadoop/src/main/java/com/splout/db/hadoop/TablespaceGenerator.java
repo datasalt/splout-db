@@ -54,9 +54,9 @@ import com.splout.db.common.JSONSerDe.JSONSerDeException;
 import com.splout.db.common.PartitionEntry;
 import com.splout.db.common.PartitionMap;
 import com.splout.db.common.Tablespace;
-import com.splout.db.common.engine.Engine;
+import com.splout.db.engine.Engine;
+import com.splout.db.engine.OutputFormatFactory;
 import com.splout.db.hadoop.TupleSampler.TupleSamplerException;
-import com.splout.db.hadoop.engine.MySQLOutputFormat;
 import com.splout.db.hadoop.engine.SQLite4JavaOutputFormat;
 import com.splout.db.hadoop.engine.SploutSQLOutputFormat;
 import com.splout.db.hadoop.engine.SploutSQLOutputFormat.SploutSQLOutputFormatException;
@@ -481,16 +481,14 @@ public class TablespaceGenerator implements Serializable {
 		builder.setJarByClass(callingClass);
 		// Define the output format
 		
-		OutputFormat outputFormat;
 		TableSpec[] tbls = tableSpecs.toArray(new TableSpec[0]);
-		
-		if(tablespace.getEngine().equals(Engine.SQLITE)) {
-			outputFormat = new SQLite4JavaOutputFormat(batchSize,	tbls);
-		} else if(tablespace.getEngine().equals(Engine.MYSQL)) {
-			outputFormat = new MySQLOutputFormat(batchSize, nPartitions, tbls);
-		} else {
-			throw new IllegalArgumentException("Engine not supported: " + tablespace.getEngine());
-		}
+		OutputFormat outputFormat = null;
+    try {
+	    outputFormat = OutputFormatFactory.getOutputFormat(tablespace, batchSize, tbls);
+    } catch(Exception e) {
+	    System.err.println(e);
+	    throw new RuntimeException(e);
+    }
 		
 		builder.setOutput(new Path(outputPath, OUT_STORE), outputFormat, ITuple.class, NullWritable.class);
 		// #reducers = #partitions by default

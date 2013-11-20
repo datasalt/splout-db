@@ -419,6 +419,7 @@ public class Deployer extends QNodeHandlerModule {
 					metadata.setNReplicas(rEntry.getNodes().size());
 					metadata.setDeploymentDate(deployDate);
 					metadata.setInitStatements(req.getInitStatements());
+					metadata.setEngineId(req.getEngine());
 
 					deployAction.setMetadata(metadata);
 					actionsSoFar.add(deployAction);

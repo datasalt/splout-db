@@ -1,4 +1,4 @@
-package com.splout.db.common.engine;
+package com.splout.db.engine;
 
 /*
  * #%L
@@ -22,14 +22,33 @@ package com.splout.db.common.engine;
 
 import java.sql.SQLException;
 
-import com.splout.db.common.engine.EmbeddedMySQL.EmbeddedMySQLConfig;
+import com.splout.db.engine.EmbeddedMySQL.EmbeddedMySQLConfig;
 
 public class MySQLManager extends JDBCManager {
 
 	public static final String DRIVER = "com.mysql.jdbc.Driver";
+	private EmbeddedMySQL embeddedMySQL;
 	
 	public MySQLManager(EmbeddedMySQLConfig config, String dbName, int nConnections) throws SQLException, ClassNotFoundException {
 		super(DRIVER, config.getLocalJDBCConnection(dbName), nConnections, config.getUser(), config.getPass());
 	}
 
+	/**
+	 * Even though the manager and the embedded server are conceptually independent to each other,
+	 * it is useful to save the reference to the server this manager is acting upon, in case both
+	 * things need to be closed at the same time.
+	 * <p>
+	 * Therefore if this reference is provided, the embedded mySQL will be also closed on close().
+	 */
+	public void saveReferenceTo(EmbeddedMySQL embeddedMySQL) {
+		this.embeddedMySQL = embeddedMySQL;
+	}
+	
+	@Override
+	public void close() {
+	  super.close();
+	  if(embeddedMySQL != null) {
+	  	embeddedMySQL.stop();
+	  }
+	}
 }
