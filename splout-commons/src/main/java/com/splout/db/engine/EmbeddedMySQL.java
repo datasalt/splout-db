@@ -159,7 +159,7 @@ public class EmbeddedMySQL {
       } catch(IOException e) {
       }
       file.delete();
-			log.info("Successfully release a lock and deleted file: " + file);
+			log.info("Successfully released a lock and deleted file: " + file);
 		}
 	}
 
@@ -168,7 +168,7 @@ public class EmbeddedMySQL {
 		int port = EmbeddedMySQLConfig.DEFAULT_PORT;
 		FileLock lock = null;
 		File lockFile = null;
-		boolean free = true;
+		boolean free = false;
 		do {
 			try {
 				ServerSocket socket = new ServerSocket(port);
@@ -189,8 +189,10 @@ public class EmbeddedMySQL {
 						free = true;
 					}
 				}
+				if(!free) {
+					port++;
+				}
 			} catch(Exception e) {
-				free = false;
 				port++;
 			}
 		} while(!free);
@@ -220,6 +222,8 @@ public class EmbeddedMySQL {
 		database_options.put(MysqldResourceI.INITIALIZE_USER, "true");
 		database_options.put(MysqldResourceI.INITIALIZE_USER_NAME, config.user);
 		database_options.put(MysqldResourceI.INITIALIZE_PASSWORD, config.pass);
+		log.info("Using user: " + System.getProperty("user.name"));
+		database_options.put("user", System.getProperty("user.name"));
 		if(config.customConfig != null) {
 			for(Map.Entry<String, Object> entry : config.customConfig.entrySet()) {
 				database_options.put(entry.getKey(), entry.getValue());

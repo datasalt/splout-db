@@ -27,13 +27,18 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.junit.Test;
 
 import com.google.common.io.Files;
 import com.mysql.management.util.QueryUtil;
 import com.splout.db.engine.EmbeddedMySQL;
+import com.splout.db.engine.EmbeddedMySQL.PortLock;
 import com.splout.db.engine.MySQLManager;
 
 public class TestEmbeddedMySQL {
@@ -70,6 +75,43 @@ public class TestEmbeddedMySQL {
 		util.execute("COMMIT");
 	}
 
+	@Test
+	public void testPortLocking() throws InterruptedException {
+		final int N_THREADS = 30;
+		Thread[] pool = new Thread[N_THREADS];
+		final ConcurrentHashMap map = new ConcurrentHashMap();
+		for(int i = 0; i < N_THREADS; i++) {
+			final int threadId = i;
+			pool[i] = new Thread() {
+				public void run() {
+					setName("thread_" + threadId);
+					PortLock portLock = EmbeddedMySQL.getNextAvailablePort();
+					map.put(getName(), portLock);
+				}
+			};
+			pool[i].start();
+		}
+		
+		long sleptSoFar = 0;
+		do {
+			Thread.sleep(500);
+			sleptSoFar += 500;
+			if(sleptSoFar > 5000) {
+				throw new RuntimeException("Waited too much");
+			}
+		} while(map.keySet().size() < N_THREADS);
+		
+		Set<Integer> distinctPorts = new HashSet<Integer>();
+		for(Object entry: map.entrySet()) {
+			PortLock pLock = (PortLock)((Map.Entry)entry).getValue();
+			distinctPorts.add(pLock.getPort());
+			pLock.release();
+		}
+		
+		// Assert every thread locked on a different port
+		assertEquals(distinctPorts.size(), map.keySet().size());
+	}
+	
 	@Test
 	public void test() throws ClassNotFoundException, SQLException, IOException, InterruptedException {
 		EmbeddedMySQL mysql = new EmbeddedMySQL();
