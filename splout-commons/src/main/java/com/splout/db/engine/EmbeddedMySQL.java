@@ -159,6 +159,7 @@ public class EmbeddedMySQL {
       } catch(IOException e) {
       }
       file.delete();
+			log.info("Successfully release a lock and deleted file: " + file);
 		}
 	}
 
@@ -178,14 +179,16 @@ public class EmbeddedMySQL {
 				 * Therefore we need to ensure that only ONE PROCESS locks the port at a time. We use NIO FileLock for that.
 				 * Because this is fast, we lock on a temporary file and release it afterwards.
 				 */
+				log.info("Locking on file: " + lockFile);
 				lockFile = new File(System.getProperty("java.io.tmpdir"), "mysql_" + port);
 				if(!lockFile.exists()) {
 					lockFile.createNewFile();
-				}
-				FileChannel channel = new RandomAccessFile(lockFile, "rw").getChannel();
-				lock = channel.tryLock();
-				if(lock != null) {
-					free = true;
+					FileChannel channel = new RandomAccessFile(lockFile, "rw").getChannel();
+					lock = channel.tryLock();
+					if(lock != null) {
+						log.info("Successfully acquired a lock on file: " + lockFile);
+						free = true;
+					}
 				}
 			} catch(Exception e) {
 				free = false;
