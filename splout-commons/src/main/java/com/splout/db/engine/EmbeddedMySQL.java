@@ -152,6 +152,9 @@ public class EmbeddedMySQL {
 		return port;
 	}
 	
+	/**
+	 * TODO MySQL Hangs if port is busy, we should perform a timeout in a separate thred.
+	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public void start(boolean deleteFilesIfExist) throws IOException, InterruptedException {
 		if(deleteFilesIfExist && config.residentFolder.exists()) {

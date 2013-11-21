@@ -405,13 +405,14 @@ public class DNodeHandler implements IDNodeHandler {
 	 * This method will be called either before publishing a new tablespace after a deploy or when a query is issued
 	 * to a tablespace/version which is not "warmed" (e.g. after Splout restart, or after long inactivity).
 	 */
-	private void loadManagerInEHCache(String tablespace, long version, int partition, File dbFolder, PartitionMetadata partitionMetadata) throws DNodeException {
+	private Element loadManagerInEHCache(String tablespace, long version, int partition, File dbFolder, PartitionMetadata partitionMetadata) throws DNodeException {
 		try {
 			// Create new EHCache item value with a {@link EngineManager}
 			EngineManager manager = factory.getManagerIn(dbFolder, partitionMetadata);
 			String dbKey = tablespace + "_" + version + "_" + partition;
 			Element dbPoolInCache = new Element(dbKey, manager);
 			dbCache.put(dbPoolInCache);
+			return dbPoolInCache;
 		} catch(Exception e) {
 			log.warn(e);
 			throw new DNodeException(EXCEPTION_ORDINARY,
@@ -446,7 +447,7 @@ public class DNodeHandler implements IDNodeHandler {
 						PartitionMetadata partitionMetadata = (PartitionMetadata) reader
 						    .read(new PartitionMetadata());
 						reader.close();
-						loadManagerInEHCache(tablespace, version, partition, dbFolder, partitionMetadata);
+						dbPoolInCache = loadManagerInEHCache(tablespace, version, partition, dbFolder, partitionMetadata);
 					}
 				}
 				// Query the {@link SQLite4JavaManager} and return
