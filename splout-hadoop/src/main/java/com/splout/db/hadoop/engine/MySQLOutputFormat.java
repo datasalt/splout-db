@@ -22,6 +22,7 @@ package com.splout.db.hadoop.engine;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -55,20 +56,45 @@ import com.splout.db.engine.MySQLManager;
 import com.splout.db.hadoop.TableSpec;
 
 @SuppressWarnings("serial")
-public class MySQLOutputFormat extends SploutSQLOutputFormat {
+public class MySQLOutputFormat extends SploutSQLOutputFormat implements Serializable {
 
 	public static Log LOG = LogFactory.getLog(MySQLOutputFormat.class);
 
 	public static String STRING_FIELD_SIZE_PROP = "com.splout.db.hadoop.engine.MySQLOutputFormat.string.field.size";
+	public static String AUTO_TRIM_STRING = "com.splout.db.hadoop.engine.MySQLOutputFormat.auto.trim.string";
+	
 	public static String GENERATED_DB_NAME = "splout";
+	
+	private String engine;
+	private String charset;
 
-	// Keep track of all opened mysqlds so we can kill them in any case
+	// Keep track of all opened Mysqlds so we can kill them in any case
 	private Map<Integer, EmbeddedMySQL> mySQLs = new HashMap<Integer, EmbeddedMySQL>();
 
 	public MySQLOutputFormat(int batchSize, TableSpec... dbSpec) throws SploutSQLOutputFormatException {
+		this(batchSize, "MyISAM", "UTF8", dbSpec);
+	}
+	
+	public MySQLOutputFormat(int batchSize, String engine, String charset, TableSpec... dbSpec) throws SploutSQLOutputFormatException {
 		super(batchSize, dbSpec);
+		this.engine = engine;
+		this.charset = charset;
+		createPrePostSQL();
 	}
 
+	public void setEngine(String engine) {
+	  this.engine = engine;
+  }
+	public void setCharset(String charset) {
+	  this.charset = charset;
+  }
+	public String getEngine() {
+	  return engine;
+  }
+	public String getCharset() {
+	  return charset;
+  }
+	
 	@Override
 	public String getCreateTable(TableSpec tableSpec) throws SploutSQLOutputFormatException {
 		String createTable = "CREATE TABLE " + tableSpec.getSchema().getName() + " (";
@@ -82,10 +108,6 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat {
 			}
 			createTable += field.getName() + " ";
 			switch(field.getType()) {
-			/*
-			 * This mapping is done after SQLite's documentation. For instance, SQLite doesn't have Booleans (have to be
-			 * INTEGERs). It doesn't have LONGS either.
-			 */
 			case INT:
 				createTable += "INTEGER, ";
 				break;
@@ -113,7 +135,7 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat {
 			}
 		}
 		createTable = createTable.substring(0, createTable.length() - 2);
-		return createTable += ") ENGINE=InnoDB DEFAULT CHARSET=UTF8;";
+		return createTable += ") ENGINE=" + engine + " DEFAULT CHARSET=" + charset;
 	}
 
 	@Override
@@ -264,7 +286,19 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat {
 						continue;
 					}
 					if(field.getType().equals(Type.STRING)) {
-						pS.setObject(count, tuple.getString(tupleCount));
+						boolean autoTrim = false;
+						if(field.getProp(AUTO_TRIM_STRING) != null) {
+							autoTrim = true;
+						}
+						int fieldSize = -1;
+						if(field.getProp(STRING_FIELD_SIZE_PROP) != null) {
+							fieldSize = Integer.parseInt(field.getProp(STRING_FIELD_SIZE_PROP));
+						}
+						String str = tuple.getString(tupleCount);
+						if(fieldSize > 0 && autoTrim && str != null && str.length() > fieldSize) {
+							str = str.substring(0, Math.min(fieldSize, str.length()));
+						}
+						pS.setObject(count, str);
 					} else {
 						pS.setObject(count, tuple.get(tupleCount));
 					}
@@ -319,7 +353,7 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat {
 					CompressorUtil.createZip(
 					    resident,
 					    zipDest,
-					    new WildcardFileFilter(new String[] { "ib*", "*.frm" }),
+					    new WildcardFileFilter(new String[] { "ib*", "*.frm", "*.MYD", "*.MYI", "db.opt" }),
 					    FileFilterUtils.or(FileFilterUtils.nameFileFilter("data"),
 					        FileFilterUtils.nameFileFilter("splout")));
 					// Delete all files except the generated zip "partition.db"

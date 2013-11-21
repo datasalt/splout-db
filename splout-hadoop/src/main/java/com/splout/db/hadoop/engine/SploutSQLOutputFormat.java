@@ -61,34 +61,43 @@ public abstract class SploutSQLOutputFormat extends FileOutputFormat<ITuple, Nul
 
 	private String[] preSQL, postSQL;
 	private int batchSize;
-	
+	private transient TableSpec[] dbSpec;
+
 	/**
 	 * This OutputFormat receives a list of {@link TableSpec}. These are the different tables that will be created. They
 	 * will be identified by Pangool Tuples. The batch size is the number of SQL statements to execute before a COMMIT.
 	 */
 	public SploutSQLOutputFormat(int batchSize, TableSpec... dbSpec) throws SploutSQLOutputFormatException {
+		this.batchSize = batchSize;
+		this.dbSpec = dbSpec;
+	}
+
+	/**
+	 * To be called by the implementation after initializing state. Not called in this constructor as it might depend on
+	 * state that needs to be initialized.
+	 */
+	public void createPrePostSQL() throws SploutSQLOutputFormatException {
 		// Generate create tables and create index statements
 		this.preSQL = getCreateTables(dbSpec);
 		this.postSQL = getCreateIndexes(dbSpec);
-		this.batchSize = batchSize;
 	}
-	
+
 	public int getBatchSize() {
-	  return batchSize;
-  }
-	
+		return batchSize;
+	}
+
 	public String[] getPostSQL() {
-	  return postSQL;
-  }
-	
+		return postSQL;
+	}
+
 	public String[] getPreSQL() {
-	  return preSQL;
-  }
+		return preSQL;
+	}
 
 	public static Field getPartitionField() {
 		return Field.create(SploutSQLOutputFormat.PARTITION_TUPLE_FIELD, Type.INT);
 	}
-	
+
 	// Get all the CREATE TABLE... for a list of {@link TableSpec}
 	protected String[] getCreateTables(TableSpec... tableSpecs) throws SploutSQLOutputFormatException {
 		List<String> createTables = new ArrayList<String>();

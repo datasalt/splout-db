@@ -62,6 +62,7 @@ public class SQLite4JavaOutputFormat extends SploutSQLOutputFormat {
 	public SQLite4JavaOutputFormat(int batchSize, TableSpec... dbSpecs)
 	    throws SploutSQLOutputFormatException {
 		super(batchSize, dbSpecs);
+		createPrePostSQL();
 	}
 
 	// Given a {@link TableSpec}, returns the appropriated SQL CREATE TABLE...
