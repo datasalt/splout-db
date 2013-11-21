@@ -50,6 +50,7 @@ import com.splout.db.common.CompressorUtil;
 import com.splout.db.common.HeartBeater;
 import com.splout.db.engine.EmbeddedMySQL;
 import com.splout.db.engine.EmbeddedMySQL.EmbeddedMySQLConfig;
+import com.splout.db.engine.EmbeddedMySQL.PortLock;
 import com.splout.db.engine.MySQLManager;
 import com.splout.db.hadoop.TableSpec;
 
@@ -182,17 +183,26 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat {
 				tempPool.put(partition, new Path(temp, partition + ".db"));
 				LOG.info("Initializing SQL connection [" + partition + "]");
 
-				// temp files to File(".") ?
+				PortLock portLock = EmbeddedMySQL.getNextAvailablePort();
 
-				int port = EmbeddedMySQL.getNextAvailablePort();
-				File mysqlDir = new File(mysqlDb.toString());
-				LOG.info("Going to instantiate a MySQLD in: " + mysqlDir + ", port [" + port + "] (partition: "
-				    + partition + ")");
+				EmbeddedMySQL mySQL = null;
+				EmbeddedMySQLConfig config = null;
 
-				EmbeddedMySQLConfig config = new EmbeddedMySQLConfig(port, EmbeddedMySQLConfig.DEFAULT_USER,
-				    EmbeddedMySQLConfig.DEFAULT_PASS, mysqlDir, null);
-				EmbeddedMySQL mySQL = new EmbeddedMySQL(config);
-				mySQL.start(true);
+				try {
+					File mysqlDir = new File(mysqlDb.toString());
+					LOG.info("Going to instantiate a MySQLD in: " + mysqlDir + ", port [" + portLock.getPort()
+					    + "] (partition: " + partition + ")");
+
+					config = new EmbeddedMySQLConfig(portLock.getPort(), EmbeddedMySQLConfig.DEFAULT_USER,
+					    EmbeddedMySQLConfig.DEFAULT_PASS, mysqlDir, null);
+					mySQL = new EmbeddedMySQL(config);
+					mySQL.start(true);
+				} catch(Exception e) {
+					throw e;
+				} finally {
+					portLock.release();
+				}
+
 				mySQLs.put(partition, mySQL);
 
 				// MySQL is successfully started at this point, or an Exception would have been thrown.

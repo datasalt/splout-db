@@ -22,7 +22,10 @@ package com.splout.db.engine;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.net.ServerSocket;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,10 +40,10 @@ import com.mysql.management.MysqldResource;
 import com.mysql.management.MysqldResourceI;
 
 /**
- * An interface to use MySQL(d) from Java in an embedded way.
- * This actually starts Mysqld in a separate process with its own PID.
+ * An interface to use MySQL(d) from Java in an embedded way. This actually starts Mysqld in a separate process with its
+ * own PID.
  * <p>
- * Classes used: http://dev.mysql.com/doc/connector-mxj/en/connector-mxj-configuration-java-object.html 
+ * Classes used: http://dev.mysql.com/doc/connector-mxj/en/connector-mxj-configuration-java-object.html
  */
 public class EmbeddedMySQL {
 
@@ -92,14 +95,14 @@ public class EmbeddedMySQL {
 		public String getUser() {
 			return user;
 		}
-		
+
 		/**
 		 * Normal JDBC connection string to localhost with "createDatabaseIfNotExist"
 		 */
 		public String getLocalJDBCConnection(String dbName) {
 			return "jdbc:mysql://localhost:" + port + "/" + dbName + "?createDatabaseIfNotExist=true";
 		}
-		
+
 		@Override
 		public String toString() {
 			return ReflectionToStringBuilder.toString(this);
@@ -112,17 +115,17 @@ public class EmbeddedMySQL {
 	public EmbeddedMySQL() {
 		this(new EmbeddedMySQLConfig());
 	}
-	
+
 	public EmbeddedMySQLConfig getConfig() {
-	  return config;
-  }
-	
+		return config;
+	}
+
 	public EmbeddedMySQL(EmbeddedMySQLConfig config) {
 		this.config = config;
 	}
 
 	/**
-	 * It's ok to call this multiple times (redundant times will be ignored). 
+	 * It's ok to call this multiple times (redundant times will be ignored).
 	 */
 	public void stop() {
 		if(resource != null) {
@@ -135,23 +138,63 @@ public class EmbeddedMySQL {
 		}
 	}
 
-	public static int getNextAvailablePort() {
+	public static class PortLock {
+		final int port;
+		final FileLock lock;
+		final File file;
+		
+		public PortLock(int port, FileLock lock, File file) {
+			this.port = port;
+			this.lock = lock;
+			this.file = file;
+		}
+
+		public int getPort() {
+			return port;
+		}
+
+		public void release() {
+			try {
+	      lock.release();
+      } catch(IOException e) {
+      }
+      file.delete();
+		}
+	}
+
+	public static PortLock getNextAvailablePort() {
 		// Look for next available port
 		int port = EmbeddedMySQLConfig.DEFAULT_PORT;
+		FileLock lock = null;
+		File lockFile = null;
 		boolean free = true;
 		do {
 			try {
 				ServerSocket socket = new ServerSocket(port);
 				socket.close();
-				free = true;
-			} catch(IOException e) {
+				/*
+				 * It's actually unsafe to assume the port will still be free when using it after calling this method. And
+				 * "mysqld" can't handle well the situation where two daemons are started with the same port concurrently.
+				 * Therefore we need to ensure that only ONE PROCESS locks the port at a time. We use NIO FileLock for that.
+				 * Because this is fast, we lock on a temporary file and release it afterwards.
+				 */
+				lockFile = new File(System.getProperty("java.io.tmpdir"), "mysql_" + port);
+				if(!lockFile.exists()) {
+					lockFile.createNewFile();
+				}
+				FileChannel channel = new RandomAccessFile(lockFile, "rw").getChannel();
+				lock = channel.tryLock();
+				if(lock != null) {
+					free = true;
+				}
+			} catch(Exception e) {
 				free = false;
 				port++;
 			}
 		} while(!free);
-		return port;
+		return new PortLock(port, lock, lockFile);
 	}
-	
+
 	/**
 	 * TODO MySQL Hangs if port is busy, we should perform a timeout in a separate thred.
 	 */
@@ -161,7 +204,7 @@ public class EmbeddedMySQL {
 			File pidFile = new File(config.residentFolder, "data/MysqldResource.pid");
 			if(pidFile.exists()) {
 				// Issue "kill -9" if process is still alive
-				String pid  = Files.toString(pidFile, Charset.defaultCharset());
+				String pid = Files.toString(pidFile, Charset.defaultCharset());
 				log.info("Killing existing process: " + pid);
 				Runtime.getRuntime().exec("kill -9 " + pid).waitFor();
 			}
@@ -184,8 +227,8 @@ public class EmbeddedMySQL {
 		try {
 			ServerSocket serverSocket = new ServerSocket(config.port);
 			serverSocket.close();
-		} catch (IOException e) {
-	    throw new RuntimeException("Port already in use: " + config.port);
+		} catch(IOException e) {
+			throw new RuntimeException("Port already in use: " + config.port);
 		}
 		if(mysqldResource.isRunning()) {
 			throw new RuntimeException("MySQL already running!");

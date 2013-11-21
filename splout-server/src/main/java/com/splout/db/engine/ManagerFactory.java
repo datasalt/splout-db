@@ -9,6 +9,7 @@ import com.splout.db.common.SploutConfiguration;
 import com.splout.db.common.TimeoutThread;
 import com.splout.db.dnode.DNodeProperties;
 import com.splout.db.engine.EmbeddedMySQL.EmbeddedMySQLConfig;
+import com.splout.db.engine.EmbeddedMySQL.PortLock;
 import com.splout.db.thrift.PartitionMetadata;
 
 /**
@@ -64,24 +65,27 @@ public class ManagerFactory {
 		} else if(engine.equals(Engine.MYSQL)) {
 			File mysqlFolder = new File(dbFolder, "mysql");
 
-			int port = EmbeddedMySQL.getNextAvailablePort();
-			
-			EmbeddedMySQLConfig config = new EmbeddedMySQLConfig(port, EmbeddedMySQLConfig.DEFAULT_USER,
-			    EmbeddedMySQLConfig.DEFAULT_PASS, mysqlFolder, null);
-			EmbeddedMySQL mySQL = new EmbeddedMySQL(config);
-			embeddedMySQLs.add(mySQL);
+			PortLock portLock = EmbeddedMySQL.getNextAvailablePort();
+			try {
+				EmbeddedMySQLConfig config = new EmbeddedMySQLConfig(portLock.getPort(),
+				    EmbeddedMySQLConfig.DEFAULT_USER, EmbeddedMySQLConfig.DEFAULT_PASS, mysqlFolder, null);
+				EmbeddedMySQL mySQL = new EmbeddedMySQL(config);
+				embeddedMySQLs.add(mySQL);
 
-			// Trick: start mysql first on the empty dir, stop it, uncompress data, start it again
-			// This is because mySQL creates some databases by default which doesn't create if "data" already exists
-			// So we don't need to add them to the produced zip (1.6 MB less).
-			mySQL.start(true);
-			mySQL.stop();
+				// Trick: start mysql first on the empty dir, stop it, uncompress data, start it again
+				// This is because mySQL creates some databases by default which doesn't create if "data" already exists
+				// So we don't need to add them to the produced zip (1.6 MB less).
+				mySQL.start(true);
+				mySQL.stop();
 
-			CompressorUtil.uncompress(new File(dbFolder, dbFile), mysqlFolder);
+				CompressorUtil.uncompress(new File(dbFolder, dbFile), mysqlFolder);
 
-			mySQL.start(false);
-			manager = new MySQLManager(config, "splout", 1);
-			((MySQLManager) manager).saveReferenceTo(mySQL); // so it can be lazily closed by EHCache
+				mySQL.start(false);
+				manager = new MySQLManager(config, "splout", 1);
+				((MySQLManager) manager).saveReferenceTo(mySQL); // so it can be lazily closed by EHCache
+			} finally {
+				portLock.release();
+			}
 		} else {
 			throw new IllegalArgumentException("Engine not implemented: " + engine);
 		}
