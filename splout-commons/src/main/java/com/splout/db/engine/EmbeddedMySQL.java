@@ -179,8 +179,7 @@ public class EmbeddedMySQL {
 				 * Therefore we need to ensure that only ONE PROCESS locks the port at a time. We use NIO FileLock for that.
 				 * Because this is fast, we lock on a temporary file and release it afterwards.
 				 */
-				log.info("Locking on file: " + lockFile);
-				lockFile = new File(System.getProperty("java.io.tmpdir"), "mysql_" + port);
+				lockFile = new File("/tmp", "mysql_" + port); // can't use java.io.tmpdir as it is overriden by Hadoop
 				if(!lockFile.exists()) {
 					lockFile.createNewFile();
 					FileChannel channel = new RandomAccessFile(lockFile, "rw").getChannel();
