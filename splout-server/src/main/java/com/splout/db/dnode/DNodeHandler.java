@@ -402,6 +402,24 @@ public class DNodeHandler implements IDNodeHandler {
 	}
 
 	/**
+	 * This method will be called either before publishing a new tablespace after a deploy or when a query is issued
+	 * to a tablespace/version which is not "warmed" (e.g. after Splout restart, or after long inactivity).
+	 */
+	private void loadManagerInEHCache(String tablespace, long version, int partition, File dbFolder, PartitionMetadata partitionMetadata) throws DNodeException {
+		try {
+			// Create new EHCache item value with a {@link EngineManager}
+			EngineManager manager = factory.getManagerIn(dbFolder, partitionMetadata);
+			String dbKey = tablespace + "_" + version + "_" + partition;
+			Element dbPoolInCache = new Element(dbKey, manager);
+			dbCache.put(dbPoolInCache);
+		} catch(Exception e) {
+			log.warn(e);
+			throw new DNodeException(EXCEPTION_ORDINARY,
+			    "Error (" + e.getMessage() + ") instantiating a manager for a data partition");
+		}	
+	}
+	
+	/**
 	 * Thrift RPC method -> Given a tablespace and a version, execute the SQL query
 	 */
 	@Override
@@ -423,22 +441,12 @@ public class DNodeHandler implements IDNodeHandler {
 							throw new DNodeException(EXCEPTION_ORDINARY, "Requested tablespace (" + tablespace
 							    + ") + version (" + version + ") is not available.");
 						}
-						// Create new EHCache item value with a {@link EngineManager}
 						File metadata = getLocalMetadataFile(tablespace, partition, version);
 						ThriftReader reader = new ThriftReader(metadata);
 						PartitionMetadata partitionMetadata = (PartitionMetadata) reader
 						    .read(new PartitionMetadata());
 						reader.close();
-
-						try {
-							EngineManager manager = factory.getManagerIn(dbFolder, partitionMetadata);
-							dbPoolInCache = new Element(dbKey, manager);
-							dbCache.put(dbPoolInCache);
-						} catch(Exception e) {
-							log.warn(e);
-							throw new DNodeException(EXCEPTION_ORDINARY,
-							    "Error (" + e.getMessage() + ") instantiating a manager for a data partition");
-						}
+						loadManagerInEHCache(tablespace, version, partition, dbFolder, partitionMetadata);
 					}
 				}
 				// Query the {@link SQLite4JavaManager} and return
@@ -587,6 +595,9 @@ public class DNodeHandler implements IDNodeHandler {
 										}
 										// 4- Perform a "mv" for finally making the data available
 										FileUtils.moveDirectory(fetchedContent, dbFolder);
+										// 5- Preemptively load the Manager in case initialization is slow
+										// Managers might warm up for a while (e.g. loading data into memory)
+										loadManagerInEHCache(action.getTablespace(), action.getVersion(), action.getPartition(), dbFolder, action.getMetadata());
 									}
 
 									// Publish new DNodeInfo in distributed registry.

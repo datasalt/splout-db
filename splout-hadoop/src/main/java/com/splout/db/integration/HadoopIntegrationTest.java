@@ -120,7 +120,7 @@ public class HadoopIntegrationTest implements Tool, Configurable {
 			Thread.sleep(2000);
 			waitedSoFar += 2000;
 			status = client.overview();
-			if(waitedSoFar > 15000) {
+			if(waitedSoFar > 60000) {
 				throw new RuntimeException(
 				    "Deploy must have failed in Splout's server. Waiting too much for it to complete.");
 			}
