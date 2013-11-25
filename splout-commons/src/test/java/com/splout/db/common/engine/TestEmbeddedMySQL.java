@@ -38,8 +38,10 @@ import org.junit.Test;
 import com.google.common.io.Files;
 import com.mysql.management.util.QueryUtil;
 import com.splout.db.engine.EmbeddedMySQL;
-import com.splout.db.engine.EmbeddedMySQL.PortLock;
+import com.splout.db.engine.EmbeddedMySQL.EmbeddedMySQLConfig;
 import com.splout.db.engine.MySQLManager;
+import com.splout.db.engine.PortUtils;
+import com.splout.db.engine.PortUtils.PortLock;
 
 public class TestEmbeddedMySQL {
 
@@ -75,7 +77,8 @@ public class TestEmbeddedMySQL {
 		util.execute("COMMIT");
 	}
 
-	@Test
+	@SuppressWarnings("rawtypes")
+  @Test
 	public void testPortLocking() throws InterruptedException {
 		final int N_THREADS = 30;
 		Thread[] pool = new Thread[N_THREADS];
@@ -83,9 +86,10 @@ public class TestEmbeddedMySQL {
 		for(int i = 0; i < N_THREADS; i++) {
 			final int threadId = i;
 			pool[i] = new Thread() {
-				public void run() {
+				@SuppressWarnings("unchecked")
+        public void run() {
 					setName("thread_" + threadId);
-					PortLock portLock = EmbeddedMySQL.getNextAvailablePort();
+					PortLock portLock = PortUtils.getNextAvailablePort(EmbeddedMySQLConfig.DEFAULT_PORT);
 					map.put(getName(), portLock);
 				}
 			};

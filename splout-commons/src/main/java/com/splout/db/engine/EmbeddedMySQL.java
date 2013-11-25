@@ -22,10 +22,7 @@ package com.splout.db.engine;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.net.ServerSocket;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
@@ -136,67 +133,6 @@ public class EmbeddedMySQL {
 		} else {
 			log.warn("Nothing to stop.");
 		}
-	}
-
-	public static class PortLock {
-		final int port;
-		final FileLock lock;
-		final File file;
-		
-		public PortLock(int port, FileLock lock, File file) {
-			this.port = port;
-			this.lock = lock;
-			this.file = file;
-		}
-
-		public int getPort() {
-			return port;
-		}
-
-		public void release() {
-			try {
-	      lock.release();
-      } catch(IOException e) {
-      }
-      file.delete();
-			log.info("Successfully released a lock and deleted file: " + file);
-		}
-	}
-
-	public static PortLock getNextAvailablePort() {
-		// Look for next available port
-		int port = EmbeddedMySQLConfig.DEFAULT_PORT;
-		FileLock lock = null;
-		File lockFile = null;
-		boolean free = false;
-		do {
-			try {
-				ServerSocket socket = new ServerSocket(port);
-				socket.close();
-				/*
-				 * It's actually unsafe to assume the port will still be free when using it after calling this method. And
-				 * "mysqld" can't handle well the situation where two daemons are started with the same port concurrently.
-				 * Therefore we need to ensure that only ONE PROCESS locks the port at a time. We use NIO FileLock for that.
-				 * Because this is fast, we lock on a temporary file and release it afterwards.
-				 */
-				lockFile = new File("/tmp", "mysql_" + port); // can't use java.io.tmpdir as it is overriden by Hadoop
-				if(!lockFile.exists()) {
-					lockFile.createNewFile();
-					FileChannel channel = new RandomAccessFile(lockFile, "rw").getChannel();
-					lock = channel.tryLock();
-					if(lock != null) {
-						log.info("Successfully acquired a lock on file: " + lockFile);
-						free = true;
-					}
-				}
-				if(!free) {
-					port++;
-				}
-			} catch(Exception e) {
-				port++;
-			}
-		} while(!free);
-		return new PortLock(port, lock, lockFile);
 	}
 
 	/**

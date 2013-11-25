@@ -16,6 +16,13 @@
 	<name>Splout SQL commons</name>
 	<description>Splout is a read only, horizontally scalable SQL database that plays well with Hadoop.</description>
 
+	<repositories>
+		<repository>
+  			<id>clojars.org</id>
+  			<url>http://clojars.org/repo</url>
+		</repository>
+	</repositories>
+
 	<licenses>
 		<license>
 			<name>Apache License version 2.0</name>
@@ -266,6 +273,26 @@
 			<version>5.0.12</version>
 		</dependency>
             
+        <!-- Redis -->
+        
+        <dependency>
+			<groupId>com.ning</groupId>
+			<artifactId>compress-lzf</artifactId>
+			<version>0.9.9</version>
+		</dependency>
+            
+        <dependency>
+			<groupId>redis.clients</groupId>
+			<artifactId>jedis</artifactId>
+			<version>2.2.1</version>
+		</dependency>
+            
+        <dependency>
+  			<groupId>redis.embedded</groupId>
+  			<artifactId>embedded-redis</artifactId>
+  			<version>0.1</version>
+		</dependency>
+		
 		<!-- SQLite -->
 
 		<dependency>

@@ -27,6 +27,13 @@
         </license>
     </licenses>
 
+	<repositories>
+		<repository>
+  			<id>clojars.org</id>
+  			<url>http://clojars.org/repo</url>
+		</repository>
+	</repositories>
+	
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jackson.version>1.7.9</jackson.version>
@@ -518,6 +525,13 @@
             <version>7.0.32</version>
         </dependency>
 
+		<!-- Redis -->
+		<dependency>
+  			<groupId>redis.embedded</groupId>
+  			<artifactId>embedded-redis</artifactId>
+  			<version>0.1</version>
+		</dependency>
+		
         <!-- Thrift -->
         <dependency>
             <groupId>org.apache.thrift</groupId>

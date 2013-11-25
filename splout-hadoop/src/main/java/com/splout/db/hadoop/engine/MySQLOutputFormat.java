@@ -51,8 +51,9 @@ import com.splout.db.common.CompressorUtil;
 import com.splout.db.common.HeartBeater;
 import com.splout.db.engine.EmbeddedMySQL;
 import com.splout.db.engine.EmbeddedMySQL.EmbeddedMySQLConfig;
-import com.splout.db.engine.EmbeddedMySQL.PortLock;
 import com.splout.db.engine.MySQLManager;
+import com.splout.db.engine.PortUtils;
+import com.splout.db.engine.PortUtils.PortLock;
 import com.splout.db.hadoop.TableSpec;
 
 @SuppressWarnings("serial")
@@ -205,7 +206,7 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat implements Serializ
 				tempPool.put(partition, new Path(temp, partition + ".db"));
 				LOG.info("Initializing SQL connection [" + partition + "]");
 
-				PortLock portLock = EmbeddedMySQL.getNextAvailablePort();
+				PortLock portLock = PortUtils.getNextAvailablePort(EmbeddedMySQLConfig.DEFAULT_PORT);
 
 				EmbeddedMySQL mySQL = null;
 				EmbeddedMySQLConfig config = null;

@@ -1,15 +1,41 @@
 package com.splout.db.engine;
 
+/*
+ * #%L
+ * Splout SQL Server
+ * %%
+ * Copyright (C) 2012 - 2013 Datasalt Systems S.L.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.commons.io.FileUtils;
+
+import redis.embedded.RedisServer;
 
 import com.splout.db.common.CompressorUtil;
 import com.splout.db.common.SploutConfiguration;
 import com.splout.db.common.TimeoutThread;
 import com.splout.db.dnode.DNodeProperties;
 import com.splout.db.engine.EmbeddedMySQL.EmbeddedMySQLConfig;
-import com.splout.db.engine.EmbeddedMySQL.PortLock;
+import com.splout.db.engine.PortUtils.PortLock;
+import com.splout.db.engine.redis.RedisManager;
 import com.splout.db.thrift.PartitionMetadata;
 
 /**
@@ -25,6 +51,9 @@ public class ManagerFactory {
 	private TimeoutThread timeoutThread;
 	private List<EmbeddedMySQL> embeddedMySQLs = new ArrayList<EmbeddedMySQL>();
 
+	private List<RedisServer> redisServers = new ArrayList<RedisServer>();
+	private File redisExecutable = new File("/home/pere/redis-2.8.1/src/redis-server"); // TODO Read from splout conf.
+
 	public void init(SploutConfiguration config) {
 		timeoutThread = new TimeoutThread(config.getLong(DNodeProperties.MAX_QUERY_TIME));
 		timeoutThread.start();
@@ -34,6 +63,9 @@ public class ManagerFactory {
 		timeoutThread.interrupt();
 		for(EmbeddedMySQL mySQL : embeddedMySQLs) {
 			mySQL.stop();
+		}
+		for(RedisServer redis : redisServers) {
+			redis.stop();
 		}
 	}
 
@@ -58,14 +90,20 @@ public class ManagerFactory {
 			throw new RuntimeException("Can't find .db file in directory: " + dbFolder);
 		}
 
+		/*
+		 * SQLite
+		 */
 		if(engine.equals(Engine.SQLITE)) {
 			manager = new SQLite4JavaManager(dbFolder + "/" + dbFile, partitionMetadata.getInitStatements());
 			((SQLite4JavaManager) manager).setTimeoutThread(timeoutThread);
 
+			/*
+			 * MySQL
+			 */
 		} else if(engine.equals(Engine.MYSQL)) {
 			File mysqlFolder = new File(dbFolder, "mysql");
 
-			PortLock portLock = EmbeddedMySQL.getNextAvailablePort();
+			PortLock portLock = PortUtils.getNextAvailablePort(EmbeddedMySQLConfig.DEFAULT_PORT);
 			try {
 				EmbeddedMySQLConfig config = new EmbeddedMySQLConfig(portLock.getPort(),
 				    EmbeddedMySQLConfig.DEFAULT_USER, EmbeddedMySQLConfig.DEFAULT_PASS, mysqlFolder, null);
@@ -83,6 +121,31 @@ public class ManagerFactory {
 				mySQL.start(false);
 				manager = new MySQLManager(config, "splout", 1);
 				((MySQLManager) manager).saveReferenceTo(mySQL); // so it can be lazily closed by EHCache
+			} finally {
+				portLock.release();
+			}
+			/*
+			 * Redis
+			 */
+		} else if(engine.equals(Engine.REDIS)) {
+			File thisServer = new File(dbFolder, "redis-server");
+			File thisDataFile = new File(dbFolder, "dump.rdb");
+			File actualDataFile = new File(dbFolder, dbFile);
+			Runtime
+			    .getRuntime()
+			    .exec(
+			        new String[] { "ln", "-s", 
+			            actualDataFile.getAbsolutePath(),
+			            thisDataFile.getAbsolutePath() }).waitFor();
+			FileUtils.copyFile(redisExecutable, thisServer);
+			thisServer.setExecutable(true);
+
+			PortLock portLock = PortUtils.getNextAvailablePort(6379);
+			try {
+				RedisServer redisServer = new RedisServer(thisServer, portLock.getPort());
+				redisServer.start();
+				redisServers.add(redisServer);
+				manager = new RedisManager(portLock.getPort());
 			} finally {
 				portLock.release();
 			}

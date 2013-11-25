@@ -7,6 +7,7 @@ import com.datasalt.pangool.io.ITuple;
 import com.splout.db.hadoop.TableSpec;
 import com.splout.db.hadoop.TablespaceSpec;
 import com.splout.db.hadoop.engine.MySQLOutputFormat;
+import com.splout.db.hadoop.engine.RedisOutputFormat;
 import com.splout.db.hadoop.engine.SQLite4JavaOutputFormat;
 
 /**
@@ -26,6 +27,14 @@ public class OutputFormatFactory {
 			oF = new SQLite4JavaOutputFormat(batchSize,	tbls);
 		} else if(tablespace.getEngine().equals(Engine.MYSQL)) {
 			oF = new MySQLOutputFormat(batchSize, tbls);
+		} else if(tablespace.getEngine().equals(Engine.REDIS)) {
+			if(tablespace.getPartitionedTables().size() != 1) {
+				throw new IllegalArgumentException("Redis output format only works with one partitioned table.");
+			}
+			if(tablespace.getPartitionedTables().get(0).getTableSpec().getPartitionFields().length != 1) {
+				throw new IllegalArgumentException("Redis output format only works with one partitioning field.");
+			}
+			oF = new RedisOutputFormat(tablespace.getPartitionedTables().get(0).getTableSpec().getPartitionFields()[0]);
 		} else {
 			throw new IllegalArgumentException("Engine not supported: " + tablespace.getEngine());
 		}
