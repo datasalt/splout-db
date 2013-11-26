@@ -244,11 +244,19 @@ public class TableBuilder {
 	}
 
 	public TableBuilder addTupleFile(Path path) throws IOException {
-		return addTupleFile(path, null);
+		return addTupleFile(path, (RecordProcessor)null);
 	}
 
+	public TableBuilder addTupleFile(Path path, Schema explicitSchema) throws IOException {
+		return addTupleFile(path, explicitSchema, null);
+	}
+	
 	public TableBuilder addTupleFile(Path path, RecordProcessor recordProcessor) throws IOException {
 		return addCustomInputFormatFile(path, new TupleInputFormat(), recordProcessor);
+	}
+
+	public TableBuilder addTupleFile(Path path, Schema explicitSchema, RecordProcessor recordProcessor) throws IOException {
+		return addCustomInputFormatFile(path, new TupleInputFormat(explicitSchema), recordProcessor);
 	}
 
 	/**

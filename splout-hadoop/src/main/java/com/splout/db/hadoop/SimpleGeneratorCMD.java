@@ -245,7 +245,11 @@ public class SimpleGeneratorCMD implements Tool {
 		} else if(inputType.equals(InputType.TUPLE)) {
 			// Pangool Tuple file
 			Path inputPath = new Path(input);
-			tableBuilder.addTupleFile(inputPath);
+			if(schema != null) {
+				tableBuilder.addTupleFile(inputPath, schema);
+			} else {
+				tableBuilder.addTupleFile(inputPath);
+			}
 		} else if(inputType.equals(InputType.CASCADING)) {
 			// Cascading Tuple file
 			Path inputPath = new Path(input);
