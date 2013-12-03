@@ -41,8 +41,6 @@ import org.apache.thrift.transport.TTransportException;
 
 import com.hazelcast.core.ICountDownLatch;
 import com.hazelcast.core.IMap;
-import com.hazelcast.core.InstanceDestroyedException;
-import com.hazelcast.core.MemberLeftException;
 import com.splout.db.common.PartitionEntry;
 import com.splout.db.common.ReplicationEntry;
 import com.splout.db.hazelcast.CoordinationStructures;
@@ -164,13 +162,7 @@ public class Deployer extends QNodeHandlerModule {
 				log.info("Deploy of version [" + version + "] Finished PROPERLY. :-)");
 				context.getCoordinationStructures().logDeployMessage(version, "Deploy of version [" + version + "] finished properly.");
 				context.getCoordinationStructures().getDeploymentsStatusPanel().put(version, DeployStatus.FINISHED);
-			} catch(MemberLeftException e) {
-				log.error("Error while deploying version [" + version + "]", e);
-				abortDeploy(dnodes, e.getMessage(), version);
-			} catch(InstanceDestroyedException e) {
-				log.error("Error while deploying version [" + version + "]", e);
-				abortDeploy(dnodes, e.getMessage(), version);
-			} catch(InterruptedException e) {
+            } catch(InterruptedException e) {
 				log.error("Error while deploying version [" + version + "]", e);
 				abortDeploy(dnodes, e.getMessage(), version);
 			} catch(Throwable t) {
@@ -279,7 +271,7 @@ public class Deployer extends QNodeHandlerModule {
 		ICountDownLatch countDownLatchForDeploy = context.getCoordinationStructures()
 		    .getCountDownLatchForDeploy(version);
 		Set<String> dnodesInvolved = actionsPerDNode.keySet();
-		countDownLatchForDeploy.setCount(dnodesInvolved.size());
+		countDownLatchForDeploy.trySetCount(dnodesInvolved.size());
 
 		// Sending deploy signals to each DNode
 		for(Map.Entry<String, List<DeployAction>> actionPerDNode : actionsPerDNode.entrySet()) {

@@ -153,7 +153,7 @@ public class DistributedRegistry {
 
 		@Override
 		public void stateChanged(LifecycleEvent event) {
-			if(event.getState() == LifecycleState.RESTARTED) {
+			if(event.getState() == LifecycleState.MERGED) {
 				synchronized(DistributedRegistry.this) {
 					if(amIRegistered.get()) {
 						log.info("Hazelcast RESTARTED event received. Reregistering myself to asure I'm properly registered");
