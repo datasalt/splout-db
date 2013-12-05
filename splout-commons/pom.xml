@@ -284,6 +284,14 @@
   			<artifactId>embedded-redis</artifactId>
   			<version>0.1</version>
 		</dependency>
+		        
+		<!-- MySQL -->    
+            
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-mxj</artifactId>
+			<version>5.0.12</version>
+		</dependency>
 		
 		<!-- SQLite -->
 
