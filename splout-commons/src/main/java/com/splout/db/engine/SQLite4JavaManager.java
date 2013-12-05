@@ -74,6 +74,7 @@ public class SQLite4JavaManager implements EngineManager {
 			SQLiteConnection conn = new SQLiteConnection(dbFile);
 			try {
 				conn.open(true);
+				conn.setExtensionLoadingEnabled(true); // TODO Make optional
         // Executing some defaults
         conn.exec("PRAGMA cache_size=20");
         // User provided initStatements
