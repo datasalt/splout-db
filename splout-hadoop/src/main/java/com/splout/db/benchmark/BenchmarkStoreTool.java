@@ -57,6 +57,7 @@ import com.splout.db.common.SploutHadoopConfiguration;
 import com.splout.db.hadoop.TableSpec;
 import com.splout.db.hadoop.engine.SQLite4JavaOutputFormat;
 import com.splout.db.hadoop.engine.SploutSQLOutputFormat;
+import com.splout.db.hadoop.engine.SploutSQLProxyOutputFormat;
 
 /**
  * Distributed map-only job that creates an arbitrarily big database for being used by {@link BenchmarkTool}. It doesn't
@@ -179,7 +180,7 @@ public class BenchmarkStoreTool implements Tool, Serializable {
 		MapOnlyJobBuilder job = new MapOnlyJobBuilder(conf);
 		TableSpec tableSpec = new TableSpec(schema, schema.getFields().get(1));
 		
-		job.setOutput(new Path(out, "store"), new SQLite4JavaOutputFormat(1000000, tableSpec), ITuple.class,
+		job.setOutput(new Path(out, "store"), new SploutSQLProxyOutputFormat(new SQLite4JavaOutputFormat(1000000, tableSpec)), ITuple.class,
 		    NullWritable.class);
 		job.addInput(input, new HadoopInputFormat(TextInputFormat.class), new MapOnlyMapper<LongWritable, Text, ITuple, NullWritable>() {
 

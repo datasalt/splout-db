@@ -11,8 +11,8 @@ import org.junit.Test;
 import com.splout.db.common.CompressorUtil;
 import com.splout.db.common.JSONSerDe;
 import com.splout.db.engine.EmbeddedMySQL;
-import com.splout.db.engine.MySQLManager;
 import com.splout.db.engine.EmbeddedMySQL.EmbeddedMySQLConfig;
+import com.splout.db.engine.MySQLManager;
 
 @SuppressWarnings("serial")
 public class TestMySQLOutputFormat extends SploutSQLOutputFormatTester {

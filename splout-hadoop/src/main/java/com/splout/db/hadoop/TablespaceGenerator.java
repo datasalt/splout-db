@@ -147,7 +147,7 @@ public class TablespaceGenerator implements Serializable {
 		}
 
 		Log.info("Calculated partition map: " + partitionMap);
-		
+
 		writeOutputMetadata(conf);
 
 		TupleMRBuilder builder = createMRBuilder(nPartitions, conf);
@@ -182,11 +182,10 @@ public class TablespaceGenerator implements Serializable {
 			writer.write(JSONSerDe.ser(tablespace.getInitStatements()));
 			writer.close();
 		}
-		
+
 		// Write the Engine ID so we know what we are deploying exactly afterwards
 		Path enginePath = new Path(outputPath, OUT_ENGINE);
-		writer = new BufferedWriter(new OutputStreamWriter(fileSystem.create(
-				enginePath, true)));
+		writer = new BufferedWriter(new OutputStreamWriter(fileSystem.create(enginePath, true)));
 		writer.write(tablespace.getEngine().toString());
 		writer.close();
 	}
@@ -277,7 +276,7 @@ public class TablespaceGenerator implements Serializable {
 			if(min != null) {
 				entry.setMin(min);
 			}
-			int keyIndex = i * offset;
+			int keyIndex = i * offset - 1;
 			if(keyIndex < keys.size()) {
 				entry.setMax(keys.get(keyIndex));
 			}
@@ -480,16 +479,16 @@ public class TablespaceGenerator implements Serializable {
 
 		builder.setJarByClass(callingClass);
 		// Define the output format
-		
+
 		TableSpec[] tbls = tableSpecs.toArray(new TableSpec[0]);
 		OutputFormat outputFormat = null;
-    try {
-	    outputFormat = OutputFormatFactory.getOutputFormat(tablespace, batchSize, tbls);
-    } catch(Exception e) {
-	    System.err.println(e);
-	    throw new RuntimeException(e);
-    }
-		
+		try {
+			outputFormat = OutputFormatFactory.getOutputFormat(tablespace, batchSize, tbls);
+		} catch(Exception e) {
+			System.err.println(e);
+			throw new RuntimeException(e);
+		}
+
 		builder.setOutput(new Path(outputPath, OUT_STORE), outputFormat, ITuple.class, NullWritable.class);
 		// #reducers = #partitions by default
 		builder.getConf().setInt("mapred.reduce.tasks", nPartitions);

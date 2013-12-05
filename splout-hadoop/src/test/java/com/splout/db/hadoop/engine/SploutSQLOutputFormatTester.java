@@ -115,7 +115,7 @@ public class SploutSQLOutputFormatTester implements Serializable {
 		
 		builder.setTupleReducer(new IdentityTupleReducer());
 		builder.setGroupByFields(SploutSQLOutputFormat.PARTITION_TUPLE_FIELD);
-		builder.setOutput(new Path(OUTPUT), outputFormat,
+		builder.setOutput(new Path(OUTPUT), new SploutSQLProxyOutputFormat(outputFormat),
 		    ITuple.class, NullWritable.class);
 
 		Job job = builder.createJob();

@@ -83,9 +83,9 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary implement
 		writer.append(getTuple("id5", "value52"));
 		writer.append(getTuple("id6", "value53"));
 		writer.append(getTuple("id6", "value54"));
+		
 		writer.append(getTuple("id7", "value55"));
 		writer.append(getTuple("id7", "value56"));
-
 		writer.append(getTuple("id8", "value61"));
 		writer.append(getTuple("id8", "value62"));
 		
@@ -103,14 +103,14 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary implement
 		assertEquals(0, (int) partitionMap.get(0).getShard());
 		
 		assertEquals("id1", partitionMap.get(1).getMin());
-		assertEquals("id2", partitionMap.get(1).getMax());
+		assertEquals("id4", partitionMap.get(1).getMax());
 		assertEquals(1, (int) partitionMap.get(1).getShard());
 
-		assertEquals("id2", partitionMap.get(2).getMin());
-		assertEquals("id5", partitionMap.get(2).getMax());
+		assertEquals("id4", partitionMap.get(2).getMin());
+		assertEquals("id6", partitionMap.get(2).getMax());
 		assertEquals(2, (int) partitionMap.get(2).getShard());
 
-		assertEquals("id5", partitionMap.get(3).getMin());
+		assertEquals("id6", partitionMap.get(3).getMin());
 		assertEquals(null, partitionMap.get(3).getMax());
 		assertEquals(3, (int) partitionMap.get(3).getShard());
 

@@ -22,26 +22,20 @@ package com.splout.db.hadoop.engine;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.mapreduce.RecordWriter;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
 
 import com.almworks.sqlite4java.SQLiteConnection;
 import com.almworks.sqlite4java.SQLiteException;
 import com.almworks.sqlite4java.SQLiteStatement;
 import com.datasalt.pangool.io.ITuple;
 import com.datasalt.pangool.io.Schema.Field;
-import com.splout.db.common.HeartBeater;
 import com.splout.db.hadoop.TableSpec;
 
 /**
@@ -55,7 +49,7 @@ import com.splout.db.hadoop.TableSpec;
  * TableSpec doesn't need to contain a "_partition" field or be nullable.
  */
 @SuppressWarnings("serial")
-public class SQLite4JavaOutputFormat extends SploutSQLOutputFormat {
+public class SQLite4JavaOutputFormat extends SploutSQLOutputFormat implements Serializable {
 
 	public static Log LOG = LogFactory.getLog(SQLite4JavaOutputFormat.class);
 
@@ -104,210 +98,153 @@ public class SQLite4JavaOutputFormat extends SploutSQLOutputFormat {
 		return createTable += ");";
 	}
 
-	private static AtomicLong FILE_SEQUENCE = new AtomicLong(0);
+	// Map of prepared statements per Schema and per Partition
+	private Map<Integer, Map<String, SQLiteStatement>> stCache = new HashMap<Integer, Map<String, SQLiteStatement>>();
+	private Map<Integer, SQLiteConnection> connCache = new HashMap<Integer, SQLiteConnection>();
 
-	@Override
-	public RecordWriter<ITuple, NullWritable> getRecordWriter(TaskAttemptContext context)
-	    throws IOException, InterruptedException {
-		return new TupleSQLRecordWriter(context);
+	private long records = 0;
+
+	// This method is called one time per each partition
+	public void initPartition(int partition, Path local) throws IOException, InterruptedException {
+		try {
+			LOG.info("Initializing SQL connection [" + partition + "]");
+			SQLiteConnection conn = new SQLiteConnection(new File(local.toString()));
+			// Change the default temp_store_directory, otherwise we may run out of disk space as it will go to /var/tmp
+			// In EMR the big disks are at /mnt
+			// It suffices to set it to . as it is the tasks' work directory
+			// Warning: this pragma is deprecated and may be removed in further versions, however there is no choice
+			// other than recompiling SQLite or modifying the environment.
+			conn.open(true);
+			conn.exec("PRAGMA temp_store_directory = '" + new File(".").getAbsolutePath() + "'");
+			SQLiteStatement st = conn.prepare("PRAGMA temp_store_directory");
+			st.step();
+			LOG.info("Changed temp_store_directory to: " + st.columnString(0));
+			// journal_mode=OFF speeds up insertions
+			conn.exec("PRAGMA journal_mode=OFF");
+			/*
+			 * page_size is one of of the most important parameters for speed up indexation. SQLite performs a merge sort for
+			 * sorting data before inserting it in an index. The buffer SQLites uses for sorting has a size equals to
+			 * page_size * SQLITE_DEFAULT_TEMP_CACHE_SIZE. Unfortunately, SQLITE_DEFAULT_TEMP_CACHE_SIZE is a compilation
+			 * parameter. That is then fixed to the sqlite4java library used. We have recompiled that library to increase
+			 * SQLITE_DEFAULT_TEMP_CACHE_SIZE (up to 32000 at the point of writing this lines), so, at runtime the unique way
+			 * to change the buffer size used for sorting is change the page_size. page_size must be changed BEFORE CREATE
+			 * STATEMENTS, otherwise it won't have effect. page_size should be a multiple of the sector size (1024 on linux)
+			 * in order to be efficient.
+			 */
+			conn.exec("PRAGMA page_size=8192;");
+			connCache.put(partition, conn);
+			// Init transaction
+			for(String sql : getPreSQL()) {
+				LOG.info("Executing: " + sql);
+				conn.exec(sql);
+			}
+			conn.exec("BEGIN");
+			Map<String, SQLiteStatement> stMap = new HashMap<String, SQLiteStatement>();
+			stCache.put(partition, stMap);
+		} catch(SQLiteException e) {
+			throw new IOException(e);
+		}
 	}
 
-	/**
-	 * A RecordWriter that accepts an Int(Partition), a Tuple and delegates to a {@link SQLRecordWriter} converting the
-	 * Tuple into SQL and assigning the partition that comes in the Key.
-	 */
-	public class TupleSQLRecordWriter extends RecordWriter<ITuple, NullWritable> {
+	@Override
+	public void write(ITuple tuple) throws IOException, InterruptedException {
+		int partition = (Integer) tuple.get(PARTITION_TUPLE_FIELD);
 
-		// Temporary and permanent Paths for properly writing Hadoop output files
-		private Map<Integer, Path> permPool = new HashMap<Integer, Path>();
-		private Map<Integer, Path> tempPool = new HashMap<Integer, Path>();
+		try {
+			/*
+			 * Key performance trick: Cache PreparedStatements when possible. We will have one PreparedStatement per each
+			 * different Tuple Schema (table).
+			 */
+			Map<String, SQLiteStatement> stMap = stCache.get(partition);
 
-		private HeartBeater heartBeater;
-
-		// Map of prepared statements per Schema and per Partition
-		Map<Integer, Map<String, SQLiteStatement>> stCache = new HashMap<Integer, Map<String, SQLiteStatement>>();
-		Map<Integer, SQLiteConnection> connCache = new HashMap<Integer, SQLiteConnection>();
-
-		long records = 0;
-		private FileSystem fs;
-		private Configuration conf;
-		private TaskAttemptContext context;
-
-		public TupleSQLRecordWriter(TaskAttemptContext context) {
-			this.context = context;
-			long waitTimeHeartBeater = context.getConfiguration().getLong(HeartBeater.WAIT_TIME_CONF, 5000);
-			heartBeater = new HeartBeater(context, waitTimeHeartBeater);
-			heartBeater.needHeartBeat();
-			conf = context.getConfiguration();
-		}
-
-		// This method is called one time per each partition
-		private void initSql(int partition) throws IOException {
-
-			// HDFS final location of the generated partition file. It will be
-			// loaded to the temporary folder in the HDFS than finally will be
-			// committed by the OutputCommitter to the proper location.
-			FileOutputCommitter committer = (FileOutputCommitter) getOutputCommitter(context);
-			Path perm = new Path(committer.getWorkPath(), partition + ".db");
-			fs = perm.getFileSystem(context.getConfiguration());
-
-			// Make a task unique name that contains the actual index output name to
-			// make debugging simpler
-			// Note: if using JVM reuse, the sequence number will not be reset for a
-			// new task using the jvm
-			Path temp = conf.getLocalPath("mapred.local.dir", "splout_task_" + context.getTaskAttemptID()
-			    + '.' + FILE_SEQUENCE.incrementAndGet());
-
-			Path local = fs.startLocalOutput(perm, temp);
-			//
-			try {
-				permPool.put(partition, perm);
-				tempPool.put(partition, temp);
-				LOG.info("Initializing SQL connection [" + partition + "]");
-				SQLiteConnection conn = new SQLiteConnection(new File(local.toString()));
-				// Change the default temp_store_directory, otherwise we may run out of disk space as it will go to /var/tmp
-				// In EMR the big disks are at /mnt
-				// It suffices to set it to . as it is the tasks' work directory
-				// Warning: this pragma is deprecated and may be removed in further versions, however there is no choice
-				// other than recompiling SQLite or modifying the environment.
-				conn.open(true);
-				conn.exec("PRAGMA temp_store_directory = '" + new File(".").getAbsolutePath() + "'");
-				SQLiteStatement st = conn.prepare("PRAGMA temp_store_directory");
-				st.step();
-				LOG.info("Changed temp_store_directory to: " + st.columnString(0));
-				// journal_mode=OFF speeds up insertions
-				conn.exec("PRAGMA journal_mode=OFF");
-				/*
-				 * page_size is one of of the most important parameters for speed up indexation. SQLite performs a merge sort
-				 * for sorting data before inserting it in an index. The buffer SQLites uses for sorting has a size equals to
-				 * page_size * SQLITE_DEFAULT_TEMP_CACHE_SIZE. Unfortunately, SQLITE_DEFAULT_TEMP_CACHE_SIZE is a compilation
-				 * parameter. That is then fixed to the sqlite4java library used. We have recompiled that library to increase
-				 * SQLITE_DEFAULT_TEMP_CACHE_SIZE (up to 32000 at the point of writing this lines), so, at runtime the unique
-				 * way to change the buffer size used for sorting is change the page_size. page_size must be changed BEFORE
-				 * CREATE STATEMENTS, otherwise it won't have effect. page_size should be a multiple of the sector size (1024 on
-				 * linux) in order to be efficient.
-				 */
-				conn.exec("PRAGMA page_size=8192;");
-				connCache.put(partition, conn);
-				// Init transaction
-				for(String sql : getPreSQL()) {
-					LOG.info("Executing: " + sql);
-					conn.exec(sql);
+			SQLiteStatement pS = stMap.get(tuple.getSchema().getName());
+			if(pS == null) {
+				SQLiteConnection conn = connCache.get(partition);
+				// Create a PreparedStatement according to the received Tuple
+				String preparedStatement = "INSERT INTO " + tuple.getSchema().getName() + " VALUES (";
+				// NOTE: tuple.getSchema().getFields().size() - 1 : quick way of skipping "_partition" fields here
+				for(int i = 0; i < tuple.getSchema().getFields().size() - 1; i++) {
+					preparedStatement += "?, ";
 				}
-				conn.exec("BEGIN");
-				Map<String, SQLiteStatement> stMap = new HashMap<String, SQLiteStatement>();
-				stCache.put(partition, stMap);
-			} catch(SQLiteException e) {
-				throw new IOException(e);
+				preparedStatement = preparedStatement.substring(0, preparedStatement.length() - 2) + ");";
+				pS = conn.prepare(preparedStatement);
+				stMap.put(tuple.getSchema().getName(), pS);
 			}
-		}
 
-		@Override
-		public void write(ITuple tuple, NullWritable ignore) throws IOException, InterruptedException {
-			int partition = (Integer) tuple.get(PARTITION_TUPLE_FIELD);
-
-			try {
-				/*
-				 * Key performance trick: Cache PreparedStatements when possible. We will have one PreparedStatement per each
-				 * different Tuple Schema (table).
-				 */
-				Map<String, SQLiteStatement> stMap = stCache.get(partition);
-				if(stMap == null) {
-					initSql(partition);
-					stMap = stCache.get(partition);
-				}
-
-				SQLiteStatement pS = stMap.get(tuple.getSchema().getName());
-				if(pS == null) {
-					SQLiteConnection conn = connCache.get(partition);
-					// Create a PreparedStatement according to the received Tuple
-					String preparedStatement = "INSERT INTO " + tuple.getSchema().getName() + " VALUES (";
-					// NOTE: tuple.getSchema().getFields().size() - 1 : quick way of skipping "_partition" fields here
-					for(int i = 0; i < tuple.getSchema().getFields().size() - 1; i++) {
-						preparedStatement += "?, ";
-					}
-					preparedStatement = preparedStatement.substring(0, preparedStatement.length() - 2) + ");";
-					pS = conn.prepare(preparedStatement);
-					stMap.put(tuple.getSchema().getName(), pS);
-				}
-
-				int count = 1, tupleCount = 0;
-				for(Field field : tuple.getSchema().getFields()) {
-					if(field.getName().equals(PARTITION_TUPLE_FIELD)) {
-						tupleCount++;
-						continue;
-					}
-
-					if(tuple.get(tupleCount) == null) {
-						pS.bindNull(count);
-					} else {
-						switch(field.getType()) {
-
-						case INT:
-							pS.bind(count, (Integer) tuple.get(tupleCount));
-							break;
-						case LONG:
-							pS.bind(count, (Long) tuple.get(tupleCount));
-							break;
-						case DOUBLE:
-							pS.bind(count, (Double) tuple.get(tupleCount));
-							break;
-						case FLOAT:
-							pS.bind(count, (Float) tuple.get(tupleCount));
-							break;
-						case STRING:
-							pS.bind(count, tuple.get(tupleCount).toString());
-							break;
-						case BOOLEAN: // Remember: In SQLite there are no booleans
-							pS.bind(count, ((Boolean) tuple.get(tupleCount)) == true ? 1 : 0);
-						default:
-							break;
-						}
-					}
-					count++;
+			int count = 1, tupleCount = 0;
+			for(Field field : tuple.getSchema().getFields()) {
+				if(field.getName().equals(PARTITION_TUPLE_FIELD)) {
 					tupleCount++;
+					continue;
 				}
-				pS.step();
-				pS.reset();
 
-				records++;
-				if(records == getBatchSize()) {
-					SQLiteConnection conn = connCache.get(partition);
-					conn.exec("COMMIT");
-					conn.exec("BEGIN");
-					records = 0;
-				}
-			} catch(SQLiteException e) {
-				throw new IOException(e);
-			}
-		}
+				if(tuple.get(tupleCount) == null) {
+					pS.bindNull(count);
+				} else {
+					switch(field.getType()) {
 
-		@Override
-		public void close(TaskAttemptContext ctx) throws IOException, InterruptedException {
-			try {
-				if(ctx != null) {
-					heartBeater.setProgress(ctx);
-				}
-				for(Map.Entry<Integer, SQLiteConnection> entry : connCache.entrySet()) {
-					LOG.info("Closing SQL connection [" + entry.getKey() + "]");
-					//
-					entry.getValue().exec("COMMIT");
-					if(getPostSQL() != null) {
-						LOG.info("Executing end SQL statements.");
-						for(String sql : getPostSQL()) {
-							LOG.info("Executing: " + sql);
-							entry.getValue().exec(sql);
-						}
+					case INT:
+						pS.bind(count, (Integer) tuple.get(tupleCount));
+						break;
+					case LONG:
+						pS.bind(count, (Long) tuple.get(tupleCount));
+						break;
+					case DOUBLE:
+						pS.bind(count, (Double) tuple.get(tupleCount));
+						break;
+					case FLOAT:
+						pS.bind(count, (Float) tuple.get(tupleCount));
+						break;
+					case STRING:
+						pS.bind(count, tuple.get(tupleCount).toString());
+						break;
+					case BOOLEAN: // Remember: In SQLite there are no booleans
+						pS.bind(count, ((Boolean) tuple.get(tupleCount)) == true ? 1 : 0);
+					default:
+						break;
 					}
-					entry.getValue().dispose();
-					// Hadoop - completeLocalOutput()
-					fs.completeLocalOutput(permPool.get(entry.getKey()), tempPool.get(entry.getKey()));
 				}
-			} catch(SQLiteException e) {
-				throw new IOException(e);
-			} finally { // in any case, destroy the HeartBeater
-				heartBeater.cancelHeartBeat();
+				count++;
+				tupleCount++;
 			}
+			pS.step();
+			pS.reset();
+
+			records++;
+			if(records == getBatchSize()) {
+				SQLiteConnection conn = connCache.get(partition);
+				conn.exec("COMMIT");
+				conn.exec("BEGIN");
+				records = 0;
+			}
+		} catch(SQLiteException e) {
+			throw new IOException(e);
 		}
+	}
+
+	@Override
+	public void close() throws IOException, InterruptedException {
+		try {
+			for(Map.Entry<Integer, SQLiteConnection> entry : connCache.entrySet()) {
+				LOG.info("Closing SQL connection [" + entry.getKey() + "]");
+				//
+				entry.getValue().exec("COMMIT");
+				if(getPostSQL() != null) {
+					LOG.info("Executing end SQL statements.");
+					for(String sql : getPostSQL()) {
+						LOG.info("Executing: " + sql);
+						entry.getValue().exec(sql);
+					}
+				}
+				entry.getValue().dispose();
+			}
+		} catch(SQLiteException e) {
+			throw new IOException(e);
+		}
+	}
+
+	@Override
+	public void init(Configuration conf) throws IOException, InterruptedException {
+
 	}
 }

@@ -112,6 +112,7 @@ public class TestTablespaceGeneratorMultiTable {
 			List list;
 			list = JSONSerDe.deSer(manager.query("SELECT * FROM payments;", 100), ArrayList.class);
 			totalPayments.addAll(list);
+			System.out.println(list);
 			assertEquals(1, list.size()); // There is one payment per each person
 			list = JSONSerDe.deSer(manager.query("SELECT * FROM logs;", 100), ArrayList.class);
 			totalLogs.addAll(list);

@@ -5,10 +5,13 @@ import org.apache.hadoop.mapreduce.OutputFormat;
 
 import com.datasalt.pangool.io.ITuple;
 import com.splout.db.hadoop.TableSpec;
+import com.splout.db.hadoop.TablespaceGenerator;
 import com.splout.db.hadoop.TablespaceSpec;
 import com.splout.db.hadoop.engine.MySQLOutputFormat;
 import com.splout.db.hadoop.engine.RedisOutputFormat;
 import com.splout.db.hadoop.engine.SQLite4JavaOutputFormat;
+import com.splout.db.hadoop.engine.SploutSQLOutputFormat;
+import com.splout.db.hadoop.engine.SploutSQLProxyOutputFormat;
 
 /**
  * Stateless factory that should be used to provide an appropriate OutputFormat for generating a Tablespace with a certain
@@ -21,7 +24,7 @@ import com.splout.db.hadoop.engine.SQLite4JavaOutputFormat;
 public class OutputFormatFactory {
 
 	public static OutputFormat<ITuple, NullWritable> getOutputFormat(TablespaceSpec tablespace, int batchSize, TableSpec[] tbls) throws Exception {
-		OutputFormat<ITuple, NullWritable> oF = null;
+		SploutSQLOutputFormat oF = null;
 		
 		if(tablespace.getEngine().equals(Engine.SQLITE)) {
 			oF = new SQLite4JavaOutputFormat(batchSize,	tbls);
@@ -39,6 +42,6 @@ public class OutputFormatFactory {
 			throw new IllegalArgumentException("Engine not supported: " + tablespace.getEngine());
 		}
 		
-		return oF;
+		return new SploutSQLProxyOutputFormat(oF);
 	}
 }

@@ -26,10 +26,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.mapreduce.RecordWriter;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 
 import com.datasalt.pangool.io.ITuple;
 import com.datasalt.pangool.io.Schema.Field;
@@ -38,8 +36,7 @@ import com.splout.db.hadoop.TableSpec;
 import com.splout.db.hadoop.TableSpec.FieldIndex;
 
 @SuppressWarnings("serial")
-public abstract class SploutSQLOutputFormat extends FileOutputFormat<ITuple, NullWritable> implements
-    Serializable {
+public abstract class SploutSQLOutputFormat implements Serializable {
 
 	public final static String PARTITION_TUPLE_FIELD = "_partition";
 
@@ -55,10 +52,12 @@ public abstract class SploutSQLOutputFormat extends FileOutputFormat<ITuple, Nul
 	}
 
 	public abstract String getCreateTable(TableSpec tableSpec) throws SploutSQLOutputFormatException;
-
-	public abstract RecordWriter<ITuple, NullWritable> getRecordWriter(TaskAttemptContext context)
-	    throws IOException, InterruptedException;
-
+		
+	public abstract void init(Configuration conf) throws IOException, InterruptedException;
+	public abstract void initPartition(int partition, Path localDbFile) throws IOException, InterruptedException;
+	public abstract void write(ITuple tuple) throws IOException, InterruptedException;
+	public abstract void close() throws IOException, InterruptedException;
+	
 	private String[] preSQL, postSQL;
 	private int batchSize;
 	private transient TableSpec[] dbSpec;
