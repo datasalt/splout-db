@@ -21,11 +21,21 @@ import com.splout.db.hadoop.TableSpec;
 @SuppressWarnings("serial")
 public class RedisOutputFormat extends SploutSQLOutputFormat implements Serializable {
 
-	String keyField;
+	String keyField = null;
 
-	public RedisOutputFormat(Field keyField) throws SploutSQLOutputFormatException {
-		super(1, (TableSpec)null);
-		this.keyField = keyField.getName();
+	public RedisOutputFormat(int batchSize, TableSpec... dbSpec) throws SploutSQLOutputFormatException {
+		super(batchSize, dbSpec);
+		for(TableSpec spec: dbSpec) {
+			if(spec.getPartitionFields() != null) {
+				if(keyField != null) {
+					throw new SploutSQLOutputFormatException("Redis output format only works with one partitioned table.");					
+				}
+				this.keyField = spec.getPartitionFields()[0].getName();
+				if(spec.getPartitionFields().length > 1) {
+					throw new SploutSQLOutputFormatException("Redis output format only works with one partitioning field.");										
+				}
+			}
+		}
 	}
 
 	private Map<Integer, RDBOutputStream> redisFiles = new HashMap<Integer, RDBOutputStream>();

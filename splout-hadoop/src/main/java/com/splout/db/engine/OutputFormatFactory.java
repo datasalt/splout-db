@@ -6,7 +6,6 @@ import org.apache.hadoop.mapreduce.OutputFormat;
 import com.datasalt.pangool.io.ITuple;
 import com.splout.db.hadoop.TableSpec;
 import com.splout.db.hadoop.TablespaceGenerator;
-import com.splout.db.hadoop.TablespaceSpec;
 import com.splout.db.hadoop.engine.MySQLOutputFormat;
 import com.splout.db.hadoop.engine.RedisOutputFormat;
 import com.splout.db.hadoop.engine.SQLite4JavaOutputFormat;
@@ -23,23 +22,17 @@ import com.splout.db.hadoop.engine.SploutSQLProxyOutputFormat;
  */
 public class OutputFormatFactory {
 
-	public static OutputFormat<ITuple, NullWritable> getOutputFormat(TablespaceSpec tablespace, int batchSize, TableSpec[] tbls) throws Exception {
+	public static OutputFormat<ITuple, NullWritable> getOutputFormat(Engine engine, int batchSize, TableSpec[] tbls) throws Exception {
 		SploutSQLOutputFormat oF = null;
 		
-		if(tablespace.getEngine().equals(Engine.SQLITE)) {
+		if(engine.equals(Engine.SQLITE)) {
 			oF = new SQLite4JavaOutputFormat(batchSize,	tbls);
-		} else if(tablespace.getEngine().equals(Engine.MYSQL)) {
+		} else if(engine.equals(Engine.MYSQL)) {
 			oF = new MySQLOutputFormat(batchSize, tbls);
-		} else if(tablespace.getEngine().equals(Engine.REDIS)) {
-			if(tablespace.getPartitionedTables().size() != 1) {
-				throw new IllegalArgumentException("Redis output format only works with one partitioned table.");
-			}
-			if(tablespace.getPartitionedTables().get(0).getTableSpec().getPartitionFields().length != 1) {
-				throw new IllegalArgumentException("Redis output format only works with one partitioning field.");
-			}
-			oF = new RedisOutputFormat(tablespace.getPartitionedTables().get(0).getTableSpec().getPartitionFields()[0]);
+		} else if(engine.equals(Engine.REDIS)) {
+			oF = new RedisOutputFormat(batchSize, tbls);
 		} else {
-			throw new IllegalArgumentException("Engine not supported: " + tablespace.getEngine());
+			throw new IllegalArgumentException("Engine not supported: " + engine);
 		}
 		
 		return new SploutSQLProxyOutputFormat(oF);

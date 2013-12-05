@@ -483,7 +483,7 @@ public class TablespaceGenerator implements Serializable {
 		TableSpec[] tbls = tableSpecs.toArray(new TableSpec[0]);
 		OutputFormat outputFormat = null;
 		try {
-			outputFormat = OutputFormatFactory.getOutputFormat(tablespace, batchSize, tbls);
+			outputFormat = OutputFormatFactory.getOutputFormat(tablespace.getEngine(), batchSize, tbls);
 		} catch(Exception e) {
 			System.err.println(e);
 			throw new RuntimeException(e);
