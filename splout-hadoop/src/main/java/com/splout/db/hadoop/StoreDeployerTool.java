@@ -37,7 +37,7 @@ import com.splout.db.common.JSONSerDe.JSONSerDeException;
 import com.splout.db.common.PartitionMap;
 import com.splout.db.common.ReplicationMap;
 import com.splout.db.common.SploutClient;
-import com.splout.db.engine.Engine;
+import com.splout.db.engine.DefaultEngine;
 import com.splout.db.qnode.beans.DeployInfo;
 import com.splout.db.qnode.beans.DeployRequest;
 
@@ -106,7 +106,7 @@ public class StoreDeployerTool {
         initStatements.addAll(tablespace.getInitStatements());
       }
       
-      String engine = Engine.getDefault().toString();
+      String engine = DefaultEngine.class.getName();
       // New : load the engine id used in the generation tool, if exists ( to maintain backwards compatibility )
       Path engineId = new Path(tablespaceOut, TablespaceGenerator.OUT_ENGINE);
       if(sourceFs.exists(engineId)) {

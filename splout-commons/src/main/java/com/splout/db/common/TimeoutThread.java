@@ -29,10 +29,10 @@ import org.apache.commons.logging.LogFactory;
 
 import com.almworks.sqlite4java.SQLiteConnection;
 import com.almworks.sqlite4java.SQLiteException;
-import com.splout.db.engine.SQLite4JavaManager;
 
 /**
  * A Thread that is in charge of killing long-running queries.
+ * TODO Generalize to other than sqlite 
  */
 public class TimeoutThread extends Thread {
 

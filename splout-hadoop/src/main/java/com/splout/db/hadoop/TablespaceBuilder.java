@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.datasalt.pangool.io.Schema.Field;
-import com.splout.db.engine.Engine;
+import com.splout.db.engine.SploutEngine;
 
 /**
  * This class is the main entry point for generating Splout views. Here we will use a Builder for adding the mapping
@@ -46,14 +46,14 @@ public class TablespaceBuilder {
 	// In-memory incremental builder state
 	private List<Table> partitionedTables = new ArrayList<Table>();
 	private List<Table> replicatedTables = new ArrayList<Table>();
-	
+
 	// Init statements that will be executed when opening the database
 	private String[] initStatements = null;
-	
+
 	// How to partition the Tablespace
 	private int nPartitions = -1;
-	
-	private Engine engine = Engine.getDefault();
+
+	private SploutEngine engine = SploutEngine.getDefault();
 
 	/**
 	 * Add a new table to the builder - use a string table identifier for this. The method will return a bean that we can
@@ -74,15 +74,23 @@ public class TablespaceBuilder {
 	public void initStatements(String... initStatements) {
 		this.initStatements = initStatements;
 	}
-	
+
 	public void setNPartitions(int nPartitions) {
 		this.nPartitions = nPartitions;
 	}
 
-	public void setEngine(Engine engine) {
-		this.engine = engine;
+	public void setEngine(String engineClass) throws TablespaceBuilderException {
+		try {
+			this.engine = Class.forName(engineClass).asSubclass(SploutEngine.class).newInstance();
+		} catch(InstantiationException e) {
+			throw new TablespaceBuilderException("Engine class '" + engineClass + "' not instantiable.");
+		} catch(IllegalAccessException e) {
+			throw new TablespaceBuilderException("Engine class '" + engineClass + "' not instantiable.");
+		} catch(ClassNotFoundException e) {
+			throw new TablespaceBuilderException("Engine class '" + engineClass + "' not in classpath.");
+		}
 	}
-	
+
 	/**
 	 * Exception that is thrown if a Tablespace cannot be built because there is missing data or inconsistent data has
 	 * been specified. The reason is specified as the message of the Exception.
@@ -157,7 +165,8 @@ public class TablespaceBuilder {
 		if(initStatements == null) {
 			return new TablespaceSpec(partitionedTables, replicatedTables, nPartitions, null, engine);
 		} else {
-			return new TablespaceSpec(partitionedTables, replicatedTables, nPartitions, Arrays.asList(initStatements), engine);			
+			return new TablespaceSpec(partitionedTables, replicatedTables, nPartitions,
+			    Arrays.asList(initStatements), engine);
 		}
 	}
 }

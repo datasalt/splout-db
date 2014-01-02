@@ -58,7 +58,8 @@ public class TestUtils {
 	    ClassNotFoundException, EngineException {
 		File dbFolder = new File(where);
 		dbFolder.mkdir();
-		final SQLite4JavaManager manager = new SQLite4JavaManager(where + "/" + "foo.db", null);
+		final SQLite4JavaManager manager = new SQLite4JavaManager();
+		manager.init(new File(where + "/" + "foo.db"), null, null);
 		manager.query("DROP TABLE IF EXISTS t;", 100);
 		manager.query("CREATE TABLE t (a INT, b TEXT);", 100);
 		manager.query("INSERT INTO t (a, b) VALUES (" + a + ", \"" + b + "\")", 100);

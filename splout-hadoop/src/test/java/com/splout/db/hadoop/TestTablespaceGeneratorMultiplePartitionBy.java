@@ -43,7 +43,7 @@ import com.datasalt.pangool.io.Fields;
 import com.datasalt.pangool.io.Schema;
 import com.google.common.io.Files;
 import com.splout.db.common.JSONSerDe;
-import com.splout.db.engine.SQLite4JavaManager;
+import com.splout.db.engine.SQLite4JavaClient;
 import com.splout.db.hadoop.TupleSampler.SamplingType;
 
 public class TestTablespaceGeneratorMultiplePartitionBy {
@@ -107,7 +107,7 @@ public class TestTablespaceGeneratorMultiplePartitionBy {
 		List distinctKeys = new ArrayList();
 		
 		for(int i = 0; i < 3; i++) {
-			SQLite4JavaManager manager = new SQLite4JavaManager(TEST_OUTPUT + "/store/" + i + ".db", null);
+			SQLite4JavaClient manager = new SQLite4JavaClient(TEST_OUTPUT + "/store/" + i + ".db", null);
 			List list;
 			list = JSONSerDe.deSer(manager.query("SELECT * FROM payments;", 100), ArrayList.class);
 			totalPayments.addAll(list);

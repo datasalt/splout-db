@@ -33,7 +33,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.splout.db.common.SploutClient;
 import com.splout.db.common.SploutHadoopConfiguration;
-import com.splout.db.engine.Engine;
+import com.splout.db.engine.DefaultEngine;
 import com.splout.db.hadoop.DeployerCMD;
 import com.splout.db.hadoop.SimpleGeneratorCMD;
 import com.splout.db.qnode.beans.QNodeStatus;
@@ -47,7 +47,7 @@ import com.splout.db.qnode.beans.QueryStatus;
 public class HadoopIntegrationTest implements Tool, Configurable {
 
 	@Parameter(names = { "-e", "--engine" }, description = "Optionally, use a specific engine for integration-testing it (otherwise default is used).")
-	private String engine = null;
+	private String engine = DefaultEngine.class.getName();
 
 	@Parameter(names = { "-q", "--qnode" }, description = "The QNode address.")
 	private String qnode = "http://localhost:4412";
@@ -87,8 +87,6 @@ public class HadoopIntegrationTest implements Tool, Configurable {
 		FileUtil.copy(FileSystem.getLocal(getConf()), pageCounts, fS, new Path(tmpHdfsPath, "input"), false,
 		    getConf());
 		
-		engine = engine == null ? Engine.getDefault().toString() : engine;
-
 		SimpleGeneratorCMD generator = new SimpleGeneratorCMD();
 		generator.setConf(getConf());
 		if(generator.run(new String[] { "-tb", "pagecountsintegration", "-t", "pagecounts", "-i",

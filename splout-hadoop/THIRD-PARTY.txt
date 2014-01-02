@@ -1,5 +1,5 @@
 
-Lists of 99 third-party dependencies.
+Lists of 96 third-party dependencies.
      (BSD License) AntLR Parser Generator (antlr:antlr:2.7.7 - http://www.antlr.org/)
      (Unknown license) ASM Core (asm:asm:3.1 - http://asm.objectweb.org/asm/)
      (The Apache Software License, Version 2.0) cascading-core (cascading:cascading-core:2.2.0-wip-15 - http://cascading.org/)
@@ -38,9 +38,6 @@ Lists of 99 third-party dependencies.
      (BSD) JLine (jline:jline:0.9.94 - http://jline.sourceforge.net)
      (Apache 2) Joda time (joda-time:joda-time:2.1 - http://joda-time.sourceforge.net)
      (The Apache Software License, Version 2.0) Apache Log4j (log4j:log4j:1.2.15 - http://logging.apache.org:80/log4j/1.2/)
-     (The GNU General Public License, Version 2) MySQL java connector (mysql:mysql-connector-java:5.1.17 - http://dev.mysql.com/usingmysql/java/)
-     (GNU GENERAL PUBLIC LICENSE) MySQL Connector/MXJ (mysql:mysql-connector-mxj:5.0.12 - http://dev.mysql.com/doc/refman/5.1/en/connector-mxj.html)
-     (GNU GENERAL PUBLIC LICENSE) MySQL Connector/MXJ (mysql:mysql-connector-mxj-db-files:5.0.12 - http://dev.mysql.com/doc/refman/5.1/en/connector-mxj.html)
      (Apache License, Version 2.0) An open source Java toolkit for Amazon S3 (net.java.dev.jets3t:jets3t:0.7.1 - http://jets3t.s3.amazonaws.com/index.html)
      (Apache 2) opencsv (net.sf.opencsv:opencsv:2.3 - http://opencsv.sf.net)
      (BSD licence) AntLR Parser Generator (org.antlr:antlr:3.0.1 - http://antlr.org/)

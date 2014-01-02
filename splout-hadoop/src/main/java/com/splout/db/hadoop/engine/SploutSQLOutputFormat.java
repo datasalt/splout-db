@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 
@@ -35,8 +36,11 @@ import com.datasalt.pangool.io.Schema.Field.Type;
 import com.splout.db.hadoop.TableSpec;
 import com.splout.db.hadoop.TableSpec.FieldIndex;
 
+/**
+ * Abstract class that can be extended for generating arbitrary outputformats in Splout.
+ */
 @SuppressWarnings("serial")
-public abstract class SploutSQLOutputFormat implements Serializable {
+public abstract class SploutSQLOutputFormat implements Serializable, Configurable {
 
 	public final static String PARTITION_TUPLE_FIELD = "_partition";
 
@@ -53,44 +57,33 @@ public abstract class SploutSQLOutputFormat implements Serializable {
 
 	public abstract String getCreateTable(TableSpec tableSpec) throws SploutSQLOutputFormatException;
 		
-	public abstract void init(Configuration conf) throws IOException, InterruptedException;
 	public abstract void initPartition(int partition, Path localDbFile) throws IOException, InterruptedException;
 	public abstract void write(ITuple tuple) throws IOException, InterruptedException;
 	public abstract void close() throws IOException, InterruptedException;
 	
-	private String[] preSQL, postSQL;
 	private int batchSize;
-	private transient TableSpec[] dbSpec;
-
+	private TableSpec[] dbSpec;
+	private transient Configuration conf;
+	
 	/**
 	 * This OutputFormat receives a list of {@link TableSpec}. These are the different tables that will be created. They
 	 * will be identified by Pangool Tuples. The batch size is the number of SQL statements to execute before a COMMIT.
 	 */
-	public SploutSQLOutputFormat(int batchSize, TableSpec... dbSpec) throws SploutSQLOutputFormatException {
+	public SploutSQLOutputFormat(Integer batchSize, TableSpec... dbSpec) throws SploutSQLOutputFormatException {
 		this.batchSize = batchSize;
 		this.dbSpec = dbSpec;
-	}
-
-	/**
-	 * To be called by the implementation after initializing state. Not called in this constructor as it might depend on
-	 * state that needs to be initialized.
-	 */
-	public void createPrePostSQL() throws SploutSQLOutputFormatException {
-		// Generate create tables and create index statements
-		this.preSQL = getCreateTables(dbSpec);
-		this.postSQL = getCreateIndexes(dbSpec);
 	}
 
 	public int getBatchSize() {
 		return batchSize;
 	}
 
-	public String[] getPostSQL() {
-		return postSQL;
+	public String[] getPostSQL() throws SploutSQLOutputFormatException {
+		return getCreateIndexes(dbSpec);
 	}
 
-	public String[] getPreSQL() {
-		return preSQL;
+	public String[] getPreSQL() throws SploutSQLOutputFormatException {
+		return getCreateTables(dbSpec);
 	}
 
 	public static Field getPartitionField() {
@@ -157,5 +150,15 @@ public abstract class SploutSQLOutputFormat implements Serializable {
 			}
 		}
 		return createIndexes.toArray(new String[0]);
+	}
+	
+	@Override
+	public void setConf(Configuration conf) {
+		this.conf = conf;
+	}
+	
+	@Override
+	public Configuration getConf() {
+	  return conf;
 	}
 }

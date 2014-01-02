@@ -40,7 +40,7 @@ import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleTextInputFormat;
 import com.datasalt.pangool.utils.HadoopUtils;
 import com.splout.db.common.SploutHadoopConfiguration;
-import com.splout.db.engine.Engine;
+import com.splout.db.engine.DefaultEngine;
 import com.splout.db.hadoop.TupleSampler.SamplingType;
 
 /**
@@ -112,7 +112,7 @@ public class SimpleGeneratorCMD implements Tool {
 	private SamplingType samplingType = SamplingType.DEFAULT;
 
 	@Parameter(names = { "-e", "--engine" }, description = "Specify the engine to be used for generating the tablespace.")
-	private String engine = null;
+	private String engine = DefaultEngine.class.getName();
 
 	public static class CharConverter implements IStringConverter<Character> {
 
@@ -179,17 +179,6 @@ public class SimpleGeneratorCMD implements Tool {
 			jComm.usage();
 			return -1;
 		}
-
-		Engine eng = Engine.getDefault();
-		if(engine != null) {
-			try {
-				eng = Engine.valueOf(engine);
-			} catch(Exception e) {
-				System.err
-		    	.println("Unrecognized / unsupported engine, please use one of: " + Engine.supportedEngines());
-				return -1;
-			}
-		}
 		
 		TableBuilder tableBuilder;
 
@@ -229,8 +218,8 @@ public class SimpleGeneratorCMD implements Tool {
 		}
 
 		TablespaceBuilder builder = new TablespaceBuilder();
-		builder.setEngine(eng);
-		log.info("Using engine: " + eng);
+		builder.setEngine(engine);
+		log.info("Using engine: " + engine);
 
 		if(inputType.equals(InputType.TEXT)) {
 			Path inputPath = new Path(input);

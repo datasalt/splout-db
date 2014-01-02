@@ -53,10 +53,9 @@ public class SQLite4JavaOutputFormat extends SploutSQLOutputFormat implements Se
 
 	public static Log LOG = LogFactory.getLog(SQLite4JavaOutputFormat.class);
 
-	public SQLite4JavaOutputFormat(int batchSize, TableSpec... dbSpecs)
+	public SQLite4JavaOutputFormat(Integer batchSize, Configuration conf, TableSpec... dbSpecs)
 	    throws SploutSQLOutputFormatException {
 		super(batchSize, dbSpecs);
-		createPrePostSQL();
 	}
 
 	// Given a {@link TableSpec}, returns the appropriated SQL CREATE TABLE...
@@ -143,7 +142,9 @@ public class SQLite4JavaOutputFormat extends SploutSQLOutputFormat implements Se
 			stCache.put(partition, stMap);
 		} catch(SQLiteException e) {
 			throw new IOException(e);
-		}
+		} catch(SploutSQLOutputFormatException e) {
+	    throw new IOException(e);
+    }
 	}
 
 	@Override
@@ -240,11 +241,8 @@ public class SQLite4JavaOutputFormat extends SploutSQLOutputFormat implements Se
 			}
 		} catch(SQLiteException e) {
 			throw new IOException(e);
-		}
-	}
-
-	@Override
-	public void init(Configuration conf) throws IOException, InterruptedException {
-
+		} catch(SploutSQLOutputFormatException e) {
+			throw new IOException(e);
+    }
 	}
 }

@@ -25,13 +25,14 @@ import java.util.List;
 import com.splout.db.common.BaseBean;
 import com.splout.db.common.PartitionEntry;
 import com.splout.db.common.ReplicationEntry;
+import com.splout.db.engine.DefaultEngine;
 
 /**
  * Bean that is serialized as JSON and sent to the QNodes for requesting a deploy. The deploy method accepts a list of such beans. Each bean refers to the deplooyment of one tablespace.
  */
 public class DeployRequest extends BaseBean {
 
-	String engine;
+	String engine = DefaultEngine.class.getName();
 	String tablespace;
 	String data_uri;
 	List<String> initStatements;

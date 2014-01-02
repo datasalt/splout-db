@@ -30,7 +30,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.splout.db.engine.EngineManager;
-import com.splout.db.engine.EngineManager.EngineException;
 
 /**
  * An EHCache event listener that calls a finalization method in the value of the Cache which is a {@link EngineManager}
@@ -47,12 +46,7 @@ public class CacheListener implements CacheEventListener, Cloneable {
 	protected void closeManager(Element paramElement) {
 		log.info("Close manager: " + paramElement);
 		EngineManager manager = (EngineManager) paramElement.getObjectValue();
-		try {
-	    manager.close();
-    } catch(EngineException e) {
-    	// usually closing is a silent action, but at least we need to log something strange
-	    log.warn("Excetion on close", e);
-    }
+    manager.close();
 	}
 
 	@Override

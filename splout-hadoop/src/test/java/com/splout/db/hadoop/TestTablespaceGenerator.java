@@ -49,8 +49,8 @@ import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat;
 import com.datasalt.pangool.utils.test.AbstractHadoopTestLibrary;
 import com.google.common.io.Files;
 import com.splout.db.common.PartitionEntry;
-import com.splout.db.engine.Engine;
-import com.splout.db.engine.SQLite4JavaManager;
+import com.splout.db.engine.DefaultEngine;
+import com.splout.db.engine.SQLite4JavaClient;
 import com.splout.db.hadoop.TupleSampler.SamplingType;
 
 @SuppressWarnings({ "rawtypes", "serial" })
@@ -117,7 +117,7 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary implement
 		// assert the engine id has been written too
 		File engineIdFile = new File(OUTPUT + "/" + TablespaceGenerator.OUT_ENGINE);
 		assertTrue(engineIdFile.exists());
-		assertEquals(Engine.getDefault().toString(), Files.toString(engineIdFile, Charset.defaultCharset()));
+		assertEquals(DefaultEngine.class.getName(), Files.toString(engineIdFile, Charset.defaultCharset()));
 		
     trash(INPUT, OUTPUT);
 	}
@@ -141,7 +141,7 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary implement
 		TablespaceGenerator viewGenerator = new TablespaceGenerator(tablespace, new Path(OUTPUT), this.getClass());
 		viewGenerator.generateView(conf, SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions());
 		
-		SQLite4JavaManager manager = new SQLite4JavaManager(OUTPUT + "/store/0.db", null);
+		SQLite4JavaClient manager = new SQLite4JavaClient(OUTPUT + "/store/0.db", null);
     String results = manager.query("SELECT * FROM schema2;", 100);
 		assertTrue(results.contains("null"));
 
@@ -229,7 +229,7 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary implement
     TablespaceGenerator viewGenerator = new TablespaceGenerator(builder.build(), new Path(OUTPUT), this.getClass());
     viewGenerator.generateView(conf, SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions());
 
-    SQLite4JavaManager manager = new SQLite4JavaManager(OUTPUT + "/store/0.db", null);
+    SQLite4JavaClient manager = new SQLite4JavaClient(OUTPUT + "/store/0.db", null);
     String results = manager.query("SELECT * FROM schema1;", TUPLES_TO_GENERATE+1);
 
     System.out.println(results);

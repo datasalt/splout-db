@@ -1,5 +1,9 @@
 package com.splout.db.engine;
 
+import java.io.File;
+import java.util.List;
+
+import org.apache.commons.configuration.Configuration;
 
 /*
  * #%L
@@ -38,6 +42,8 @@ public interface EngineManager {
 		}
 	}
 
+	public void init(File dbFile, Configuration config, List<String> initStatements) throws EngineException;
+	
 	/**
 	 * SQL command, returning JSON object status result. This is implementation-dependent with no particular constraints.
 	 */
@@ -49,5 +55,5 @@ public interface EngineManager {
 	 */
 	public String query(String query, int maxResults) throws EngineException;
 
-	public void close() throws EngineException;
+	public void close();
 }

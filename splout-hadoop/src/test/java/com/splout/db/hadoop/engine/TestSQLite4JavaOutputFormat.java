@@ -21,7 +21,9 @@ package com.splout.db.hadoop.engine;
  */
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +34,8 @@ import com.datasalt.pangool.io.Fields;
 import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.io.Schema.Field;
 import com.splout.db.common.JSONSerDe;
-import com.splout.db.engine.SQLite4JavaManager;
+import com.splout.db.engine.DefaultEngine;
+import com.splout.db.engine.SQLite4JavaClient;
 import com.splout.db.hadoop.TableSpec;
 import com.splout.db.hadoop.TableSpec.FieldIndex;
 
@@ -49,18 +52,17 @@ public class TestSQLite4JavaOutputFormat extends SploutSQLOutputFormatTester imp
 		assertEquals("CREATE INDEX idx_schema1_ab ON schema1(a, b);", createIndex[0]);
 	}
 
-	@SuppressWarnings("rawtypes")
 	@Test
 	public void test() throws Exception {
-		runTest(SQLite4JavaOutputFormat.class);
+		runTest(new DefaultEngine());
 		
 		// Assert that the DB has been created successfully
-
-		SQLite4JavaManager manager = new SQLite4JavaManager(OUTPUT + "/0.db", null);
-		List list = JSONSerDe.deSer(manager.query("SELECT * FROM schema1;", 100), ArrayList.class);
+		
+		assertTrue(new File(OUTPUT + "/0.db").exists());
+		SQLite4JavaClient manager = new SQLite4JavaClient(OUTPUT + "/0.db", null);
+		@SuppressWarnings("rawtypes")
+    List list = JSONSerDe.deSer(manager.query("SELECT * FROM schema1;", 100), ArrayList.class);
 		assertEquals(6, list.size());
-		list = JSONSerDe.deSer(manager.query("SELECT * FROM schema2;", 100), ArrayList.class);
-		assertEquals(2, list.size());
 		
 		manager.close();
 	}

@@ -54,7 +54,6 @@ import com.splout.db.common.JSONSerDe.JSONSerDeException;
 import com.splout.db.common.PartitionEntry;
 import com.splout.db.common.PartitionMap;
 import com.splout.db.common.Tablespace;
-import com.splout.db.engine.Engine;
 import com.splout.db.engine.OutputFormatFactory;
 import com.splout.db.hadoop.TupleSampler.TupleSamplerException;
 import com.splout.db.hadoop.engine.SQLite4JavaOutputFormat;
@@ -73,7 +72,7 @@ import com.splout.db.hadoop.engine.SploutSQLOutputFormat.SploutSQLOutputFormatEx
  * The output of the process is a Splout deployable path with a {@link PartitionMap} . The format of the output is:
  * outputPath + / + {@link #OUT_PARTITION_MAP} for the partition map, outputPath + / + {@link #OUT_SAMPLED_INPUT} for
  * the list of sampled keys and outputPath + / + {@link #OUT_STORE} for the folder containing the generated SQL store.
- * outputPath + / + {@link #OUT_ENGINE} is a file with the {@link Engine} id used to generate the tablespace.
+ * outputPath + / + {@link #OUT_ENGINE} is a file with the {@link SploutEngine} id used to generate the tablespace.
  * <p>
  * For creating the store we first sample the input dataset with {@link TupleSampler} and then execute a Hadoop job that
  * distributes the data accordingly. The Hadoop job will use {@link SQLite4JavaOutputFormat}.
@@ -186,7 +185,7 @@ public class TablespaceGenerator implements Serializable {
 		// Write the Engine ID so we know what we are deploying exactly afterwards
 		Path enginePath = new Path(outputPath, OUT_ENGINE);
 		writer = new BufferedWriter(new OutputStreamWriter(fileSystem.create(enginePath, true)));
-		writer.write(tablespace.getEngine().toString());
+		writer.write(tablespace.getEngine().getClass().getName());
 		writer.close();
 	}
 

@@ -130,7 +130,7 @@ public class DNodeHandler implements IDNodeHandler {
 	// This map will hold all the current balance file transactions being done
 	private ConcurrentHashMap<String, BalanceFileReceivingProgress> balanceActionsStateMap = new ConcurrentHashMap<String, BalanceFileReceivingProgress>();
 
-	// The factory we will use to instantiate managers for each partition associated with an {@link Engine}
+	// The factory we will use to instantiate managers for each partition associated with an {@link SploutEngine}
 	private ManagerFactory factory;
 
 	public DNodeHandler(Fetcher fetcher) {
@@ -414,7 +414,7 @@ public class DNodeHandler implements IDNodeHandler {
 			dbCache.put(dbPoolInCache);
 			return dbPoolInCache;
 		} catch(Exception e) {
-			log.warn(e);
+			e.printStackTrace();
 			throw new DNodeException(EXCEPTION_ORDINARY,
 			    "Error (" + e.getMessage() + ") instantiating a manager for a data partition");
 		}	
