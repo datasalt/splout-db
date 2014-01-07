@@ -53,7 +53,7 @@ public class SQLite4JavaOutputFormat extends SploutSQLOutputFormat implements Se
 
 	public static Log LOG = LogFactory.getLog(SQLite4JavaOutputFormat.class);
 
-	public SQLite4JavaOutputFormat(Integer batchSize, Configuration conf, TableSpec... dbSpecs)
+	public SQLite4JavaOutputFormat(Integer batchSize, TableSpec... dbSpecs)
 	    throws SploutSQLOutputFormatException {
 		super(batchSize, dbSpecs);
 	}

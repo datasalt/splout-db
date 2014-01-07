@@ -41,7 +41,7 @@ public class TestSploutSQLOutputFormat {
 		TableSpec tableSpec = new TableSpec(tupleSchema1, new Field[] { tupleSchema1.getField(0) },
 		    new FieldIndex[] { new FieldIndex(tupleSchema1.getField(0), tupleSchema1.getField(1)) },
 		    initSQL, preInsertSQL, null, null, null);
-		String[] createTables = new SQLite4JavaOutputFormat(10, new Configuration(), tableSpec)
+		String[] createTables = new SQLite4JavaOutputFormat(10, tableSpec)
 		    .getCreateTables(tableSpec);
 		assertEquals("init1", createTables[0]);
 		assertEquals("init2", createTables[1]);

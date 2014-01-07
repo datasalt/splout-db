@@ -180,7 +180,7 @@ public class BenchmarkStoreTool implements Tool, Serializable {
 		MapOnlyJobBuilder job = new MapOnlyJobBuilder(conf);
 		TableSpec tableSpec = new TableSpec(schema, schema.getFields().get(1));
 		
-		job.setOutput(new Path(out, "store"), new SploutSQLProxyOutputFormat(new SQLite4JavaOutputFormat(1000000, conf, tableSpec)), ITuple.class,
+		job.setOutput(new Path(out, "store"), new SploutSQLProxyOutputFormat(new SQLite4JavaOutputFormat(1000000, tableSpec)), ITuple.class,
 		    NullWritable.class);
 		job.addInput(input, new HadoopInputFormat(TextInputFormat.class), new MapOnlyMapper<LongWritable, Text, ITuple, NullWritable>() {
 
