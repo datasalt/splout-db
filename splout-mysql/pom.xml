@@ -168,6 +168,7 @@
             <groupId>com.splout.db</groupId>
             <artifactId>splout-hadoop</artifactId>
             <version>${project.parent.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
