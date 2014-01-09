@@ -28,6 +28,7 @@ import java.util.List;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.io.FileUtils;
+import org.apache.log4j.Logger;
 
 import redis.clients.jedis.Jedis;
 import redis.embedded.RedisServer;
@@ -39,6 +40,8 @@ import com.splout.db.common.PortUtils.PortLock;
 
 public class RedisManager implements EngineManager {
 
+	private static Logger logger = Logger.getLogger(RedisManager.class);
+	
 	Jedis jedis;
 	private RedisServer redisServer = null;
 	
@@ -96,9 +99,11 @@ public class RedisManager implements EngineManager {
 		if(!new File(redisExecutable).exists()) {
 			throw new EngineException("The specified Redis executable doesn't exist: " + redisExecutable, null);
 		}
-		
+				
 		int basePort = config.getInt(BASE_PORT_CONF, DEFAULT_BASE_PORT);
-		
+
+		logger.info("Redis executable -> " + redisExecutable + "; base port -> " + basePort);
+
 		File thisServer = new File(dbFolder, "redis-server");
 		File thisDataFile = new File(dbFolder, "dump.rdb");
 		File actualDataFile = dbFile;
@@ -113,6 +118,7 @@ public class RedisManager implements EngineManager {
 
 			PortLock portLock = PortUtils.getNextAvailablePort(basePort);
 			try {
+				logger.info("Using port from port lock: " + portLock.getPort());
 				redisServer = new RedisServer(thisServer, portLock.getPort());
 				redisServer.start();
 				jedis = new Jedis("localhost", portLock.getPort());

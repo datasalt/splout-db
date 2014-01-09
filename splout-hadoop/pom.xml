@@ -26,7 +26,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<pangool.version>0.60.7-SNAPSHOT</pangool.version>
+		<pangool.version>0.70</pangool.version>
 	</properties>
 
     <profiles>
