@@ -414,6 +414,7 @@ public class DNodeHandler implements IDNodeHandler {
 			dbCache.put(dbPoolInCache);
 			return dbPoolInCache;
 		} catch(Exception e) {
+			log.error(e);
 			e.printStackTrace();
 			throw new DNodeException(EXCEPTION_ORDINARY,
 			    "Error (" + e.getMessage() + ") instantiating a manager for a data partition");

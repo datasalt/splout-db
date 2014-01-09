@@ -524,13 +524,6 @@
             <artifactId>tomcat-servlet-api</artifactId>
             <version>7.0.32</version>
         </dependency>
-
-		<!-- Redis -->
-		<dependency>
-  			<groupId>redis.embedded</groupId>
-  			<artifactId>embedded-redis</artifactId>
-  			<version>0.1</version>
-		</dependency>
 		
         <!-- Thrift -->
         <dependency>

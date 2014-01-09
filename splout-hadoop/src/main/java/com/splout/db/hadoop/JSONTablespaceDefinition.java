@@ -205,7 +205,7 @@ public class JSONTablespaceDefinition {
 		if(engine == null) {
 			engine = DefaultEngine.class.getName();
 		}
-		builder.setEngine(engine);
+		builder.setEngineClassName(engine);
 		
 		for(JSONTableDefinition table : partitionedTables) {
 			builder.add(buildTable(table, false, hadoopConf));

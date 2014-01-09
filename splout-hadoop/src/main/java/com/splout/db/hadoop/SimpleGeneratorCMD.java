@@ -218,7 +218,7 @@ public class SimpleGeneratorCMD implements Tool {
 		}
 
 		TablespaceBuilder builder = new TablespaceBuilder();
-		builder.setEngine(engine);
+		builder.setEngineClassName(engine);
 		log.info("Using engine: " + engine);
 
 		if(inputType.equals(InputType.TEXT)) {

@@ -97,7 +97,7 @@ public class RedisManager implements EngineManager {
 			throw new EngineException("The specified Redis executable doesn't exist: " + redisExecutable, null);
 		}
 		
-		int basePort = config.getInt(BASE_PORT_CONF, 6379);
+		int basePort = config.getInt(BASE_PORT_CONF, DEFAULT_BASE_PORT);
 		
 		File thisServer = new File(dbFolder, "redis-server");
 		File thisDataFile = new File(dbFolder, "dump.rdb");

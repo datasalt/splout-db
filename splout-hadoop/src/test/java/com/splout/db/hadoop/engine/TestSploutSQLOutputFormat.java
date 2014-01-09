@@ -22,7 +22,6 @@ package com.splout.db.hadoop.engine;
 
 import static org.junit.Assert.assertEquals;
 
-import org.apache.hadoop.conf.Configuration;
 import org.junit.Test;
 
 import com.datasalt.pangool.io.Fields;
