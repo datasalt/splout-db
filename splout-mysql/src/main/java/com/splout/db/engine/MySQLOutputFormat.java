@@ -81,7 +81,7 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat implements Serializ
 			if(field.getName().equals(PARTITION_TUPLE_FIELD)) {
 				continue;
 			}
-			createTable += field.getName() + " ";
+			createTable += "`" + field.getName() + "` ";
 			switch(field.getType()) {
 			case INT:
 				createTable += "INTEGER, ";

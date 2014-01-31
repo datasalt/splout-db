@@ -137,7 +137,7 @@ public abstract class SploutSQLOutputFormat implements Serializable, Configurabl
 				}
 				createIndex += " ON " + tableSpec.getSchema().getName() + "(";
 				for(Field field : index.getIndexFields()) {
-					createIndex += field.getName() + ", ";
+					createIndex += "`" + field.getName() + "`, ";
 				}
 				createIndex = createIndex.substring(0, createIndex.length() - 2) + ");";
 				createIndexes.add(createIndex);

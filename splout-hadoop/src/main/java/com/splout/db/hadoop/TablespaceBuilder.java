@@ -79,6 +79,10 @@ public class TablespaceBuilder {
 		this.nPartitions = nPartitions;
 	}
 
+	public void setEngine(SploutEngine engine) throws TablespaceBuilderException {
+		setEngineClassName(engine.getClass().getName());
+	}
+	
 	public void setEngineClassName(String engineClass) throws TablespaceBuilderException {
 		try {
 			this.engine = Class.forName(engineClass).asSubclass(SploutEngine.class).newInstance();

@@ -28,7 +28,6 @@ import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 
 import com.almworks.sqlite4java.SQLiteConnection;
@@ -65,7 +64,7 @@ public class SQLite4JavaOutputFormat extends SploutSQLOutputFormat implements Se
 			if(field.getName().equals(PARTITION_TUPLE_FIELD)) {
 				continue;
 			}
-			createTable += field.getName() + " ";
+			createTable += "`" + field.getName() + "` ";
 			switch(field.getType()) {
 			/*
 			 * This mapping is done after SQLite's documentation. For instance, SQLite doesn't have Booleans (have to be

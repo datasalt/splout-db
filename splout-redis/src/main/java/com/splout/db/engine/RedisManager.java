@@ -47,7 +47,7 @@ public class RedisManager implements EngineManager {
 	
 	public static String REDIS_EXECUTABLE_CONF = "com.splout.db.engine.RedisManager.redis.executable";
 	public static String BASE_PORT_CONF = "com.splout.db.engine.RedisManager.redis.base.port"; 
-	final static int DEFAULT_BASE_PORT = 6379; // TODO make parametric
+	final static int DEFAULT_BASE_PORT = 6379;
 	
 	public RedisManager() {
 	}

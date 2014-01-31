@@ -20,7 +20,7 @@ package com.splout.db.engine;
  * #L%
  */
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -32,7 +32,7 @@ import org.junit.Test;
 import com.splout.db.common.JSONSerDe;
 import com.splout.db.hadoop.engine.SploutSQLOutputFormatTester;
 
-@SuppressWarnings("serial")
+@SuppressWarnings({ "serial", "unchecked", "rawtypes" })
 public class TestRedisOutputFormat extends SploutSQLOutputFormatTester {
 
 	@Test
@@ -43,7 +43,7 @@ public class TestRedisOutputFormat extends SploutSQLOutputFormatTester {
 		manager.init(new File(OUTPUT, "0.db"), BaseTest.getBaseConfiguration(), null);
 		
 		List l = JSONSerDe.deSer(manager.query("foo1", 1), ArrayList.class);
-		Map<String, Object> record = (Map<String, Object>)l.get(0);
+    Map<String, Object> record = (Map<String, Object>)l.get(0);
 		
 		assertEquals("foo1", record.get("a"));
 		assertEquals(30, record.get("b"));
