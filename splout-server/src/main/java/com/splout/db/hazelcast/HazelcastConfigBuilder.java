@@ -23,14 +23,10 @@ package com.splout.db.hazelcast;
 
 import java.util.Arrays;
 
+import com.hazelcast.config.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.hazelcast.config.Config;
-import com.hazelcast.config.Interfaces;
-import com.hazelcast.config.Join;
-import com.hazelcast.config.MapConfig;
-import com.hazelcast.config.NetworkConfig;
 import com.splout.db.common.SploutConfiguration;
 
 /**
@@ -65,7 +61,7 @@ public class HazelcastConfigBuilder {
 		String strIFaces = buConf.getString(HazelcastProperties.INTERFACES);
 		if(strIFaces != null) {
 			log.info("-- Using Hazelcast network interfaces: " + strIFaces);
-			Interfaces iFaces = new Interfaces();
+            InterfacesConfig iFaces = new InterfacesConfig();
 			for(String strIFace : strIFaces.split(",")) {
 				iFaces.addInterface(strIFace.trim());
 			}
@@ -102,7 +98,7 @@ public class HazelcastConfigBuilder {
 		}
 
 		NetworkConfig network = hzConfig.getNetworkConfig();
-		Join join = network.getJoin();
+		JoinConfig join = network.getJoin();
 
 		// Disable all by default. Then we enable the correct one.
 		join.getMulticastConfig().setEnabled(false);
