@@ -49,7 +49,7 @@ public class TestSQLite4JavaOutputFormat extends SploutSQLOutputFormatTester imp
 		    new FieldIndex[] { new FieldIndex(tupleSchema1.getField(0), tupleSchema1.getField(1)) }, null,
 		    null, null, null, null);
 		String[] createIndex = SploutSQLOutputFormat.getCreateIndexes(tableSpec);
-		assertEquals("CREATE INDEX idx_schema1_ab ON schema1(a, b);", createIndex[0]);
+		assertEquals("CREATE INDEX idx_schema1_ab ON schema1(`a`, `b`);", createIndex[0]);
 	}
 
 	@Test

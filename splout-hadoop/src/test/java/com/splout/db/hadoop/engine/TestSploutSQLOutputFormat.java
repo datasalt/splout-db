@@ -44,7 +44,7 @@ public class TestSploutSQLOutputFormat {
 		    .getCreateTables(tableSpec);
 		assertEquals("init1", createTables[0]);
 		assertEquals("init2", createTables[1]);
-		assertEquals("CREATE TABLE schema1 (a TEXT, b INTEGER);", createTables[2]);
+		assertEquals("CREATE TABLE schema1 (`a` TEXT, `b` INTEGER);", createTables[2]);
 		assertEquals("CREATE Mytable;", createTables[3]);
 		assertEquals("ME_LO_INVENTO", createTables[4]);
 	}
@@ -60,7 +60,7 @@ public class TestSploutSQLOutputFormat {
 		String[] createIndex = SploutSQLOutputFormat.getCreateIndexes(tableSpec);
 		assertEquals("afterinsert1", createIndex[0]);
 		assertEquals("afterinsert2", createIndex[1]);
-		assertEquals("CREATE INDEX idx_schema1_ab ON schema1(a, b);", createIndex[2]);
+		assertEquals("CREATE INDEX idx_schema1_ab ON schema1(`a`, `b`);", createIndex[2]);
 		assertEquals("DROP INDEX idx_schema1_ab", createIndex[3]);
 		assertEquals("CREATE INDEX blablabla", createIndex[4]);
 	}
