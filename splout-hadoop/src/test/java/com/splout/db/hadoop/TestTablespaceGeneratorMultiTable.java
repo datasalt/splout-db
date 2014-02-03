@@ -42,7 +42,7 @@ import com.datasalt.pangool.io.Fields;
 import com.datasalt.pangool.io.Schema;
 import com.google.common.io.Files;
 import com.splout.db.common.JSONSerDe;
-import com.splout.db.common.SQLiteJDBCManager;
+import com.splout.db.engine.SQLite4JavaClient;
 import com.splout.db.hadoop.TupleSampler.SamplingType;
 
 public class TestTablespaceGeneratorMultiTable {
@@ -108,10 +108,11 @@ public class TestTablespaceGeneratorMultiTable {
 		List<String> jsonGeoData = new ArrayList<String>();
 		
 		for(int i = 0; i < 3; i++) {
-			SQLiteJDBCManager manager = new SQLiteJDBCManager(TEST_OUTPUT + "/store/" + i + ".db", 10);
+			SQLite4JavaClient manager = new SQLite4JavaClient(TEST_OUTPUT + "/store/" + i + ".db", null);
 			List list;
 			list = JSONSerDe.deSer(manager.query("SELECT * FROM payments;", 100), ArrayList.class);
 			totalPayments.addAll(list);
+			System.out.println(list);
 			assertEquals(1, list.size()); // There is one payment per each person
 			list = JSONSerDe.deSer(manager.query("SELECT * FROM logs;", 100), ArrayList.class);
 			totalLogs.addAll(list);

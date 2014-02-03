@@ -52,6 +52,7 @@ import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.io.Tuple;
 import com.datasalt.pangool.io.TupleFile;
 import com.datasalt.pangool.tuplemr.MapOnlyJobBuilder;
+import com.datasalt.pangool.tuplemr.MultipleOutputsCollector;
 import com.datasalt.pangool.tuplemr.TupleMRException;
 import com.datasalt.pangool.tuplemr.mapred.MapOnlyMapper;
 import com.datasalt.pangool.utils.TaskAttemptContextFactory;
@@ -207,7 +208,8 @@ public class TupleSampler implements Serializable {
 					    long recordCounter = 0;
 
 					    @Override
-					    protected void setup(Context context) throws IOException, InterruptedException {
+					    protected void setup(Context context, MultipleOutputsCollector coll) throws IOException,
+					        InterruptedException {
 						    counterInterface = new CounterInterface(context);
 					    };
 
@@ -240,7 +242,8 @@ public class TupleSampler implements Serializable {
 					    }
 
 					    // Write the in-memory sampled Tuples
-					    protected void cleanup(Context context) throws IOException, InterruptedException {
+					    protected void cleanup(Context context, MultipleOutputsCollector coll) throws IOException,
+					        InterruptedException {
 						    for(ITuple tuple : samples) {
 							    if(tuple != null) {
 								    context.write(tuple, NullWritable.get());
@@ -311,7 +314,8 @@ public class TupleSampler implements Serializable {
 		TupleFile.Writer writer = new TupleFile.Writer(fs, hadoopConf, outFile,
 		    NullableSchema.nullableSchema(tableSchema));
 
-		logger.info("Default sampling options, max splits to visit: " + maxSplitsToVisit + ", samples to take: " + sampleSize + ", total number of splits: " + splits.size());
+		logger.info("Default sampling options, max splits to visit: " + maxSplitsToVisit
+		    + ", samples to take: " + sampleSize + ", total number of splits: " + splits.size());
 		int samples = Math.min(maxSplitsToVisit, splits.size());
 		samples = Math.min((int) sampleSize, samples);
 		long recordsPerSample = sampleSize / samples;
@@ -340,7 +344,7 @@ public class TupleSampler implements Serializable {
 			logger.info("Sampling split: " + split);
 			RecordReader<ITuple, NullWritable> reader = splitToFormat.get(split).createRecordReader(split,
 			    attemptContext);
-			reader.initialize(split, attemptContext);			
+			reader.initialize(split, attemptContext);
 
 			RecordProcessor processor = recordProcessorPerSplit.get(split);
 			while(reader.nextKeyValue()) {

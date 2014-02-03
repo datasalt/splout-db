@@ -36,10 +36,10 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.splout.db.common.SQLiteJDBCManager;
 import com.splout.db.common.SploutClient;
 import com.splout.db.common.Tablespace;
 import com.splout.db.dnode.TestCommands;
+import com.splout.db.engine.SQLite4JavaClient;
 import com.splout.db.qnode.QNode;
 import com.splout.db.qnode.beans.QueryStatus;
 import com.splout.db.thrift.DNodeException;
@@ -178,7 +178,7 @@ public class TestMultiThreadedFailover extends BaseIntegrationTest {
 
 		for(int i = 0; i < N_DNODES; i++) {
 			File dbData = new File(deployData, i + ".db");
-			SQLiteJDBCManager manager = new SQLiteJDBCManager(dbData + "", 10);
+			SQLite4JavaClient manager = new SQLite4JavaClient(dbData + "", null);
 			// We create a foo database with one integer and one text
 			manager.query("CREATE TABLE " + TABLE + " (iteration INT, dnode INT);", 100);
 			// We insert as many values as the ones we defined in the partition map

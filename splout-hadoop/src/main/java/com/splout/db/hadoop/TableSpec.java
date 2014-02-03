@@ -26,10 +26,11 @@ import java.util.Arrays;
 import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.io.Schema.Field;
 import com.datasalt.pangool.tuplemr.OrderBy;
+import com.splout.db.hadoop.engine.SQLite4JavaOutputFormat;
 
 /**
  * Simple immutable bean that specifies the Pangool Schema of a Splout Table and the Fields that need to be indexed and how it is partitioned.
- * It is part of a {@link Table} bean. It is also used by {@link TupleSQLite4JavaOutputFormat}.
+ * It is part of a {@link Table} bean. It is also used by {@link SQLite4JavaOutputFormat}.
  */
 @SuppressWarnings("serial")
 public class TableSpec implements Serializable {

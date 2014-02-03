@@ -37,6 +37,7 @@ import com.splout.db.common.JSONSerDe.JSONSerDeException;
 import com.splout.db.common.PartitionMap;
 import com.splout.db.common.ReplicationMap;
 import com.splout.db.common.SploutClient;
+import com.splout.db.engine.DefaultEngine;
 import com.splout.db.qnode.beans.DeployInfo;
 import com.splout.db.qnode.beans.DeployRequest;
 
@@ -104,9 +105,19 @@ public class StoreDeployerTool {
       if (tablespace.getInitStatements() != null) {
         initStatements.addAll(tablespace.getInitStatements());
       }
+      
+      String engine = DefaultEngine.class.getName();
+      // New : load the engine id used in the generation tool, if exists ( to maintain backwards compatibility )
+      Path engineId = new Path(tablespaceOut, TablespaceGenerator.OUT_ENGINE);
+      if(sourceFs.exists(engineId)) {
+      	engine = HadoopUtils.fileToString(sourceFs, engineId);
+      	log.info("Using generated engine id: " + engine);
+      }
+      
       // Finally set
       deployRequests[tIndex].setInitStatements(initStatements);
-
+      deployRequests[tIndex].setEngine(engine);
+      
       deployRequests[tIndex].setTablespace(tablespace.getTablespace());
       deployRequests[tIndex].setData_uri(new Path(absoluteOutPath, "store").toUri().toString());
       deployRequests[tIndex].setPartitionMap(partitionMap.getPartitionEntries());

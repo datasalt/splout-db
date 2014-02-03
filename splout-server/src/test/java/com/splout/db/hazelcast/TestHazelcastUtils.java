@@ -34,7 +34,7 @@ import org.junit.Test;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.Member;
-import com.hazelcast.impl.MemberImpl;
+import com.hazelcast.instance.MemberImpl;
 import com.hazelcast.nio.Address;
 import com.splout.db.common.SploutConfiguration;
 import com.splout.db.hazelcast.HazelcastConfigBuilder.HazelcastConfigBuilderException;

@@ -43,7 +43,7 @@ import com.hazelcast.core.LifecycleEvent;
 import com.hazelcast.core.LifecycleEvent.LifecycleState;
 import com.hazelcast.core.LifecycleListener;
 import com.hazelcast.core.Member;
-import com.hazelcast.impl.GroupProperties;
+import com.hazelcast.instance.GroupProperties;
 import com.splout.db.common.SploutConfiguration;
 import com.splout.db.common.TestUtils;
 import com.splout.db.hazelcast.HazelcastConfigBuilder.HazelcastConfigBuilderException;
@@ -82,10 +82,14 @@ public class TestDistributedRegistry {
 
 		// This port selection ensures that when h3 restarts it will try to join h4
 		// instead of joining the nodes in cluster one
-		Config c1 = buildHZConfig(false).setPort(15701);
-		Config c2 = buildHZConfig(false).setPort(15702);
-		Config c3 = buildHZConfig(false).setPort(15703);
-		Config c4 = buildHZConfig(false).setPort(15704);
+		Config c1 = buildHZConfig(false);
+        c1.getNetworkConfig().setPort(15701);
+		Config c2 = buildHZConfig(false);
+        c2.getNetworkConfig().setPort(15702);
+		Config c3 = buildHZConfig(false);
+        c3.getNetworkConfig().setPort(15703);
+		Config c4 = buildHZConfig(false);
+        c4.getNetworkConfig().setPort(15704);
 
 		List<String> clusterOneMembers = Arrays.asList("127.0.0.1:15701", "127.0.0.1:15702",
 		    "127.0.0.1:15703");
@@ -101,7 +105,7 @@ public class TestDistributedRegistry {
 		final CountDownLatch latch = new CountDownLatch(1);
 		c4.addListenerConfig(new ListenerConfig(new LifecycleListener() {
 			public void stateChanged(final LifecycleEvent event) {
-				if(event.getState() == LifecycleState.RESTARTED) {
+				if(event.getState() == LifecycleState.MERGED) {
 					System.out.println("h4 restarted");
 					latch.countDown();
 				}
@@ -160,8 +164,10 @@ public class TestDistributedRegistry {
 	@SuppressWarnings("deprecation")
 	public void testCrossRequest() throws Exception {
 
-    Config c1 = buildHZConfig(false).setPort(15701);
-		Config c2 = buildHZConfig(false).setPort(15702);
+    Config c1 = buildHZConfig(false);
+        c1.getNetworkConfig().setPort(15701);
+		Config c2 = buildHZConfig(false);
+        c2.getNetworkConfig().setPort(15702);
 
 		List<String> clusterMembers = Arrays.asList("127.0.0.1:15701", "127.0.0.1:15702");
 		c1.getNetworkConfig().getJoin().getTcpIpConfig().setMembers(clusterMembers);
@@ -186,7 +192,7 @@ public class TestDistributedRegistry {
 		String memberOne = null;
 		String memberTwo = null;
 		for(Member m : h2.getCluster().getMembers()) {
-			if(m.getPort() == 15701) {
+			if(m.getInetSocketAddress().getPort() == 15701) {
 				memberOne = getHZAddress(m);
 			} else {
 				memberTwo = getHZAddress(m);
@@ -202,7 +208,7 @@ public class TestDistributedRegistry {
 		memberOne = null;
 		memberTwo = null;
 		for(Member m : h1.getCluster().getMembers()) {
-			if(m.getPort() == 15701) {
+			if(m.getInetSocketAddress().getPort() == 15701) {
 				memberOne = getHZAddress(m);
 				;
 			} else {

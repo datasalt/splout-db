@@ -26,10 +26,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
@@ -40,6 +38,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.Element;
@@ -51,7 +50,6 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.almworks.sqlite4java.SQLiteConnection;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.hazelcast.core.EntryEvent;
@@ -62,14 +60,14 @@ import com.hazelcast.core.ICountDownLatch;
 import com.splout.db.benchmark.PerformanceTool;
 import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
-import com.splout.db.common.SQLite4JavaManager;
 import com.splout.db.common.SploutConfiguration;
 import com.splout.db.common.ThriftReader;
 import com.splout.db.common.ThriftWriter;
-import com.splout.db.common.TimeoutThread;
 import com.splout.db.dnode.beans.BalanceFileReceivingProgress;
 import com.splout.db.dnode.beans.DNodeStatusResponse;
 import com.splout.db.dnode.beans.DNodeSystemStatus;
+import com.splout.db.engine.EngineManager;
+import com.splout.db.engine.ManagerFactory;
 import com.splout.db.hazelcast.CoordinationStructures;
 import com.splout.db.hazelcast.DNodeInfo;
 import com.splout.db.hazelcast.DistributedRegistry;
@@ -129,11 +127,11 @@ public class DNodeHandler implements IDNodeHandler {
 	private long absoluteSlowQueryLimit;
 	private long slowQueries = 0;
 
-	// This thread will interrupt long-running queries
-	private TimeoutThread timeoutThread;
-
 	// This map will hold all the current balance file transactions being done
 	private ConcurrentHashMap<String, BalanceFileReceivingProgress> balanceActionsStateMap = new ConcurrentHashMap<String, BalanceFileReceivingProgress>();
+
+	// The factory we will use to instantiate managers for each partition associated with an {@link SploutEngine}
+	private ManagerFactory factory;
 
 	public DNodeHandler(Fetcher fetcher) {
 		this.fetcher = fetcher;
@@ -321,8 +319,8 @@ public class DNodeHandler implements IDNodeHandler {
 		maxResultsPerQuery = config.getInt(DNodeProperties.MAX_RESULTS_PER_QUERY);
 		int maxCachePools = config.getInt(DNodeProperties.EH_CACHE_N_ELEMENTS);
 		absoluteSlowQueryLimit = config.getLong(DNodeProperties.SLOW_QUERY_ABSOLUTE_LIMIT);
-		timeoutThread = new TimeoutThread(config.getLong(DNodeProperties.MAX_QUERY_TIME));
-		timeoutThread.start();
+		factory = new ManagerFactory();
+		factory.init(config);
 		// We create a Cache for holding SQL connection pools to different tablespace versions
 		// http://stackoverflow.com/questions/2583429/how-to-differentiate-between-time-to-live-and-time-to-idle-in-ehcache
 		dbCache = new Cache("dbCache", maxCachePools, false, false, Integer.MAX_VALUE, evictionSeconds);
@@ -381,15 +379,16 @@ public class DNodeHandler implements IDNodeHandler {
 		if(versionFolder.exists()) {
 			File[] partitions = versionFolder.listFiles();
 			if(partitions != null) {
-				for(File partition: partitions) {
+				for(File partition : partitions) {
 					if(partition.isDirectory()) {
-						// remove references to binary SQLite files in ECache
+						// remove references to engine in ECache
 						// so that space in disk is immediately available
-						String dbKey = version.getTablespace() + "_" + version.getVersion() + "_" + partition.getName();
+						String dbKey = version.getTablespace() + "_" + version.getVersion() + "_"
+						    + partition.getName();
 						synchronized(dbCache) {
 							if(dbCache.get(dbKey) != null) {
 								dbCache.remove(dbKey);
-								log.info("-- Removing references from ECache: " + dbKey); 
+								log.info("-- Removing references from ECache: " + dbKey);
 							}
 						}
 					}
@@ -403,28 +402,32 @@ public class DNodeHandler implements IDNodeHandler {
 	}
 
 	/**
+	 * This method will be called either before publishing a new tablespace after a deploy or when a query is issued
+	 * to a tablespace/version which is not "warmed" (e.g. after Splout restart, or after long inactivity).
+	 */
+	private Element loadManagerInEHCache(String tablespace, long version, int partition, File dbFolder, PartitionMetadata partitionMetadata) throws DNodeException {
+		try {
+			// Create new EHCache item value with a {@link EngineManager}
+			EngineManager manager = factory.getManagerIn(dbFolder, partitionMetadata);
+			String dbKey = tablespace + "_" + version + "_" + partition;
+			Element dbPoolInCache = new Element(dbKey, manager);
+			dbCache.put(dbPoolInCache);
+			return dbPoolInCache;
+		} catch(Exception e) {
+			log.error(e);
+			e.printStackTrace();
+			throw new DNodeException(EXCEPTION_ORDINARY,
+			    "Error (" + e.getMessage() + ") instantiating a manager for a data partition");
+		}	
+	}
+	
+	/**
 	 * Thrift RPC method -> Given a tablespace and a version, execute the SQL query
 	 */
 	@Override
 	public String sqlQuery(String tablespace, long version, int partition, String query)
 	    throws DNodeException {
 
-		String t = Thread.currentThread().getName();
-		Set<SQLiteConnection> pendingClose = SQLite4JavaManager.CLEAN_UP_AFTER_YOURSELF.get(t);
-		// Because SQLiteConnection can only be closed by owner Thread, here we need to check if we 
-		// have some pending connections to close...
-		if(pendingClose != null && pendingClose.size() > 0) {
-			synchronized(pendingClose) {
-				Iterator<SQLiteConnection> it = pendingClose.iterator();
-				while(it.hasNext()) {
-					SQLiteConnection conn = it.next();
-					log.info("-- Closed a connection pending diposal: " + conn.getDatabaseFile());
-					conn.dispose();
-					it.remove();
-				}
-			}
-		}
-		
 		try {
 			try {
 				performanceTool.startQuery();
@@ -440,50 +443,33 @@ public class DNodeHandler implements IDNodeHandler {
 							throw new DNodeException(EXCEPTION_ORDINARY, "Requested tablespace (" + tablespace
 							    + ") + version (" + version + ") is not available.");
 						}
-						// Currently using first ".db" file but in the future there might be some convention
-						for(String file : dbFolder.list()) {
-							if(file.endsWith(".db")) {
-								// Create new EHCache item value with a {@link SQLite4JavaManager}
-								File metadata = getLocalMetadataFile(tablespace, partition, version);
-								ThriftReader reader = new ThriftReader(metadata);
-								PartitionMetadata partitionMetadata = (PartitionMetadata) reader
-								    .read(new PartitionMetadata());
-								reader.close();
-								SQLite4JavaManager manager = new SQLite4JavaManager(dbFolder + "/" + file,
-								    partitionMetadata.getInitStatements());
-								manager.setTimeoutThread(timeoutThread);
-								dbPoolInCache = new Element(dbKey, manager);
-								dbCache.put(dbPoolInCache);
-								break;
-							}
-						}
+						File metadata = getLocalMetadataFile(tablespace, partition, version);
+						ThriftReader reader = new ThriftReader(metadata);
+						PartitionMetadata partitionMetadata = (PartitionMetadata) reader
+						    .read(new PartitionMetadata());
+						reader.close();
+						dbPoolInCache = loadManagerInEHCache(tablespace, version, partition, dbFolder, partitionMetadata);
 					}
 				}
-				if(dbPoolInCache != null) {
-					// Query the {@link SQLite4JavaManager} and return
-					String result = ((SQLite4JavaManager) dbPoolInCache.getObjectValue()).query(query,
-					    maxResultsPerQuery);
-					long time = performanceTool.endQuery();
-					log.info("serving query [" + tablespace + "]" + " [" + version + "] [" + partition + "] ["
-					    + query + "] time [" + time + "] OK.");
-					// double prob = performanceTool.getHistogram().getLeftAccumulatedProbability(time);
-					// if(prob > 0.95) {
-					// // slow query!
-					// log.warn("[SLOW QUERY] Query time over 95 percentil: [" + query + "] time [" + time + "]");
-					// slowQueries++;
-					// }
-					if(time > absoluteSlowQueryLimit) {
-						// slow query!
-						log.warn("[SLOW QUERY] Query time over absolute slow query time (" + absoluteSlowQueryLimit
-						    + ") : [" + query + "] time [" + time + "]");
-						slowQueries++;
-					}
-					return result;
-				} else {
-					throw new DNodeException(
-					    EXCEPTION_ORDINARY,
-					    "Deployed folder doesn't contain a .db file - This shouldn't happen. This means there is a bug or inconsistency in the deploy process.");
+				// Query the {@link SQLite4JavaManager} and return
+				String result = ((EngineManager) dbPoolInCache.getObjectValue())
+				    .query(query, maxResultsPerQuery);
+				long time = performanceTool.endQuery();
+				log.info("serving query [" + tablespace + "]" + " [" + version + "] [" + partition + "] ["
+				    + query + "] time [" + time + "] OK.");
+				// double prob = performanceTool.getHistogram().getLeftAccumulatedProbability(time);
+				// if(prob > 0.95) {
+				// // slow query!
+				// log.warn("[SLOW QUERY] Query time over 95 percentil: [" + query + "] time [" + time + "]");
+				// slowQueries++;
+				// }
+				if(time > absoluteSlowQueryLimit) {
+					// slow query!
+					log.warn("[SLOW QUERY] Query time over absolute slow query time (" + absoluteSlowQueryLimit
+					    + ") : [" + query + "] time [" + time + "]");
+					slowQueries++;
 				}
+				return result;
 			} catch(Throwable e) {
 				unexpectedException(e);
 				throw new DNodeException(EXCEPTION_UNEXPECTED, e.getMessage());
@@ -525,6 +511,70 @@ public class DNodeHandler implements IDNodeHandler {
 									lastDeployTimedout.set(false);
 									log.info("Starting deploy actions [" + deployActions + "]");
 									long start = System.currentTimeMillis();
+									long totalSize = 0;
+
+									// Ask for the total size of the deployment first.
+									for(DeployAction action : deployActions) {
+										long plusSize = fetcher.sizeOf(action.getDataURI());
+										if(plusSize == Fetcher.SIZE_UNKNOWN) {
+											totalSize = Fetcher.SIZE_UNKNOWN;
+											break;
+										}
+										totalSize += plusSize;
+									}
+
+									final double totalKnownSize = totalSize / (1024d * 1024d);
+									final long startTime = System.currentTimeMillis();
+									final AtomicLong bytesSoFar = new AtomicLong(0l);
+
+									Fetcher.Reporter reporter = new Fetcher.Reporter() {
+										@Override
+										public void progress(long consumed) {
+											long now = System.currentTimeMillis();
+											double totalSoFar = bytesSoFar.addAndGet(consumed) / (1024d * 1024d);
+											double secondsSoFar = (now - startTime) / 1000d;
+											double mBytesPerSec = totalSoFar / secondsSoFar;
+
+											String msg = "[" + whoAmI() + " progress/speed report]: Fetched [";
+											if(totalSoFar > 999) {
+												msg += String.format("%.3f", (totalSoFar / 1024d)) + "] GBs so far ";
+											} else {
+												msg += String.format("%.3f", totalSoFar) + "] MBs so far ";
+											}
+
+											if(totalKnownSize != Fetcher.SIZE_UNKNOWN) {
+												msg += "(out of [";
+												if(totalKnownSize > 999) {
+													msg += String.format("%.3f", (totalKnownSize / 1024d)) + "] GBs) ";
+												} else {
+													msg += String.format("%.3f", totalKnownSize) + "] MBs) ";
+												}
+											}
+											msg += "- Current deployment speed is [" + String.format("%.3f", mBytesPerSec)
+											    + "] MB/s.";
+											// Add a report of the estimated remaining time if we can
+											if(totalKnownSize != Fetcher.SIZE_UNKNOWN) {
+												double missingSize = (totalKnownSize - totalSoFar);
+												long remainingSecs = (long) (missingSize / mBytesPerSec);
+												String timeRemaining = "";
+												if(remainingSecs > 3600) { // hours, minutes and secs
+													int hours = (int) (remainingSecs / 3600);
+													int restOfSeconds = (int) (remainingSecs % 3600);
+													timeRemaining = hours + " hours and " + (int) (restOfSeconds / 60)
+													    + " minutes and " + (restOfSeconds % 60) + " seconds";
+												} else if(remainingSecs > 60) { // minutes and secs
+													timeRemaining = (int) (remainingSecs / 60) + " minutes and "
+													    + (remainingSecs % 60) + " seconds";
+												} else { // secs
+													timeRemaining = remainingSecs + " seconds";
+												}
+												msg += " Estimated remaining time is [" + timeRemaining + "].";
+											}
+											log.info(msg);
+											coord.logDeploySpeed(version, whoAmI(), msg);
+										}
+									};
+
 									for(DeployAction action : deployActions) {
 										// 1- Store metadata
 										File metadataFile = getLocalMetadataFile(action.getTablespace(),
@@ -536,7 +586,7 @@ public class DNodeHandler implements IDNodeHandler {
 										writer.write(action.getMetadata());
 										writer.close();
 										// 2- Call the fetcher for fetching
-										File fetchedContent = fetcher.fetch(action.getDataURI());
+										File fetchedContent = fetcher.fetch(action.getDataURI(), reporter);
 										// If we reach this point then the fetch has been OK
 										File dbFolder = getLocalStorageFolder(action.getTablespace(), action.getPartition(),
 										    version);
@@ -547,6 +597,9 @@ public class DNodeHandler implements IDNodeHandler {
 										}
 										// 4- Perform a "mv" for finally making the data available
 										FileUtils.moveDirectory(fetchedContent, dbFolder);
+										// 5- Preemptively load the Manager in case initialization is slow
+										// Managers might warm up for a while (e.g. loading data into memory)
+										loadManagerInEHCache(action.getTablespace(), action.getVersion(), action.getPartition(), dbFolder, action.getMetadata());
 									}
 
 									// Publish new DNodeInfo in distributed registry.
@@ -724,7 +777,7 @@ public class DNodeHandler implements IDNodeHandler {
 	public void stop() throws Exception {
 		dbCache.dispose();
 		deployThread.shutdownNow();
-		timeoutThread.interrupt();
+		factory.close();
 		httpExchanger.close();
 		hz.getLifecycleService().shutdown();
 	}

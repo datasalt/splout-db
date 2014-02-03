@@ -49,20 +49,20 @@ public class TestTupleSampler {
 
 	@Test
 	public void testDefault() throws IOException, InterruptedException, TupleSamplerException {
-		testDefault(Long.MAX_VALUE);
-		testDefault(1024 * 100);
-		testDefault(1024 * 10);
+		testDefault(Long.MAX_VALUE, 1);
+		testDefault(1024 * 100, 2);
+		testDefault(1024 * 10, 3);
 	}
 	
 	@Test
 	public void testReservoir() throws IOException, InterruptedException, TupleSamplerException {
-		Runtime.getRuntime().exec("rm -rf " + INPUT);
-		Runtime.getRuntime().exec("rm -rf " + OUTPUT);
+		Runtime.getRuntime().exec("rm -rf " + INPUT + "_r");
+		Runtime.getRuntime().exec("rm -rf " + OUTPUT + "_r");
 		
 		Configuration conf = new Configuration();
 
 		final Schema schema = new Schema("schema", Fields.parse("id:string, foo:int"));
-    TupleFile.Writer writer = new TupleFile.Writer(FileSystem.get(conf), conf, new Path(INPUT), schema);
+    TupleFile.Writer writer = new TupleFile.Writer(FileSystem.get(conf), conf, new Path(INPUT + "_r"), schema);
 		for(int i = 0; i < 10000; i++) {
 			ITuple tuple = new Tuple(schema);
 			tuple.set("id", "id" + i);
@@ -76,12 +76,12 @@ public class TestTupleSampler {
 		// Default input split size so only one InputSplit
 		// All sampled keys will be [0, 1, 2, ..., 9]
 		TupleSampler sampler = new TupleSampler(SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions());
-		sampler.sample(Arrays.asList(new TableInput[] { new TableInput(new TupleInputFormat(), new HashMap<String, String>(), schema, new IdentityRecordProcessor(), new Path(INPUT)) }), schema, conf, 10, new Path(OUTPUT));		
+		sampler.sample(Arrays.asList(new TableInput[] { new TableInput(new TupleInputFormat(), new HashMap<String, String>(), schema, new IdentityRecordProcessor(), new Path(INPUT + "_r")) }), schema, conf, 10, new Path(OUTPUT + "_r"));		
 		
 		int nTuples = 0;
 		int[] sampledKeys = new int[10];
 		
-		TupleFile.Reader reader = new TupleFile.Reader(FileSystem.get(conf),  conf, new Path(OUTPUT));
+		TupleFile.Reader reader = new TupleFile.Reader(FileSystem.get(conf),  conf, new Path(OUTPUT + "_r"));
     Tuple tuple = new Tuple(reader.getSchema());
 		while(reader.next(tuple)) {
 			// Get the "foo" field from sampled Tuples
@@ -96,12 +96,12 @@ public class TestTupleSampler {
 
 		// Reservoir sampling should yield better results for this case, let's see
 		sampler = new TupleSampler(SamplingType.RESERVOIR, new TupleSampler.DefaultSamplingOptions());
-		sampler.sample(Arrays.asList(new TableInput[] { new TableInput(new TupleInputFormat(), new HashMap<String, String>(), schema, new IdentityRecordProcessor(), new Path(INPUT)) }), schema, conf, 10, new Path(OUTPUT));
+		sampler.sample(Arrays.asList(new TableInput[] { new TableInput(new TupleInputFormat(), new HashMap<String, String>(), schema, new IdentityRecordProcessor(), new Path(INPUT + "_r")) }), schema, conf, 10, new Path(OUTPUT + "_r"));
 		
 		nTuples = 0;
 		sampledKeys = new int[10];
 
-    reader = new TupleFile.Reader(FileSystem.get(conf), conf, new Path(OUTPUT));
+    reader = new TupleFile.Reader(FileSystem.get(conf), conf, new Path(OUTPUT + "_r"));
     tuple = new Tuple(reader.getSchema());
     while(reader.next(tuple)) {
       // Get the "foo" field from sampled Tuples
@@ -120,24 +120,24 @@ public class TestTupleSampler {
 		// The lower bound is very low, usually the average key will be around 1/4th of the max key (10000).
 		assertTrue(avgKey > 100);
 		
-		Runtime.getRuntime().exec("rm -rf " + INPUT);
-		Runtime.getRuntime().exec("rm -rf " + OUTPUT);
+		Runtime.getRuntime().exec("rm -rf " + INPUT + "_r");
+		Runtime.getRuntime().exec("rm -rf " + OUTPUT + "_r");
 	}
 	
-	public void testDefault(long splitSize) throws TupleSamplerException, IOException, InterruptedException {
-		Runtime.getRuntime().exec("rm -rf " + INPUT);
-		Runtime.getRuntime().exec("rm -rf " + OUTPUT);
+	public void testDefault(long splitSize, int iter) throws TupleSamplerException, IOException, InterruptedException {
+		Runtime.getRuntime().exec("rm -rf " + INPUT + "_" + iter);
+		Runtime.getRuntime().exec("rm -rf " + OUTPUT + "_" + iter);
 		
 		Configuration conf = new Configuration();
 
-    TupleFile.Writer writer = new TupleFile.Writer(FileSystem.get(conf), conf, new Path(INPUT), schema);
+    TupleFile.Writer writer = new TupleFile.Writer(FileSystem.get(conf), conf, new Path(INPUT + "_" + iter), schema);
 		for(int i = 0; i < 1000; i++) {
 			writer.append(randomTuple());
 		}
 		writer.close();
 
     // Requesting as many samples as splits so one sample is needed from each split.
-    FileStatus status = FileSystem.get(conf).getFileStatus(new Path(INPUT));
+    FileStatus status = FileSystem.get(conf).getFileStatus(new Path(INPUT + "_" + iter));
     long expectedSplits = Math.max(1, (long) Math.ceil(((double) status.getLen()) / splitSize));
 
 		TupleSampler.DefaultSamplingOptions options = new TupleSampler.DefaultSamplingOptions();
@@ -145,9 +145,9 @@ public class TestTupleSampler {
     options.setMaxSplitsToVisit(Integer.MAX_VALUE);
 		
 		TupleSampler sampler = new TupleSampler(SamplingType.DEFAULT, options);
-		sampler.sample(Arrays.asList(new TableInput[] { new TableInput(new TupleInputFormat(), new HashMap<String, String>(), schema, new IdentityRecordProcessor(), new Path(INPUT)) }), schema, conf, expectedSplits, new Path(OUTPUT));
+		sampler.sample(Arrays.asList(new TableInput[] { new TableInput(new TupleInputFormat(), new HashMap<String, String>(), schema, new IdentityRecordProcessor(), new Path(INPUT + "_" + iter)) }), schema, conf, expectedSplits, new Path(OUTPUT + "_" + iter));
 		int nTuples = 0;
-    TupleFile.Reader reader = new TupleFile.Reader(FileSystem.get(conf), conf, new Path(OUTPUT));
+    TupleFile.Reader reader = new TupleFile.Reader(FileSystem.get(conf), conf, new Path(OUTPUT + "_" + iter));
     Tuple tuple = new Tuple(reader.getSchema());
     while(reader.next(tuple)) {
 			nTuples++;
@@ -159,8 +159,8 @@ public class TestTupleSampler {
 		
 		assertEquals(expectedSplits, nTuples);
 		
-		Runtime.getRuntime().exec("rm -rf " + INPUT);
-		Runtime.getRuntime().exec("rm -rf " + OUTPUT);
+		Runtime.getRuntime().exec("rm -rf " + INPUT + "_" + iter);
+		Runtime.getRuntime().exec("rm -rf " + OUTPUT + "_" + iter);
 	}
 
 	final Schema schema = new Schema("schema", Fields.parse("id:string, foo:string"));

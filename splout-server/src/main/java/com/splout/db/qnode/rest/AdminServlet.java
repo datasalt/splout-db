@@ -39,6 +39,7 @@ public class AdminServlet extends BaseServlet {
 	public final static String ACTION_TABLESPACES = "tablespaces";
 	public final static String ACTION_DNODE_LIST = "dnodelist";
 	public final static String ACTION_OVERVIEW = "overview";
+	public final static String ACTION_DEPLOYMENTS_STATUS = "deploymentsstatus"; 
 	
 	public AdminServlet(IQNodeHandler qNodeHandler) {
 	  super(qNodeHandler);
@@ -49,6 +50,9 @@ public class AdminServlet extends BaseServlet {
 	    IOException {
 
 		String action = req.getParameter("action");
+		
+		resp.setHeader("content-type", "application/json;charset=UTF-8");
+		resp.setCharacterEncoding("UTF-8");
 		
 		String response = null;
 		try {
@@ -67,6 +71,8 @@ public class AdminServlet extends BaseServlet {
 				response = JSONSerDe.ser(qNodeHandler.getDNodeList());								
 			} else if(action.equals(ACTION_OVERVIEW)) {
 				response = JSONSerDe.ser(qNodeHandler.overview());	
+			} else if(action.equals(ACTION_DEPLOYMENTS_STATUS)) {
+				response = JSONSerDe.ser(qNodeHandler.deploymentsStatus());
 			} else {
 				throw new ServletException("Unknown action: " + action);
 			}

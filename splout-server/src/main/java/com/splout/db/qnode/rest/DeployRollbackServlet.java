@@ -63,6 +63,9 @@ public class DeployRollbackServlet extends BaseServlet {
 		while((line = reader.readLine()) != null) {
 			postBody.append(line);
 		}
+		
+		resp.setHeader("content-type", "application/json;charset=UTF-8");
+		resp.setCharacterEncoding("UTF-8");
 
 		String action = req.getParameter("action");
 		String response = null;
@@ -80,6 +83,9 @@ public class DeployRollbackServlet extends BaseServlet {
 					if(request.getPartitionMap().size() != request.getReplicationMap().size()) {
 						throw new IllegalArgumentException(
 						    "Invalid deploy request with non-coherent replication / partition maps [" + request + "]");
+					}
+					if(request.getEngine() == null) {
+						throw new IllegalArgumentException("Invalid deploy request with null engine id received");
 					}
 				}
 				response = JSONSerDe.ser(qNodeHandler.deploy(deployReq));

@@ -1,10 +1,10 @@
-package com.splout.db.common;
+package com.splout.db.engine;
 
 /*
  * #%L
  * Splout SQL commons
  * %%
- * Copyright (C) 2012 Datasalt Systems S.L.
+ * Copyright (C) 2012 - 2013 Datasalt Systems S.L.
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,45 +34,45 @@ import org.apache.commons.logging.LogFactory;
 
 import com.jolbox.bonecp.BoneCP;
 import com.jolbox.bonecp.BoneCPConfig;
+import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
+import com.splout.db.engine.EngineManager.EngineException;
 
 /**
- * SQL Wrapper for querying SQLite through a connection pool using BoneCP (<a
- * href="http://jolbox.com">http://jolbox.com/</a>).
+ * Generic JDBC Manager which can be reused by any engine which is JDBC-compliant.
  */
-public class SQLiteJDBCManager implements ISQLiteManager {
-
-	private final static Log log = LogFactory.getLog(SQLiteJDBCManager.class);
+public class JDBCManager {
+	
+	private final static Log log = LogFactory.getLog(JDBCManager.class);
 	BoneCP connectionPool = null;
-
-	public SQLiteJDBCManager(String dbFile, int nConnections) throws SQLException, ClassNotFoundException {
-		// Load the sqlite-JDBC driver using the current class loader
-		Class.forName("org.sqlite.JDBC");
+	
+	public JDBCManager(String driver, String connectionUri, int nConnectionsPool, String userName, String password) throws SQLException, ClassNotFoundException {
+		
+		Class.forName(driver);
+		
 		BoneCPConfig config = new BoneCPConfig();
-		config.setJdbcUrl("jdbc:sqlite:" + dbFile);
-		config.setMinConnectionsPerPartition(nConnections);
-		config.setMaxConnectionsPerPartition(nConnections);
-		config.setUsername("foo");
-		config.setPassword("foo");
+		config.setJdbcUrl(connectionUri);
+		config.setMinConnectionsPerPartition(nConnectionsPool);
+		config.setMaxConnectionsPerPartition(nConnectionsPool);
+		config.setUsername(userName);
+		config.setPassword(password);
 		config.setPartitionCount(1);
+		config.setDefaultAutoCommit(false);
 
 		connectionPool = new BoneCP(config); // setup the connection pool
 	}
-
-	public Connection getConnectionFromPool() throws SQLException {
-		return connectionPool.getConnection();
-	}
-
+	
 	/**
 	 * The contract of this function is to return a JSON-ized ArrayList of JSON Objects which in Java are represented as
 	 * Map<String, Object>. So, for a query with no results, an empty ArrayList is returned.
 	 */
-	public String query(String query, int maxResults) throws SQLException, JSONSerDeException {
+	public String query(String query, int maxResults) throws EngineException {
 		long start = System.currentTimeMillis();
-		Connection connection = connectionPool.getConnection(); // fetch a connection
-		Statement stmt = null;
+		Connection connection = null;
 		ResultSet rs = null;
+		Statement stmt = null;
 		try {
+			connection = connectionPool.getConnection(); // fetch a connection
 			stmt = connection.createStatement();
 			String result = null;
 			if(stmt.execute(query)) {
@@ -85,20 +85,28 @@ public class SQLiteJDBCManager implements ISQLiteManager {
 			log.info(Thread.currentThread().getName() + ": Query [" + query + "] handled in [" + (end - start)
 			    + "] ms.");
 			return result;
+		} catch(SQLException e) {
+			throw new EngineException(e);
+		} catch(JSONSerDeException e) {
+			throw new EngineException(e);
 		} finally {
-			if(rs != null) {
-				rs.close();
+			try {
+				if(rs != null) {
+					rs.close();
+				}
+				if(stmt != null) {
+					stmt.close();
+				}
+				connection.close();
+			} catch(SQLException e) {
+				throw new EngineException(e);
 			}
-			if(stmt != null) {
-				stmt.close();
-			}
-			connection.close();
 		}
 	}
 
 	// -------- //
 
-	private static List<HashMap<String, Object>> convertResultSetToList(ResultSet rs, int maxResults)
+	public static List<HashMap<String, Object>> convertResultSetToList(ResultSet rs, int maxResults)
 	    throws SQLException {
 		ResultSetMetaData md = rs.getMetaData();
 		int columns = md.getColumnCount();
@@ -111,7 +119,8 @@ public class SQLiteJDBCManager implements ISQLiteManager {
 			list.add(row);
 		}
 		if(list.size() == maxResults) {
-			throw new SQLException("Hard limit on number of results reached (" + maxResults + "), please use a LIMIT for this query.");
+			throw new SQLException("Hard limit on number of results reached (" + maxResults
+			    + "), please use a LIMIT for this query.");
 		}
 		return list;
 	}
@@ -120,8 +129,11 @@ public class SQLiteJDBCManager implements ISQLiteManager {
 		connectionPool.shutdown();
 	}
 
-	@Override
-  public String exec(String query) throws SQLException, JSONSerDeException {
-	  return query(query, 1);
-  }
+	public String exec(String query) throws EngineException {
+		return query(query, 1);
+	}
+	
+	public Connection getConnectionFromPool() throws SQLException {
+		return connectionPool.getConnection();
+	}
 }

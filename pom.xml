@@ -177,7 +177,7 @@
 
     <ciManagement>
         <system>Jenkins CI</system>
-        <url>http://clinker.datasalt.com/jenkins/view/Splout-db/</url>
+        <url>http://clinker.datasalt.com/jenkins/view/SploutSQL/</url>
     </ciManagement>
 
     <scm>
@@ -210,4 +210,5 @@
             <url>http://clinker.datasalt.com/nexus/content/repositories/snapshots</url>
         </snapshotRepository>
     </distributionManagement>
+
 </project>

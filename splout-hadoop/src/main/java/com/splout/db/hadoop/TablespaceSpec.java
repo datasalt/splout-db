@@ -35,6 +35,7 @@ import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.io.Schema.Field;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleTextInputFormat;
 import com.google.common.collect.ImmutableList;
+import com.splout.db.engine.SploutEngine;
 import com.splout.db.hadoop.TableSpec.FieldIndex;
 
 /**
@@ -47,12 +48,14 @@ public class TablespaceSpec {
 	private final ImmutableList<Table> replicateAllTables;
 	private final int nPartitions;
 	private final List<String> initStatements;
+	private final SploutEngine engine;
 
-	TablespaceSpec(List<Table> partitionedTables, List<Table> replicateAllTables, int nPartitions, List<String> initStatements) {
+	TablespaceSpec(List<Table> partitionedTables, List<Table> replicateAllTables, int nPartitions, List<String> initStatements, SploutEngine engine) {
 		this.partitionedTables = ImmutableList.copyOf(partitionedTables);
 		this.replicateAllTables = ImmutableList.copyOf(replicateAllTables == null ? new ArrayList<Table>() : replicateAllTables);
 		this.nPartitions = nPartitions;
 		this.initStatements = initStatements;
+		this.engine = engine;
 	}
 
 	/**
@@ -97,7 +100,7 @@ public class TablespaceSpec {
 		}
 		Field[] partitionByFields = fields.toArray(new Field[0]);
 		partitionedTables.add(new Table(new TableInput(inputFormat, new HashMap<String, String>(), schema, new IdentityRecordProcessor(), input), new TableSpec(schema, partitionByFields, new FieldIndex[] { new FieldIndex(partitionByFields) },null, null, null, null, null)));
-		TablespaceSpec tablespace = new TablespaceSpec(partitionedTables, new ArrayList<Table>(), nPartitions, null);
+		TablespaceSpec tablespace = new TablespaceSpec(partitionedTables, new ArrayList<Table>(), nPartitions, null, SploutEngine.getDefault());
 		return tablespace;
 	}
 	
@@ -114,5 +117,8 @@ public class TablespaceSpec {
   }
 	public List<String> getInitStatements() {
   	return initStatements;
+  }
+	public SploutEngine getEngine() {
+	  return engine;
   }
 }

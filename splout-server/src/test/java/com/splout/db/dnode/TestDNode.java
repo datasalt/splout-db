@@ -81,7 +81,7 @@ public class TestDNode {
 		DNodeHandler dHandler = new DNodeHandler(new Fetcher(testConfig) {
 			
 			@Override
-			public File fetch(String uriStr) throws IOException, URISyntaxException {
+			public File fetch(String uriStr, Reporter reporter) throws IOException, URISyntaxException {
 				try {
 	        Thread.sleep(5000);
 	        return null;

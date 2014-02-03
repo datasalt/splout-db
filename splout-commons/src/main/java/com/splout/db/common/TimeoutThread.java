@@ -32,6 +32,7 @@ import com.almworks.sqlite4java.SQLiteException;
 
 /**
  * A Thread that is in charge of killing long-running queries.
+ * TODO Generalize to other than sqlite 
  */
 public class TimeoutThread extends Thread {
 

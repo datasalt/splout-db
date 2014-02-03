@@ -31,6 +31,7 @@ import com.splout.db.common.Tablespace;
 import com.splout.db.dnode.beans.DNodeSystemStatus;
 import com.splout.db.qnode.beans.DeployInfo;
 import com.splout.db.qnode.beans.DeployRequest;
+import com.splout.db.qnode.beans.DeploymentsStatus;
 import com.splout.db.qnode.beans.QNodeStatus;
 import com.splout.db.qnode.beans.QueryStatus;
 import com.splout.db.qnode.beans.StatusMessage;
@@ -87,6 +88,10 @@ public class QNodeMockHandler implements IQNodeHandler {
   }
 	@Override
   public Tablespace tablespace(String tablespace) throws Exception {
+	  return null;
+  }
+	@Override
+  public DeploymentsStatus deploymentsStatus() throws Exception {
 	  return null;
   }
 }

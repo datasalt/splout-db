@@ -16,6 +16,13 @@
 	<name>Splout SQL commons</name>
 	<description>Splout is a read only, horizontally scalable SQL database that plays well with Hadoop.</description>
 
+	<repositories>
+		<repository>
+  			<id>clojars.org</id>
+  			<url>http://clojars.org/repo</url>
+		</repository>
+	</repositories>
+
 	<licenses>
 		<license>
 			<name>Apache License version 2.0</name>
@@ -198,8 +205,14 @@
 			<artifactId>powermock-api-mockito</artifactId>
 			<version>1.4.12</version>
 			<scope>test</scope>
-		</dependency>
+		</dependency>            
             
+        <dependency>
+            <groupId>commons-configuration</groupId>
+            <artifactId>commons-configuration</artifactId>
+            <version>1.8</version>
+        </dependency>
+        
 		<dependency>
 			<groupId>com.splout.db</groupId>
 			<artifactId>splout-resources</artifactId>
@@ -244,6 +257,18 @@
 			<groupId>org.codehaus.jackson</groupId>
 			<artifactId>jackson-mapper-lgpl</artifactId>
 			<version>${jackson.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>commons-lang</groupId>
+			<artifactId>commons-lang</artifactId>
+			<version>2.6</version>
+		</dependency>
+
+	        <dependency>
+		        <groupId>commons-io</groupId>
+		        <artifactId>commons-io</artifactId>
+		        <version>2.2</version>
 		</dependency>
 
 		<!-- SQLite -->

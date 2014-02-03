@@ -28,12 +28,14 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
   private static final org.apache.thrift.protocol.TField N_REPLICAS_FIELD_DESC = new org.apache.thrift.protocol.TField("nReplicas", org.apache.thrift.protocol.TType.I32, (short)3);
   private static final org.apache.thrift.protocol.TField DEPLOYMENT_DATE_FIELD_DESC = new org.apache.thrift.protocol.TField("deploymentDate", org.apache.thrift.protocol.TType.I64, (short)4);
   private static final org.apache.thrift.protocol.TField INIT_STATEMENTS_FIELD_DESC = new org.apache.thrift.protocol.TField("initStatements", org.apache.thrift.protocol.TType.LIST, (short)5);
+  private static final org.apache.thrift.protocol.TField ENGINE_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("engineId", org.apache.thrift.protocol.TType.STRING, (short)6);
 
   public String minKey; // required
   public String maxKey; // required
   public int nReplicas; // required
   public long deploymentDate; // required
   public List<String> initStatements; // required
+  public String engineId; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -41,7 +43,8 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
     MAX_KEY((short)2, "maxKey"),
     N_REPLICAS((short)3, "nReplicas"),
     DEPLOYMENT_DATE((short)4, "deploymentDate"),
-    INIT_STATEMENTS((short)5, "initStatements");
+    INIT_STATEMENTS((short)5, "initStatements"),
+    ENGINE_ID((short)6, "engineId");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -66,6 +69,8 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
           return DEPLOYMENT_DATE;
         case 5: // INIT_STATEMENTS
           return INIT_STATEMENTS;
+        case 6: // ENGINE_ID
+          return ENGINE_ID;
         default:
           return null;
       }
@@ -124,6 +129,8 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
     tmpMap.put(_Fields.INIT_STATEMENTS, new org.apache.thrift.meta_data.FieldMetaData("initStatements", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING))));
+    tmpMap.put(_Fields.ENGINE_ID, new org.apache.thrift.meta_data.FieldMetaData("engineId", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(PartitionMetadata.class, metaDataMap);
   }
@@ -167,6 +174,9 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
       }
       this.initStatements = __this__initStatements;
     }
+    if (other.isSetEngineId()) {
+      this.engineId = other.engineId;
+    }
   }
 
   public PartitionMetadata deepCopy() {
@@ -182,6 +192,7 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
     setDeploymentDateIsSet(false);
     this.deploymentDate = 0;
     this.initStatements = null;
+    this.engineId = null;
   }
 
   public String getMinKey() {
@@ -317,6 +328,30 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
     }
   }
 
+  public String getEngineId() {
+    return this.engineId;
+  }
+
+  public PartitionMetadata setEngineId(String engineId) {
+    this.engineId = engineId;
+    return this;
+  }
+
+  public void unsetEngineId() {
+    this.engineId = null;
+  }
+
+  /** Returns true if field engineId is set (has been assigned a value) and false otherwise */
+  public boolean isSetEngineId() {
+    return this.engineId != null;
+  }
+
+  public void setEngineIdIsSet(boolean value) {
+    if (!value) {
+      this.engineId = null;
+    }
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case MIN_KEY:
@@ -359,6 +394,14 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
       }
       break;
 
+    case ENGINE_ID:
+      if (value == null) {
+        unsetEngineId();
+      } else {
+        setEngineId((String)value);
+      }
+      break;
+
     }
   }
 
@@ -378,6 +421,9 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
 
     case INIT_STATEMENTS:
       return getInitStatements();
+
+    case ENGINE_ID:
+      return getEngineId();
 
     }
     throw new IllegalStateException();
@@ -400,6 +446,8 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
       return isSetDeploymentDate();
     case INIT_STATEMENTS:
       return isSetInitStatements();
+    case ENGINE_ID:
+      return isSetEngineId();
     }
     throw new IllegalStateException();
   }
@@ -459,6 +507,15 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
       if (!(this_present_initStatements && that_present_initStatements))
         return false;
       if (!this.initStatements.equals(that.initStatements))
+        return false;
+    }
+
+    boolean this_present_engineId = true && this.isSetEngineId();
+    boolean that_present_engineId = true && that.isSetEngineId();
+    if (this_present_engineId || that_present_engineId) {
+      if (!(this_present_engineId && that_present_engineId))
+        return false;
+      if (!this.engineId.equals(that.engineId))
         return false;
     }
 
@@ -528,6 +585,16 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
         return lastComparison;
       }
     }
+    lastComparison = Boolean.valueOf(isSetEngineId()).compareTo(typedOther.isSetEngineId());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetEngineId()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.engineId, typedOther.engineId);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     return 0;
   }
 
@@ -592,6 +659,13 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
+        case 6: // ENGINE_ID
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
+            this.engineId = iprot.readString();
+          } else { 
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
         default:
           org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
       }
@@ -637,6 +711,13 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
         oprot.writeFieldEnd();
       }
     }
+    if (this.engineId != null) {
+      if (isSetEngineId()) {
+        oprot.writeFieldBegin(ENGINE_ID_FIELD_DESC);
+        oprot.writeString(this.engineId);
+        oprot.writeFieldEnd();
+      }
+    }
     oprot.writeFieldStop();
     oprot.writeStructEnd();
   }
@@ -676,6 +757,16 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
         sb.append("null");
       } else {
         sb.append(this.initStatements);
+      }
+      first = false;
+    }
+    if (isSetEngineId()) {
+      if (!first) sb.append(", ");
+      sb.append("engineId:");
+      if (this.engineId == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.engineId);
       }
       first = false;
     }

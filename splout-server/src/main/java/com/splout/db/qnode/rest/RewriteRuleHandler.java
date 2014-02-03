@@ -88,6 +88,12 @@ public class RewriteRuleHandler extends HandlerWrapper {
 		 * {@link AdminServlet} rewrite rules 
 		 */
 		
+		if(target.startsWith("/api/deployments")) {
+			MutableHttpRequest req = new MutableHttpRequest(request);
+			req.addParameter("action", AdminServlet.ACTION_DEPLOYMENTS_STATUS);
+			super.handle("/api/admin", req, response, dispatch);			
+		}
+		
 		if(target.startsWith("/api/overview")) {
 			MutableHttpRequest req = new MutableHttpRequest(request);
 			req.addParameter("action", AdminServlet.ACTION_OVERVIEW);

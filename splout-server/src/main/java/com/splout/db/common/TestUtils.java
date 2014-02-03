@@ -35,6 +35,8 @@ import com.splout.db.dnode.DNode;
 import com.splout.db.dnode.DNodeProperties;
 import com.splout.db.dnode.FetcherProperties;
 import com.splout.db.dnode.IDNodeHandler;
+import com.splout.db.engine.SQLite4JavaManager;
+import com.splout.db.engine.EngineManager.EngineException;
 import com.splout.db.hazelcast.CoordinationStructures;
 import com.splout.db.hazelcast.HazelcastConfigBuilder;
 import com.splout.db.hazelcast.HazelcastConfigBuilder.HazelcastConfigBuilderException;
@@ -50,12 +52,14 @@ public class TestUtils {
 	/**
 	 * Creates a simple database with two columns: one integer (a) and one string (b). It also insertes one default row
 	 * from parameters a, b.
+	 * @throws EngineException 
 	 */
 	public static void createFooDatabase(String where, int a, String b) throws SQLException, JSONSerDeException,
-	    ClassNotFoundException {
+	    ClassNotFoundException, EngineException {
 		File dbFolder = new File(where);
 		dbFolder.mkdir();
-		final SQLiteJDBCManager manager = new SQLiteJDBCManager(where + "/" + "foo.db", 10);
+		final SQLite4JavaManager manager = new SQLite4JavaManager();
+		manager.init(new File(where + "/" + "foo.db"), null, null);
 		manager.query("DROP TABLE IF EXISTS t;", 100);
 		manager.query("CREATE TABLE t (a INT, b TEXT);", 100);
 		manager.query("INSERT INTO t (a, b) VALUES (" + a + ", \"" + b + "\")", 100);

@@ -59,14 +59,17 @@ public class Fetcher {
 
 	private final static Log log = LogFactory.getLog(Fetcher.class);
 
-	File tempDir;
-	S3Service s3Service;
-	String accessKey;
-	String secretKey;
-	int downloadBufferSize;
-	int bytesPerSecThrottle;
+	private File tempDir;
+	private S3Service s3Service;
+	private String accessKey;
+	private String secretKey;
+	private int downloadBufferSize;
+	private int bytesPerSecThrottle;
+	private long bytesToReportProgress;
 
-	Configuration hadoopConf;
+	private Configuration hadoopConf;
+
+	public final static int SIZE_UNKNOWN = -1;
 
 	public Fetcher(SploutConfiguration config) {
 		tempDir = new File(config.getString(FetcherProperties.TEMP_DIR));
@@ -74,6 +77,7 @@ public class Fetcher {
 		secretKey = config.getString(FetcherProperties.S3_SECRET_KEY, null);
 		downloadBufferSize = config.getInt(FetcherProperties.DOWNLOAD_BUFFER);
 		bytesPerSecThrottle = config.getInt(FetcherProperties.BYTES_PER_SEC_THROTTLE);
+		bytesToReportProgress = config.getLong(FetcherProperties.BYTES_TO_REPORT_PROGRESS);
 		String fsName = config.getString(FetcherProperties.HADOOP_FS_NAME);
 		hadoopConf = new Configuration();
 		if(fsName != null) {
@@ -95,8 +99,7 @@ public class Fetcher {
 	/*
 	 * Fetch a file that is in a Hadoop file system. Return a local File.
 	 */
-	private File hdfsFetch(String path) throws IOException {
-		Path fromPath = new Path(path);
+	private File hdfsFetch(Path fromPath, Reporter reporter) throws IOException {
 		File toFile = new File(tempDir, fromPath.toUri().getPath());
 		File toDir = new File(toFile.getParent());
 		if(toDir.exists()) {
@@ -104,7 +107,7 @@ public class Fetcher {
 		}
 		toDir.mkdirs();
 		Path toPath = new Path(toFile.getCanonicalPath());
-		
+
 		FileSystem fS = fromPath.getFileSystem(hadoopConf);
 		FileSystem tofS = FileSystem.getLocal(hadoopConf);
 
@@ -112,6 +115,7 @@ public class Fetcher {
 
 		for(FileStatus fStatus : fS.globStatus(fromPath)) {
 			log.info("Copying " + fStatus.getPath() + " to " + toPath);
+			long bytesSoFar = 0;
 
 			FSDataInputStream iS = fS.open(fStatus.getPath());
 			FSDataOutputStream oS = tofS.create(toPath);
@@ -120,14 +124,37 @@ public class Fetcher {
 
 			int nRead;
 			while((nRead = iS.read(buffer, 0, buffer.length)) != -1) {
+				bytesSoFar += nRead;
 				oS.write(buffer, 0, nRead);
 				throttler.incrementAndThrottle(nRead);
+				if(bytesSoFar >= bytesToReportProgress) {
+					reporter.progress(bytesSoFar);
+					bytesSoFar = 0l;
+				}
+			}
+
+			if(reporter != null) {
+				reporter.progress(bytesSoFar);
 			}
 
 			oS.close();
 			iS.close();
 		}
+
 		return toDir;
+	}
+
+	/**
+	 * An interface that can be implemented to receive progress about fetching. The Fetcher will use it when provided.
+	 **/
+	public static interface Reporter {
+
+		/**
+		 * This method is called periodically to report progress made. The reported consumed bytes are an incremental
+		 * measure, not a total measure. In other words, "consumed" is not the total consumed bytes since the beginning of
+		 * the fetching, but the total "consumed" bytes since the last call to progress.
+		 */
+		public void progress(long consumed);
 	}
 
 	/**
@@ -171,14 +198,7 @@ public class Fetcher {
 	/*
 	 * Fetch a file that is in a S3 file system. Return a local File. It accepts "s3://" and "s3n://" prefixes.
 	 */
-	private File s3Fetch(String fileUrl) throws IOException {
-		URI uri;
-		try {
-			uri = new URI(fileUrl);
-		} catch(URISyntaxException e1) {
-			throw new RuntimeException("Bad URI passed to s3Fetch()! " + fileUrl);
-		}
-
+	private File s3Fetch(URI uri, Reporter reporter) throws IOException {
 		String bucketName = uri.getHost();
 		String path = uri.getPath();
 
@@ -202,6 +222,8 @@ public class Fetcher {
 			}
 
 			for(S3Object object : s3Service.listObjects(new S3Bucket(bucketName), path, "")) {
+				long bytesSoFar = 0;
+
 				String fileName = path;
 				if(path.contains("/")) {
 					fileName = path.substring(path.lastIndexOf("/") + 1, path.length());
@@ -220,8 +242,17 @@ public class Fetcher {
 
 				int nRead;
 				while((nRead = iS.read(buffer, 0, buffer.length)) != -1) {
+					bytesSoFar += nRead;
 					writer.write(buffer, 0, nRead);
 					throttler.incrementAndThrottle(nRead);
+					if(bytesSoFar >= bytesToReportProgress) {
+						reporter.progress(bytesSoFar);
+						bytesSoFar = 0l;
+					}
+				}
+
+				if(reporter != null) {
+					reporter.progress(bytesSoFar);
 				}
 
 				writer.close();
@@ -242,19 +273,18 @@ public class Fetcher {
 	/*
 	 * Fetch a file that is in a local file system. Return a local File.
 	 */
-	private File fileFetch(URI uri) throws IOException {
-		File file = new File(uri);
+	private File fileFetch(File file, Reporter reporter) throws IOException {
 		File toDir = new File(tempDir, file.getParent() + "/" + file.getName());
 		if(toDir.exists()) {
 			FileUtils.deleteDirectory(toDir);
 		}
 		toDir.mkdirs();
 		log.info("Copying " + file + " to " + toDir);
-		copyFile(file, new File(toDir, file.getName()));
+		copyFile(file, new File(toDir, file.getName()), reporter);
 		return toDir;
 	}
 
-	private void copyFile(File sourceFile, File destFile) throws IOException {
+	private void copyFile(File sourceFile, File destFile, Reporter reporter) throws IOException {
 		if(!destFile.exists()) {
 			destFile.createNewFile();
 		}
@@ -265,24 +295,35 @@ public class Fetcher {
 
 		FileInputStream iS = null;
 		FileOutputStream oS = null;
-		
+
 		try {
 			iS = new FileInputStream(sourceFile);
-			oS = new FileOutputStream(destFile); 
+			oS = new FileOutputStream(destFile);
 			source = iS.getChannel();
 			destination = oS.getChannel();
-			long count = 0;
+			long bytesSoFar = 0;
+			long reportingBytesSoFar = 0;
 			long size = source.size();
 
 			int transferred = 0;
 
-			while(count < size) {
+			while(bytesSoFar < size) {
 				// Casting to int here is safe since we will transfer at most "downloadBufferSize" bytes.
 				// This is done on purpose for being able to implement Throttling.
-				transferred = (int) destination.transferFrom(source, count, downloadBufferSize);
-				count += transferred;
+				transferred = (int) destination.transferFrom(source, bytesSoFar, downloadBufferSize);
+				bytesSoFar += transferred;
+				reportingBytesSoFar += transferred;
 				throttler.incrementAndThrottle(transferred);
+				if(reportingBytesSoFar >= bytesToReportProgress) {
+					reporter.progress(reportingBytesSoFar);
+					reportingBytesSoFar = 0l;
+				}
 			}
+
+			if(reporter != null) {
+				reporter.progress(reportingBytesSoFar);
+			}
+
 		} finally {
 			if(iS != null) {
 				iS.close();
@@ -300,20 +341,40 @@ public class Fetcher {
 	}
 
 	/**
+	 * Use this method to know the total size of a deployment URI.
+	 */
+	public long sizeOf(String uriStr) throws IOException, URISyntaxException {
+		URI uri = new URI(uriStr);
+		if(uriStr.startsWith("file:")) {
+			File f = new File(uri);
+			return f.isDirectory() ? FileUtils.sizeOfDirectory(f) : f.length();
+		} else if(uriStr.startsWith("s3")) {
+			return -1; // NotYetImplemented
+		} else if(uriStr.startsWith("hdfs")) {
+			return FileSystem.get(hadoopConf).getContentSummary(new Path(uriStr)).getLength();
+		} else {
+			throw new IllegalArgumentException("Scheme not recognized or non-absolute URI provided: " + uri);
+		}
+	}
+
+	/**
 	 * This is the main method that accepts a URI string and delegates the fetching to the appropriate private method.
 	 */
 	public File fetch(String uriStr) throws IOException, URISyntaxException {
+		return fetch(uriStr, null);
+	}
+
+	/**
+	 * This is the main method that accepts a URI string and delegates the fetching to the appropriate private method.
+	 */
+	public File fetch(String uriStr, Reporter reporter) throws IOException, URISyntaxException {
 		URI uri = new URI(uriStr);
 		if(uriStr.startsWith("file:")) {
-			return fileFetch(uri);
+			return fileFetch(new File(uri), reporter);
 		} else if(uriStr.startsWith("s3")) {
-			if(uriStr.startsWith("s3n")) {
-				return s3Fetch(uriStr);
-			} else {
-				return s3Fetch(uriStr);
-			}
+			return s3Fetch(uri, reporter);
 		} else if(uriStr.startsWith("hdfs")) {
-			return hdfsFetch(uriStr);
+			return hdfsFetch(new Path(uriStr), reporter);
 		} else {
 			throw new IllegalArgumentException("Scheme not recognized or non-absolute URI provided: " + uri);
 		}

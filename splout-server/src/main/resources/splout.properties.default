@@ -130,12 +130,18 @@ dnode.slow.query.abs.limit	2500
 # This folder is also used by the HTTP File exchanger module
 fetcher.temp.dir	fetcher-tmp
 
-# The size in bytes of the in-memory buffer used to download files from S3 
+# The size in bytes of the in-memory buffer used to download files 
 # This property is the same for the HTTP File exchanger module
 fetcher.download.buffer	1048576
 
 # (Deprecated) Whether to use throttling (> 0) or not. If so, number of bytes per second to throttle.
 fetcher.bytes.per.sec.throttle	-1
+
+# Everytime this number of bytes have been fetched from a file, a report will be made so that
+# the DNode can calculate the transferring speed and put the info into Hazelcast.
+# This shouldn't be too low - otherwise it would overload the network!
+# Leave default value in case of doubt.
+fetcher.bytes.to.report.progress	268435456
 
 #
 # If using Hadoop fetching, the address of the NameNode for 

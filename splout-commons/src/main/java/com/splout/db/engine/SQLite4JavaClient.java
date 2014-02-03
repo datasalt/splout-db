@@ -1,10 +1,10 @@
-package com.splout.db.common;
+package com.splout.db.engine;
 
 /*
  * #%L
  * Splout SQL commons
  * %%
- * Copyright (C) 2012 Datasalt Systems S.L.
+ * Copyright (C) 2012 - 2014 Datasalt Systems S.L.
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,11 @@ package com.splout.db.common;
  */
 
 import java.io.File;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,17 +38,16 @@ import org.apache.commons.logging.LogFactory;
 import com.almworks.sqlite4java.SQLiteConnection;
 import com.almworks.sqlite4java.SQLiteException;
 import com.almworks.sqlite4java.SQLiteStatement;
+import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
+import com.splout.db.common.TimeoutThread;
 
-/**
- * SQL Wrapper for querying SQLite by using sqlite4java (http://code.google.com/p/sqlite4java).
- */
-public class SQLite4JavaManager implements ISQLiteManager {
+public class SQLite4JavaClient {
 
-	private final static Log log = LogFactory.getLog(SQLite4JavaManager.class);
+	private final static Log log = LogFactory.getLog(SQLite4JavaClient.class);
 	
-	private final File dbFile;
-	private final List<String> initStatements;
+	private File dbFile;
+	private List<String> initStatements;
 	
 	// If present, will monitor long-running queries and kill them if needed
 	private TimeoutThread timeoutThread = null;
@@ -72,6 +71,7 @@ public class SQLite4JavaManager implements ISQLiteManager {
 			SQLiteConnection conn = new SQLiteConnection(dbFile);
 			try {
 				conn.open(true);
+				conn.setExtensionLoadingEnabled(true); // TODO Make optional
         // Executing some defaults
         conn.exec("PRAGMA cache_size=20");
         // User provided initStatements
@@ -100,11 +100,11 @@ public class SQLite4JavaManager implements ISQLiteManager {
 		}
 	};
 
-	public SQLite4JavaManager(String dbFile, List<String> initStatements) throws SQLException {
+	public SQLite4JavaClient(String dbFile, List<String> initStatements)  {
 		this.dbFile = new File(dbFile);
 		this.initStatements = initStatements;
 	}
-
+	
 	/**
 	 * Optionally sets a {@link TimeoutThread} that will take care of cancelling long-running queries.
 	 * If present, each SQLiteConnectiona associated with each thread will be monitored by this thread
@@ -114,8 +114,7 @@ public class SQLite4JavaManager implements ISQLiteManager {
 		this.timeoutThread = timeoutThread;
 	}
 	
-	@Override
-	public String exec(String query) throws SQLException, JSONSerDeException {
+	public String exec(String query) throws SQLException {
 		try {
 			db.get().exec(query);
 			return "[{ \"status\": \"OK\" }]";
@@ -124,8 +123,24 @@ public class SQLite4JavaManager implements ISQLiteManager {
 		}
 	}
 
-	@Override
-	public String query(String query, int maxResults) throws SQLException, JSONSerDeException {
+	public String query(String query, int maxResults) throws SQLException {
+
+		String t = Thread.currentThread().getName();
+		Set<SQLiteConnection> pendingClose = CLEAN_UP_AFTER_YOURSELF.get(t);
+		// Because SQLiteConnection can only be closed by owner Thread, here we need to check if we
+		// have some pending connections to close...
+		if(pendingClose != null && pendingClose.size() > 0) {
+			synchronized(pendingClose) {
+				Iterator<SQLiteConnection> it = pendingClose.iterator();
+				while(it.hasNext()) {
+					SQLiteConnection conn = it.next();
+					log.info("-- Closed a connection pending diposal: " + conn.getDatabaseFile());
+					conn.dispose();
+					it.remove();
+				}
+			}
+		}
+
 		SQLiteStatement st = null;
 		try {
 			SQLiteConnection conn = db.get();
@@ -155,14 +170,17 @@ public class SQLite4JavaManager implements ISQLiteManager {
 			return JSONSerDe.ser(list);
 		} catch(SQLiteException e) {
 			throw new SQLException(e);
-		} finally {
+		} catch(JSONSerDeException e) {
+			throw new SQLException(e);
+		} catch(SQLException e) {
+			throw new SQLException(e);
+    } finally {
 			if(st != null) {
 				st.dispose();
 			}
 		}
 	}
 
-	@Override
 	public void close() {
 		String thisThread = Thread.currentThread().getName();
 		for(ThreadAndConnection tConn: allOpenedConnections) {
@@ -176,10 +194,6 @@ public class SQLite4JavaManager implements ISQLiteManager {
 				}
 			}
 		}
-	}
-
-	@Override
-	public Connection getConnectionFromPool() throws SQLException {
-		throw new RuntimeException("Not implemented");
+//		timeoutThread.interrupt();
 	}
 }

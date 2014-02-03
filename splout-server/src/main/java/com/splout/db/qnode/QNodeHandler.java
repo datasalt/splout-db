@@ -24,6 +24,8 @@ package com.splout.db.qnode;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -61,6 +63,9 @@ import com.splout.db.qnode.QNodeHandlerContext.TablespaceVersionInfoException;
 import com.splout.db.qnode.Querier.QuerierException;
 import com.splout.db.qnode.beans.DeployInfo;
 import com.splout.db.qnode.beans.DeployRequest;
+import com.splout.db.qnode.beans.DeployStatus;
+import com.splout.db.qnode.beans.DeploymentStatus;
+import com.splout.db.qnode.beans.DeploymentsStatus;
 import com.splout.db.qnode.beans.ErrorQueryStatus;
 import com.splout.db.qnode.beans.QNodeStatus;
 import com.splout.db.qnode.beans.QueryStatus;
@@ -536,6 +541,70 @@ public class QNodeHandler implements IQNodeHandler {
 				context.returnDNodeClientToPool(dnode, client, renew);
 			}
 		}
+	}
+
+	/**
+	 * Returns an overview of what happened with all deployments so far.
+	 * There is a short status associated with each deploy, and there is a set of detailed log messages as well. 
+	 */
+	@Override
+	public DeploymentsStatus deploymentsStatus() throws Exception {
+		DeploymentsStatus status = new DeploymentsStatus();
+		status.setFailedDeployments(new ArrayList<DeploymentStatus>());
+		status.setFinishedDeployments(new ArrayList<DeploymentStatus>());
+		status.setOngoingDeployments(new ArrayList<DeploymentStatus>());
+		
+		for(Map.Entry<Long, DeployStatus> deployment: coord.getDeploymentsStatusPanel().entrySet()) {
+			long deployVersion = deployment.getKey();
+
+			DeploymentStatus dStatus = new DeploymentStatus();
+			dStatus.setDeploymentId(deployVersion);
+
+			DeployInfo dInfo = coord.getDeployInfoPanel().get(deployVersion);
+			dStatus.setDate("");
+			
+			if(dInfo != null) {
+				dStatus.setDate(dInfo.getStartedAt());
+				dStatus.setDataURIs(dInfo.getDataURIs());
+				dStatus.setTablespacesDeployed(dInfo.getTablespacesDeployed());
+			} else {
+				log.warn("Null DeployInfo for deploy: " + deployVersion +" - it should be persisted in any case.");
+			}
+
+			List<String> logsPerDeploy = new ArrayList<String>();
+			logsPerDeploy.addAll(coord.getDeployLogPanel(deployVersion));
+			logsPerDeploy.addAll(coord.getDeploySpeedPanel(deployVersion).values());
+			Collections.sort(logsPerDeploy);
+			dStatus.setLogMessages(logsPerDeploy);
+			
+			if(deployment.getValue().equals(DeployStatus.FAILED)) {
+				status.getFailedDeployments().add(dStatus);
+			} else if(deployment.getValue().equals(DeployStatus.FINISHED)) {
+				status.getFinishedDeployments().add(dStatus);
+			} else if(deployment.getValue().equals(DeployStatus.ONGOING)) {
+				status.getOngoingDeployments().add(dStatus);
+			}
+		}
+		
+		Comparator<DeploymentStatus> byDeploymentDateDesc = new Comparator<DeploymentStatus>() {
+
+			@Override
+      public int compare(DeploymentStatus dStatus1, DeploymentStatus dStatus2) {
+	      return dStatus2.getDate().compareTo(dStatus1.getDate());
+      }
+		};
+		
+		final int maxDeploymentsToShowPerCategory = 10 ;
+		
+		Collections.sort(status.getFailedDeployments(), byDeploymentDateDesc);
+		Collections.sort(status.getFinishedDeployments(), byDeploymentDateDesc);
+		Collections.sort(status.getOngoingDeployments(), byDeploymentDateDesc);
+		
+		status.setFailedDeployments(status.getFailedDeployments().subList(0, Math.min(status.getFailedDeployments().size(), maxDeploymentsToShowPerCategory)));
+		status.setFinishedDeployments(status.getFinishedDeployments().subList(0, Math.min(status.getFinishedDeployments().size(), maxDeploymentsToShowPerCategory)));
+		status.setOngoingDeployments(status.getOngoingDeployments().subList(0, Math.min(status.getOngoingDeployments().size(), maxDeploymentsToShowPerCategory)));
+		
+		return status;
 	}
 
 	@Override

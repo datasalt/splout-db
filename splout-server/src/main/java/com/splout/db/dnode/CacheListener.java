@@ -29,11 +29,10 @@ import net.sf.ehcache.event.CacheEventListener;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.splout.db.common.SQLite4JavaManager;
-import com.splout.db.common.SQLiteJDBCManager;
+import com.splout.db.engine.EngineManager;
 
 /**
- * An EHCache event listener that calls a finalization method in the value of the Cache which is a {@link SQLiteJDBCManager}
+ * An EHCache event listener that calls a finalization method in the value of the Cache which is a {@link EngineManager}
  * . We use an expiring cache in {@link DNode} for closing SQL connection pools that have not been used for some time.
  * We want to close the pool when the item expires and that's what this class does.
  */
@@ -46,8 +45,8 @@ public class CacheListener implements CacheEventListener, Cloneable {
 	 */
 	protected void closeManager(Element paramElement) {
 		log.info("Close manager: " + paramElement);
-		SQLite4JavaManager manager = (SQLite4JavaManager) paramElement.getObjectValue();
-		manager.close();
+		EngineManager manager = (EngineManager) paramElement.getObjectValue();
+    manager.close();
 	}
 
 	@Override

@@ -20,26 +20,38 @@ package com.splout.db.hadoop;
  * #L%
  */
 
-import com.datasalt.pangool.io.*;
-import com.datasalt.pangool.tuplemr.Criteria;
-import com.datasalt.pangool.tuplemr.OrderBy;
-import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat;
-import com.datasalt.pangool.utils.test.AbstractHadoopTestLibrary;
-import com.splout.db.common.PartitionEntry;
-import com.splout.db.common.SQLiteJDBCManager;
-import com.splout.db.hadoop.TupleSampler.SamplingType;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
+import java.nio.charset.Charset;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
-
-import static org.junit.Assert.*;
+import com.datasalt.pangool.io.Fields;
+import com.datasalt.pangool.io.ITuple;
+import com.datasalt.pangool.io.Schema;
+import com.datasalt.pangool.io.Tuple;
+import com.datasalt.pangool.io.TupleFile;
+import com.datasalt.pangool.io.Utf8;
+import com.datasalt.pangool.tuplemr.Criteria;
+import com.datasalt.pangool.tuplemr.OrderBy;
+import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleInputFormat;
+import com.datasalt.pangool.utils.test.AbstractHadoopTestLibrary;
+import com.google.common.io.Files;
+import com.splout.db.common.PartitionEntry;
+import com.splout.db.engine.DefaultEngine;
+import com.splout.db.engine.SQLite4JavaClient;
+import com.splout.db.hadoop.TupleSampler.SamplingType;
 
 @SuppressWarnings({ "rawtypes", "serial" })
 public class TestTablespaceGenerator extends AbstractHadoopTestLibrary implements Serializable  {
@@ -71,9 +83,9 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary implement
 		writer.append(getTuple("id5", "value52"));
 		writer.append(getTuple("id6", "value53"));
 		writer.append(getTuple("id6", "value54"));
+		
 		writer.append(getTuple("id7", "value55"));
 		writer.append(getTuple("id7", "value56"));
-
 		writer.append(getTuple("id8", "value61"));
 		writer.append(getTuple("id8", "value62"));
 		
@@ -91,17 +103,22 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary implement
 		assertEquals(0, (int) partitionMap.get(0).getShard());
 		
 		assertEquals("id1", partitionMap.get(1).getMin());
-		assertEquals("id2", partitionMap.get(1).getMax());
+		assertEquals("id4", partitionMap.get(1).getMax());
 		assertEquals(1, (int) partitionMap.get(1).getShard());
 
-		assertEquals("id2", partitionMap.get(2).getMin());
-		assertEquals("id5", partitionMap.get(2).getMax());
+		assertEquals("id4", partitionMap.get(2).getMin());
+		assertEquals("id6", partitionMap.get(2).getMax());
 		assertEquals(2, (int) partitionMap.get(2).getShard());
 
-		assertEquals("id5", partitionMap.get(3).getMin());
+		assertEquals("id6", partitionMap.get(3).getMin());
 		assertEquals(null, partitionMap.get(3).getMax());
 		assertEquals(3, (int) partitionMap.get(3).getShard());
 
+		// assert the engine id has been written too
+		File engineIdFile = new File(OUTPUT + "/" + TablespaceGenerator.OUT_ENGINE);
+		assertTrue(engineIdFile.exists());
+		assertEquals(DefaultEngine.class.getName(), Files.toString(engineIdFile, Charset.defaultCharset()));
+		
     trash(INPUT, OUTPUT);
 	}
 	
@@ -124,7 +141,7 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary implement
 		TablespaceGenerator viewGenerator = new TablespaceGenerator(tablespace, new Path(OUTPUT), this.getClass());
 		viewGenerator.generateView(conf, SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions());
 		
-		SQLiteJDBCManager manager = new SQLiteJDBCManager(OUTPUT + "/store/0.db", 10);
+		SQLite4JavaClient manager = new SQLite4JavaClient(OUTPUT + "/store/0.db", null);
     String results = manager.query("SELECT * FROM schema2;", 100);
 		assertTrue(results.contains("null"));
 
@@ -212,7 +229,7 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary implement
     TablespaceGenerator viewGenerator = new TablespaceGenerator(builder.build(), new Path(OUTPUT), this.getClass());
     viewGenerator.generateView(conf, SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions());
 
-    SQLiteJDBCManager manager = new SQLiteJDBCManager(OUTPUT + "/store/0.db", 10);
+    SQLite4JavaClient manager = new SQLite4JavaClient(OUTPUT + "/store/0.db", null);
     String results = manager.query("SELECT * FROM schema1;", TUPLES_TO_GENERATE+1);
 
     System.out.println(results);

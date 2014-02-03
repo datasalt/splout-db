@@ -33,6 +33,7 @@ import com.datasalt.pangool.io.Fields;
 import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.tuplemr.OrderBy;
 import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleTextInputFormat;
+import com.splout.db.engine.DefaultEngine;
 import com.splout.db.hadoop.TableBuilder.TableBuilderException;
 import com.splout.db.hadoop.TablespaceBuilder.TablespaceBuilderException;
 
@@ -46,6 +47,7 @@ public class JSONTablespaceDefinition {
 
 	private final static Log log = LogFactory.getLog(JSONTablespaceDefinition.class);
 	
+	private String engine;
 	private String name;
 	private int nPartitions;
 	private List<JSONTableDefinition> partitionedTables;
@@ -199,7 +201,12 @@ public class JSONTablespaceDefinition {
 		if(name == null) {
 			throw new IllegalArgumentException("Must provide a name for the Tablespace.");
 		}
-
+		
+		if(engine == null) {
+			engine = DefaultEngine.class.getName();
+		}
+		builder.setEngineClassName(engine);
+		
 		for(JSONTableDefinition table : partitionedTables) {
 			builder.add(buildTable(table, false, hadoopConf));
 		}
@@ -461,4 +468,12 @@ public class JSONTablespaceDefinition {
 	public void setName(String name) {
 		this.name = name;
 	}
+	
+	public String getEngine() {
+	  return engine;
+  }
+	
+	public void setEngine(String engine) {
+	  this.engine = engine;
+  }
 }

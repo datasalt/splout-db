@@ -27,6 +27,13 @@
         </license>
     </licenses>
 
+	<repositories>
+		<repository>
+  			<id>clojars.org</id>
+  			<url>http://clojars.org/repo</url>
+		</repository>
+	</repositories>
+	
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jackson.version>1.7.9</jackson.version>
@@ -448,6 +455,12 @@
             <version>1.6.0</version>
         </dependency>
 
+	<dependency>
+ 	    <groupId>org.slf4j</groupId>
+	    <artifactId>slf4j-log4j12</artifactId>
+	    <version>1.6.0</version>
+	</dependency>
+
         <dependency>
             <groupId>com.beust</groupId>
             <artifactId>jcommander</artifactId>
@@ -511,7 +524,7 @@
             <artifactId>tomcat-servlet-api</artifactId>
             <version>7.0.32</version>
         </dependency>
-
+		
         <!-- Thrift -->
         <dependency>
             <groupId>org.apache.thrift</groupId>
@@ -536,13 +549,13 @@
         <dependency>
             <groupId>com.hazelcast</groupId>
             <artifactId>hazelcast</artifactId>
-            <version>2.3</version>
+            <version>3.1.2</version>
         </dependency>
 
         <dependency>
             <groupId>com.hazelcast</groupId>
             <artifactId>hazelcast-cloud</artifactId>
-            <version>2.3.1</version>
+            <version>3.1.2</version>
         </dependency>
 
         <!-- jets3t -->
