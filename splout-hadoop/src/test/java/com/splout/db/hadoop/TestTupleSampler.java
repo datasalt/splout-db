@@ -75,7 +75,7 @@ public class TestTupleSampler {
 		// Sampling with default method should yield lower numbers
 		// Default input split size so only one InputSplit
 		// All sampled keys will be [0, 1, 2, ..., 9]
-		TupleSampler sampler = new TupleSampler(SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions());
+		TupleSampler sampler = new TupleSampler(SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions(), this.getClass());
 		sampler.sample(Arrays.asList(new TableInput[] { new TableInput(new TupleInputFormat(), new HashMap<String, String>(), schema, new IdentityRecordProcessor(), new Path(INPUT + "_r")) }), schema, conf, 10, new Path(OUTPUT + "_r"));		
 		
 		int nTuples = 0;
@@ -95,7 +95,7 @@ public class TestTupleSampler {
 		}
 
 		// Reservoir sampling should yield better results for this case, let's see
-		sampler = new TupleSampler(SamplingType.RESERVOIR, new TupleSampler.DefaultSamplingOptions());
+		sampler = new TupleSampler(SamplingType.RESERVOIR, new TupleSampler.DefaultSamplingOptions(), this.getClass());
 		sampler.sample(Arrays.asList(new TableInput[] { new TableInput(new TupleInputFormat(), new HashMap<String, String>(), schema, new IdentityRecordProcessor(), new Path(INPUT + "_r")) }), schema, conf, 10, new Path(OUTPUT + "_r"));
 		
 		nTuples = 0;
@@ -144,7 +144,7 @@ public class TestTupleSampler {
 		options.setMaxInputSplitSize(splitSize);
     options.setMaxSplitsToVisit(Integer.MAX_VALUE);
 		
-		TupleSampler sampler = new TupleSampler(SamplingType.DEFAULT, options);
+		TupleSampler sampler = new TupleSampler(SamplingType.DEFAULT, options, this.getClass());
 		sampler.sample(Arrays.asList(new TableInput[] { new TableInput(new TupleInputFormat(), new HashMap<String, String>(), schema, new IdentityRecordProcessor(), new Path(INPUT + "_" + iter)) }), schema, conf, expectedSplits, new Path(OUTPUT + "_" + iter));
 		int nTuples = 0;
     TupleFile.Reader reader = new TupleFile.Reader(FileSystem.get(conf), conf, new Path(OUTPUT + "_" + iter));

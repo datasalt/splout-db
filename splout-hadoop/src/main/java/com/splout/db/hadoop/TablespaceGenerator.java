@@ -238,7 +238,7 @@ public class TablespaceGenerator implements Serializable {
 			}
 
 			Path sampledInput = new Path(outputPath, OUT_SAMPLED_INPUT);
-			TupleSampler sampler = new TupleSampler(samplingType, samplingOptions);
+			TupleSampler sampler = new TupleSampler(samplingType, samplingOptions, callingClass);
 			sampler.sample(table.getFiles(), table.getTableSpec().getSchema(), conf, recordsToSample,
 			    sampledInput);
 
