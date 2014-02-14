@@ -243,10 +243,6 @@ public class TablespaceGenerator implements Serializable {
     SequenceFile.Reader reader= new SequenceFile.Reader(fileSystem, sampledInputSorted, conf);
     Text key = new Text();
 
-    //while(reader.next(key)) {
-//      keys.add(key.toString());
-//    }
-
 
 		Log.info(retrivedSamples + " total keys sampled.");
 
@@ -283,6 +279,8 @@ public class TablespaceGenerator implements Serializable {
 		partitionEntries.get(partitionEntries.size() - 1).setMax(null);
 
     reader.close();
+    fileSystem.delete(sampledInput, true);
+    fileSystem.delete(sampledInputSorted, true);
 
 		// 2.2 Create the partition map
 		return new PartitionMap(PartitionMap.adjustEmptyPartitions(partitionEntries));
