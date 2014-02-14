@@ -69,14 +69,15 @@ import com.splout.db.common.PartitionMap;
  * Sampling can be used by {@link TablespaceGenerator} for determining a {@link PartitionMap} based on the approximated
  * distribution of the keys.
  */
-@SuppressWarnings("serial")
+@SuppressWarnings({ "serial", "rawtypes" })
 public class TupleSampler implements Serializable {
 
 	private final static Log logger = LogFactory.getLog(TupleSampler.class);
 
 	private final SamplingType samplingType;
 	private final SamplingOptions options;
-
+	private Class callingClass;
+	
 	public enum SamplingType {
 		DEFAULT, RESERVOIR
 	}
@@ -121,9 +122,10 @@ public class TupleSampler implements Serializable {
 		}
 	}
 
-	public TupleSampler(SamplingType samplingType, SamplingOptions options) {
+	public TupleSampler(SamplingType samplingType, SamplingOptions options, Class callingClass) {
 		this.samplingType = samplingType;
 		this.options = options;
+		this.callingClass = callingClass;
 	}
 
 	public void sample(List<TableInput> inputFiles, Schema tableSchema, Configuration hadoopConf,
@@ -256,6 +258,7 @@ public class TupleSampler implements Serializable {
 		// Set output path
 		Path outReservoirPath = new Path(outputPath + "-reservoir");
 		builder.setTupleOutput(outReservoirPath, NullableSchema.nullableSchema(tableSchema));
+		builder.setJarByClass(callingClass);
 		try {
 			Job job = builder.createJob();
 			if(!job.waitForCompletion(true)) {
