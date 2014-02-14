@@ -99,7 +99,7 @@ public class TestTablespaceGeneratorMultiplePartitionBy {
 		// 2 - generate view
 		Path outputPath = new Path(TEST_OUTPUT);
 		TablespaceGenerator viewGenerator = new TablespaceGenerator(tablespace, outputPath, this.getClass());
-		viewGenerator.generateView(new Configuration(), SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions());
+		viewGenerator.generateView(new Configuration(), SamplingType.FULL_SCAN, new TupleSampler.RandomSamplingOptions());
 		
 		// 3 - assert result
 		List totalPayments = new ArrayList();

@@ -221,8 +221,8 @@ public class PageCountsExample implements Tool, Serializable {
 				tablespaceViewBuilder = new TablespaceGenerator(tablespaceBuilder.build(), outPath, this.getClass());
 			}
 
-			tablespaceViewBuilder.generateView(getConf(), SamplingType.RESERVOIR,
-			    new TupleSampler.DefaultSamplingOptions());
+			tablespaceViewBuilder.generateView(getConf(), SamplingType.FULL_SCAN,
+			    new TupleSampler.RandomSamplingOptions());
 		}
 
 		if(deploy) {

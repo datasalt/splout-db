@@ -32,6 +32,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.SequenceFile;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.mortbay.log.Log;
@@ -226,38 +228,19 @@ public class TablespaceGenerator implements Serializable {
 		FileSystem fileSystem = outputPath.getFileSystem(conf);
 		List<String> keys = new ArrayList<String>();
 
-		// We must sample as many tables as there are for the tablespace
-		for(Table table : tablespace.getPartitionedTables()) {
-			JavascriptEngine jsEngine = null;
-			if(table.getTableSpec().getPartitionByJavaScript() != null) {
-				try {
-					jsEngine = new JavascriptEngine(table.getTableSpec().getPartitionByJavaScript());
-				} catch(Throwable e) {
-					throw new RuntimeException(e);
-				}
-			}
+    // The sampler will generate a file with samples to use to create the partition map
+    Path sampledInput = new Path(outputPath, OUT_SAMPLED_INPUT);
+    TupleSampler sampler = new TupleSampler(samplingType, samplingOptions, callingClass);
+    long retrivedSamples = sampler.sample(tablespace, conf, recordsToSample, sampledInput);
 
-			Path sampledInput = new Path(outputPath, OUT_SAMPLED_INPUT);
-			TupleSampler sampler = new TupleSampler(samplingType, samplingOptions, callingClass);
-			sampler.sample(table.getFiles(), table.getTableSpec().getSchema(), conf, recordsToSample,
-			    sampledInput);
+    // 1.1 Read sampled keys
+    SequenceFile.Reader reader= new SequenceFile.Reader(fileSystem, sampledInput, conf);
+    Text key = new Text();
 
-			// 1.1 Read sampled keys
-			TupleFile.Reader reader = new TupleFile.Reader(fileSystem, conf, sampledInput);
-			Tuple tuple = new Tuple(reader.getSchema());
-
-			while(reader.next(tuple)) {
-				String key;
-				try {
-					key = getPartitionByKey(tuple, table.getTableSpec(), jsEngine);
-				} catch(Throwable e) {
-					reader.close();
-					throw new RuntimeException(e);
-				}
-				keys.add(key);
-			}
-			reader.close();
-		}
+    while(reader.next(key)) {
+      keys.add(key.toString());
+    }
+    reader.close();
 
 		Log.info(keys.size() + " total keys sampled.");
 		// 1.2 Sort them using default comparators
