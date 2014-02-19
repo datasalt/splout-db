@@ -222,7 +222,7 @@ public class PageCountsExample implements Tool, Serializable {
 			}
 
 			tablespaceViewBuilder.generateView(getConf(), SamplingType.FULL_SCAN,
-			    new TupleSampler.RandomSamplingOptions());
+			    new TupleSampler.FullScanSamplingOptions());
 		}
 
 		if(deploy) {

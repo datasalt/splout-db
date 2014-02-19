@@ -22,9 +22,11 @@ package com.splout.db.hadoop;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import com.datasalt.pangool.tuplemr.mapred.lib.output.HadoopOutputFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -50,6 +52,7 @@ import com.datasalt.pangool.io.ITuple;
 import com.datasalt.pangool.tuplemr.MapOnlyJobBuilder;
 import com.datasalt.pangool.tuplemr.MultipleOutputsCollector;
 import com.datasalt.pangool.tuplemr.mapred.MapOnlyMapper;
+import com.datasalt.pangool.tuplemr.mapred.lib.output.HadoopOutputFormat;
 import com.datasalt.pangool.utils.TaskAttemptContextFactory;
 import com.splout.db.common.PartitionMap;
 
@@ -121,6 +124,11 @@ public class TupleSampler implements Serializable {
 		}
 	}
 
+	// Options for FULLSCAN sampling
+	public static class FullScanSamplingOptions extends SamplingOptions {
+		
+	}
+	
 	public TupleSampler(SamplingType samplingType, SamplingOptions options, Class callingClass) {
 		this.samplingType = samplingType;
 		this.options = options;
