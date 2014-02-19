@@ -31,6 +31,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.SequenceFile;
+import org.apache.hadoop.io.Text;
 import org.junit.Test;
 
 import com.datasalt.pangool.io.Fields;
@@ -58,68 +60,67 @@ public class TestTupleSampler {
 	public void testReservoir() throws IOException, InterruptedException, TupleSamplerException {
 		Runtime.getRuntime().exec("rm -rf " + INPUT + "_r");
 		Runtime.getRuntime().exec("rm -rf " + OUTPUT + "_r");
-		
+
 		Configuration conf = new Configuration();
 
-		final Schema schema = new Schema("schema", Fields.parse("id:string, foo:int"));
     TupleFile.Writer writer = new TupleFile.Writer(FileSystem.get(conf), conf, new Path(INPUT + "_r"), schema);
 		for(int i = 0; i < 10000; i++) {
 			ITuple tuple = new Tuple(schema);
-			tuple.set("id", "id" + i);
+			tuple.set("id", i+"");
 			// We save a number in the "foo" field which is consecutive: [0, 1, 2, ... 9999]
-			tuple.set("foo", i);
+			tuple.set("foo", "foo" + i);
 			writer.append(tuple);
 		}
 		writer.close();
-		
+
 		// Sampling with default method should yield lower numbers
 		// Default input split size so only one InputSplit
 		// All sampled keys will be [0, 1, 2, ..., 9]
-		TupleSampler sampler = new TupleSampler(SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions(), this.getClass());
-		sampler.sample(Arrays.asList(new TableInput[] { new TableInput(new TupleInputFormat(), new HashMap<String, String>(), schema, new IdentityRecordProcessor(), new Path(INPUT + "_r")) }), schema, conf, 10, new Path(OUTPUT + "_r"));		
-		
+		TupleSampler sampler = new TupleSampler(SamplingType.RANDOM, new TupleSampler.RandomSamplingOptions(), this.getClass());
+		//sampler.sample(Arrays.asList(new TableInput[] { new TableInput(new TupleInputFormat(), new HashMap<String, String>(), schema, new IdentityRecordProcessor(), new Path(INPUT + "_r")) }), schema, conf, 10, new Path(OUTPUT + "_r"));
+    sampler.sample(getTblSpec("r"), conf, 10, new Path(OUTPUT + "_r"));
+
 		int nTuples = 0;
 		int[] sampledKeys = new int[10];
-		
-		TupleFile.Reader reader = new TupleFile.Reader(FileSystem.get(conf),  conf, new Path(OUTPUT + "_r"));
-    Tuple tuple = new Tuple(reader.getSchema());
-		while(reader.next(tuple)) {
-			// Get the "foo" field from sampled Tuples
-			sampledKeys[nTuples] = Integer.parseInt(tuple.get("foo").toString());
+
+		SequenceFile.Reader reader = new SequenceFile.Reader(FileSystem.get(conf),  new Path(OUTPUT + "_r"), conf);
+    Text key = new Text();
+		while(reader.next(key)) {
+			sampledKeys[nTuples] = Integer.parseInt(key.toString());
 			nTuples++;
 		}
 		reader.close();
-		
+
 		for(int i = 0; i < 10; i++) {
 			assertEquals(i, sampledKeys[i]);
 		}
 
 		// Reservoir sampling should yield better results for this case, let's see
-		sampler = new TupleSampler(SamplingType.RESERVOIR, new TupleSampler.DefaultSamplingOptions(), this.getClass());
-		sampler.sample(Arrays.asList(new TableInput[] { new TableInput(new TupleInputFormat(), new HashMap<String, String>(), schema, new IdentityRecordProcessor(), new Path(INPUT + "_r")) }), schema, conf, 10, new Path(OUTPUT + "_r"));
-		
+		sampler = new TupleSampler(SamplingType.FULL_SCAN, new TupleSampler.RandomSamplingOptions(), this.getClass());
+		// sampler.sample(Arrays.asList(new TableInput[] { new TableInput(new TupleInputFormat(), new HashMap<String, String>(), schema, new IdentityRecordProcessor(), new Path(INPUT + "_r")) }), schema, conf, 10, new Path(OUTPUT + "_r"));
+    sampler.sample(getTblSpec("r"), conf, 10, new Path(OUTPUT + "_r"));
+
 		nTuples = 0;
 		sampledKeys = new int[10];
 
-    reader = new TupleFile.Reader(FileSystem.get(conf), conf, new Path(OUTPUT + "_r"));
-    tuple = new Tuple(reader.getSchema());
-    while(reader.next(tuple)) {
-      // Get the "foo" field from sampled Tuples
-			sampledKeys[nTuples] = Integer.parseInt(tuple.get("foo").toString());
-			nTuples++;
-		}
-		reader.close();
-		
+    reader = new SequenceFile.Reader(FileSystem.get(conf),  new Path(OUTPUT + "_r"), conf);
+    key = new Text();
+    while(reader.next(key)) {
+      sampledKeys[nTuples] = Integer.parseInt(key.toString());
+      nTuples++;
+    }
+    reader.close();
+
 		int avgKey = 0;
 		for(int i = 0; i < 10; i++) {
 			avgKey += sampledKeys[i];
 		}
-		
+
 		avgKey = avgKey / 10;
 		// This assertion may fail some day... but the chances are very rare.
 		// The lower bound is very low, usually the average key will be around 1/4th of the max key (10000).
 		assertTrue(avgKey > 100);
-		
+
 		Runtime.getRuntime().exec("rm -rf " + INPUT + "_r");
 		Runtime.getRuntime().exec("rm -rf " + OUTPUT + "_r");
 	}
@@ -140,24 +141,27 @@ public class TestTupleSampler {
     FileStatus status = FileSystem.get(conf).getFileStatus(new Path(INPUT + "_" + iter));
     long expectedSplits = Math.max(1, (long) Math.ceil(((double) status.getLen()) / splitSize));
 
-		TupleSampler.DefaultSamplingOptions options = new TupleSampler.DefaultSamplingOptions();
+		TupleSampler.RandomSamplingOptions options = new TupleSampler.RandomSamplingOptions();
 		options.setMaxInputSplitSize(splitSize);
     options.setMaxSplitsToVisit(Integer.MAX_VALUE);
-		
-		TupleSampler sampler = new TupleSampler(SamplingType.DEFAULT, options, this.getClass());
-		sampler.sample(Arrays.asList(new TableInput[] { new TableInput(new TupleInputFormat(), new HashMap<String, String>(), schema, new IdentityRecordProcessor(), new Path(INPUT + "_" + iter)) }), schema, conf, expectedSplits, new Path(OUTPUT + "_" + iter));
-		int nTuples = 0;
-    TupleFile.Reader reader = new TupleFile.Reader(FileSystem.get(conf), conf, new Path(OUTPUT + "_" + iter));
-    Tuple tuple = new Tuple(reader.getSchema());
-    while(reader.next(tuple)) {
-			nTuples++;
+
+    TablespaceSpec tablespaceSpec = getTblSpec(iter + "");
+
+		TupleSampler sampler = new TupleSampler(SamplingType.RANDOM, options, this.getClass());
+    sampler.sample(tablespaceSpec, conf, expectedSplits, new Path(OUTPUT + "_" + iter));
+
+		int nKeys = 0;
+    SequenceFile.Reader reader = new SequenceFile.Reader(FileSystem.get(conf), new Path(OUTPUT + "_" + iter), conf);
+    Text key = new Text();
+    while(reader.next(key)) {
+			nKeys++;
 		}
 		reader.close();
 		
 		String a = "";
 		a.split("foo");
 		
-		assertEquals(expectedSplits, nTuples);
+		assertEquals(expectedSplits, nKeys);
 		
 		Runtime.getRuntime().exec("rm -rf " + INPUT + "_" + iter);
 		Runtime.getRuntime().exec("rm -rf " + OUTPUT + "_" + iter);
@@ -171,4 +175,24 @@ public class TestTupleSampler {
 		tuple.set("foo", "foobar" + (Math.random() * 1000000000));
 		return tuple;
 	}
+
+  public TablespaceSpec getTblSpec(String inputPostfix) {
+    return new TablespaceSpec(
+        Arrays.asList(
+            new Table(
+                Arrays.asList(
+                    new TableInput[] {
+                        new TableInput(
+                            new TupleInputFormat(),
+                            new HashMap<String, String>(),
+                            schema,
+                            new IdentityRecordProcessor(),
+                            new Path(INPUT + "_" + inputPostfix)) }),
+                new TableSpec(
+                    schema,
+                    schema.getField("id"))
+
+            )),
+        null, 1, null, null);
+  }
 }

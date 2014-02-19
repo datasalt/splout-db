@@ -54,8 +54,8 @@ public class GeneratorCMD implements Tool {
 	@Parameter(required = true, names = { "-o", "--output" }, description = "Output path where the generated tablespaces will be saved. If you are running the process from Hadoop, relative paths would use the Hadoop filesystem. Use full qualified URIs instead if you want other behaviour.")
 	private String output;
 
-  @Parameter(required = false, names = { "-st", "--sampling-type" }, description = "Selects the sampling type to use. DEFAULT: random selection of samples from the start of splits. RESERVOIR: sampling from the full dataset.")
-  private SamplingType samplingType = SamplingType.DEFAULT;
+  @Parameter(required = false, names = { "-st", "--sampling-type" }, description = "Selects the sampling type to use. FULL_SCAN: sampling from the full dataset. RANDOM: random selection of samples from the start of splits. ")
+  private SamplingType samplingType = SamplingType.FULL_SCAN;
 
   private Configuration conf;
 
@@ -111,7 +111,7 @@ public class GeneratorCMD implements Tool {
 			log.info("Generating view with Hadoop (" + tablespace.getKey() + ")");
 			TablespaceGenerator viewGenerator = new TablespaceGenerator(spec, tablespaceOut, this.getClass());
 			// TODO Parametrize sampling options?
-			viewGenerator.generateView(conf, samplingType, new TupleSampler.DefaultSamplingOptions());
+			viewGenerator.generateView(conf, samplingType, new TupleSampler.RandomSamplingOptions());
 		}
 
 		log.info("Done!");

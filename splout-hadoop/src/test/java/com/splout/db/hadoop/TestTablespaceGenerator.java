@@ -93,7 +93,7 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary implement
 		
 		TablespaceSpec tablespace = TablespaceSpec.of(theSchema1, "id", new Path(INPUT), new TupleInputFormat(),  4);
 		TablespaceGenerator viewGenerator = new TablespaceGenerator(tablespace, new Path(OUTPUT), this.getClass());
-		viewGenerator.generateView(conf, SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions());
+		viewGenerator.generateView(conf, SamplingType.FULL_SCAN, new TupleSampler.RandomSamplingOptions());
 		
 		List<PartitionEntry> partitionMap = viewGenerator.getPartitionMap().getPartitionEntries();
 		assertEquals(4, partitionMap.size());
@@ -103,10 +103,10 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary implement
 		assertEquals(0, (int) partitionMap.get(0).getShard());
 		
 		assertEquals("id1", partitionMap.get(1).getMin());
-		assertEquals("id4", partitionMap.get(1).getMax());
+		assertEquals("id3", partitionMap.get(1).getMax());
 		assertEquals(1, (int) partitionMap.get(1).getShard());
 
-		assertEquals("id4", partitionMap.get(2).getMin());
+		assertEquals("id3", partitionMap.get(2).getMin());
 		assertEquals("id6", partitionMap.get(2).getMax());
 		assertEquals(2, (int) partitionMap.get(2).getShard());
 
@@ -139,7 +139,7 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary implement
 		
 		TablespaceSpec tablespace = TablespaceSpec.of(theSchema2, "id", new Path(INPUT), new TupleInputFormat(), 1);
 		TablespaceGenerator viewGenerator = new TablespaceGenerator(tablespace, new Path(OUTPUT), this.getClass());
-		viewGenerator.generateView(conf, SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions());
+		viewGenerator.generateView(conf, SamplingType.FULL_SCAN, new TupleSampler.RandomSamplingOptions());
 		
 		SQLite4JavaClient manager = new SQLite4JavaClient(OUTPUT + "/store/0.db", null);
     String results = manager.query("SELECT * FROM schema2;", 100);
@@ -227,7 +227,7 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary implement
     builder.add(tBuilder.build());
 
     TablespaceGenerator viewGenerator = new TablespaceGenerator(builder.build(), new Path(OUTPUT), this.getClass());
-    viewGenerator.generateView(conf, SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions());
+    viewGenerator.generateView(conf, SamplingType.FULL_SCAN, new TupleSampler.RandomSamplingOptions());
 
     SQLite4JavaClient manager = new SQLite4JavaClient(OUTPUT + "/store/0.db", null);
     String results = manager.query("SELECT * FROM schema1;", TUPLES_TO_GENERATE+1);

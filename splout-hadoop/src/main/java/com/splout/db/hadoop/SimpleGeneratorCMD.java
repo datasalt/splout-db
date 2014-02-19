@@ -108,8 +108,8 @@ public class SimpleGeneratorCMD implements Tool {
 	@Parameter(names = { "-fw", "--fixedwidthfields" }, description = "When used, you must provide a comma-separated list of numbers. These numbers will be interpreted by pairs, as [beginning, end] inclusive position offsets. For example: 0,3,5,7 means there are two fields, the first one of 4 characters at offsets [0, 3] and the second one of 3 characters at offsets [5, 7]. This option can be used in combination with --nullstring parameter. The rest of CSV parameters are ignored.")
 	private String fixedWidthFields;
 	
-	@Parameter(names = { "-st", "--samplingType" }, description = "It can be used to specify the sampling method to use. Currently, DEFAULT is very simple and fast, but might not be accurate. RESERVOIR executes a map-only Pangool Job before generation but it is more accurate.")
-	private SamplingType samplingType = SamplingType.DEFAULT;
+	@Parameter(names = { "-st", "--samplingType" }, description = "It can be used to specify the sampling method to use. FULL_SCAN executes a map-only Job before generation but it is more accurate. This is the recommended one. RANDOM is very simple and fast, but might not be accurate.")
+	private SamplingType samplingType = SamplingType.FULL_SCAN;
 
 	@Parameter(names = { "-e", "--engine" }, description = "Specify the engine to be used for generating the tablespace.")
 	private String engine = DefaultEngine.class.getName();
@@ -261,7 +261,7 @@ public class SimpleGeneratorCMD implements Tool {
 		builder.setNPartitions(nPartitions);
 
 		TablespaceGenerator viewGenerator = new TablespaceGenerator(builder.build(), out, this.getClass());
-		viewGenerator.generateView(conf, samplingType, new TupleSampler.DefaultSamplingOptions());
+		viewGenerator.generateView(conf, samplingType, new TupleSampler.RandomSamplingOptions());
 
 		log.info("Success! Tablespace [" + tablespace + "] with table [" + tablename
 		    + "] properly created at path [" + out + "]");

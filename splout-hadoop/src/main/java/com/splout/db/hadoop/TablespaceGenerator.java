@@ -32,6 +32,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.SequenceFile;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.mortbay.log.Log;
@@ -122,6 +124,7 @@ public class TablespaceGenerator implements Serializable {
 	}
 
 	public final static String OUT_SAMPLED_INPUT = "sampled-input";
+  public final static String OUT_SAMPLED_INPUT_SORTED = "sampled-input-sorted";
 	public final static String OUT_PARTITION_MAP = "partition-map";
 	public final static String OUT_INIT_STATEMENTS = "init-statements";
 	public final static String OUT_STORE = "store";
@@ -224,60 +227,49 @@ public class TablespaceGenerator implements Serializable {
 	    throws TupleSamplerException, IOException {
 
 		FileSystem fileSystem = outputPath.getFileSystem(conf);
-		List<String> keys = new ArrayList<String>();
 
-		// We must sample as many tables as there are for the tablespace
-		for(Table table : tablespace.getPartitionedTables()) {
-			JavascriptEngine jsEngine = null;
-			if(table.getTableSpec().getPartitionByJavaScript() != null) {
-				try {
-					jsEngine = new JavascriptEngine(table.getTableSpec().getPartitionByJavaScript());
-				} catch(Throwable e) {
-					throw new RuntimeException(e);
-				}
-			}
+    // The sampler will generate a file with samples to use to create the partition map
+    Path sampledInput = new Path(outputPath, OUT_SAMPLED_INPUT);
+    Path sampledInputSorted = new Path(outputPath, OUT_SAMPLED_INPUT_SORTED);
+    TupleSampler sampler = new TupleSampler(samplingType, samplingOptions, callingClass);
+    long retrivedSamples = sampler.sample(tablespace, conf, recordsToSample, sampledInput);
 
-			Path sampledInput = new Path(outputPath, OUT_SAMPLED_INPUT);
-			TupleSampler sampler = new TupleSampler(samplingType, samplingOptions, callingClass);
-			sampler.sample(table.getFiles(), table.getTableSpec().getSchema(), conf, recordsToSample,
-			    sampledInput);
+    // 1.1 Sorting sampled keys on disk
+    fileSystem.delete(sampledInputSorted, true);
+    SequenceFile.Sorter sorter = new SequenceFile.Sorter(fileSystem, Text.class, NullWritable.class, conf);
+    sorter.sort(sampledInput, sampledInputSorted);
 
-			// 1.1 Read sampled keys
-			TupleFile.Reader reader = new TupleFile.Reader(fileSystem, conf, sampledInput);
-			Tuple tuple = new Tuple(reader.getSchema());
+    // Start the reader
+    SequenceFile.Reader reader= new SequenceFile.Reader(fileSystem, sampledInputSorted, conf);
+    Text key = new Text();
 
-			while(reader.next(tuple)) {
-				String key;
-				try {
-					key = getPartitionByKey(tuple, table.getTableSpec(), jsEngine);
-				} catch(Throwable e) {
-					reader.close();
-					throw new RuntimeException(e);
-				}
-				keys.add(key);
-			}
-			reader.close();
-		}
 
-		Log.info(keys.size() + " total keys sampled.");
-		// 1.2 Sort them using default comparators
-		Collections.sort(keys);
+		Log.info(retrivedSamples + " total keys sampled.");
 
 		/*
 		 * 2: Calculate partition map
 		 */
 		// 2.1 Select "n" keys evenly distributed
 		List<PartitionEntry> partitionEntries = new ArrayList<PartitionEntry>();
-		int offset = keys.size() / nPartitions;
+		int offset = (int) (retrivedSamples / nPartitions);
 		String min = null;
+    int rowPointer = 0;
+    boolean hasNext = true;
 		for(int i = 1; i <= nPartitions; i++) {
 			PartitionEntry entry = new PartitionEntry();
 			if(min != null) {
 				entry.setMin(min);
 			}
 			int keyIndex = i * offset - 1;
-			if(keyIndex < keys.size()) {
-				entry.setMax(keys.get(keyIndex));
+      do {
+        hasNext = reader.next(key);
+        if (hasNext) {
+          rowPointer++;
+        }
+      } while (hasNext && rowPointer < keyIndex);
+
+			if(hasNext) {
+				entry.setMax(key.toString());
 			}
 			min = entry.getMax();
 			entry.setShard(i);
@@ -285,6 +277,11 @@ public class TablespaceGenerator implements Serializable {
 		}
 		// Leave the last entry opened for having a complete map
 		partitionEntries.get(partitionEntries.size() - 1).setMax(null);
+
+    reader.close();
+    fileSystem.delete(sampledInput, true);
+    fileSystem.delete(sampledInputSorted, true);
+
 		// 2.2 Create the partition map
 		return new PartitionMap(PartitionMap.adjustEmptyPartitions(partitionEntries));
 	}

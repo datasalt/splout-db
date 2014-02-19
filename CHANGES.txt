@@ -3,6 +3,16 @@ Splout SQL Change Log
 
 (DEVELOPMENT 0.2.6-SNAPSHOT)
 
+IMPROVEMENTS
+
+ - 2014-02-14 - Improved FULL_SCAN sampling. Now it uses one job per tablespaces instead of
+                one per table.
+ - 2014-02-14 - Renamed RESERVOIR and DEFAULT sampling methods to FULL_SCAN and RANDOM.
+                The default one is now RESERVOIR as it is the one that gives the best results.
+ - 2014-02-14 - Sampling is not using memory anymore. That allows to use more samples in
+                sampling, so that we can have more accurate partition map.
+
+
 BUG FIXES
 
  - 2013-09-05 - splout-service.sh adapted to run properly with packages from  Cloudera

@@ -150,8 +150,8 @@ public class TestTablespaceGeneratorTestInsertionSortOrder implements Serializab
 			};
 		});
 		
-		viewGenerator.generateView(new Configuration(), SamplingType.DEFAULT,
-		    new TupleSampler.DefaultSamplingOptions());
+		viewGenerator.generateView(new Configuration(), SamplingType.RANDOM,
+		    new TupleSampler.RandomSamplingOptions());
 	}
 
 	private void generateInput() throws IOException {

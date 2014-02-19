@@ -50,8 +50,13 @@ public class TestTablespaceGeneratorJavaScript {
 		System.out.println(System.getProperty("java.library.path"));
 	}
 
-	@Test
-	public void simpleTest() throws Exception {
+  @Test
+  public void simpleTest() throws Exception {
+    simpleTest(SamplingType.FULL_SCAN);
+    simpleTest(SamplingType.RANDOM);
+  }
+
+  public void simpleTest(SamplingType samplingType) throws Exception {
 		Runtime.getRuntime().exec("rm -rf " + INPUT);
 		Runtime.getRuntime().exec("rm -rf " + OUTPUT);
 
@@ -82,7 +87,7 @@ public class TestTablespaceGeneratorJavaScript {
 
 		TablespaceGenerator viewGenerator = new TablespaceGenerator(builder.build(), new Path(OUTPUT),
 		    this.getClass());
-		viewGenerator.generateView(conf, SamplingType.DEFAULT, new TupleSampler.DefaultSamplingOptions());
+		viewGenerator.generateView(conf, samplingType, new TupleSampler.RandomSamplingOptions());
 
 		PartitionMap partitionMap = JSONSerDe.deSer(
 		    HadoopUtils.fileToString(FileSystem.getLocal(conf), new Path(OUTPUT, "partition-map")),
