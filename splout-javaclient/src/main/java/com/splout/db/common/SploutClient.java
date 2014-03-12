@@ -20,24 +20,34 @@ package com.splout.db.common;
  * #L%
  */
 
-import com.google.api.client.http.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.io.IOUtils;
+
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpContent;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestFactory;
+import com.google.api.client.http.HttpRequestInitializer;
+import com.google.api.client.http.HttpResponse;
+import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
 import com.splout.db.qnode.beans.DeployInfo;
 import com.splout.db.qnode.beans.DeployRequest;
 import com.splout.db.qnode.beans.QNodeStatus;
 import com.splout.db.qnode.beans.QueryStatus;
-import org.apache.commons.io.IOUtils;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.StringWriter;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Java HTTP Interface to Splout that uses Google Http Client (https://code.google.com/p/google-http-java-client/). We
@@ -49,18 +59,18 @@ public class SploutClient {
 	String[] qNodes;
 	String[] qNodesNoProtocol;
 
-  public SploutClient(String... qnodes) {
-    this(20 * 1000, qnodes);
-  }
+	public SploutClient(String... qnodes) {
+		this(20 * 1000, qnodes);
+	}
 
 	public SploutClient(final int timeoutMillis, String... qnodes) {
 		HttpTransport transport = new NetHttpTransport();
 		requestFactory = transport.createRequestFactory(new HttpRequestInitializer() {
-      @Override
-      public void initialize(HttpRequest request) throws IOException {
-        request.readTimeout = timeoutMillis;
-      }
-    });
+			@Override
+			public void initialize(HttpRequest request) throws IOException {
+				request.readTimeout = timeoutMillis;
+			}
+		});
 		this.qNodes = qnodes;
 		// strip last "/" if present
 		for(int i = 0; i < qNodes.length; i++) {
@@ -84,19 +94,19 @@ public class SploutClient {
 			writer.close();
 		}
 	}
-	
+
 	/*
 	 * 
 	 */
 	public Tablespace tablespace(String tablespace) throws IOException {
 		HttpRequest request = requestFactory.buildGetRequest(new GenericUrl(
-		    qNodes[(int) (Math.random() * qNodes.length)] + "/api/tablespace/" +  tablespace));
+		    qNodes[(int) (Math.random() * qNodes.length)] + "/api/tablespace/" + tablespace));
 		HttpResponse resp = request.execute();
 		try {
 			return JSONSerDe.deSer(asString(resp.getContent()), Tablespace.class);
 		} catch(JSONSerDeException e) {
 			throw new IOException(e);
-		}		
+		}
 	}
 
 	/*
@@ -125,6 +135,44 @@ public class SploutClient {
 			return JSONSerDe.deSer(asString(resp.getContent()), ArrayList.class);
 		} catch(JSONSerDeException e) {
 			throw new IOException(e);
+		}
+	}
+
+	private static class StringHttpContent implements HttpContent {
+
+		byte[] content;
+
+		public StringHttpContent(String strCont) {
+			try {
+				content = strCont.getBytes("UTF-8");
+			} catch(UnsupportedEncodingException e) {
+				throw new RuntimeException(e);
+			}
+		}
+
+		@Override
+		public String getEncoding() {
+			return "UTF-8";
+		}
+
+		@Override
+		public long getLength() throws IOException {
+			return content.length;
+		}
+
+		@Override
+		public String getType() {
+			return "text/ascii";
+		}
+
+		@Override
+		public boolean retrySupported() {
+			return false;
+		}
+
+		@Override
+		public void writeTo(OutputStream oS) throws IOException {
+			oS.write(content);
 		}
 	}
 
@@ -165,40 +213,34 @@ public class SploutClient {
 
 	public DeployInfo deploy(final DeployRequest... requests) throws IOException {
 		try {
-			final String strCont = JSONSerDe.ser(new ArrayList<DeployRequest>(Arrays.asList(requests)));
-			HttpContent content = new HttpContent() {
-				byte[] content = strCont.getBytes("UTF-8");
-
-				@Override
-				public String getEncoding() {
-					return "UTF-8";
-				}
-
-				@Override
-				public long getLength() throws IOException {
-					return content.length;
-				}
-
-				@Override
-				public String getType() {
-					return "text/ascii";
-				}
-
-				@Override
-				public boolean retrySupported() {
-					return false;
-				}
-
-				@Override
-				public void writeTo(OutputStream oS) throws IOException {
-					oS.write(content);
-				}
-			};
-
+			String strCont = JSONSerDe.ser(new ArrayList<DeployRequest>(Arrays.asList(requests)));
+			HttpContent content = new StringHttpContent(strCont);
 			HttpRequest request = requestFactory.buildPostRequest(new GenericUrl(
 			    qNodes[(int) (Math.random() * qNodes.length)] + "/api/deploy"), content);
 			HttpResponse resp = request.execute();
 			return JSONSerDe.deSer(asString(resp.getContent()), DeployInfo.class);
+		} catch(JSONSerDeException e) {
+			throw new IOException(e);
+		}
+	}
+
+	/*
+	 * Same method as query(), but using POST instead of GET. Useful for very long SQL queries.
+	 */
+	public QueryStatus queryPost(String tablespace, String key, String query, String partition)
+	    throws IOException {
+
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("sql", query);
+		params.put("key", new String[] { key });
+		params.put("partition", partition);
+
+		try {
+			HttpContent content = new StringHttpContent(JSONSerDe.ser(params));
+			HttpRequest request = requestFactory.buildPostRequest(new GenericUrl(
+			    qNodes[(int) (Math.random() * qNodes.length)] + "/api/query/" + tablespace), content);
+			HttpResponse resp = request.execute();
+			return JSONSerDe.deSer(asString(resp.getContent()), QueryStatus.class);
 		} catch(JSONSerDeException e) {
 			throw new IOException(e);
 		}

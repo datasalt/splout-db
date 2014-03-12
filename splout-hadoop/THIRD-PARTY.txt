@@ -1,5 +1,5 @@
 
-Lists of 95 third-party dependencies.
+Lists of 94 third-party dependencies.
      (BSD License) AntLR Parser Generator (antlr:antlr:2.7.7 - http://www.antlr.org/)
      (Unknown license) ASM Core (asm:asm:3.1 - http://asm.objectweb.org/asm/)
      (The Apache Software License, Version 2.0) cascading-core (cascading:cascading-core:2.2.0-wip-15 - http://cascading.org/)
@@ -31,8 +31,7 @@ Lists of 95 third-party dependencies.
      (Unknown license) commons-logging-api (commons-logging:commons-logging-api:1.0.4 - no url defined)
      (The Apache Software License, Version 2.0) Commons Pool (commons-pool:commons-pool:1.5.4 - http://commons.apache.org/pool/)
      (Apache License, Version 2.0) The Netty Project (io.netty:netty:3.4.0.Final - http://netty.io/)
-     (Unknown license) JDO2 API (javax.jdo:jdo2-api:2.3-ec - no url defined)
-     (Unknown license) Java Transaction API (javax.transaction:jta:1.1 - http://java.sun.com/products/jta)
+     (Unknown license) jdo2-api (javax.jdo:jdo2-api:2.3-ec - no url defined)
      (BSD License) Javolution (javolution:javolution:5.5.1 - http://javolution.org)
      (BSD) JLine (jline:jline:0.9.94 - http://jline.sourceforge.net)
      (Apache 2) Joda time (joda-time:joda-time:2.1 - http://joda-time.sourceforge.net)

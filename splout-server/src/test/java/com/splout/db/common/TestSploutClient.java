@@ -78,4 +78,27 @@ public class TestSploutClient {
 			qnode.close();
 		}
 	}
+	
+	@Test
+	public void testPost() throws Exception {
+		QNode qnode = new QNode();
+		try {
+			qnode.start(SploutConfiguration.getTestConfig(), QNODE_HANDLER);
+			
+			SploutClient client = new SploutClient(qnode.getAddress());
+			
+			QueryStatus queryStatus = client.queryPost("t1", "k1", "SELECT * FROM foo;", null);
+			assertEquals("t1 k1 SELECT * FROM foo;", queryStatus.getError());
+			
+			List<String> dnodes = client.dNodeList();
+			assertEquals("ok", dnodes.get(0));
+
+			DeployInfo info = client.deploy("t1", PartitionMap.oneShardOpenedMap(), ReplicationMap.oneToOneMap("http://localhost:4444"), new URI("file:///foo"));
+			assertEquals("ok", info.getError());
+			
+		} finally {
+			qnode.close();
+		}
+	}
+
 }

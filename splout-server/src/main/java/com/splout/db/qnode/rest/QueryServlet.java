@@ -21,36 +21,75 @@ package com.splout.db.qnode.rest;
  * #L%
  */
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Map;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.splout.db.common.JSONSerDe;
+import com.splout.db.common.JSONSerDe.JSONSerDeException;
 import com.splout.db.qnode.IQNodeHandler;
 import com.splout.db.qnode.beans.QueryStatus;
 
 @SuppressWarnings("serial")
 public class QueryServlet extends BaseServlet {
-	
+
 	public QueryServlet(IQNodeHandler qNodeHandler) {
-	  super(qNodeHandler);
-  }
+		super(qNodeHandler);
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+  @Override
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
+	    IOException {
+
+		String tablespace = req.getParameter("tablespace");
+
+		StringBuffer postBody = new StringBuffer();
+		String line = null;
+
+		BufferedReader reader = req.getReader();
+		while((line = reader.readLine()) != null) {
+			postBody.append(line);
+		}
+
+    Map<String, Object> params;
+    try {
+	    params = JSONSerDe.deSer(postBody.toString(), Map.class);
+			String[] keys = (String[]) ((ArrayList) params.get("key")).toArray(new String[0]);
+			String sql = (String) params.get("sql");
+			String callback = (String) params.get("callback");
+			String partition = (String) params.get("partition");
+			
+			handle(req, resp, keys, tablespace, sql, callback, partition);
+    } catch(JSONSerDeException e) {
+	    throw new IOException(e);
+    }
+	}
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
 	    IOException {
-
+		
 		String[] keys = req.getParameterValues("key");
 		String tablespace = req.getParameter("tablespace");
 		String sql = req.getParameter("sql");
 		String callback = req.getParameter("callback");
 		String partition = req.getParameter("partition");
 		
+		handle(req, resp, keys, tablespace, sql, callback, partition);
+	}
+
+	private void handle(HttpServletRequest req, HttpServletResponse resp, String[] keys, String tablespace, String sql, String callback, String partition) throws ServletException,
+	    IOException {
+
 		resp.setHeader("content-type", "application/json;charset=UTF-8");
 		resp.setCharacterEncoding("UTF-8");
-		
+
 		String key = null;
 		if(keys != null) {
 			key = "";
@@ -58,7 +97,7 @@ public class QueryServlet extends BaseServlet {
 				key += strKey;
 			}
 		}
-		
+
 		try {
 			QueryStatus st = qNodeHandler.query(tablespace, key, sql, partition);
 			log.info(Thread.currentThread().getName() + ": Query request received, tablespace[" + tablespace
