@@ -112,6 +112,12 @@ public class RewriteRuleHandler extends HandlerWrapper {
 			super.handle("/api/admin", req, response, dispatch);
 		}
 		
+		if(target.startsWith("/api/cleanoldversions")) {
+			MutableHttpRequest req = new MutableHttpRequest(request);
+			req.addParameter("action", AdminServlet.ACTION_CLEAN_OLD_VERSIONS);
+			super.handle("/api/admin", req, response, dispatch);			
+		}
+		
 		m = tablespaceInfo.matcher(target);
 		if(m.matches()) {
 	  	String tablespace = m.group(1);

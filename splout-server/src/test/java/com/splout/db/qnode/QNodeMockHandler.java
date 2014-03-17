@@ -94,4 +94,8 @@ public class QNodeMockHandler implements IQNodeHandler {
   public DeploymentsStatus deploymentsStatus() throws Exception {
 	  return null;
   }
+	@Override
+  public StatusMessage cleanOldVersions() throws Exception {
+	  return null;
+  }
 }

@@ -40,6 +40,7 @@ public class AdminServlet extends BaseServlet {
 	public final static String ACTION_DNODE_LIST = "dnodelist";
 	public final static String ACTION_OVERVIEW = "overview";
 	public final static String ACTION_DEPLOYMENTS_STATUS = "deploymentsstatus"; 
+	public final static String ACTION_CLEAN_OLD_VERSIONS = "cleanoldversions";
 	
 	public AdminServlet(IQNodeHandler qNodeHandler) {
 	  super(qNodeHandler);

@@ -51,6 +51,7 @@ public interface IQNodeHandler {
 	public StatusMessage rollback(List<SwitchVersionRequest> rollbackRequest) throws Exception;
 	public QNodeStatus overview() throws Exception;
 	public DeploymentsStatus deploymentsStatus() throws Exception;
+	public StatusMessage cleanOldVersions() throws Exception;
 	
 	public List<String> getDNodeList() throws Exception;
 	public Set<String> tablespaces() throws Exception;

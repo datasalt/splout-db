@@ -544,8 +544,8 @@ public class QNodeHandler implements IQNodeHandler {
 	}
 
 	/**
-	 * Returns an overview of what happened with all deployments so far.
-	 * There is a short status associated with each deploy, and there is a set of detailed log messages as well. 
+	 * Returns an overview of what happened with all deployments so far. There is a short status associated with each
+	 * deploy, and there is a set of detailed log messages as well.
 	 */
 	@Override
 	public DeploymentsStatus deploymentsStatus() throws Exception {
@@ -553,8 +553,8 @@ public class QNodeHandler implements IQNodeHandler {
 		status.setFailedDeployments(new ArrayList<DeploymentStatus>());
 		status.setFinishedDeployments(new ArrayList<DeploymentStatus>());
 		status.setOngoingDeployments(new ArrayList<DeploymentStatus>());
-		
-		for(Map.Entry<Long, DeployStatus> deployment: coord.getDeploymentsStatusPanel().entrySet()) {
+
+		for(Map.Entry<Long, DeployStatus> deployment : coord.getDeploymentsStatusPanel().entrySet()) {
 			long deployVersion = deployment.getKey();
 
 			DeploymentStatus dStatus = new DeploymentStatus();
@@ -562,13 +562,14 @@ public class QNodeHandler implements IQNodeHandler {
 
 			DeployInfo dInfo = coord.getDeployInfoPanel().get(deployVersion);
 			dStatus.setDate("");
-			
+
 			if(dInfo != null) {
 				dStatus.setDate(dInfo.getStartedAt());
 				dStatus.setDataURIs(dInfo.getDataURIs());
 				dStatus.setTablespacesDeployed(dInfo.getTablespacesDeployed());
 			} else {
-				log.warn("Null DeployInfo for deploy: " + deployVersion +" - it should be persisted in any case.");
+				log.warn("Null DeployInfo for deploy: " + deployVersion
+				    + " - it should be persisted in any case.");
 			}
 
 			List<String> logsPerDeploy = new ArrayList<String>();
@@ -576,7 +577,7 @@ public class QNodeHandler implements IQNodeHandler {
 			logsPerDeploy.addAll(coord.getDeploySpeedPanel(deployVersion).values());
 			Collections.sort(logsPerDeploy);
 			dStatus.setLogMessages(logsPerDeploy);
-			
+
 			if(deployment.getValue().equals(DeployStatus.FAILED)) {
 				status.getFailedDeployments().add(dStatus);
 			} else if(deployment.getValue().equals(DeployStatus.FINISHED)) {
@@ -585,25 +586,28 @@ public class QNodeHandler implements IQNodeHandler {
 				status.getOngoingDeployments().add(dStatus);
 			}
 		}
-		
+
 		Comparator<DeploymentStatus> byDeploymentDateDesc = new Comparator<DeploymentStatus>() {
 
 			@Override
-      public int compare(DeploymentStatus dStatus1, DeploymentStatus dStatus2) {
-	      return dStatus2.getDate().compareTo(dStatus1.getDate());
-      }
+			public int compare(DeploymentStatus dStatus1, DeploymentStatus dStatus2) {
+				return dStatus2.getDate().compareTo(dStatus1.getDate());
+			}
 		};
-		
-		final int maxDeploymentsToShowPerCategory = 10 ;
-		
+
+		final int maxDeploymentsToShowPerCategory = 10;
+
 		Collections.sort(status.getFailedDeployments(), byDeploymentDateDesc);
 		Collections.sort(status.getFinishedDeployments(), byDeploymentDateDesc);
 		Collections.sort(status.getOngoingDeployments(), byDeploymentDateDesc);
-		
-		status.setFailedDeployments(status.getFailedDeployments().subList(0, Math.min(status.getFailedDeployments().size(), maxDeploymentsToShowPerCategory)));
-		status.setFinishedDeployments(status.getFinishedDeployments().subList(0, Math.min(status.getFinishedDeployments().size(), maxDeploymentsToShowPerCategory)));
-		status.setOngoingDeployments(status.getOngoingDeployments().subList(0, Math.min(status.getOngoingDeployments().size(), maxDeploymentsToShowPerCategory)));
-		
+
+		status.setFailedDeployments(status.getFailedDeployments().subList(0,
+		    Math.min(status.getFailedDeployments().size(), maxDeploymentsToShowPerCategory)));
+		status.setFinishedDeployments(status.getFinishedDeployments().subList(0,
+		    Math.min(status.getFinishedDeployments().size(), maxDeploymentsToShowPerCategory)));
+		status.setOngoingDeployments(status.getOngoingDeployments().subList(0,
+		    Math.min(status.getOngoingDeployments().size(), maxDeploymentsToShowPerCategory)));
+
 		return status;
 	}
 
@@ -649,5 +653,29 @@ public class QNodeHandler implements IQNodeHandler {
 	 */
 	public Deployer getDeployer() {
 		return deployer;
+	}
+
+	/**
+	 * Allows the user to manually tell the QNode to look for old tablespace versions to remove.
+	 * This happens automatically on every deploy. But if some disks are about to be filled,
+	 * this can be invoked manually after changing {@link QNodeProperties.#VERSIONS_PER_TABLESPACE} 
+	 * configuration property and restarting the services.
+	 */
+	@Override
+	public StatusMessage cleanOldVersions() throws Exception {
+		// Check old versions to remove on demand
+		List<com.splout.db.thrift.TablespaceVersion> removed = context.synchronizeTablespaceVersions();
+		String rmvdTxt = "";
+		for(com.splout.db.thrift.TablespaceVersion tV : removed) {
+			rmvdTxt += tV.getTablespace() + ":" + tV.getVersion() + ", ";
+		}
+		if(rmvdTxt.length() > 0) {
+			rmvdTxt = rmvdTxt.substring(0, rmvdTxt.length() - 1);
+			return new StatusMessage("Removing tablespace versions: " + rmvdTxt);
+		} else {
+			return new StatusMessage("No old tablespace versions to remove. Change "
+			    + QNodeProperties.VERSIONS_PER_TABLESPACE
+			    + " configuration property and restart the QNodes if you intend to free some space.");
+		}
 	}
 }
