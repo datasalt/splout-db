@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.hazelcast.core.EntryListener;
 import com.hazelcast.core.EntryView;
+import com.hazelcast.core.ExecutionCallback;
 import com.hazelcast.core.IMap;
 import com.hazelcast.map.EntryProcessor;
 import com.hazelcast.map.MapInterceptor;
@@ -288,5 +289,43 @@ public class FixedDNodeList extends ConcurrentHashMap<String, DNodeInfo> impleme
     @Override
     public void destroy() {
         //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+		@Override
+    public String addLocalEntryListener(EntryListener<String, DNodeInfo> listener,
+        Predicate<String, DNodeInfo> predicate, boolean includeValue) {
+	    // TODO Auto-generated method stub
+	    return null;
+    }
+
+		@Override
+    public String addLocalEntryListener(EntryListener<String, DNodeInfo> listener,
+        Predicate<String, DNodeInfo> predicate, String key, boolean includeValue) {
+	    // TODO Auto-generated method stub
+	    return null;
+    }
+
+		@Override
+    public Map<String, Object> executeOnKeys(Set<String> keys, EntryProcessor entryProcessor) {
+	    // TODO Auto-generated method stub
+	    return null;
+    }
+
+		@Override
+    public void submitToKey(String key, EntryProcessor entryProcessor, ExecutionCallback callback) {
+	    // TODO Auto-generated method stub
+	    
+    }
+
+		@Override
+    public Future submitToKey(String key, EntryProcessor entryProcessor) {
+	    // TODO Auto-generated method stub
+	    return null;
+    }
+
+		@Override
+    public Map<String, Object> executeOnEntries(EntryProcessor entryProcessor, Predicate predicate) {
+	    // TODO Auto-generated method stub
+	    return null;
     }
 }

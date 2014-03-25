@@ -1,5 +1,5 @@
 
-Lists of 43 third-party dependencies.
+Lists of 44 third-party dependencies.
      (The Apache Software License, Version 2.0) sqlite4java (com.almworks.sqlite4java:sqlite4java:0.282 - http://code.google.com/p/sqlite4java)
      (The Apache Software License, Version 2.0) JCommander (com.beust:jcommander:1.27 - http://beust.com/jcommander)
      (The Apache Software License, Version 2.0) Jackson-annotations (com.fasterxml.jackson.core:jackson-annotations:2.1.1 - http://wiki.fasterxml.com/JacksonHome)
@@ -9,8 +9,8 @@ Lists of 43 third-party dependencies.
      (The Apache Software License, Version 2.0) FindBugs-jsr305 (com.google.code.findbugs:jsr305:1.3.9 - http://findbugs.sourceforge.net/)
      (The Apache Software License, Version 2.0) Gson (com.google.code.gson:gson:1.6 - http://code.google.com/p/google-gson/)
      (The Apache Software License, Version 2.0) Guava: Google Core Libraries for Java (com.google.guava:guava:13.0 - http://code.google.com/p/guava-libraries/guava)
-     (The Apache Software License, Version 2.0) hazelcast (com.hazelcast:hazelcast:3.1.2 - http://www.hazelcast.com/hazelcast/)
-     (The Apache Software License, Version 2.0) hazelcast-cloud (com.hazelcast:hazelcast-cloud:3.1.2 - http://www.hazelcast.com/hazelcast-cloud/)
+     (The Apache Software License, Version 2.0) hazelcast (com.hazelcast:hazelcast:3.2-RC2 - http://www.hazelcast.com/hazelcast/)
+     (The Apache Software License, Version 2.0) hazelcast-cloud (com.hazelcast:hazelcast-cloud:3.2-RC2 - http://www.hazelcast.com/hazelcast-cloud/)
      (Apache License version 2.0) BoneCP :: Core Library (com.jolbox:bonecp:0.7.1.RELEASE - http://jolbox.com/bonecp)
      (Apache License version 2.0) Splout SQL commons (com.splout.db:splout-commons:0.2.6-SNAPSHOT - http://nexus.sonatype.org/oss-repository-hosting.html/splout-top-level/splout-commons)
      (Apache License version 2.0) Splout SQL Java client (com.splout.db:splout-javaclient:0.2.6-SNAPSHOT - http://nexus.sonatype.org/oss-repository-hosting.html/splout-top-level/splout-javaclient)
@@ -30,6 +30,7 @@ Lists of 43 third-party dependencies.
      (The Apache Software License, Version 2.0) Apache Log4j (log4j:log4j:1.2.15 - http://logging.apache.org:80/log4j/1.2/)
      (Apache License, Version 2.0) An open source Java toolkit for Amazon S3 (net.java.dev.jets3t:jets3t:0.7.1 - http://jets3t.s3.amazonaws.com/index.html)
      (The Apache Software License, Version 2.0) Ehcache Core (net.sf.ehcache:ehcache-core:2.5.1 - http://ehcache.org)
+     (GNU Lesser Public License) FindBugs-Annotations (net.sourceforge.findbugs:annotations:1.3.2 - http://findbugs.sourceforge.net/)
      (Apache License) HttpClient (org.apache.httpcomponents:httpclient:4.0.1 - http://hc.apache.org/httpcomponents-client)
      (Apache License) HttpCore (org.apache.httpcomponents:httpcore:4.0.1 - http://hc.apache.org/httpcomponents-core/)
      (The Apache Software License, Version 2.0) Apache Thrift (org.apache.thrift:libthrift:0.7.0 - http://thrift.apache.org)

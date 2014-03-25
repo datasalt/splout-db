@@ -42,6 +42,7 @@ import com.hazelcast.core.IMap;
 import com.hazelcast.core.LifecycleEvent;
 import com.hazelcast.core.LifecycleEvent.LifecycleState;
 import com.hazelcast.core.LifecycleListener;
+import com.hazelcast.core.MemberAttributeEvent;
 import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
 
@@ -140,6 +141,11 @@ public class DistributedRegistry {
 				}, seconds, TimeUnit.SECONDS));
 			}
 		}
+
+		@Override
+    public void memberAttributeChanged(MemberAttributeEvent memberAttributeEvent) {
+	    // TODO Since HZ 3.2
+    }
 	}
 
 	/**
