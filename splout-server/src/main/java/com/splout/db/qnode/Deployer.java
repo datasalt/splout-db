@@ -154,8 +154,8 @@ public class Deployer extends QNodeHandlerModule {
 					    "Unexisting version after deploying this version. Sounds like a bug.", e);
 				}
 
-				// After a deploy we must synchronize tablespace versions to see if we have to remove some.
-				context.synchronizeTablespaceVersions();
+//				// After a deploy we must synchronize tablespace versions to see if we have to remove some.
+//				context.synchronizeTablespaceVersions();
 				// If some replicas are under-replicated, start a balancing process
 				context.maybeBalance();
 				
