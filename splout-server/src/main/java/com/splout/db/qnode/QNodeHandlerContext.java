@@ -513,6 +513,7 @@ public class QNodeHandlerContext {
 		for(Entry<TablespaceVersion, Tablespace> entry : myTablespaces.entrySet()) {
 			tablespaces.put(entry.getKey().getTablespace(), entry.getValue());
 		}
+    log.info("Analyzing " + tablespaces.keySet().size() + " tablespaces with a total of " + tablespaces.size() + " versions...");
 
 		// We will remove only versions older than the one being served
 		Map<String, Long> hzVersionsBeingServed = coordinationStructures.getCopyVersionsBeingServed();
@@ -520,6 +521,7 @@ public class QNodeHandlerContext {
 			log.info("... No versions yet being served.");
 			return null; // nothing to do yet
 		}
+    log.info("Number of versions being served: " + hzVersionsBeingServed.size());
 
 		List<com.splout.db.thrift.TablespaceVersion> tablespacesToRemove = new ArrayList<com.splout.db.thrift.TablespaceVersion>();
 
