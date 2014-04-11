@@ -75,7 +75,7 @@ public class AdminServlet extends BaseServlet {
 			} else if(action.equals(ACTION_DEPLOYMENTS_STATUS)) {
 				response = JSONSerDe.ser(qNodeHandler.deploymentsStatus());
 			} else if(action.equals(ACTION_CLEAN_OLD_VERSIONS)) {
-				response = JSONSerDe.ser(qNodeHandler.deploymentsStatus());
+				response = JSONSerDe.ser(qNodeHandler.cleanOldVersions());
 			} else {
 				throw new ServletException("Unknown action: " + action);
 			}
