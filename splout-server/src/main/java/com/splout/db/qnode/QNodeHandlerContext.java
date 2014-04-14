@@ -483,7 +483,7 @@ public class QNodeHandlerContext {
 	}
 
 	/**
-	 * Rotates the versions (deletes versions that are old or useless). To be executed at startup and after a deployment.
+	 * Rotates the versions (deletes versions that are old or useless).
 	 */
 	public List<com.splout.db.thrift.TablespaceVersion> synchronizeTablespaceVersions()
 	    throws InterruptedException {

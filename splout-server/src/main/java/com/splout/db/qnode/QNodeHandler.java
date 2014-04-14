@@ -138,6 +138,7 @@ public class QNodeHandler implements IQNodeHandler {
 				    + "] as it connected.");
 				context.initializeThriftClientCacheFor(dnode);
 				context.updateTablespaceVersions(event.getValue(), QNodeHandlerContext.DNodeEvent.ENTRY);
+				context.synchronizeTablespaceVersions();
 				log.info(Thread.currentThread() + ": Maybe balance (entryAdded)");
 				context.maybeBalance();
 			} catch(TablespaceVersionInfoException e) {
@@ -170,9 +171,12 @@ public class QNodeHandler implements IQNodeHandler {
 			// Update TablespaceVersions
 			try {
 				context.updateTablespaceVersions(event.getValue(), QNodeHandlerContext.DNodeEvent.UPDATE);
+				context.synchronizeTablespaceVersions();
 			} catch(TablespaceVersionInfoException e) {
 				throw new RuntimeException(e);
-			}
+			} catch(InterruptedException e) {
+				throw new RuntimeException(e);
+      }
 		}
 
 		@Override
@@ -197,7 +201,6 @@ public class QNodeHandler implements IQNodeHandler {
 			try {
 				// We perform all changes together with the aim of atomicity
 				updateLocalTablespace(event.getValue());
-				context.synchronizeTablespaceVersions();
 			} catch(Exception e) {
 				log.error(
 				    "Error changing serving tablespace [" + event.getKey() + " to version [" + event.getValue()
@@ -252,8 +255,6 @@ public class QNodeHandler implements IQNodeHandler {
 		// Now instantiate modules
 		deployer = new Deployer(context);
 		querier = new Querier(context);
-		// Get updated tablespace + version information
-		context.synchronizeTablespaceVersions();
 		log.info(Thread.currentThread() + " - Initializing QNode [DONE].");
 		warmingThread = new Thread() {
 			@Override
