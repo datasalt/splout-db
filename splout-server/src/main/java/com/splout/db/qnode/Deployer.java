@@ -142,7 +142,16 @@ public class Deployer extends QNodeHandlerModule {
 					abortDeploy(dnodes, "One or more DNodes failed.", version);
 					return;
 				}
-				
+
+        // We have to wait some time so that the DNodes data is spread across the cluster
+        // That does not seem the best solution, but it seems there is not simple
+        // solutions to that. At least it would be good to check after the wait
+        // than the complete tablespaces are available to that QNode. If that is the
+        // case for this QNode it will be probably the case for the rest of QNodes.
+        int waitDataSpread = 30;
+        log.info("Waiting " + waitDataSpread + " seconds before update versions so that QNodes get updated with DNodes info...");
+        Thread.sleep(waitDataSpread * 1000);
+
 				log.info("All DNodes performed the deploy of version [" + version
 				    + "]. Publishing tablespaces...");
 

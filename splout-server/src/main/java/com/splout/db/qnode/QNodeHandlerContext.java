@@ -557,7 +557,7 @@ public class QNodeHandlerContext {
             }
 					} else {
             log.info("Tablespace [" + tablespace + "] Version [" + tb.getVersion() + "] "
-                + "created at [" + new Date(tb.getCreationDate()) + "] younger than served one. Keeping.");
+                + "created at [" + new Date(tb.getCreationDate()) + "] either younger than served one or without version being served. Keeping.");
           }
 				}
 			}
