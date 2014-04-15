@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.splout.db.qnode.IQNodeHandler;
@@ -69,29 +68,9 @@ public class TestSploutClient {
 			QueryStatus queryStatus = client.query("t1", "k1", "SELECT * FROM foo;", null);
 			assertEquals("t1 k1 SELECT * FROM foo;", queryStatus.getError());
 			
-			List<String> dnodes = client.dNodeList();
-			assertEquals("ok", dnodes.get(0));
-
-			DeployInfo info = client.deploy("t1", PartitionMap.oneShardOpenedMap(), ReplicationMap.oneToOneMap("http://localhost:4444"), new URI("file:///foo"));
-			assertEquals("ok", info.getError());
-			
-		} finally {
-			qnode.close();
-		}
-	}
-	
-	@Test
-	@Ignore
-	public void testPost() throws Exception {
-		QNode qnode = new QNode();
-		try {
-			qnode.start(SploutConfiguration.getTestConfig(), QNODE_HANDLER);
-			
-			SploutClient client = new SploutClient(qnode.getAddress());
-			
-			QueryStatus queryStatus = client.queryPost("t1", "k1", "SELECT * FROM foo;", null);
+			queryStatus = client.queryPost("t1", "k1", "SELECT * FROM foo;", null);
 			assertEquals("t1 k1 SELECT * FROM foo;", queryStatus.getError());
-			
+
 			List<String> dnodes = client.dNodeList();
 			assertEquals("ok", dnodes.get(0));
 
@@ -102,5 +81,4 @@ public class TestSploutClient {
 			qnode.close();
 		}
 	}
-
 }
