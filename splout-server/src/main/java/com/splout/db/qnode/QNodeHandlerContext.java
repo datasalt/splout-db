@@ -483,7 +483,7 @@ public class QNodeHandlerContext {
 	}
 
 	/**
-	 * Rotates the versions (deletes versions that are old or useless).
+	 * Rotates the versions (deletes versions that are old or useless). To be executed at startup and after a deployment.
 	 */
 	public List<com.splout.db.thrift.TablespaceVersion> synchronizeTablespaceVersions()
 	    throws InterruptedException {
@@ -513,6 +513,7 @@ public class QNodeHandlerContext {
 		for(Entry<TablespaceVersion, Tablespace> entry : myTablespaces.entrySet()) {
 			tablespaces.put(entry.getKey().getTablespace(), entry.getValue());
 		}
+    log.info("Analyzing " + tablespaces.keySet().size() + " tablespaces with a total of " + tablespaces.size() + " versions...");
 
 		// We will remove only versions older than the one being served
 		Map<String, Long> hzVersionsBeingServed = coordinationStructures.getCopyVersionsBeingServed();
@@ -520,6 +521,7 @@ public class QNodeHandlerContext {
 			log.info("... No versions yet being served.");
 			return null; // nothing to do yet
 		}
+    log.info("Number of versions being served: " + hzVersionsBeingServed.size());
 
 		List<com.splout.db.thrift.TablespaceVersion> tablespacesToRemove = new ArrayList<com.splout.db.thrift.TablespaceVersion>();
 
@@ -548,8 +550,15 @@ public class QNodeHandlerContext {
 							log.info("Tablespace [" + tablespace + "] Version [" + tb.getVersion() + "] "
 							    + "created at [" + new Date(tb.getCreationDate())
 							    + "] REMOVED. We already keep younger versions.");
-						}
-					}
+						} else {
+              log.info("Tablespace [" + tablespace + "] Version [" + tb.getVersion() + "] "
+                  + "created at [" + new Date(tb.getCreationDate())
+                  + "] KEPT.");
+            }
+					} else {
+            log.info("Tablespace [" + tablespace + "] Version [" + tb.getVersion() + "] "
+                + "created at [" + new Date(tb.getCreationDate()) + "] younger than served one. Keeping.");
+          }
 				}
 			}
 
