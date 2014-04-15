@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -43,6 +44,7 @@ import com.hazelcast.core.ICountDownLatch;
 import com.hazelcast.core.IMap;
 import com.splout.db.common.PartitionEntry;
 import com.splout.db.common.ReplicationEntry;
+import com.splout.db.common.Tablespace;
 import com.splout.db.hazelcast.CoordinationStructures;
 import com.splout.db.hazelcast.TablespaceVersion;
 import com.splout.db.qnode.beans.DeployInfo;
@@ -143,28 +145,49 @@ public class Deployer extends QNodeHandlerModule {
 					return;
 				}
 
-        // We have to wait some time so that the DNodes data is spread across the cluster
-        // That does not seem the best solution, but it seems there is not simple
-        // solutions to that. At least it would be good to check after the wait
-        // than the complete tablespaces are available to that QNode. If that is the
+        // Check after the wait than the complete tablespaces are available to that QNode. If that is the
         // case for this QNode it will be probably the case for the rest of QNodes.
-        int waitDataSpread = 30;
-        log.info("Waiting " + waitDataSpread + " seconds before update versions so that QNodes get updated with DNodes info...");
-        Thread.sleep(waitDataSpread * 1000);
+				List<SwitchVersionRequest> versionsToCheck = switchActions();
+				do {
+					Thread.sleep(50);
+					Iterator<SwitchVersionRequest> it = versionsToCheck.iterator();
+					while(it.hasNext()) {
+						SwitchVersionRequest req = it.next();
+						Tablespace t = context.getTablespaceVersionsMap().get(new TablespaceVersion(req.getTablespace(), req.getVersion()));
+						// Check that this TablespaceVersion has been reported by some node through Hazelcast
+						if(t != null && t.getReplicationMap() != null && t.getReplicationMap().getReplicationEntries() != null &&
+								 t.getReplicationMap().getReplicationEntries().size() > 0) {
+							// Now we check that each partition has enough replicas.
+							// Otherwise it is not safe to start serving this new version.
+							boolean allReplicasOk = true;
+							for(ReplicationEntry entry: t.getReplicationMap().getReplicationEntries()) {
+								if(entry.getNodes() != null && (entry.getNodes().size() >= entry.getExpectedReplicationFactor())) {
+									continue;
+								}
+								allReplicasOk = false;
+								break;
+							}
+							if(allReplicasOk) {
+								it.remove();
+								log.info("Ok, TablespaceVersion [" + req.getTablespace() + ", " + req.getVersion() + "] with each partition being handled by enough DNodes as reported by Hazelcast. (" + t.getReplicationMap().getReplicationEntries() + ")");
+							}
+						}
+					}
+				} while(versionsToCheck.size() > 0);
 
 				log.info("All DNodes performed the deploy of version [" + version
 				    + "]. Publishing tablespaces...");
 
 				// We finish by publishing the versions table with the new versions.
 				try {
-					switchVersions(switchActions());
+					switchVersions(versionsToCheck);
 				} catch(UnexistingVersion e) {
 					throw new RuntimeException(
 					    "Unexisting version after deploying this version. Sounds like a bug.", e);
 				}
 
-//				// After a deploy we must synchronize tablespace versions to see if we have to remove some.
-//				context.synchronizeTablespaceVersions();
+				// After a deploy we must synchronize tablespace versions to see if we have to remove some.
+				context.synchronizeTablespaceVersions();
 				// If some replicas are under-replicated, start a balancing process
 				context.maybeBalance();
 				

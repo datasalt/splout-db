@@ -197,7 +197,6 @@ public class QNodeHandler implements IQNodeHandler {
 			try {
 				// We perform all changes together with the aim of atomicity
 				updateLocalTablespace(event.getValue());
-				context.synchronizeTablespaceVersions();
 			} catch(Exception e) {
 				log.error(
 				    "Error changing serving tablespace [" + event.getKey() + " to version [" + event.getValue()
@@ -252,8 +251,6 @@ public class QNodeHandler implements IQNodeHandler {
 		// Now instantiate modules
 		deployer = new Deployer(context);
 		querier = new Querier(context);
-		// Get updated tablespace + version information
-		context.synchronizeTablespaceVersions();
 		log.info(Thread.currentThread() + " - Initializing QNode [DONE].");
 		warmingThread = new Thread() {
 			@Override
