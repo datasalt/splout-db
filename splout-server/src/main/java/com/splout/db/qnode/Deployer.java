@@ -180,7 +180,7 @@ public class Deployer extends QNodeHandlerModule {
 
 				// We finish by publishing the versions table with the new versions.
 				try {
-					switchVersions(versionsToCheck);
+					switchVersions(switchActions());
 				} catch(UnexistingVersion e) {
 					throw new RuntimeException(
 					    "Unexisting version after deploying this version. Sounds like a bug.", e);

@@ -97,7 +97,7 @@ public class TestMultiQNodeDeploy extends BaseIntegrationTest {
 		client.deploy("p1", testTablespace.getPartitionMap(), testTablespace.getReplicationMap(),
 		    deployData.getAbsoluteFile().toURI());
 
-		Thread.sleep(1000); // TODO How to improve this.
+		Thread.sleep(2000); // TODO How to improve this.
 
 		// Perform N queries, one to each DNode and validate the resultant data
 		for(int i = 0; i < N_DNODES; i++) {
