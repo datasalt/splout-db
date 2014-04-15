@@ -145,31 +145,27 @@ public class Deployer extends QNodeHandlerModule {
 					return;
 				}
 
-        // Check after the wait than the complete tablespaces are available to that QNode. If that is the
-        // case for this QNode it will be probably the case for the rest of QNodes.
+				// Check after the wait than the complete tablespaces are available to that QNode. If that is the
+				// case for this QNode it will be probably the case for the rest of QNodes.
 				List<SwitchVersionRequest> versionsToCheck = switchActions();
 				do {
 					Thread.sleep(50);
 					Iterator<SwitchVersionRequest> it = versionsToCheck.iterator();
 					while(it.hasNext()) {
 						SwitchVersionRequest req = it.next();
-						Tablespace t = context.getTablespaceVersionsMap().get(new TablespaceVersion(req.getTablespace(), req.getVersion()));
+						Tablespace t = context.getTablespaceVersionsMap().get(
+						    new TablespaceVersion(req.getTablespace(), req.getVersion()));
 						// Check that this TablespaceVersion has been reported by some node through Hazelcast
-						if(t != null && t.getReplicationMap() != null && t.getReplicationMap().getReplicationEntries() != null &&
-								 t.getReplicationMap().getReplicationEntries().size() > 0) {
-							// Now we check that each partition has enough replicas.
-							// Otherwise it is not safe to start serving this new version.
-							boolean allReplicasOk = true;
-							for(ReplicationEntry entry: t.getReplicationMap().getReplicationEntries()) {
-								if(entry.getNodes() != null && (entry.getNodes().size() >= entry.getExpectedReplicationFactor())) {
-									continue;
-								}
-								allReplicasOk = false;
-								break;
-							}
-							if(allReplicasOk) {
+						if(t != null && t.getReplicationMap() != null && t.getPartitionMap() != null
+						    && t.getPartitionMap().getPartitionEntries() != null
+						    && t.getReplicationMap().getReplicationEntries() != null
+						    && t.getReplicationMap().getReplicationEntries().size() > 0) {
+							if(t.getPartitionMap().getPartitionEntries().size() == t.getReplicationMap()
+							    .getReplicationEntries().size()) {
+								log.info("Ok, TablespaceVersion [" + req.getTablespace() + ", " + req.getVersion()
+								    + "] being handled by enough DNodes as reported by Hazelcast. ("
+								    + t.getReplicationMap().getReplicationEntries() + ")");
 								it.remove();
-								log.info("Ok, TablespaceVersion [" + req.getTablespace() + ", " + req.getVersion() + "] with each partition being handled by enough DNodes as reported by Hazelcast. (" + t.getReplicationMap().getReplicationEntries() + ")");
 							}
 						}
 					}
@@ -190,11 +186,13 @@ public class Deployer extends QNodeHandlerModule {
 				context.synchronizeTablespaceVersions();
 				// If some replicas are under-replicated, start a balancing process
 				context.maybeBalance();
-				
+
 				log.info("Deploy of version [" + version + "] Finished PROPERLY. :-)");
-				context.getCoordinationStructures().logDeployMessage(version, "Deploy of version [" + version + "] finished properly.");
-				context.getCoordinationStructures().getDeploymentsStatusPanel().put(version, DeployStatus.FINISHED);
-            } catch(InterruptedException e) {
+				context.getCoordinationStructures().logDeployMessage(version,
+				    "Deploy of version [" + version + "] finished properly.");
+				context.getCoordinationStructures().getDeploymentsStatusPanel()
+				    .put(version, DeployStatus.FINISHED);
+			} catch(InterruptedException e) {
 				log.error("Error while deploying version [" + version + "]", e);
 				abortDeploy(dnodes, e.getMessage(), version);
 			} catch(Throwable t) {
@@ -219,8 +217,8 @@ public class Deployer extends QNodeHandlerModule {
 		}
 
 		/**
-		 * Log DNodes errors in deployment.
-		 * We log both to the QNode logger and to Hazelcast so the info is persisted in the session.
+		 * Log DNodes errors in deployment. We log both to the QNode logger and to Hazelcast so the info is persisted in the
+		 * session.
 		 */
 		private void explainErrors() {
 			IMap<String, String> deployErrorPanel = context.getCoordinationStructures().getDeployErrorPanel(
@@ -246,7 +244,7 @@ public class Deployer extends QNodeHandlerModule {
 			Set<String> failedDNodes = new HashSet<String>(deployErrorPanel.keySet());
 			// Check if deploy needs to be canceled or if the system could auto-rebalance itself afterwards
 			for(DeployRequest deployRequest : deployRequests) {
-				for(ReplicationEntry repEntry: deployRequest.getReplicationMap()) {
+				for(ReplicationEntry repEntry : deployRequest.getReplicationMap()) {
 					if(failedDNodes.containsAll(repEntry.getNodes())) {
 						// There is AT LEAST one partition that depends on the failed DNodes so the deploy must fail!
 						return true;
@@ -277,24 +275,25 @@ public class Deployer extends QNodeHandlerModule {
 		// A new unique version number is generated.
 		long version = context.getCoordinationStructures().uniqueVersionId();
 		deployInfo.setVersion(version);
-		
+
 		List<String> tablespaces = new ArrayList<String>();
 		List<String> dataURIs = new ArrayList<String>();
-		
-		for(DeployRequest request: deployRequests) {
+
+		for(DeployRequest request : deployRequests) {
 			tablespaces.add(request.getTablespace());
 			dataURIs.add(request.getData_uri());
 		}
-		
+
 		deployInfo.setTablespacesDeployed(tablespaces);
 		deployInfo.setDataURIs(dataURIs);
-		
+
 		Date startTime = new Date();
 		deployInfo.setStartedAt(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(startTime));
-		
-		context.getCoordinationStructures().logDeployMessage(version, "Deploy [" + version + "] for tablespaces " + tablespaces + " started.");
+
+		context.getCoordinationStructures().logDeployMessage(version,
+		    "Deploy [" + version + "] for tablespaces " + tablespaces + " started.");
 		context.getCoordinationStructures().getDeploymentsStatusPanel().put(version, DeployStatus.ONGOING);
-		
+
 		// Generate the list of actions per DNode
 		Map<String, List<DeployAction>> actionsPerDNode = generateDeployActionsPerDNode(deployRequests,
 		    version);
@@ -364,7 +363,8 @@ public class Deployer extends QNodeHandlerModule {
 				}
 			}
 		}
-		context.getCoordinationStructures().logDeployMessage(version, "Deploy failed due to: " + deployerErrorMessage);
+		context.getCoordinationStructures().logDeployMessage(version,
+		    "Deploy failed due to: " + deployerErrorMessage);
 		context.getCoordinationStructures().getDeploymentsStatusPanel().put(version, DeployStatus.FAILED);
 		CoordinationStructures.DEPLOY_IN_PROGRESS.decrementAndGet();
 	}
@@ -402,7 +402,7 @@ public class Deployer extends QNodeHandlerModule {
 		HashMap<String, List<DeployAction>> actions = new HashMap<String, List<DeployAction>>();
 
 		long deployDate = System.currentTimeMillis(); // Here is where we decide the data of the deployment for all deployed
-																									// tablespaces
+		                                              // tablespaces
 
 		for(DeployRequest req : deployRequests) {
 			for(Object obj : req.getReplicationMap()) {

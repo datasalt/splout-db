@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.splout.db.qnode.IQNodeHandler;
@@ -80,6 +81,7 @@ public class TestSploutClient {
 	}
 	
 	@Test
+	@Ignore
 	public void testPost() throws Exception {
 		QNode qnode = new QNode();
 		try {
