@@ -79,6 +79,7 @@ public class HazelcastConfigBuilder {
 		cfg.setName("default");
 		cfg.setBackupCount(buConf.getInt(HazelcastProperties.BACKUP_COUNT));
 		cfg.setMergePolicy("hz.LATEST_UPDATE");
+    cfg.setInMemoryFormat(InMemoryFormat.OBJECT); // So that comparisons happens by using equals method
 		hzConfig.addMapConfig(cfg);
 
 		cfg = new MapConfig();
