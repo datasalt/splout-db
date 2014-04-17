@@ -94,15 +94,17 @@ public class Deployer extends QNodeHandlerModule {
 		private List<String> dnodes;
 		private long timeoutSeconds;
 		private List<DeployRequest> deployRequests;
+    private long dnodesSpreadMetadataTimeout;
 		private boolean isReplicaBalancingEnabled;
 
 		public ManageDeploy(List<String> dnodes, List<DeployRequest> deployRequests, long version,
-		    long timeoutSeconds, long secondsToCheckFailureOrTimeout, boolean isReplicaBalancingEnabled) {
+		    long timeoutSeconds, long secondsToCheckFailureOrTimeout, long dnodesSpreadMetadataTimeout, boolean isReplicaBalancingEnabled) {
 			this.dnodes = dnodes;
 			this.deployRequests = deployRequests;
 			this.version = version;
 			this.timeoutSeconds = timeoutSeconds;
 			this.secondsToCheckFailureOrTimeout = secondsToCheckFailureOrTimeout;
+      this.dnodesSpreadMetadataTimeout = Math.max(dnodesSpreadMetadataTimeout, 1);
 			this.isReplicaBalancingEnabled = isReplicaBalancingEnabled;
 		}
 
@@ -147,9 +149,22 @@ public class Deployer extends QNodeHandlerModule {
 
 				// Check after the wait than the complete tablespaces are available to that QNode. If that is the
 				// case for this QNode it will be probably the case for the rest of QNodes.
+        long millisToWait = 50;
+        double acumulatedMillis = 0.;
 				List<SwitchVersionRequest> versionsToCheck = switchActions();
 				do {
-					Thread.sleep(50);
+					Thread.sleep(millisToWait);
+          acumulatedMillis += millisToWait;
+
+          // Let's see if we reached the timeout.
+          // Negative timeoutSeconds => waits forever
+          if((acumulatedMillis/1000) > dnodesSpreadMetadataTimeout) {
+            log.warn("Deploy of version [" + version + "] timed out when waiting DNodes to spread the metadata. Reached [" + (acumulatedMillis/1000)
+                + "] seconds.");
+            abortDeploy(dnodes, "Timeout reached", version);
+            return;
+          }
+
 					Iterator<SwitchVersionRequest> it = versionsToCheck.iterator();
 					while(it.hasNext()) {
 						SwitchVersionRequest req = it.next();
@@ -182,8 +197,6 @@ public class Deployer extends QNodeHandlerModule {
 					    "Unexisting version after deploying this version. Sounds like a bug.", e);
 				}
 
-				// After a deploy we must synchronize tablespace versions to see if we have to remove some.
-				context.synchronizeTablespaceVersions();
 				// If some replicas are under-replicated, start a balancing process
 				context.maybeBalance();
 
@@ -331,8 +344,9 @@ public class Deployer extends QNodeHandlerModule {
 		// Initiating an asynchronous process to manage the deployment
 		deployThread.execute(new ManageDeploy(new ArrayList(actionsPerDNode.keySet()), deployRequests,
 		    version, context.getConfig().getLong(QNodeProperties.DEPLOY_TIMEOUT, -1), context.getConfig()
-		        .getLong(QNodeProperties.DEPLOY_SECONDS_TO_CHECK_ERROR), context.getConfig().getBoolean(
-		        QNodeProperties.REPLICA_BALANCE_ENABLE)));
+		        .getLong(QNodeProperties.DEPLOY_SECONDS_TO_CHECK_ERROR),
+        context.getConfig().getLong(QNodeProperties.DEPLOY_DNODES_SPREAD_METADATA_TIMEOUT, 180),
+        context.getConfig().getBoolean(QNodeProperties.REPLICA_BALANCE_ENABLE)));
 
 		context.getCoordinationStructures().getDeployInfoPanel().put(version, deployInfo);
 		return deployInfo;

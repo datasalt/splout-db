@@ -55,6 +55,11 @@ public class QNodeProperties {
 	 * middle of a deploy
 	 */
 	public final static String DEPLOY_SECONDS_TO_CHECK_ERROR = "qnode.deploy.seconds.to.check.error";
+  /**
+   * The timeout in seconds when waiting the DNodes metadata to spread in the cluster
+   * once all of them has finished the downloading.
+   */
+  public final static String DEPLOY_DNODES_SPREAD_METADATA_TIMEOUT = "qnode.deploy.dnodes.spread.metadata.timeout";
 	/**
 	 * A fixed amount of time (seconds) that this QNode will wait before taking certain actions. For example, a QNode may decide to
 	 * re-balance under-replicated partitions. But if we are at cluster start, some DNodes may still be connecting or are

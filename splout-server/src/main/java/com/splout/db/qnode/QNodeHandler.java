@@ -197,6 +197,9 @@ public class QNodeHandler implements IQNodeHandler {
 			try {
 				// We perform all changes together with the aim of atomicity
 				updateLocalTablespace(event.getValue());
+        // After a change in versions (deployment, rollback, delete) we must
+        // synchronize tablespace versions to see if we have to remove some.
+        context.synchronizeTablespaceVersions();
 			} catch(Exception e) {
 				log.error(
 				    "Error changing serving tablespace [" + event.getKey() + " to version [" + event.getValue()
