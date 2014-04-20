@@ -5,6 +5,8 @@ Splout SQL Change Log
 
 IMPROVEMENTS
 
+ - 2014-04-20 - Sampling size can be configured by setting the property  splout.sampling.records.to.sample
+                in Hadoop configuration.
  - 2014-02-14 - Improved FULL_SCAN sampling. Now it uses one job per tablespaces instead of
                 one per table.
  - 2014-02-14 - Renamed RESERVOIR and DEFAULT sampling methods to FULL_SCAN and RANDOM.

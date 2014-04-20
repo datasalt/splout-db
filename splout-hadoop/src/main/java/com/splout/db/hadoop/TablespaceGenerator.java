@@ -106,8 +106,6 @@ public class TablespaceGenerator implements Serializable {
 	private transient final Path outputPath;
 	protected transient final TablespaceSpec tablespace;
 
-	// Number of keys that will be sampled for partitioning
-	private int recordsToSample = 100000;
 	// Number of SQL statements to execute before a COMMIT
 	private int batchSize = 1000000;
 	protected PartitionMap partitionMap;
@@ -227,6 +225,9 @@ public class TablespaceGenerator implements Serializable {
 	    throws TupleSamplerException, IOException {
 
 		FileSystem fileSystem = outputPath.getFileSystem(conf);
+
+    // Number of records to sample
+    long recordsToSample = conf.getLong("splout.sampling.records.to.sample", 100000);
 
     // The sampler will generate a file with samples to use to create the partition map
     Path sampledInput = new Path(outputPath, OUT_SAMPLED_INPUT);
@@ -519,14 +520,6 @@ public class TablespaceGenerator implements Serializable {
 	 */
 	public PartitionMap getPartitionMap() {
 		return partitionMap;
-	}
-
-	public int getRecordsToSample() {
-		return recordsToSample;
-	}
-
-	public void setRecordsToSample(int recordsToSample) {
-		this.recordsToSample = recordsToSample;
 	}
 
 	public int getBatchSize() {
