@@ -427,7 +427,7 @@ public class Deployer extends QNodeHandlerModule {
           if (rEntry.getShard() == 128) {
             log.error("partEntry: " + partEntry.getShard() + " rEntry: " + rEntry.getShard());
           }
-					if(partEntry.getShard() == rEntry.getShard()) {
+					if(partEntry.getShard().equals(rEntry.getShard())) {
             log.error("----> partEntry: " + partEntry.getShard() + " rEntry: " + rEntry.getShard());
 						pEntry = partEntry;
 					}
