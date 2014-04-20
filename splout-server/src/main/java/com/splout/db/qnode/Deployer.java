@@ -35,6 +35,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import com.splout.db.common.JSONSerDe;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -428,8 +429,16 @@ public class Deployer extends QNodeHandlerModule {
 					}
 				}
 				if(pEntry == null) {
-					throw new RuntimeException("No Partition metadata for shard: " + rEntry.getShard()
-					    + " this is very likely to be a software bug.");
+          String msg = "No Partition metadata for shard: " + rEntry.getShard()
+              + " this is very likely to be a software bug.";
+          log.error(msg);
+          try {
+            log.error("Partition map: " + JSONSerDe.ser(req.getPartitionMap()));
+            log.error("Replication map: " + JSONSerDe.ser(req.getReplicationMap()));
+          } catch (JSONSerDe.JSONSerDeException e) {
+            log.error("JSON error", e);
+          }
+          throw new RuntimeException(msg);
 				}
 				// Normalize DNode ids -> The convention is that DNodes are identified by host:port . So we need to strip the
 				// protocol, if any
