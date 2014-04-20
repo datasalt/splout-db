@@ -425,6 +425,9 @@ public class Deployer extends QNodeHandlerModule {
 				PartitionEntry pEntry = null;
 				for(PartitionEntry partEntry : req.getPartitionMap()) {
 					if(partEntry.getShard() == rEntry.getShard()) {
+            if (rEntry.getShard() == 128) {
+              log.error("partEntry: " + partEntry.getShard() + " rEntry: " + rEntry.getShard());
+            }
 						pEntry = partEntry;
 					}
 				}
