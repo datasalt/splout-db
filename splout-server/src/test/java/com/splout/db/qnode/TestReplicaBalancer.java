@@ -53,7 +53,7 @@ public class TestReplicaBalancer {
 		@SuppressWarnings("unchecked")
     @Override
 		public IMap<String, DNodeInfo> getDNodes() {
-			return new FixedDNodeList(new HashSet<String>(dNodes), dNodeInfo);
+ 			return new FixedDNodeList(dNodes, dNodeInfo);
 		}
 	}
 
