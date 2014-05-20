@@ -19,6 +19,7 @@
         <input ng-model="search.tbl_name" type="text" class="input-medium search-query">
     </form>
 
+    <p>{{(tables|array|filter:search).length}} of {{(tables|array).length}} tables in {{tablespace}} tablespace.</p>
 
     <div ng-repeat="table in tables | array | filter:search" class="row-fluid">
         <div class="span12" class="table-responsive">
