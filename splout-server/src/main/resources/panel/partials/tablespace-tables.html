@@ -1,0 +1,74 @@
+<div class="container-fluid">
+    <div class="page-header"><h2>Tablespace tables</h2></div>
+
+    <!-- <form class="form-horizontal">
+        <div class="control-group">
+            <label class="control-label">Tablespace</label>
+            <div class="controls">
+                <select ng-model="tablespace" ng-options="tablespace for tablespace in tablespaces"></select>
+            </div>
+        </div>
+        <input ng-model="search.tbl_name" type="text" class="input-medium search-query">
+    </form>-->
+
+    <form class="form-search">
+        <label class="control-label">Tablespace:</label>
+        <select ng-model="tablespace" ng-options="tablespace for tablespace in tablespaces">
+        </select>
+        <label class="control-label">Tablename filter:</label>
+        <input ng-model="search.tbl_name" type="text" class="input-medium search-query">
+    </form>
+
+
+    <div ng-repeat="table in tables | array | filter:search" class="row-fluid">
+        <div class="span12" class="table-responsive">
+            <table style="width: auto;" class="table table-striped table-condensed table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th style="text-align: center" colspan="{{table.tableInfo.length}}">Table {{table.tbl_name}}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td ng-repeat="column in table.tableInfo">{{column.name}}</td>
+                    </tr>
+                    <tr>
+                        <td ng-repeat="column in table.tableInfo">
+                            <i ng-if="column.pk != 0" class="icon-circle-arrow-right"></i>
+                            {{column.type}}
+                            <i ng-if="column.notnull != 0" class="icon-remove-sign"></i></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <table style="width: auto; margin-bottom: 0px" class="table table-striped table-condensed table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <td style="text-align: center">Indexes</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <dl class="dl-horizontal">
+                                <dt ng-repeat-start="(indexName, indexColumns) in table.indexes" data-toggle="tooltip" data-placement="bottom" title="{{indexName}}">{{indexName}}</dt>
+                                <dd ng-repeat-end>
+                                    <table style="width: auto; margin-bottom: 0px" class="table table-striped table-condensed table-bordered table-hover">
+                                        <tbody>
+                                        <tr>
+                                            <td ng-repeat="column in indexColumns | orderBy:column.seqno">{{column.name}}</td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </dd>
+                            </dl>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <hr>
+            <!-- {{table}} -->
+        </div>
+    </div>
+
+</div>
