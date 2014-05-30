@@ -21,9 +21,8 @@ package com.splout.db.hadoop;
  */
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -57,6 +56,9 @@ public class GeneratorCMD implements Tool {
   @Parameter(required = false, names = { "-st", "--sampling-type" }, description = "Selects the sampling type to use. FULL_SCAN: sampling from the full dataset. RANDOM: random selection of samples from the start of splits. ")
   private SamplingType samplingType = SamplingType.FULL_SCAN;
 
+  @Parameter(required = false, names = { "-p", "--parallelism"}, description = "Parallelism to be used. Allows to execute the generation of several tablespaces in parallel.")
+  private int parallelism = 1;
+
   private Configuration conf;
 
 	public int run(String[] args) throws Exception {
@@ -70,6 +72,11 @@ public class GeneratorCMD implements Tool {
 			jComm.usage();
 			return -1;
 		}
+
+    if (parallelism <1) {
+      System.err.println("Parallelism must be greater than 0.");
+      System.exit(1);
+    }
 
 		log.info("Parsing input parameters...");
 
@@ -103,16 +110,45 @@ public class GeneratorCMD implements Tool {
 		FileSystem outFs = out.getFileSystem(getConf());
 		HadoopUtils.deleteIfExists(outFs, out);
 
+    ExecutorService executor = Executors.newFixedThreadPool(parallelism);
+    ArrayList<Future<Boolean>> generatorFutures = new ArrayList<Future<Boolean>>();
+
 		// Generate each tablespace
 		for(Map.Entry<String, TablespaceSpec> tablespace : tablespacesToGenerate.entrySet()) {
 			Path tablespaceOut = new Path(out, tablespace.getKey());
 			TablespaceSpec spec = tablespace.getValue();
 
 			log.info("Generating view with Hadoop (" + tablespace.getKey() + ")");
-			TablespaceGenerator viewGenerator = new TablespaceGenerator(spec, tablespaceOut, this.getClass());
-			// TODO Parametrize sampling options?
-			viewGenerator.generateView(conf, samplingType, new TupleSampler.RandomSamplingOptions());
+			final TablespaceGenerator viewGenerator = new TablespaceGenerator(spec, tablespaceOut, this.getClass());
+
+      generatorFutures.add(executor.submit(new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          viewGenerator.generateView(conf, samplingType, new TupleSampler.RandomSamplingOptions());
+          return true;
+        }
+      }));
 		}
+
+    // Waiting to finishing
+    while(true) {
+      if (generatorFutures.size() == 0) {
+        break;
+      }
+      Iterator<Future<Boolean>> it = generatorFutures.iterator();
+      while(it.hasNext()) {
+        try {
+          // Get will throw an exception if the callable returned it.
+          it.next().get(10, TimeUnit.SECONDS);
+          it.remove();
+        } catch(TimeoutException e) {}
+        catch (Exception e) {
+          // One job was wrong. Stopping to waiting to the rest.
+          executor.shutdownNow();
+          throw e;
+        }
+      }
+    }
 
 		log.info("Done!");
 		return 0;
