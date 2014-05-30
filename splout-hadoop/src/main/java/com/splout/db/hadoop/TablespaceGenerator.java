@@ -292,7 +292,7 @@ public class TablespaceGenerator implements Serializable {
 	 */
 	protected TupleMRBuilder createMRBuilder(final int nPartitions, Configuration conf)
 	    throws TupleMRException, SploutSQLOutputFormatException {
-		TupleMRBuilder builder = new TupleMRBuilder(conf, "Splout View Builder");
+		TupleMRBuilder builder = new TupleMRBuilder(conf, "Splout generating " + outputPath);
 
 		List<TableSpec> tableSpecs = new ArrayList<TableSpec>();
 
