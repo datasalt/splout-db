@@ -111,6 +111,7 @@ public class GeneratorCMD implements Tool {
 		HadoopUtils.deleteIfExists(outFs, out);
 
     ExecutorService executor = Executors.newFixedThreadPool(parallelism);
+    ExecutorCompletionService<Boolean> ecs = new ExecutorCompletionService<Boolean>(executor);
     ArrayList<Future<Boolean>> generatorFutures = new ArrayList<Future<Boolean>>();
 
 		// Generate each tablespace
@@ -130,25 +131,22 @@ public class GeneratorCMD implements Tool {
       }));
 		}
 
-    // Waiting to finishing
-    while(true) {
-      if (generatorFutures.size() == 0) {
-        break;
-      }
-      Iterator<Future<Boolean>> it = generatorFutures.iterator();
-      while(it.hasNext()) {
-        try {
-          // Get will throw an exception if the callable returned it.
-          it.next().get(10, TimeUnit.SECONDS);
-          it.remove();
-        } catch(TimeoutException e) {}
-        catch (Exception e) {
-          // One job was wrong. Stopping to waiting to the rest.
-          executor.shutdownNow();
-          throw e;
+    // Waiting all tasks to finish.
+    for (int i = 0; i < tablespacesToGenerate.size(); i++) {
+      // Get will throw an exception if the callable returned it.
+      try {
+        ecs.take().get();
+      } catch (Exception e) {
+        // One job was wrong. Stopping the rest.
+        for (Future<Boolean> task : generatorFutures) {
+          task.cancel(true);
         }
+        executor.shutdown();
+        throw e;
       }
     }
+
+    executor.shutdown();
 
 		log.info("Done!");
 		return 0;
