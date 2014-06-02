@@ -136,6 +136,7 @@ Properties that start with "fetcher" affect the configuration of the DNode's fet
 | dnode.max.query.time | Queries that run for more than this time will be interrupted. Must be greater than 1000. | 15000
 | dnode.slow.query.abs.limit | In milliseconds, queries that are slower will be logged with a WARNING and registered as "slow queries" for this DNode's stats. | 2500
 | dnode.db.connections.per.pool | Size of the connection pool to each partition that this DNode services. | 10
+| dnode.deploy.parallelism | Number of parallel downloads allowed when deploying partitions in a DNode | 3
 | fetcher.s3.access.key	| If using S3 fetching, specify here your AWS credentials. | (none)
 | fetcher.s3.secret.key	| If using S3 fetching, specify here your AWS credentials.| (none)
 | fetcher.temp.dir | The local folder that will be used to download new deployments. | fetcher-tmp
