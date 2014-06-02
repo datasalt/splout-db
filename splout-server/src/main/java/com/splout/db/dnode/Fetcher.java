@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.channels.FileChannel;
+import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
@@ -100,7 +101,8 @@ public class Fetcher {
 	 * Fetch a file that is in a Hadoop file system. Return a local File.
 	 */
 	private File hdfsFetch(Path fromPath, Reporter reporter) throws IOException {
-		File toFile = new File(tempDir, fromPath.toUri().getPath());
+    UUID uniqueId = UUID.randomUUID();
+		File toFile = new File(tempDir, uniqueId.toString());
 		File toDir = new File(toFile.getParent());
 		if(toDir.exists()) {
 			FileUtils.deleteDirectory(toDir);
@@ -201,8 +203,8 @@ public class Fetcher {
 	private File s3Fetch(URI uri, Reporter reporter) throws IOException {
 		String bucketName = uri.getHost();
 		String path = uri.getPath();
-
-		File destFolder = new File(tempDir, bucketName + "/" + path);
+    UUID uniqueId = UUID.randomUUID();
+		File destFolder = new File(tempDir, uniqueId.toString());
 		if(destFolder.exists()) {
 			FileUtils.deleteDirectory(destFolder);
 		}
@@ -274,7 +276,8 @@ public class Fetcher {
 	 * Fetch a file that is in a local file system. Return a local File.
 	 */
 	private File fileFetch(File file, Reporter reporter) throws IOException {
-		File toDir = new File(tempDir, file.getParent() + "/" + file.getName());
+    UUID uniqueId = UUID.randomUUID();
+		File toDir = new File(tempDir, uniqueId.toString());
 		if(toDir.exists()) {
 			FileUtils.deleteDirectory(toDir);
 		}
