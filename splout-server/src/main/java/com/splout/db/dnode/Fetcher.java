@@ -102,7 +102,7 @@ public class Fetcher {
 	 */
 	private File hdfsFetch(Path fromPath, Reporter reporter) throws IOException {
     UUID uniqueId = UUID.randomUUID();
-		File toFile = new File(tempDir, uniqueId.toString());
+		File toFile = new File(tempDir, uniqueId.toString() + "/" + fromPath.getName());
 		File toDir = new File(toFile.getParent());
 		if(toDir.exists()) {
 			FileUtils.deleteDirectory(toDir);
@@ -204,7 +204,7 @@ public class Fetcher {
 		String bucketName = uri.getHost();
 		String path = uri.getPath();
     UUID uniqueId = UUID.randomUUID();
-		File destFolder = new File(tempDir, uniqueId.toString());
+		File destFolder = new File(tempDir, uniqueId.toString() + "/" + path);
 		if(destFolder.exists()) {
 			FileUtils.deleteDirectory(destFolder);
 		}
@@ -277,7 +277,7 @@ public class Fetcher {
 	 */
 	private File fileFetch(File file, Reporter reporter) throws IOException {
     UUID uniqueId = UUID.randomUUID();
-		File toDir = new File(tempDir, uniqueId.toString());
+		File toDir = new File(tempDir, uniqueId.toString() + "/" + file.getName());
 		if(toDir.exists()) {
 			FileUtils.deleteDirectory(toDir);
 		}
