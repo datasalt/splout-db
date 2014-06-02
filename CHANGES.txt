@@ -5,6 +5,7 @@ Splout SQL Change Log
 
 IMPROVEMENTS
 
+ - 2014-06-02 - Parallel deployment of partitions in DNode, configure through the property dnode.deploy.parallelism. Default 3.
  - 2014-05-20 - Parallel generation of tablespaces with generate command
  - 2014-05-20 - Tablespace tables view in the Splout panel
  - 2014-04-20 - Sampling size can be configured by setting the property  splout.sampling.records.to.sample
