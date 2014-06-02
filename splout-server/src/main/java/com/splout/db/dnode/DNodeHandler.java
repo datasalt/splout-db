@@ -23,19 +23,13 @@ package com.splout.db.dnode;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -126,6 +120,9 @@ public class DNodeHandler implements IDNodeHandler {
 	// Above this query time the query will be logged as slow query
 	private long absoluteSlowQueryLimit;
 	private long slowQueries = 0;
+
+  // Deploy parallelism
+  private int deployParallelism;
 
 	// This map will hold all the current balance file transactions being done
 	private ConcurrentHashMap<String, BalanceFileReceivingProgress> balanceActionsStateMap = new ConcurrentHashMap<String, BalanceFileReceivingProgress>();
@@ -319,6 +316,7 @@ public class DNodeHandler implements IDNodeHandler {
 		maxResultsPerQuery = config.getInt(DNodeProperties.MAX_RESULTS_PER_QUERY);
 		int maxCachePools = config.getInt(DNodeProperties.EH_CACHE_N_ELEMENTS);
 		absoluteSlowQueryLimit = config.getLong(DNodeProperties.SLOW_QUERY_ABSOLUTE_LIMIT);
+    deployParallelism = config.getInt(DNodeProperties.DEPLOY_PARALLELISM, 3);
 		factory = new ManagerFactory();
 		factory.init(config);
 		// We create a Cache for holding SQL connection pools to different tablespace versions
@@ -527,7 +525,7 @@ public class DNodeHandler implements IDNodeHandler {
 									final long startTime = System.currentTimeMillis();
 									final AtomicLong bytesSoFar = new AtomicLong(0l);
 
-									Fetcher.Reporter reporter = new Fetcher.Reporter() {
+									final Fetcher.Reporter reporter = new Fetcher.Reporter() {
 										@Override
 										public void progress(long consumed) {
 											long now = System.currentTimeMillis();
@@ -575,34 +573,40 @@ public class DNodeHandler implements IDNodeHandler {
 										}
 									};
 
-									for(DeployAction action : deployActions) {
-										// 1- Store metadata
-										File metadataFile = getLocalMetadataFile(action.getTablespace(),
-										    action.getPartition(), version);
-										if(!metadataFile.getParentFile().exists()) {
-											metadataFile.getParentFile().mkdirs();
-										}
-										ThriftWriter writer = new ThriftWriter(metadataFile);
-										writer.write(action.getMetadata());
-										writer.close();
-										// 2- Call the fetcher for fetching
-										File fetchedContent = fetcher.fetch(action.getDataURI(), reporter);
-										// If we reach this point then the fetch has been OK
-										File dbFolder = getLocalStorageFolder(action.getTablespace(), action.getPartition(),
-										    version);
-										if(dbFolder.exists()) { // If the new folder where we want to deploy already exists means it is
-											                      // somehow
-											                      // stalled from a previous failed deploy - it is ok to delete it
-											FileUtils.deleteDirectory(dbFolder);
-										}
-										// 4- Perform a "mv" for finally making the data available
-										FileUtils.moveDirectory(fetchedContent, dbFolder);
-										// 5- Preemptively load the Manager in case initialization is slow
-										// Managers might warm up for a while (e.g. loading data into memory)
-										loadManagerInEHCache(action.getTablespace(), action.getVersion(), action.getPartition(), dbFolder, action.getMetadata());
-									}
+                  // Parallel execution of deploy actions
+                  ExecutorService executor = Executors.newFixedThreadPool(deployParallelism);
+                  ExecutorCompletionService<Boolean> ecs = new ExecutorCompletionService<Boolean>(executor);
+                  ArrayList<Future<Boolean>> deployFutures = new ArrayList<Future<Boolean>>();
 
-									// Publish new DNodeInfo in distributed registry.
+									for(final DeployAction action : deployActions) {
+                    deployFutures.add(executor.submit(new Callable<Boolean>() {
+                      @Override
+                      public Boolean call() throws Exception {
+                        // Downloads data and updates some structs
+                        runDeployAction(reporter, action, version);
+                        return true;
+                      }
+                    }));
+                  }
+
+                  // Waiting all tasks to finish.
+                  for (int i = 0; i < deployActions.size(); i++) {
+                    // Get will throw an exception if the callable returned it.
+                    try {
+                      ecs.take().get();
+                    } catch (ExecutionException e) {
+                      // One job was wrong. Stopping the rest.
+                      for (Future<Boolean> task : deployFutures) {
+                        task.cancel(true);
+                      }
+                      executor.shutdown();
+                      throw e.getCause();
+                    }
+                  }
+
+                  executor.shutdown();
+
+                  // Publish new DNodeInfo in distributed registry.
 									// This makes QNodes notice that a new version is available...
 									// PartitionMap and ReplicationMap will be built incrementally as DNodes finish.
 									dnodesRegistry.changeInfo(new DNodeInfo(config));
@@ -655,7 +659,37 @@ public class DNodeHandler implements IDNodeHandler {
 		}
 	}
 
-	/**
+  /**
+   * Runs a deploy action. Downloads file and warm up the data.
+   */
+  private void runDeployAction(Fetcher.Reporter reporter, DeployAction action, long version) throws IOException, URISyntaxException, DNodeException {
+    // 1- Store metadata
+    File metadataFile = getLocalMetadataFile(action.getTablespace(),
+        action.getPartition(), version);
+    if(!metadataFile.getParentFile().exists()) {
+      metadataFile.getParentFile().mkdirs();
+    }
+    ThriftWriter writer = new ThriftWriter(metadataFile);
+    writer.write(action.getMetadata());
+    writer.close();
+    // 2- Call the fetcher for fetching
+    File fetchedContent = fetcher.fetch(action.getDataURI(), reporter);
+    // If we reach this point then the fetch has been OK
+    File dbFolder = getLocalStorageFolder(action.getTablespace(), action.getPartition(),
+        version);
+    if(dbFolder.exists()) { // If the new folder where we want to deploy already exists means it is
+                            // somehow
+                            // stalled from a previous failed deploy - it is ok to delete it
+      FileUtils.deleteDirectory(dbFolder);
+    }
+    // 4- Perform a "mv" for finally making the data available
+    FileUtils.moveDirectory(fetchedContent, dbFolder);
+    // 5- Preemptively load the Manager in case initialization is slow
+    // Managers might warm up for a while (e.g. loading data into memory)
+    loadManagerInEHCache(action.getTablespace(), action.getVersion(), action.getPartition(), dbFolder, action.getMetadata());
+  }
+
+  /**
 	 * Thrift RPC method -> Given a list of {@link RollbackAction}s, perform a synchronous rollback
 	 */
 	@Override

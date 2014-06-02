@@ -56,6 +56,10 @@ public class DNodeProperties {
 	 * The amount of seconds that the DNode will wait before canceling a too-long deployment.
 	 */
 	public final static String DEPLOY_TIMEOUT_SECONDS = "dnode.deploy.timeout.seconds";
+  /**
+   * The amount of parallel downloads that are allowed per each deployment
+   */
+  public final static String DEPLOY_PARALLELISM = "dnode.deploy.parallelism";
 	/**
 	 * A hard limit on the number of results per each SQL query that this DNode may send back to QNodes.
 	 */
