@@ -122,7 +122,7 @@ public class GeneratorCMD implements Tool {
 			log.info("Generating view with Hadoop (" + tablespace.getKey() + ")");
 			final TablespaceGenerator viewGenerator = new TablespaceGenerator(spec, tablespaceOut, this.getClass());
 
-      generatorFutures.add(executor.submit(new Callable<Boolean>() {
+      generatorFutures.add(ecs.submit(new Callable<Boolean>() {
         @Override
         public Boolean call() throws Exception {
           viewGenerator.generateView(conf, samplingType, new TupleSampler.RandomSamplingOptions());

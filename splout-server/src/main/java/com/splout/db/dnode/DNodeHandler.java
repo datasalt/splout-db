@@ -579,7 +579,7 @@ public class DNodeHandler implements IDNodeHandler {
                   ArrayList<Future<Boolean>> deployFutures = new ArrayList<Future<Boolean>>();
 
 									for(final DeployAction action : deployActions) {
-                    deployFutures.add(executor.submit(new Callable<Boolean>() {
+                    deployFutures.add(ecs.submit(new Callable<Boolean>() {
                       @Override
                       public Boolean call() throws Exception {
                         // Downloads data and updates some structs
