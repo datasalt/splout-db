@@ -601,6 +601,14 @@ public class DNodeHandler implements IDNodeHandler {
                       }
                       executor.shutdown();
                       throw e.getCause();
+                    } catch (InterruptedException e) {
+                      // Somebody interrupted the deployment thread. Stopping the
+                      // rest of tasks.
+                      for (Future<Boolean> task : deployFutures) {
+                        task.cancel(true);
+                      }
+                      executor.shutdown();
+                      throw e;
                     }
                   }
 
