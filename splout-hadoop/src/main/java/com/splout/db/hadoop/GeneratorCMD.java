@@ -136,7 +136,7 @@ public class GeneratorCMD implements Tool {
       // Get will throw an exception if the callable returned it.
       try {
         ecs.take().get();
-      } catch (Exception e) {
+      } catch (ExecutionException e) {
         // One job was wrong. Stopping the rest.
         for (Future<Boolean> task : generatorFutures) {
           task.cancel(true);
