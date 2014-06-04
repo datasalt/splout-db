@@ -115,6 +115,10 @@ dnode.max.query.time	15000
 	 
 dnode.slow.query.abs.limit	2500
 
+# The amount of parallel downloads that are allowed per each deployment
+
+dnode.deploy.parallelism  3
+
 #
 # DNode Data Fetcher Properties
 # (The DNode Data Fetcher is in charge of downloading the files under a new deploy request)

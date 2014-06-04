@@ -316,7 +316,7 @@ public class DNodeHandler implements IDNodeHandler {
 		maxResultsPerQuery = config.getInt(DNodeProperties.MAX_RESULTS_PER_QUERY);
 		int maxCachePools = config.getInt(DNodeProperties.EH_CACHE_N_ELEMENTS);
 		absoluteSlowQueryLimit = config.getLong(DNodeProperties.SLOW_QUERY_ABSOLUTE_LIMIT);
-    deployParallelism = config.getInt(DNodeProperties.DEPLOY_PARALLELISM, 3);
+    deployParallelism = config.getInt(DNodeProperties.DEPLOY_PARALLELISM);
 		factory = new ManagerFactory();
 		factory.init(config);
 		// We create a Cache for holding SQL connection pools to different tablespace versions
