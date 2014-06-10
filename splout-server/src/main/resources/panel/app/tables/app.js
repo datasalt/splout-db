@@ -1,6 +1,8 @@
 var tablesApp = angular.module('tablesApp', [
     'ui.bootstrap',
     'ngRoute',
+    'angularSpinner',
+    'ajoslin.promise-tracker',
     'tablesControllers']);
 
 

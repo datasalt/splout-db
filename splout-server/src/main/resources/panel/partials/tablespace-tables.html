@@ -1,15 +1,7 @@
 <div class="container-fluid">
     <div class="page-header"><h2>Tablespace tables</h2></div>
 
-    <!-- <form class="form-horizontal">
-        <div class="control-group">
-            <label class="control-label">Tablespace</label>
-            <div class="controls">
-                <select ng-model="tablespace" ng-options="tablespace for tablespace in tablespaces"></select>
-            </div>
-        </div>
-        <input ng-model="search.tbl_name" type="text" class="input-medium search-query">
-    </form>-->
+    <span us-spinner ng-show="loadingTracker.active()"></span>
 
     <form class="form-search">
         <label class="control-label">Tablespace:</label>
