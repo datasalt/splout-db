@@ -1,0 +1,94 @@
+#!/bin/sh
+#
+# splout-qnode SploutSQL qnode
+#
+# chkconfig:   - 60 40
+# description: SploutSQL qnode.
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+splout_user="splout"
+splout_home="/home/${splout_user}/splout"
+exec="${splout_home}/bin/splout-service.sh"
+pidfile="${splout_home}/splout-qnode.pid"
+prog="sploutqnode"
+
+# Get Hadoop & SploutSQL environment variables
+. /home/${splout_user}/.bashrc
+
+lockfile=/var/lock/subsys/$prog
+
+start() {
+    [ -x $exec ] || exit 5
+    echo -n $"Starting $prog: "
+    daemon --user $splout_user "$exec qnode start >/dev/null"
+    retval=$?
+    echo
+    [ $retval -eq 0 ] && touch $lockfile
+    return $retval
+}
+
+stop() {
+    echo -n $"Stopping $prog: "
+    daemon --user $splout_user "$exec qnode stop >/dev/null"
+    retval=$?
+    echo
+    [ $retval -eq 0 ] && rm -f $lockfile $pidfile
+    return $retval
+}
+
+restart() {
+    stop
+    start
+}
+
+reload() {
+    restart
+}
+
+force_reload() {
+    restart
+}
+
+rh_status() {
+    # run checks to determine if the service is running or use generic status
+    status -p $pidfile $prog
+}
+
+rh_status_q() {
+    rh_status >/dev/null 2>&1
+}
+
+
+case "$1" in
+    start)
+        rh_status_q && exit 0
+        $1
+        ;;
+    stop)
+        rh_status_q || exit 0
+        $1
+        ;;
+    restart)
+        $1
+        ;;
+    reload)
+        rh_status_q || exit 7
+        $1
+        ;;
+    force-reload)
+        force_reload
+        ;;
+    status)
+        rh_status
+        ;;
+    condrestart|try-restart)
+        rh_status_q || exit 0
+        restart
+        ;;
+    *)
+        echo $"Usage: $0 {start|stop|status|restart|condrestart|try-restart|reload|force-reload}"
+        exit 2
+esac
+exit $?
