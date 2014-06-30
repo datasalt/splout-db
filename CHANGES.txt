@@ -20,6 +20,9 @@ IMPROVEMENTS
 
 BUG FIXES
 
+ - 2014-06-30 - Solved a Bug with generated partitions maps. The code could generate partition maps
+                with the latest partition empty. Workarround implemented to ensure that all partitions
+                has some data.
  - 2014-04-20 - Solved a Bug that prevents the deployment of tablespaces with 128 or more partitions
 
  - 2013-09-05 - splout-service.sh adapted to run properly with packages from  Cloudera

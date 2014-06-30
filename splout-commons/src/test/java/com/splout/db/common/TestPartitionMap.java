@@ -28,9 +28,6 @@ import java.util.List;
 
 import org.junit.Test;
 
-import com.splout.db.common.JSONSerDe;
-import com.splout.db.common.PartitionEntry;
-import com.splout.db.common.PartitionMap;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
 
 public class TestPartitionMap {
@@ -71,60 +68,7 @@ public class TestPartitionMap {
 		map.setPartitionEntries(entries);
 		return map;
 	}
-	
-	@Test
-	public void testAdjustEmptyPartitions() {
-		List<PartitionEntry> entries = new ArrayList<PartitionEntry>();
-		PartitionEntry entry = new PartitionEntry();
-		entry.setMin(null);
-		entry.setMax("c");
-		entry.setShard(0);
-		entries.add(entry);
-		
-		// Partition entry that would become empty - has to be removed
-		// min = max
-		entry = new PartitionEntry();
-		entry.setMin("c");
-		entry.setMax("c");
-		entry.setShard(1);
-		entries.add(entry);
-		
-		entry = new PartitionEntry();
-		entry.setMin("c");
-		entry.setMax("m");
-		entry.setShard(2);
-		entries.add(entry);
-		
-		// Partition entry that would become empty - has to be removed
-		// min = max
-		entry = new PartitionEntry();
-		entry.setMin("m");
-		entry.setMax("m");
-		entry.setShard(3);
-		entries.add(entry);
-		
-		entry = new PartitionEntry();
-		entry.setMin("m");
-		entry.setMax(null);
-		entry.setShard(4);
-		entries.add(entry);
 
-		List<PartitionEntry> newEntries = PartitionMap.adjustEmptyPartitions(entries);
-		assertEquals(3, newEntries.size());
-		
-		assertEquals(null, newEntries.get(0).getMin());
-		assertEquals("c", newEntries.get(0).getMax());
-		assertEquals((Integer)0, newEntries.get(0).getShard());
-		
-		assertEquals("c", newEntries.get(1).getMin());
-		assertEquals("m", newEntries.get(1).getMax());
-		assertEquals((Integer)1, newEntries.get(1).getShard());
-
-		assertEquals("m", newEntries.get(2).getMin());
-		assertEquals(null, newEntries.get(2).getMax());
-		assertEquals((Integer)2, newEntries.get(2).getShard());
-	}
-	
   @Test
 	public void testOpenedMapSerDe() throws Exception {
 		PartitionMap map = PartitionMap.oneShardOpenedMap();

@@ -65,30 +65,6 @@ public class PartitionMap implements Serializable {
 		partitionMap.add(openedEntry);
 		return new PartitionMap(partitionMap);
 	}
-	
-	/**
-	 * Method that can be used to adjust PartitionEntries that may contain partitions that will become empty.
-	 * This may happen if a key spans more than one partition. In that case, because we cannot divide further,
-	 * we have to create less partitions than desired. So this method may return less partitions than what
-	 * it receives.
-	 */
-	public static List<PartitionEntry> adjustEmptyPartitions(List<PartitionEntry> entries) {
-		// return a list of partitionEntries that don't contain any partition such that min = max
-		// this may happen if there is a hot spot in a key that appears too often in the dataset
-		List<PartitionEntry> newPartitionEntries = new ArrayList<PartitionEntry>();
-		int shardCount = 0;
-		for(PartitionEntry entry: entries) {
-			PartitionEntry newEntry = new PartitionEntry();
-			newEntry.setShard(shardCount);
-			if(entry.getMin() == null || entry.getMax() == null || !entry.getMin().equals(entry.getMax())) {
-				newEntry.setMin(entry.getMin());
-				newEntry.setMax(entry.getMax());
-				newPartitionEntries.add(newEntry);
-				shardCount++;
-			} // we skip entries such that min = max so we may return less shards than what we received
-		}
-		return newPartitionEntries;
-	}
 
 	public PartitionMap(List<PartitionEntry> partitionMap) {
 		if(partitionMap == null || partitionMap.size() == 0) {
