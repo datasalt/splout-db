@@ -59,8 +59,9 @@ public class QNode {
 		do {
 			try {
 				server = new Server(config.getInt(QNodeProperties.PORT));
+        server.setAttribute("headerBufferSize", 65535);
 
-				RewriteRuleHandler rewrite = new RewriteRuleHandler();
+        RewriteRuleHandler rewrite = new RewriteRuleHandler();
 				
 				WebAppContext context = new WebAppContext();
 				context.setContextPath("/");

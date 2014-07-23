@@ -5,6 +5,7 @@ Splout SQL Change Log
 
 IMPROVEMENTS
 
+ - 2014-07-23 - Increase GET buffer to 65535
  - 2014-06-02 - Parallel deployment of partitions in DNode, configure through the property dnode.deploy.parallelism. Default 3.
  - 2014-05-20 - Parallel generation of tablespaces with generate command
  - 2014-05-20 - Tablespace tables view in the Splout panel
