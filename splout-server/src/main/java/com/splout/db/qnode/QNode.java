@@ -21,6 +21,7 @@ package com.splout.db.qnode;
  * #L%
  */
 
+import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Handler;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.servlet.DefaultServlet;
@@ -59,9 +60,10 @@ public class QNode {
 		do {
 			try {
 				server = new Server(config.getInt(QNodeProperties.PORT));
-        server.setAttribute("headerBufferSize", 65535);
-        server.setAttribute("requestBufferSize", 65535);
-        server.setAttribute("requestHeaderSize", 65535);
+
+        for(Connector connector : server.getConnectors()) {
+          connector.setHeaderBufferSize(65535);
+        };
 
         RewriteRuleHandler rewrite = new RewriteRuleHandler();
 				
