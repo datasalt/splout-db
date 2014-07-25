@@ -70,7 +70,7 @@
 	    				$('#querystats').html("Query took: " + data.millis + "ms, hit shard: " + data.shard + ". <a href='" + queryURL + "'> Raw JSON results </a>" + "<p/>"	);
 	  				}
 				).error(function(jqXHR, textStatus, errorThrown) {
-	   				$('#querystats').html("<a href='" + queryURL + "'> Raw JSON results </a><p/>");
+	   				$('#querystats').html("<a href='" + encodeURI(queryURL) + "'> Raw JSON results </a><p/>");
 					$('#queryerror').html("<p><strong>Error: </strong>" + textStatus + "</p>");
 	  				$('#queryerror').show();
 	  				return;
