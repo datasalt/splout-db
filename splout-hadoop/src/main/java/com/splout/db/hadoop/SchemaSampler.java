@@ -60,7 +60,7 @@ public class SchemaSampler {
 		List<InputSplit> inputSplits = inputFormat.getSplits(job);
 		if(inputSplits == null || inputSplits.size() == 0) {
 			throw new IOException(
-			    "Given input format doesn't produce any input split. Can't sample first record.");
+			    "Given input format doesn't produce any input split. Can't sample first record. PATH: " + input);
 		}
 		InputSplit inputSplit = inputSplits.get(0);
 		TaskAttemptID attemptId = new TaskAttemptID(new TaskID(), 1);
