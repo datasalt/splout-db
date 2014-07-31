@@ -65,6 +65,7 @@ public class HazelcastConfigBuilder {
 			for(String strIFace : strIFaces.split(",")) {
 				iFaces.addInterface(strIFace.trim());
 			}
+      iFaces.setEnabled(true);
 			hzConfig.getNetworkConfig().setInterfaces(iFaces);
 		}
 		
