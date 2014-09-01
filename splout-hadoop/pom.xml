@@ -32,9 +32,6 @@
     <profiles>
         <profile>
             <id>mr1</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <dependencies>
 		<dependency>
 			<groupId>org.apache.hcatalog</groupId>
@@ -125,10 +122,30 @@
                     </exclusions>
                 </dependency>
             </dependencies>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <artifactId>maven-jar-plugin</artifactId>
+                            <executions>
+                                <execution>
+                                    <id>default-jar</id>
+                                    <configuration>
+                                        <classifier>mr1</classifier>
+                                    </configuration>
+                                </execution>
+                            </executions>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
         </profile>
 
         <profile>
             <id>mr2</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
 
 	    <repositories>
 		        <repository>
@@ -296,23 +313,6 @@
 		    </exclusions>
 		</dependency>
             </dependencies>
-            <build>
-                <pluginManagement>
-                    <plugins>
-                        <plugin>
-                            <artifactId>maven-jar-plugin</artifactId>
-                            <executions>
-                                <execution>
-                                    <id>default-jar</id>
-                                    <configuration>
-                                        <classifier>mr2</classifier>
-                                    </configuration>
-                                </execution>
-                            </executions>
-                        </plugin>
-                    </plugins>
-                </pluginManagement>
-            </build>
         </profile>
     </profiles>
 

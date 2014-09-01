@@ -35,18 +35,18 @@
     <profiles>
         <profile>
             <id>mr1</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <properties>
-                <postfix.mapreduce.version />
+                <postfix.mapreduce.version>-mr1</postfix.mapreduce.version>
             </properties>
         </profile>
 
         <profile>
             <id>mr2</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
             <properties>
-                <postfix.mapreduce.version>-mr2</postfix.mapreduce.version>
+                <postfix.mapreduce.version/>
             </properties>
         </profile>
     </profiles>

@@ -159,7 +159,9 @@ public class TestRollback {
 			new TestUtils.NotWaitingForeverCondition() {
 				@Override
 				public boolean endCondition() {
-					return handler.getContext().getCurrentVersionsMap().get("t1") == 2l;
+					return
+              handler.getContext().getCurrentVersionsMap().get("t1") != null &&
+              handler.getContext().getCurrentVersionsMap().get("t1") == 2l;
 				}
 			}.waitAtMost(5000);
 

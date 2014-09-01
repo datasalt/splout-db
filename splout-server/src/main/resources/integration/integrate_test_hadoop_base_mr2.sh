@@ -5,8 +5,8 @@
 # 
 # To integrate-test Splout with the stable Apache distro, please configure the variables as:
 #
-export HADOOP_REPO="http://mirror.arcor-online.net/www.apache.org/hadoop/common/hadoop-2.0.3-alpha/"
-export HADOOP_FILE="hadoop-2.0.3-alpha"
+export HADOOP_REPO="http://mirror.arcor-online.net/www.apache.org/hadoop/common/hadoop-2.2.0/"
+export HADOOP_FILE="hadoop-2.2.0"
 export HADOOP_EXT=".tar.gz"
 
 HELP='This script requires the environment variables YARN_HOME, HADOOP_FILE, HADOOP_EXT to be configured before calling it.'

@@ -32,9 +32,6 @@
     <profiles>
         <profile>
             <id>mr1</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <properties>
                 <postfix.mapreduce.version>mr1</postfix.mapreduce.version>
             </properties>
@@ -44,7 +41,7 @@
                     <artifactId>splout-hadoop</artifactId>
                     <version>${project.parent.version}</version>
                     <type>tar.gz</type>
-                    <classifier>pre-full-distro</classifier>
+                    <classifier>pre-full-distro-mr1</classifier>
                 </dependency>
 
                 <dependency>
@@ -52,13 +49,16 @@
                     <artifactId>splout-server</artifactId>
                     <version>${project.parent.version}</version>
                     <type>tar.gz</type>
-                    <classifier>pre-full-distro</classifier>
+                    <classifier>pre-full-distro-mr1</classifier>
                 </dependency>
             </dependencies>
         </profile>
 
         <profile>
             <id>mr2</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
             <properties>
                 <postfix.mapreduce.version>mr2</postfix.mapreduce.version>
             </properties>
@@ -68,7 +68,7 @@
                     <artifactId>splout-hadoop</artifactId>
                     <version>${project.parent.version}</version>
                     <type>tar.gz</type>
-                    <classifier>pre-full-distro-mr2</classifier>
+                    <classifier>pre-full-distro</classifier>
                 </dependency>
 
                 <dependency>
@@ -76,7 +76,7 @@
                     <artifactId>splout-server</artifactId>
                     <version>${project.parent.version}</version>
                     <type>tar.gz</type>
-                    <classifier>pre-full-distro-mr2</classifier>
+                    <classifier>pre-full-distro</classifier>
                 </dependency>
             </dependencies>
         </profile>
