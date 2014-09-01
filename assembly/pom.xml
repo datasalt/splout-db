@@ -6,13 +6,13 @@
 	<parent>
 		<groupId>com.splout.db</groupId>
 		<artifactId>splout-top-level</artifactId>
-		<version>0.2.6-SNAPSHOT</version>
+		<version>0.3.0</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
 	<groupId>com.splout.db</groupId>
 	<artifactId>splout-distribution</artifactId>
-	<version>0.2.6-SNAPSHOT</version>
+	<version>0.3.0</version>
 
 	<packaging>pom</packaging>
 	
