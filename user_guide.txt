@@ -9,7 +9,7 @@ Splout SQL installation
 Download
 ~~~~~~~~
 
-You need to have Java => 1.6 preinstalled. Download a release of Splout from http://search.maven.org/#browse%7C-1223220128[Maven central]:
+You need to have Java &gt;= 1.6 preinstalled. Download a release of Splout from http://search.maven.org/#browse%7C-1223220128[Maven central]:
 
 * *-mr2* version for Hadoop => 2.X (YARN)
 * *-mr1* version for Hadoop < 2.X</li>
@@ -37,7 +37,7 @@ Example of env variables for Cloudera CDH5 using parcels:
  export SPLOUT_HADOOP_COMMON_HOME=/opt/cloudera/parcels/CDH/lib/hadoop
  export SPLOUT_HADOOP_HDFS_HOME=/opt/cloudera/parcels/CDH/lib/hadoop-hdfs
  export SPLOUT_HADOOP_MAPRED_HOME=/opt/cloudera/parcels/CDH/lib/hadoop-mapreduce
- export SPLOUT_HADOOP_CONF_DIR=/etc/hadoop/conf</tt></pre>
+ export SPLOUT_HADOOP_CONF_DIR=/etc/hadoop/conf
 
 For Hadoop &lt; 2.X:
 
@@ -62,7 +62,7 @@ Logs are stored in logs/ folder from where daemons are launched. http://commons.
 
 .Splout SQL has been tested to perform correctly under both AMD64 and i386 default Amazon AMIs. Splout is compatible with the latest Elastic Map Reduce AMI.
 
-Splout SQL is still beta, so if you find any strange problem or issue please contact us or https://github.com/datasalt/splout-db/issues[raise a bug in Github].
+If you find any strange problem or issue please contact us or https://github.com/datasalt/splout-db/issues[raise a bug in Github].
 
 link:user_guide.html[ > Back to table of contents]
 
