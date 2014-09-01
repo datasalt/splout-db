@@ -1,16 +1,13 @@
 #!/bin/bash
 
 #
-# This script requires the environment variables YARN_HOME, HADOOP_FILE, HADOOP_EXT to be configured before calling it.
+# This script requires the environment variables HADOOP_REPO, HADOOP_FILE, HADOOP_EXT to be configured before calling it.
 # 
 # To integrate-test Splout with the stable Apache distro, please configure the variables as:
 #
 # Using a Hortonworks compilation because the Apache one gives problems with 64bits
-export HADOOP_REPO="http://public-repo-1.hortonworks.com/HDP/centos5/2.x/updates/2.0.6.1/tars/"
-export HADOOP_FILE="hadoop-2.2.0.2.0.6.0-102"
-export HADOOP_EXT=".tar.gz"
 
-HELP='This script requires the environment variables YARN_HOME, HADOOP_FILE, HADOOP_EXT to be configured before calling it.'
+HELP='This script requires the environment variables HADOOP_REPO, HADOOP_FILE, HADOOP_EXT to be configured before calling it.'
 
 if [ -z "$HADOOP_REPO" ]; then
     echo $HELP

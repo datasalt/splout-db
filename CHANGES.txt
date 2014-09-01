@@ -5,6 +5,7 @@ Splout SQL Change Log
 
 IMPROVEMENTS
 
+ - 2014-09-01 - Cloudera CDH5 compilation profile added. Integration test for CDH5 added.
  - 2014-09-01 - Now default profile is mr2. Fixing mr2 integration test
  - 2014-07-31 - Solved a bug that arises when no state was stored in disk
  - 2014-07-23 - Increase GET buffer to 65535
