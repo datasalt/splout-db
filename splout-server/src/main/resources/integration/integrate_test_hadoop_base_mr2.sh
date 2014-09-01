@@ -5,8 +5,9 @@
 # 
 # To integrate-test Splout with the stable Apache distro, please configure the variables as:
 #
-export HADOOP_REPO="http://mirror.arcor-online.net/www.apache.org/hadoop/common/hadoop-2.2.0/"
-export HADOOP_FILE="hadoop-2.2.0"
+# Using a Hortonworks compilation because the Apache one gives problems with 64bits
+export HADOOP_REPO="http://public-repo-1.hortonworks.com/HDP/centos5/2.x/updates/2.0.6.1/tars/"
+export HADOOP_FILE="hadoop-2.2.0.2.0.6.0-102"
 export HADOOP_EXT=".tar.gz"
 
 HELP='This script requires the environment variables YARN_HOME, HADOOP_FILE, HADOOP_EXT to be configured before calling it.'
@@ -50,6 +51,13 @@ export HADOOP_COMMON_HOME="${YARN_HOME}"
 export HADOOP_HDFS_HOME="${YARN_HOME}"
 export HADOOP_MAPRED_HOME="${YARN_HOME}"
 
+# Splout config
+
+export SPLOUT_HADOOP_COMMON_HOME="${YARN_HOME}/share/hadoop/common"
+export SPLOUT_HADOOP_HDFS_HOME="${YARN_HOME}/share/hadoop/hdfs"
+export SPLOUT_HADOOP_MAPRED_HOME="${YARN_HOME}/share/hadoop/mapreduce"
+export SPLOUT_HADOOP_CONF_DIR="${HADOOP_CONF_DIR}"
+
 # Format data folder
 
 if [ -d "/tmp/dfs-2" ]
@@ -61,7 +69,7 @@ then
 fi
 
 # This is different in MR2
-$YARN_HOME/bin/hdfs namenode -format
+printf "Y\n" | $YARN_HOME/bin/hdfs namenode -format
 
 # Start services
 
