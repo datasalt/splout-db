@@ -6,31 +6,40 @@ Splout SQL User Guide
 Splout SQL installation
 -----------------------
 
-For running Splout SQL, the underlying system must have the following:
-
-- Java 1.6 or higher.
-- http://hadoop.apache.org/releases.html#Download[Hadoop]
-
 Download
 ~~~~~~~~
 
-Download the latest release from http://search.maven.org/#browse%7C-1223220128[Maven central]. Current production-ready recommended version is 0.2.5. You will find two kinds
-of release files:
+You need to have Java => 1.6 preinstalled. Download a release of Splout from http://search.maven.org/#browse%7C-1223220128[Maven central]:</p>
+- *-mr2* version for Hadoop >= 2.X (YARN)
+- *-mr1* version for Hadoop < 2.X</li>
+- Others (cdh5, etc) for your particular Hadoop distribution
 
-- The ones with "mr1" in the name should be used for Hadoop 0.20.X and 1.X versions.
-- The ones with "mr2" in the name should be used for Hadoop 2.X and YARN.
+TIP: *Other distros:*
+     We don't provide builds for every existing Hadoop distribution and version. If you need
+     Splout working for your distro, you'll probably need to recompile Splout adapting a few dependencies.
+     You can have a look to cdh5 profile at the different pom.xml to have a reference.
 
-Once you have downloaded Splout SQL and uncompressed in a path - which we will refer to as SPLOUT_HOME - it can be used straight-away. However, the <<splout_configuration,Configuration>> section has to be revised carefully in order to adjust everything properly.
+Environmental variables
+~~~~~~~~~~~~~~~~~~~~~~~
 
-Hadoop < 2.X (0.20.X, 1.X)
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+You'll need to set properly a few environmental variables (i.e. at ~/.bashrc)
 
-You must have HADOOP_HOME environment variable defined in your system. Splout will load the libraries from your Hadoop distribution in runtime.
+For Hadoop &gt;= 2.X (YARN):
+- SPLOUT_HADOOP_COMMON_HOME -> Pointing to the folder where the hadoop-common-*.jar can be found
+- SPLOUT_HADOOP_HDFS_HOME -> Pointing to the folder where where the hadoop-mapreduce-client-*.jar can be found
+- SPLOUT_HADOOP_MAPRED_HOME -> Pointing to the folder where the hadoop-common-*.jar can be found
+- SPLOUT_HADOOP_CONF_DIR -> *Optional:* Optionally, specify the Hadoop configuration folder (e.g. /etc/hadoop/conf). Will default to SPLOUT_HADOOP_MAPRED_HOME/conf
 
-Hadoop >= 2.X
-~~~~~~~~~~~~~
+Example of env variables for Cloudera CDH5 using parcels:
 
-You must have HADOOP_COMMON_HOME, HADOOP_HDFS_HOME, HADOOP_MAPRED_HOME environment variables defined in your system. Splout will load the libraries from your Hadoop distribution in runtime.
+ export SPLOUT_HADOOP_COMMON_HOME=/opt/cloudera/parcels/CDH/lib/hadoop
+ export SPLOUT_HADOOP_HDFS_HOME=/opt/cloudera/parcels/CDH/lib/hadoop-hdfs
+ export SPLOUT_HADOOP_MAPRED_HOME=/opt/cloudera/parcels/CDH/lib/hadoop-mapreduce
+ export SPLOUT_HADOOP_CONF_DIR=/etc/hadoop/conf</tt></pre>
+
+For Hadoop &lt; 2.X:
+
+HADOOP_HOME must be properly defined pointing to your Hadoop installation folder.
 
 Start up
 ~~~~~~~~
