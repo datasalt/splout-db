@@ -8,19 +8,48 @@ title: Getting started with Splout SQL
 
 <h3>Installing Splout</h3>
 
-<p>For playing with Splout you will need:</p>
 
-<ul>
-  <li>Java >= 1.6</li>
-  <li><a href='http://www.apache.org/dyn/closer.cgi/hadoop/common/' target='_blank'>Hadoop stable or
-    previous versions of it</a> installed on your machine. <strong>HADOOP_HOME</strong> must be defined for Hadoop &lt; 2.X
-    and <strong>HADOOP_COMMON_HOME, HADOOP_HDFS_HOME, HADOOP_MAPRED_HOME</strong> for Hadoop &gt;= 2.X.
-  </li>
-</ul>
+    <p>You need to have Java => 1.6 preinstalled. <a href='http://search.maven.org/#browse%7C-1327466356' target='_blank'>Download a release
+    of Splout from Maven Central</a>.</p>
+    <ul>
+        <li><strong>mr2</strong> version for Hadoop &gt;= 2.X (YARN)</li>
+        <li><strong>mr1</strong> version for Hadoop &lt; 2.X</li>
+        <li>Others (cdh5, etc) for your particular Hadoop distribution</li>
+    </ul>
 
-<p>You can <a href='http://search.maven.org/#browse%7C-1327466356' target='_blank'>download a release
-  of Splout from Maven Central</a>. Download versions with <strong>mr2</strong> in the name if you are using Hadoop &gt;= 2.X (YARN).
-  After that, you just need to decompress it.</p>
+    <div class="bs-callout bs-callout-warning">
+        <h4>Other distros</h4>
+        <p>We don't provide builds for every existing Hadoop distribution and version. If you need
+        Splout working for your distro, you'll probably need to recompile Splout adapting a few dependencies.
+        You can have a look to cdh5 profile at the different pom.xml to have a reference.</p>
+    </div>
+
+    <a class="btn btn-large btn-block btn-primary"
+           href="http://search.maven.org/#browse%7C-1327466356" target='_blank'>Download Splout</a>
+
+    <p>After that, you just need to decompress it.</p>
+
+    <h4>Environmental variables</h4>
+        You'll need to set properly a few environmental variables (i.e. at ~/.bashrc)
+
+        <h5>For Hadoop &gt;= 2.X (YARN)</h5>
+        <ul>
+            <li><strong>SPLOUT_HADOOP_COMMON_HOME</strong>	Pointing to the folder where the hadoop-common-*.jar can be found.</li>
+            <li><strong>SPLOUT_HADOOP_HDFS_HOME</strong>	Pointing to the folder where where the hadoop-mapreduce-client-*.jar can be found.</li>
+            <li><strong>SPLOUT_HADOOP_MAPRED_HOME</strong>	Pointing to the folder where the hadoop-common-*.jar can be found.</li>
+            <li>Optional: <strong>SPLOUT_HADOOP_CONF_DIR</strong>	Optionally, specify the Hadoop configuration folder (e.g. /etc/hadoop/conf). Will default to SPLOUT_HADOOP_MAPRED_HOME/conf</li>
+        </ul>
+
+        <div class="bs-callout bs-callout-warning">
+            <h4>Example of env variables for Cloudera CDH5 using parcels</h4>
+            <pre><tt>export SPLOUT_HADOOP_COMMON_HOME=/opt/cloudera/parcels/CDH/lib/hadoop
+            export SPLOUT_HADOOP_HDFS_HOME=/opt/cloudera/parcels/CDH/lib/hadoop-hdfs
+            export SPLOUT_HADOOP_MAPRED_HOME=/opt/cloudera/parcels/CDH/lib/hadoop-mapreduce
+            export SPLOUT_HADOOP_CONF_DIR=/etc/hadoop/conf</tt></pre>
+        </div>
+
+        <h5>For Hadoop &lt; 2.X</h5>
+            <p><strong>HADOOP_HOME</strong> must be properly defined pointing to your Hadoop installation folder.</p>
 
 <h3 id="running">Running a local cluster</h3>
 
