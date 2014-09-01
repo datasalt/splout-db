@@ -29,7 +29,7 @@ Java 1.6 or higher.
 </ul></div>
 <div class="sect2">
 <h3 id="_download">Download</h3>
-<div class="paragraph"><p>Download the latest release from <a href="http://search.maven.org/#browse%7C-1327466356">Maven central</a>. You will find two kinds
+<div class="paragraph"><p>Download the latest release from <a href="http://search.maven.org/#browse%7C-1223220128">Maven central</a>. Current production-ready recommended version is 0.2.5. You will find two kinds
 of release files:</p></div>
 <div class="ulist"><ul>
 <li>
@@ -389,7 +389,7 @@ cellspacing="0" cellpadding="4">
 <tbody>
 <tr>
 <td align="left" valign="top"><p class="table">Multicast</p></td>
-<td align="left" valign="top"><p class="table">"hz.join.method=aws", Activated by default.</p></td>
+<td align="left" valign="top"><p class="table">"hz.join.method=multicast", Activated by default.</p></td>
 <td align="left" valign="top"><p class="table">Optionally, "hz.multicast.group", "hz.multicast.port" can be used for fine-tuning the configuration.</p></td>
 </tr>
 <tr>
@@ -807,7 +807,7 @@ in <a href="https://github.com/datasalt/splout-hadoop-starter/blob/master/pom.xm
     &lt;version&gt;1.4&lt;/version&gt;
     &lt;configuration&gt;
       &lt;resourceBundles&gt;
-        &lt;resourceBundle&gt;com.splout.db:splout-resources:0.2.2&lt;/resourceBundle&gt;
+        &lt;resourceBundle&gt;com.splout.db:splout-resources:0.2.4&lt;/resourceBundle&gt;
       &lt;/resourceBundles&gt;
     &lt;/configuration&gt;
    &lt;executions&gt;
@@ -896,6 +896,12 @@ For example, you may choose to narrow your input Tuple and emit a subset of it, 
 We will see an overview of such functionality in this section, together with some practical examples.</p></div>
 <div class="sect2">
 <h3 id="_integration_with_hive">Integration with Hive</h3>
+<div class="paragraph"><p>Note: For using Hive with Splout, it is recommended to add Hive conf/ and lib/ folder to the HADOOP_CLASSPATH environment variable:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><tt>export HADOOP_CLASSPATH=$HADOOP_CLASSPATH:$HIVE_HOME/conf:$HIVE_HOME/lib/*</tt></pre>
+</div></div>
+<div class="paragraph"><p>In this way, Splout will be able to locate the appropriate Hive metastore and sample the Schema of Hive tables implicitly.</p></div>
 <div class="paragraph"><p>For importing tables using the "simple-generate" tool we can use arguments "-hdb" and "-htn" for indicating the Hive database and the
 Hive table we want to import. We will need to specify that the input type is "HIVE" through "-it" property and add the rest of
 parameters needed (number of partitions, partitioning columns, output folder, table name and tablespace name). Note how
@@ -935,6 +941,12 @@ the input type and the Hive database and table names. Note how we don&#8217;t ne
 <div class="paragraph"><p>When using the Java API, we can add Hive table inputs with methods addHiveTable() from <a href="apidocs/splout-hadoop/com/splout/db/hadoop/TableBuilder.html">TableBuilder</a>.</p></div>
 <div class="paragraph"><p>Keep in mind that if you are using Hive with default embedded Derby database you can&#8217;t import Hive tables while you have another
 session opened in Hive at the same time, as the import process will try to connect to it too.</p></div>
+<div class="paragraph"><p>Note: When using advanced Hive features such as the OCRInputFormat, it is also needed to add the hive-exec JAR via "-libjars", so that
+Mappers and Reducers can understand this native format:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><tt>hadoop jar splout-*-hadoop.jar generate -libjars $HIVE_HOME/lib/hive-exec-0.11.0.jar &lt;rest-of-commands-here&gt;</tt></pre>
+</div></div>
 </div>
 <div class="sect2">
 <h3 id="_integration_with_cascading">Integration with Cascading</h3>
@@ -1885,6 +1897,6 @@ You can control the data colocation policy with "insertionOrderBy" as explained 
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2013-04-10 13:17:31 CEST
+Last updated 2013-08-05 11:02:03 CEST
 </div>
 </div>

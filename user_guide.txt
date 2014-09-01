@@ -14,7 +14,7 @@ For running Splout SQL, the underlying system must have the following:
 Download
 ~~~~~~~~
 
-Download the latest release from http://search.maven.org/#browse%7C-1327466356[Maven central]. You will find two kinds
+Download the latest release from http://search.maven.org/#browse%7C-1223220128[Maven central]. Current production-ready recommended version is 0.2.5. You will find two kinds
 of release files:
 
 - The ones with "mr1" in the name should be used for Hadoop 0.20.X and 1.X versions.
@@ -164,7 +164,7 @@ It is fairly easy to install Splout in a distributed environment. By default, Sp
 
 .Distributed configurations
 |=======================
-| Multicast | "hz.join.method=aws", Activated by default. | Optionally, "hz.multicast.group", "hz.multicast.port" can be used for fine-tuning the configuration.
+| Multicast | "hz.join.method=multicast", Activated by default. | Optionally, "hz.multicast.group", "hz.multicast.port" can be used for fine-tuning the configuration.
 | TCP/IP | "hz.join.method=tcp", "hz.tcp.cluster=192.168.1.3,192.168.1.4" | Only hosts specified in the comma-separated list will be considered for membership.
 | AWS | "hz.join.method=aws", "hz.aws.key=KEY", "hz.aws.secret=SECRET" | Using the provided credentials, active hosts in AWS will be considered for membership. The list of hosts can be narrowed by specifying a security group in " hz.aws.security.group"
 |=======================
@@ -368,7 +368,7 @@ in https://github.com/datasalt/splout-hadoop-starter/blob/master/pom.xml[the spl
      <version>1.4</version>
      <configuration>
        <resourceBundles>
-         <resourceBundle>com.splout.db:splout-resources:0.2.2</resourceBundle>
+         <resourceBundle>com.splout.db:splout-resources:0.2.4</resourceBundle>
        </resourceBundles>
      </configuration>
     <executions>
@@ -433,6 +433,12 @@ We will see an overview of such functionality in this section, together with som
 Integration with Hive
 ~~~~~~~~~~~~~~~~~~~~~
 
+Note: For using Hive with Splout, it is recommended to add Hive conf/ and lib/ folder to the HADOOP_CLASSPATH environment variable:
+
+ export HADOOP_CLASSPATH=$HADOOP_CLASSPATH:$HIVE_HOME/conf:$HIVE_HOME/lib/*
+
+In this way, Splout will be able to locate the appropriate Hive metastore and sample the Schema of Hive tables implicitly.
+
 For importing tables using the "simple-generate" tool we can use arguments "-hdb" and "-htn" for indicating the Hive database and the
 Hive table we want to import. We will need to specify that the input type is "HIVE" through "-it" property and add the rest of 
 parameters needed (number of partitions, partitioning columns, output folder, table name and tablespace name). Note how 
@@ -470,6 +476,11 @@ When using the Java API, we can add Hive table inputs with methods addHiveTable(
 Keep in mind that if you are using Hive with default embedded Derby database you can't import Hive tables while you have another
 session opened in Hive at the same time, as the import process will try to connect to it too.
 
+Note: When using advanced Hive features such as the OCRInputFormat, it is also needed to add the hive-exec JAR via "-libjars", so that
+Mappers and Reducers can understand this native format:
+
+ hadoop jar splout-*-hadoop.jar generate -libjars $HIVE_HOME/lib/hive-exec-0.11.0.jar <rest-of-commands-here>
+ 
 Integration with Cascading
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
