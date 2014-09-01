@@ -18,10 +18,24 @@ title: Splout SQL User Guide
 <div class="sectionbody">
 <div class="sect2">
 <h3 id="_download">Download</h3>
-<div class="paragraph"><p>You need to have Java &#8658; 1.6 preinstalled. Download a release of Splout from <a href="http://search.maven.org/#browse%7C-1223220128">Maven central</a>:&lt;/p&gt;
-- <strong>-mr2</strong> version for Hadoop &gt;= 2.X (YARN)
-- <strong>-mr1</strong> version for Hadoop &lt; 2.X&lt;/li&gt;
-- Others (cdh5, etc) for your particular Hadoop distribution</p></div>
+<div class="paragraph"><p>You need to have Java &#8658; 1.6 preinstalled. Download a release of Splout from <a href="http://search.maven.org/#browse%7C-1223220128">Maven central</a>:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong>-mr2</strong> version for Hadoop &#8658; 2.X (YARN)
+</p>
+</li>
+<li>
+<p>
+<strong>-mr1</strong> version for Hadoop &lt; 2.X&lt;/li&gt;
+</p>
+</li>
+<li>
+<p>
+Others (cdh5, etc) for your particular Hadoop distribution
+</p>
+</li>
+</ul></div>
 <div class="admonitionblock">
 <table><tr>
 <td class="icon">
@@ -37,11 +51,29 @@ title: Splout SQL User Guide
 <div class="sect2">
 <h3 id="_environmental_variables">Environmental variables</h3>
 <div class="paragraph"><p>You&#8217;ll need to set properly a few environmental variables (i.e. at ~/.bashrc)</p></div>
-<div class="paragraph"><p>For Hadoop &gt;= 2.X (YARN):
-- SPLOUT_HADOOP_COMMON_HOME &#8594; Pointing to the folder where the hadoop-common-<strong>.jar can be found
-- SPLOUT_HADOOP_HDFS_HOME &#8594; Pointing to the folder where where the hadoop-mapreduce-client-</strong>.jar can be found
-- SPLOUT_HADOOP_MAPRED_HOME &#8594; Pointing to the folder where the hadoop-common-<strong>.jar can be found
-- SPLOUT_HADOOP_CONF_DIR &#8594; *Optional:</strong> Optionally, specify the Hadoop configuration folder (e.g. /etc/hadoop/conf). Will default to SPLOUT_HADOOP_MAPRED_HOME/conf</p></div>
+<div class="paragraph"><p>For Hadoop &gt;= 2.X (YARN):</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+SPLOUT_HADOOP_COMMON_HOME &#8594; Pointing to the folder where the hadoop-common-*.jar can be found
+</p>
+</li>
+<li>
+<p>
+SPLOUT_HADOOP_HDFS_HOME &#8594; Pointing to the folder where where the hadoop-mapreduce-client-*.jar can be found
+</p>
+</li>
+<li>
+<p>
+SPLOUT_HADOOP_MAPRED_HOME &#8594; Pointing to the folder where the hadoop-common-*.jar can be found
+</p>
+</li>
+<li>
+<p>
+SPLOUT_HADOOP_CONF_DIR &#8594; <strong>Optional:</strong> Optionally, specify the Hadoop configuration folder (e.g. /etc/hadoop/conf). Will default to SPLOUT_HADOOP_MAPRED_HOME/conf
+</p>
+</li>
+</ul></div>
 <div class="paragraph"><p>Example of env variables for Cloudera CDH5 using parcels:</p></div>
 <div class="literalblock">
 <div class="content">
@@ -1902,6 +1934,6 @@ You can control the data colocation policy with "insertionOrderBy" as explained 
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2014-09-01 20:36:15 CEST
+Last updated 2014-09-01 20:37:49 CEST
 </div>
 </div>

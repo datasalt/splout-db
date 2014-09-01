@@ -9,8 +9,9 @@ Splout SQL installation
 Download
 ~~~~~~~~
 
-You need to have Java => 1.6 preinstalled. Download a release of Splout from http://search.maven.org/#browse%7C-1223220128[Maven central]:</p>
-- *-mr2* version for Hadoop >= 2.X (YARN)
+You need to have Java => 1.6 preinstalled. Download a release of Splout from http://search.maven.org/#browse%7C-1223220128[Maven central]:
+
+- *-mr2* version for Hadoop => 2.X (YARN)
 - *-mr1* version for Hadoop < 2.X</li>
 - Others (cdh5, etc) for your particular Hadoop distribution
 
@@ -25,6 +26,7 @@ Environmental variables
 You'll need to set properly a few environmental variables (i.e. at ~/.bashrc)
 
 For Hadoop &gt;= 2.X (YARN):
+
 - SPLOUT_HADOOP_COMMON_HOME -> Pointing to the folder where the hadoop-common-*.jar can be found
 - SPLOUT_HADOOP_HDFS_HOME -> Pointing to the folder where where the hadoop-mapreduce-client-*.jar can be found
 - SPLOUT_HADOOP_MAPRED_HOME -> Pointing to the folder where the hadoop-common-*.jar can be found
