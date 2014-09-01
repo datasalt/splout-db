@@ -11,9 +11,9 @@ Download
 
 You need to have Java => 1.6 preinstalled. Download a release of Splout from http://search.maven.org/#browse%7C-1223220128[Maven central]:
 
-- *-mr2* version for Hadoop => 2.X (YARN)
-- *-mr1* version for Hadoop < 2.X</li>
-- Others (cdh5, etc) for your particular Hadoop distribution
+* *-mr2* version for Hadoop => 2.X (YARN)
+* *-mr1* version for Hadoop < 2.X</li>
+* Others (cdh5, etc) for your particular Hadoop distribution
 
 TIP: *Other distros:*
      We don't provide builds for every existing Hadoop distribution and version. If you need
@@ -27,10 +27,10 @@ You'll need to set properly a few environmental variables (i.e. at ~/.bashrc)
 
 For Hadoop &gt;= 2.X (YARN):
 
-- SPLOUT_HADOOP_COMMON_HOME -> Pointing to the folder where the hadoop-common-*.jar can be found
-- SPLOUT_HADOOP_HDFS_HOME -> Pointing to the folder where where the hadoop-mapreduce-client-*.jar can be found
-- SPLOUT_HADOOP_MAPRED_HOME -> Pointing to the folder where the hadoop-common-*.jar can be found
-- SPLOUT_HADOOP_CONF_DIR -> *Optional:* Optionally, specify the Hadoop configuration folder (e.g. /etc/hadoop/conf). Will default to SPLOUT_HADOOP_MAPRED_HOME/conf
+* SPLOUT_HADOOP_COMMON_HOME -> Pointing to the folder where the hadoop-common-*.jar can be found
+* SPLOUT_HADOOP_HDFS_HOME -> Pointing to the folder where where the hadoop-mapreduce-client-*.jar can be found
+* SPLOUT_HADOOP_MAPRED_HOME -> Pointing to the folder where the hadoop-common-*.jar can be found
+* SPLOUT_HADOOP_CONF_DIR -> *Optional:* Optionally, specify the Hadoop configuration folder (e.g. /etc/hadoop/conf). Will default to SPLOUT_HADOOP_MAPRED_HOME/conf
 
 Example of env variables for Cloudera CDH5 using parcels:
 
