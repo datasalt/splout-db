@@ -9,11 +9,11 @@ title: Getting started with Splout SQL
 <h3>Installing Splout</h3>
 
 
-    <p>You need to have Java => 1.6 preinstalled. <a href='http://search.maven.org/#browse%7C-1327466356' target='_blank'>Download a release
-    of Splout from Maven Central</a>.</p>
+    <p>You need to have Java => 1.6 preinstalled. Download a release
+    of Splout from Maven Central:</p>
     <ul>
-        <li><strong>mr2</strong> version for Hadoop &gt;= 2.X (YARN)</li>
-        <li><strong>mr1</strong> version for Hadoop &lt; 2.X</li>
+        <li><strong>splout⁻*-mr2</strong> version for Hadoop &gt;= 2.X (YARN)</li>
+        <li><strong>splout-*-mr1</strong> version for Hadoop &lt; 2.X</li>
         <li>Others (cdh5, etc) for your particular Hadoop distribution</li>
     </ul>
 
@@ -48,8 +48,7 @@ title: Getting started with Splout SQL
 
         <div class="alert alert-info">
             <p><strong>Example of env variables for Cloudera CDH5 using parcels</strong></p>
-            <pre><tt>
-export SPLOUT_HADOOP_COMMON_HOME=/opt/cloudera/parcels/CDH/lib/hadoop
+            <pre><tt>export SPLOUT_HADOOP_COMMON_HOME=/opt/cloudera/parcels/CDH/lib/hadoop
 export SPLOUT_HADOOP_HDFS_HOME=/opt/cloudera/parcels/CDH/lib/hadoop-hdfs
 export SPLOUT_HADOOP_MAPRED_HOME=/opt/cloudera/parcels/CDH/lib/hadoop-mapreduce
 export SPLOUT_HADOOP_CONF_DIR=/etc/hadoop/conf</tt></pre>
