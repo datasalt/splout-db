@@ -1,7 +1,9 @@
 Splout SQL Change Log
 =====================
 
-(DEVELOPMENT 0.2.6-SNAPSHOT)
+(DEVELOPMENT 0.3.1-SNAPSHOT)
+
+Splout SQL 0.3.0
 
 IMPROVEMENTS
 
