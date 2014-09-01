@@ -68,7 +68,7 @@
                     <artifactId>splout-hadoop</artifactId>
                     <version>${project.parent.version}</version>
                     <type>tar.gz</type>
-                    <classifier>pre-full-distro</classifier>
+                    <classifier>pre-full-distro-cdh5</classifier>
                 </dependency>
 
                 <dependency>
@@ -76,7 +76,7 @@
                     <artifactId>splout-server</artifactId>
                     <version>${project.parent.version}</version>
                     <type>tar.gz</type>
-                    <classifier>pre-full-distro</classifier>
+                    <classifier>pre-full-distro-cdh5</classifier>
                 </dependency>
             </dependencies>
         </profile>
