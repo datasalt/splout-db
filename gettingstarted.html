@@ -17,7 +17,7 @@ title: Getting started with Splout SQL
         <li>Others (cdh5, etc) for your particular Hadoop distribution</li>
     </ul>
 
-    <div class="alert alert">
+    <div class="alert alert-info">
         <strong>Other distros:</strong>
         We don't provide builds for every existing Hadoop distribution and version. If you need
         Splout working for your distro, you'll probably need to recompile Splout adapting a few dependencies.
@@ -46,12 +46,13 @@ title: Getting started with Splout SQL
             <li>Optional: <strong>SPLOUT_HADOOP_CONF_DIR</strong>	Optionally, specify the Hadoop configuration folder (e.g. /etc/hadoop/conf). Will default to SPLOUT_HADOOP_MAPRED_HOME/conf</li>
         </ul>
 
-        <div class="bs-callout bs-callout-warning">
-            <h4>Example of env variables for Cloudera CDH5 using parcels</h4>
-            <pre><tt>export SPLOUT_HADOOP_COMMON_HOME=/opt/cloudera/parcels/CDH/lib/hadoop
-            export SPLOUT_HADOOP_HDFS_HOME=/opt/cloudera/parcels/CDH/lib/hadoop-hdfs
-            export SPLOUT_HADOOP_MAPRED_HOME=/opt/cloudera/parcels/CDH/lib/hadoop-mapreduce
-            export SPLOUT_HADOOP_CONF_DIR=/etc/hadoop/conf</tt></pre>
+        <div class="alert alert-info">
+            <p><strong>Example of env variables for Cloudera CDH5 using parcels</strong></p>
+            <pre><tt>
+export SPLOUT_HADOOP_COMMON_HOME=/opt/cloudera/parcels/CDH/lib/hadoop
+export SPLOUT_HADOOP_HDFS_HOME=/opt/cloudera/parcels/CDH/lib/hadoop-hdfs
+export SPLOUT_HADOOP_MAPRED_HOME=/opt/cloudera/parcels/CDH/lib/hadoop-mapreduce
+export SPLOUT_HADOOP_CONF_DIR=/etc/hadoop/conf</tt></pre>
         </div>
 
         <h5>For Hadoop &lt; 2.X</h5>
