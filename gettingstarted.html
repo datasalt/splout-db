@@ -39,12 +39,42 @@ title: Getting started with Splout SQL
         You'll need to set properly a few environmental variables (i.e. at ~/.bashrc)
 
         <h5>For Hadoop &gt;= 2.X (YARN)</h5>
-        <ul>
-            <li><strong>SPLOUT_HADOOP_COMMON_HOME</strong>	Pointing to the folder where the hadoop-common-*.jar can be found.</li>
-            <li><strong>SPLOUT_HADOOP_HDFS_HOME</strong>	Pointing to the folder where where the hadoop-mapreduce-client-*.jar can be found.</li>
-            <li><strong>SPLOUT_HADOOP_MAPRED_HOME</strong>	Pointing to the folder where the hadoop-common-*.jar can be found.</li>
-            <li>Optional: <strong>SPLOUT_HADOOP_CONF_DIR</strong>	Optionally, specify the Hadoop configuration folder (e.g. /etc/hadoop/conf). Will default to SPLOUT_HADOOP_MAPRED_HOME/conf</li>
-        </ul>
+        <table>
+            <tbody>
+                <tr>
+                    <td>
+                        SPLOUT_HADOOP_COMMON_HOME
+                    </td>
+                    <td>
+                        Pointing to the folder where the hadoop-common-*.jar can be found
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        SPLOUT_HADOOP_HDFS_HOME
+                    </td>
+                    <td>
+                        Pointing to the folder where where the hadoop-mapreduce-client-*.jar can be found
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        SPLOUT_HADOOP_MAPRED_HOME
+                    </td>
+                    <td>
+                        Pointing to the folder where the hadoop-common-*.jar can be found
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        SPLOUT_HADOOP_CONF_DIR
+                    </td>
+                    <td>
+                        <strong>Optional:</strong> Optionally, specify the Hadoop configuration folder (e.g. /etc/hadoop/conf). Will default to SPLOUT_HADOOP_MAPRED_HOME/conf
+                    </td>
+                </tr>
+            </tbody>
+        </table>
 
         <div class="alert alert-info">
             <p><strong>Example of env variables for Cloudera CDH5 using parcels</strong></p>
