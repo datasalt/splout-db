@@ -9,7 +9,7 @@ Splout SQL installation
 Download
 ~~~~~~~~
 
-You need to have Java &gt;= 1.6 preinstalled. Download a release of Splout from http://search.maven.org/#browse%7C-1223220128[Maven central]:
+You need to have Java &gt;= 1.6 preinstalled. Download a release of Splout from http://search.maven.org/#browse%7C-1223190492[Maven central]:
 
 * *-mr2* version for Hadoop => 2.X (YARN)
 * *-mr1* version for Hadoop < 2.X
