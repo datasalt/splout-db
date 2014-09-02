@@ -1,3 +1,4 @@
+Para hacerlo fallar al compilar adrede
 package com.splout.db.common;
 
 /*
