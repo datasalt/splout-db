@@ -7,14 +7,27 @@ Splout is a scalable, open-source, easy-to-manage SQL big data view. Splout is t
 
 For up-to-date documentation and examples please visit [the official website](http://sploutsql.com)
 
-Quick steps to use it:
+Quick steps to compile it:
 
 1) Compile it adapting the different pom.xml to your Hadoop distro versions. Use "mr2" profile for MR2 versions.
 
-mvn clean install -DskipTests -Pmr2
+mvn clean install -DskipTests
 
-2) You should use the 
-file assembly/target/splout-distribution-0.2.6-SNAPSHOT-mr2.tar.gz 
+The default version compiles the distribution for MR2 versions (MapReduce 2), the most common use case. Other
+available maven profiles are:
+
+* mr1: MarReduce 1 version
+* cdh5: Cloudera CDH5 version
+
+For example, for compiling for CDH5 version you have to launch:
+
+mvn clean install -DskipTests -Pcdh5
+
+If you need to compile against a particular Hadoop version, you'll need to modify the different pom.xml
+acordingly. You can use the cdh5 profile as reference. 
+
+2) Once compiled you'll find the distribution binaries are at file assembly/target/splout-distribution-*.tar.gz 
+ready for being installed.
 
 [1]: http://clinker.datasalt.com/desktop/plugin/public/status/splout-build
 [2]: http://clinker.datasalt.com/jenkins/view/SploutSQL
