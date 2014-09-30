@@ -46,7 +46,9 @@ public class TestHttpFileExchanger {
 
 	public final static String FOO_CONTENT = "This is a text file. It is not very big, but it is ok for a test. "
 		    + "Specially if we use a small buffer size to try to detect race conditions.";
-	
+
+  public static final int WAIT_AT_MOST = 15000;
+
 	@Test
 	public void testConcurrentTransfersSameFileNotAllowed() throws IOException, InterruptedException {
 		final File fileToSend = new File(TMP_FILE);
@@ -99,14 +101,14 @@ public class TestHttpFileExchanger {
 			public boolean endCondition() {
 				return failed.get() > 0;
 			}
-		}.waitAtMost(5000);
+		}.waitAtMost(WAIT_AT_MOST);
 		
 		new TestUtils.NotWaitingForeverCondition() {
 			@Override
 			public boolean endCondition() {
 				return downloadedFile.exists() && downloadedFile.length() == fileToSend.length();
 			}
-		}.waitAtMost(5000);
+		}.waitAtMost(WAIT_AT_MOST);
 		
 		exchanger.close();
 		exchanger.join();
@@ -168,7 +170,7 @@ public class TestHttpFileExchanger {
 			public boolean endCondition() {
 				return downloadedFile.exists() && downloadedFile.length() == fileToSend.length();
 			}
-		}.waitAtMost(5000);
+		}.waitAtMost(WAIT_AT_MOST);
 
 		Assert.assertEquals(Files.toString(fileToSend, Charset.defaultCharset()),
 		    Files.toString(downloadedFile, Charset.defaultCharset()));

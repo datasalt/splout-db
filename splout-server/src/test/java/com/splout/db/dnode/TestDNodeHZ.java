@@ -42,6 +42,7 @@ import com.splout.db.hazelcast.HazelcastConfigBuilder;
  * Unit tests related to synchronization things with Hazelcast
  */
 public class TestDNodeHZ {
+  public static final int WAIT_AT_MOST = 15000;
 
 	@After
 	public void cleanUp() throws IOException {
@@ -76,7 +77,7 @@ public class TestDNodeHZ {
 				public boolean endCondition() {
 					return !expectedFolder.exists();
 				}
-			}.waitAtMost(5000);
+			}.waitAtMost(WAIT_AT_MOST);
 
 		} finally {
 			if(dnode != null) {
@@ -116,7 +117,7 @@ public class TestDNodeHZ {
 					}
 					return registered;
 				}
-			}.waitAtMost(5000);
+			}.waitAtMost(WAIT_AT_MOST);
 
 			dnode.stop();
 			dnode = null;

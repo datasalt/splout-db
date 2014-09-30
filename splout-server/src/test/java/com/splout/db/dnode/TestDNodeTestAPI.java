@@ -32,6 +32,8 @@ import com.splout.db.qnode.QNodeHandler;
 
 public class TestDNodeTestAPI {
 
+  public static final int WAIT_AT_MOST = 25000;
+
 	@Test
 	public void test() throws Exception {
 		SploutConfiguration testConfig = SploutConfiguration.getTestConfig();
@@ -69,6 +71,6 @@ public class TestDNodeTestAPI {
 	        throw new RuntimeException(e);
         }
 			}
-		}.waitAtMost(15000);
+		}.waitAtMost(WAIT_AT_MOST);
 	}
 }
