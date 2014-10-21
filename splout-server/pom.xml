@@ -305,7 +305,7 @@
                 <version>2.12</version>
                 <configuration>
                     <argLine>
-                        -Djava.library.path=${project.build.directory}/maven-shared-archive-resources
+                        -Djava.library.path=${project.build.directory}/maven-shared-archive-resources -Dfile.encoding=UTF-8
                     </argLine>
                     <includes>
                         <include>**/Test**</include>

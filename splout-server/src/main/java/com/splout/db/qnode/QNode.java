@@ -25,6 +25,7 @@ import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Handler;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.servlet.DefaultServlet;
+import org.mortbay.jetty.servlet.FilterHolder;
 import org.mortbay.jetty.servlet.ServletHolder;
 import org.mortbay.jetty.webapp.WebAppContext;
 import org.mortbay.resource.Resource;
@@ -35,6 +36,7 @@ import com.splout.db.qnode.rest.AdminServlet;
 import com.splout.db.qnode.rest.DeployRollbackServlet;
 import com.splout.db.qnode.rest.QueryServlet;
 import com.splout.db.qnode.rest.RewriteRuleHandler;
+import org.mortbay.servlet.GzipFilter;
 
 /**
  * Like the {@link com.splout.db.dnode.DNode}, this class is only the skeleton of the QNode service. It handles the HTTP
@@ -81,6 +83,12 @@ public class QNode {
 				// No cache header in all responses... otherwise some browsers
 				// can decide to cache some requests and they shouldn't
 				context.addFilter(NoCacheFilter.class, "/*", Handler.DEFAULT);
+
+        // Adding support to GZip compression responses.
+        FilterHolder gzipFilter = context.addFilter(GzipFilter.class, "/*", Handler.REQUEST);
+        gzipFilter.setInitParameter("mimeTypes", "text/html,text/plain,text/xml,application/xhtml+xml,text/css,application/javascript,image/svg+xml,application/json");
+        gzipFilter.setInitParameter("bufferSize", "16384");
+        gzipFilter.setInitParameter("methods", "GET,POST");
 				
 				ResourceCollection resources = new ResourceCollection(new String[] { Resource
 				    .newClassPathResource("panel").toString() });

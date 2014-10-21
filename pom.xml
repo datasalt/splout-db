@@ -90,6 +90,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.12</version>
                 <configuration>
+                    <argLine>-Dfile.encoding=UTF-8</argLine>
                     <includes>
                         <!-- Naming convention for JUnit tests -->
                         <include>**/Test**</include>

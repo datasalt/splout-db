@@ -82,7 +82,8 @@ public class TestRollback {
 			new TestUtils.NotWaitingForeverCondition() {
 				@Override
 				public boolean endCondition() {
-					return handler.getContext().getCurrentVersionsMap().get("t1") == 3l;
+					return handler.getContext().getCurrentVersionsMap().get("t1") != null &&
+              handler.getContext().getCurrentVersionsMap().get("t1") == 3l;
 				}
 			}.waitAtMost(5000);
 			
@@ -99,7 +100,8 @@ public class TestRollback {
 			new TestUtils.NotWaitingForeverCondition() {
 				@Override
 				public boolean endCondition() {
-					return handler.getContext().getCurrentVersionsMap().get("t1") == 4l;
+					return handler.getContext().getCurrentVersionsMap().get("t1") != null &&
+              handler.getContext().getCurrentVersionsMap().get("t1") == 4l;
 				}
 			}.waitAtMost(5000);
 			

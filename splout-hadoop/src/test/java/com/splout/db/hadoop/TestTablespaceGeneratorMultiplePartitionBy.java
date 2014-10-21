@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.junit.After;
@@ -121,11 +122,13 @@ public class TestTablespaceGeneratorMultiplePartitionBy {
 			manager.close();
 		}
 
+    String keys = StringUtils.join(distinctKeys.toArray(), ", ");
+
 		assertEquals(4, distinctKeys.size());
-		assertTrue(distinctKeys.contains("Tanos1"));
-		assertTrue(distinctKeys.contains("Iván1"));
-		assertTrue(distinctKeys.contains("Iván2"));
-		assertTrue(distinctKeys.contains("Pere3"));
+		assertTrue(keys, distinctKeys.contains("Tanos1"));
+		assertTrue(keys, distinctKeys.contains("Iván1"));
+		assertTrue(keys, distinctKeys.contains("Iván2"));
+		assertTrue(keys, distinctKeys.contains("Pere3"));
 		assertEquals(5, totalLogs.size());
 		assertEquals(7, totalPayments.size());
 	}
