@@ -376,10 +376,12 @@ public class Fetcher {
 			return fileFetch(new File(uri), reporter);
 		} else if(uriStr.startsWith("s3")) {
 			return s3Fetch(uri, reporter);
-		} else if(uriStr.startsWith("hdfs")) {
-			return hdfsFetch(new Path(uriStr), reporter);
 		} else {
-			throw new IllegalArgumentException("Scheme not recognized or non-absolute URI provided: " + uri);
+		    // Be flexible as to what we can expect here (e.g. maprfs, etc)
+//		} else if(uriStr.startsWith("hdfs")) {
+			return hdfsFetch(new Path(uriStr), reporter);
+//		} else {
+//			throw new IllegalArgumentException("Scheme not recognized or non-absolute URI provided: " + uri);
 		}
 	}
 }
