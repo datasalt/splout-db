@@ -353,10 +353,12 @@ public class Fetcher {
 			return f.isDirectory() ? FileUtils.sizeOfDirectory(f) : f.length();
 		} else if(uriStr.startsWith("s3")) {
 			return -1; // NotYetImplemented
-		} else if(uriStr.startsWith("hdfs")) {
-			return FileSystem.get(hadoopConf).getContentSummary(new Path(uriStr)).getLength();
+            // Be flexible as to what we can expect here (e.g. maprfs, etc)
 		} else {
-			throw new IllegalArgumentException("Scheme not recognized or non-absolute URI provided: " + uri);
+//		} else if(uriStr.startsWith("hdfs")) {
+			return FileSystem.get(hadoopConf).getContentSummary(new Path(uriStr)).getLength();
+//		} else {
+//			throw new IllegalArgumentException("Scheme not recognized or non-absolute URI provided: " + uri);
 		}
 	}
 
@@ -376,10 +378,12 @@ public class Fetcher {
 			return fileFetch(new File(uri), reporter);
 		} else if(uriStr.startsWith("s3")) {
 			return s3Fetch(uri, reporter);
-		} else if(uriStr.startsWith("hdfs")) {
-			return hdfsFetch(new Path(uriStr), reporter);
 		} else {
-			throw new IllegalArgumentException("Scheme not recognized or non-absolute URI provided: " + uri);
+		    // Be flexible as to what we can expect here (e.g. maprfs, etc)
+//		} else if(uriStr.startsWith("hdfs")) {
+			return hdfsFetch(new Path(uriStr), reporter);
+//		} else {
+//			throw new IllegalArgumentException("Scheme not recognized or non-absolute URI provided: " + uri);
 		}
 	}
 }
