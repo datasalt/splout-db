@@ -3,12 +3,12 @@
 
 	<modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>com.splout.db</groupId>
-		<artifactId>splout-top-level</artifactId>
-		<version>0.2.6-SNAPSHOT</version>
-		<relativePath>../pom.xml</relativePath>
-	</parent>
+    <parent>
+        <groupId>com.splout.db</groupId>
+        <artifactId>splout-top-level</artifactId>
+        <version>0.3.1-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
 
 	<groupId>com.splout.db</groupId>
 	<artifactId>splout-mysql</artifactId>

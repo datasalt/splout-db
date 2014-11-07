@@ -23,6 +23,7 @@ package com.splout.db.engine;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.lang.Class;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -35,6 +36,7 @@ import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 
 import com.datasalt.pangool.io.ITuple;
@@ -57,19 +59,27 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat implements Serializ
 	
 	public static String GLOBAL_ENGINE_CONF_PROP = "com.splout.db.engine.MySQLOutputFormat.engine";
 	public static String GLOBAL_CHARSET_CONF_PROP = "com.splout.db.engine.MySQLOutputFormat.charset";
-	
-	public static String GENERATED_DB_NAME = "splout";
+  public static String GLOBAL_MEMORY_AVAILABLE_FOR_INDEXING = "com.splout.db.engine.MySQLOutputFormat.memory.indexing";
+
+  public static String GLOBAL_STRING_FIELD_SIZE = "com.splout.db.engine.MySQLOutputFormat.string.field.size";
+  public static String GLOBAL_AUTO_TRIM_STRING = "com.splout.db.engine.MySQLOutputFormat.auto.trim.string";
+
+  public static String GENERATED_DB_NAME = "splout";
 
 	// Keep track of all opened Mysqlds so we can kill them in any case
 	private Map<Integer, EmbeddedMySQL> mySQLs = new HashMap<Integer, EmbeddedMySQL>();
 
+  protected Integer globalStringFieldSize;
+  protected Boolean globalAutoTrim = null;
+
 	public MySQLOutputFormat(Integer batchSize, TableSpec... dbSpec) throws SploutSQLOutputFormatException {
 		super(batchSize, dbSpec);
+    loadGlobalConf();
 	}
 
 	@Override
 	public String getCreateTable(TableSpec tableSpec) throws SploutSQLOutputFormatException {
-		String engine = getConf().get(GLOBAL_ENGINE_CONF_PROP, "MyISAM");
+		String engine = getConf().get(GLOBAL_ENGINE_CONF_PROP, "MyIsam");
 		String charset = getConf().get(GLOBAL_CHARSET_CONF_PROP, "UTF8");
 
 		String createTable = "CREATE TABLE " + tableSpec.getSchema().getName() + " (";
@@ -130,14 +140,24 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat implements Serializ
 
 			EmbeddedMySQL mySQL = null;
 			EmbeddedMySQLConfig config = null;
+      HashMap<String, Object> customConfig = new HashMap<String, Object>();
 
-			try {
+      // Fixing memory for indexation. Main important parameters is myisam_sort_buffer_size
+      // and key_buffer_size. See http://dev.mysql.com/doc/refman/5.0/en/server-system-variables.html
+      long totalMem = getConf().getLong(GLOBAL_MEMORY_AVAILABLE_FOR_INDEXING, 100 * 1024 * 1024);
+      double shareForSortBuffer = 0.9;
+      customConfig.put("myisam_sort_buffer_size", (long) shareForSortBuffer * totalMem);
+      customConfig.put("key_buffer_size", (long) (1 - shareForSortBuffer) * totalMem);
+      customConfig.put("myisam_max_sort_file_size", 9223372036854775807l);
+
+      try {
 				File mysqlDir = new File(mysqlDb.toString());
 				LOG.info("Going to instantiate a MySQLD in: " + mysqlDir + ", port [" + portLock.getPort()
 				    + "] (partition: " + partition + ")");
 
 				config = new EmbeddedMySQLConfig(portLock.getPort(), EmbeddedMySQLConfig.DEFAULT_USER,
-				    EmbeddedMySQLConfig.DEFAULT_PASS, mysqlDir, null);
+				    EmbeddedMySQLConfig.DEFAULT_PASS, mysqlDir, customConfig);
+
 				mySQL = new EmbeddedMySQL(config);
 				mySQL.start(true);
 			} catch(Exception e) {
@@ -170,6 +190,19 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat implements Serializ
 			throw new IOException(e);
 		}
 	}
+
+  /**
+   * Loads global variable configuration
+   */
+  protected void loadGlobalConf() {
+    Configuration conf = getConf();
+    if (conf.get(GLOBAL_AUTO_TRIM_STRING) != null) {
+      globalAutoTrim = conf.getBoolean(GLOBAL_AUTO_TRIM_STRING, true);
+    }
+    if (conf.get(GLOBAL_STRING_FIELD_SIZE) != null) {
+      globalStringFieldSize = conf.getInt(GLOBAL_AUTO_TRIM_STRING, 255);
+    }
+  }
 
 	@Override
 	public void write(ITuple tuple) throws IOException, InterruptedException {
@@ -267,7 +300,7 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat implements Serializ
 				CompressorUtil.createZip(
 				    resident,
 				    zipDest,
-				    new WildcardFileFilter(new String[] { "ib*", "*.frm", "*.MYD", "*.MYI", "db.opt" }),
+				    new WildcardFileFilter(new String[] { "ib*", "*.frm", "*.MYD", "*.MYI", "db.opt", "*.ibd" }),
 				    FileFilterUtils.or(FileFilterUtils.nameFileFilter("data"),
 				        FileFilterUtils.nameFileFilter("splout")));
 				// Delete all files except the generated zip "partition.db"

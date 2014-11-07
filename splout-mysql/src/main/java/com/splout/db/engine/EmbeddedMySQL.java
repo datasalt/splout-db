@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.nio.charset.Charset;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
@@ -155,19 +156,24 @@ public class EmbeddedMySQL {
 		}
 		log.info("Using config: " + config);
 		MysqldResource mysqldResource = new MysqldResource(config.residentFolder);
-		Map database_options = new HashMap();
+		Map<String, String> database_options = new HashMap();
 		database_options.put(MysqldResourceI.PORT, Integer.toString(config.port));
 		database_options.put(MysqldResourceI.INITIALIZE_USER, "true");
 		database_options.put(MysqldResourceI.INITIALIZE_USER_NAME, config.user);
 		database_options.put(MysqldResourceI.INITIALIZE_PASSWORD, config.pass);
-		log.info("Using user: " + System.getProperty("user.name"));
-		database_options.put("user", System.getProperty("user.name"));
+    database_options.put("innodb-file-per-table", "true");
+
 		if(config.customConfig != null) {
 			for(Map.Entry<String, Object> entry : config.customConfig.entrySet()) {
-				database_options.put(entry.getKey(), entry.getValue());
+				database_options.put(entry.getKey(), entry.getValue().toString());
 			}
 		}
-		// I have to do this checking myself, otherwise in some cases mysqldResource will block undefinitely...
+
+    log.info("Using the following MySQL Configuration:");
+    for (Map.Entry<String, String> entry : database_options.entrySet()) {
+      log.info("MySQLConf: " + entry.getKey() + " -> " + entry.getValue());
+    }
+    // I have to do this checking myself, otherwise in some cases mysqldResource will block undefinitely...
 		try {
 			ServerSocket serverSocket = new ServerSocket(config.port);
 			serverSocket.close();
