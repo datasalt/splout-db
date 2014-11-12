@@ -20,13 +20,6 @@ package com.splout.db.common;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import java.io.File;
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.thrift.transport.TTransportException;
 
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
@@ -35,14 +28,21 @@ import com.splout.db.dnode.DNode;
 import com.splout.db.dnode.DNodeProperties;
 import com.splout.db.dnode.FetcherProperties;
 import com.splout.db.dnode.IDNodeHandler;
-import com.splout.db.engine.SQLite4JavaManager;
 import com.splout.db.engine.EngineManager.EngineException;
+import com.splout.db.engine.SQLite4JavaManager;
 import com.splout.db.hazelcast.CoordinationStructures;
 import com.splout.db.hazelcast.HazelcastConfigBuilder;
 import com.splout.db.hazelcast.HazelcastConfigBuilder.HazelcastConfigBuilderException;
 import com.splout.db.qnode.IQNodeHandler;
 import com.splout.db.qnode.QNode;
 import com.splout.db.qnode.QNodeProperties;
+import org.apache.commons.io.FileUtils;
+import org.apache.thrift.transport.TTransportException;
+
+import java.io.File;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Things that are used extensively in unit / integration tests.
@@ -81,9 +81,9 @@ public class TestUtils {
 	 */
 	public static abstract class NotWaitingForeverCondition {
 		
-		public abstract boolean endCondition();
+		public abstract boolean endCondition() throws Exception;
 		
-		public void waitAtMost(long patience) throws InterruptedException {
+		public void waitAtMost(long patience) throws Exception {
 			long waitedSoFar = 0;
 			while(!endCondition()) {
 				Thread.sleep(200);

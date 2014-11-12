@@ -21,23 +21,21 @@ package com.splout.db.dnode;
  * #L%
  */
 
-import static org.junit.Assert.*;
-
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.google.common.io.Files;
 import com.splout.db.common.SploutConfiguration;
 import com.splout.db.common.TestUtils;
 import com.splout.db.dnode.HttpFileExchanger.ReceiveFileCallback;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.nio.charset.Charset;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.junit.Assert.assertEquals;
 
 public class TestHttpFileExchanger {
 
@@ -50,7 +48,7 @@ public class TestHttpFileExchanger {
   public static final int WAIT_AT_MOST = 15000;
 
 	@Test
-	public void testConcurrentTransfersSameFileNotAllowed() throws IOException, InterruptedException {
+	public void testConcurrentTransfersSameFileNotAllowed() throws Exception {
 		final File fileToSend = new File(TMP_FILE);
 
 		// big file to make it unlikely that several concurrent transfers will not colide.
@@ -124,7 +122,7 @@ public class TestHttpFileExchanger {
 	}
 	
 	@Test
-	public void test() throws IOException, InterruptedException {
+	public void test() throws Exception {
 		final File fileToSend = new File(TMP_FILE);
 
 		String fileContents = "This is a text file. It is not very big, but it is ok for a test. "

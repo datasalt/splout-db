@@ -21,41 +21,29 @@ package com.splout.db.qnode;
  * #L%
  */
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
-import com.splout.db.common.JSONSerDe;
-import org.apache.commons.collections.MapUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.thrift.transport.TTransportException;
-
 import com.hazelcast.core.ICountDownLatch;
 import com.hazelcast.core.IMap;
+import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.PartitionEntry;
 import com.splout.db.common.ReplicationEntry;
 import com.splout.db.common.Tablespace;
 import com.splout.db.hazelcast.CoordinationStructures;
 import com.splout.db.hazelcast.TablespaceVersion;
-import com.splout.db.qnode.beans.DeployInfo;
-import com.splout.db.qnode.beans.DeployRequest;
-import com.splout.db.qnode.beans.DeployStatus;
-import com.splout.db.qnode.beans.QueryStatus;
-import com.splout.db.qnode.beans.SwitchVersionRequest;
+import com.splout.db.qnode.beans.*;
 import com.splout.db.thrift.DNodeService;
 import com.splout.db.thrift.DeployAction;
 import com.splout.db.thrift.PartitionMetadata;
+import org.apache.commons.collections.MapUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.thrift.transport.TTransportException;
+
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The Deployer is a specialized module ({@link com.splout.db.qnode.QNodeHandlerModule}) of the
@@ -179,8 +167,7 @@ public class Deployer extends QNodeHandlerModule {
 							if(t.getPartitionMap().getPartitionEntries().size() == t.getReplicationMap()
 							    .getReplicationEntries().size()) {
 								log.info("Ok, TablespaceVersion [" + req.getTablespace() + ", " + req.getVersion()
-								    + "] being handled by enough DNodes as reported by Hazelcast. ("
-								    + t.getReplicationMap().getReplicationEntries() + ")");
+								    + "] being handled by enough DNodes as reported by Hazelcast.");
 								it.remove();
 							}
 						}
@@ -305,7 +292,7 @@ public class Deployer extends QNodeHandlerModule {
 		deployInfo.setStartedAt(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(startTime));
 
 		context.getCoordinationStructures().logDeployMessage(version,
-		    "Deploy [" + version + "] for tablespaces " + tablespaces + " started.");
+		    "Deploy [" + version + "] for tablespaces" + tablespaces + " started.");
 		context.getCoordinationStructures().getDeploymentsStatusPanel().put(version, DeployStatus.ONGOING);
 
 		// Generate the list of actions per DNode

@@ -21,30 +21,21 @@ package com.splout.db.integration;
  * #L%
  */
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-
+import com.google.common.io.Files;
+import com.splout.db.common.*;
+import com.splout.db.dnode.DNode;
+import com.splout.db.dnode.TestCommands;
+import com.splout.db.qnode.QNodeHandler;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Test;
 
-import com.google.common.io.Files;
-import com.splout.db.common.ReplicationEntry;
-import com.splout.db.common.ReplicationMap;
-import com.splout.db.common.SploutClient;
-import com.splout.db.common.Tablespace;
-import com.splout.db.common.TestUtils;
-import com.splout.db.dnode.DNode;
-import com.splout.db.dnode.TestCommands;
-import com.splout.db.qnode.QNodeHandler;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class TestReplicaBalanceIntegration extends BaseIntegrationTest {
 
@@ -108,7 +99,7 @@ public class TestReplicaBalanceIntegration extends BaseIntegrationTest {
 					return true;
 				}
 			}
-		}.waitAtMost(5000);
+		}.waitAtMost(20000);
 		
 		// Deploy
 		client1.deploy("p1", testTablespace.getPartitionMap(), testTablespace.getReplicationMap(),
@@ -138,7 +129,7 @@ public class TestReplicaBalanceIntegration extends BaseIntegrationTest {
 					return true;
 				}
 			}
-		}.waitAtMost(5000);
+		}.waitAtMost(20000);
 
 		final DNode dnode1 = getdNodes().get(1);
 
@@ -174,7 +165,7 @@ public class TestReplicaBalanceIntegration extends BaseIntegrationTest {
 					return true;
 				}
 			}
-		}.waitAtMost(5000);
+		}.waitAtMost(60000);
 
 		// waiting now until the system recovers itself without dnode1
 		new TestUtils.NotWaitingForeverCondition() {
@@ -200,7 +191,7 @@ public class TestReplicaBalanceIntegration extends BaseIntegrationTest {
 					return true;
 				}
 			}
-		}.waitAtMost(5000);
+		}.waitAtMost(20000);
 
 		// now we bring back dnode1 to life
 		// what will happen now is that the partitions it seves will be over-replicated
@@ -231,7 +222,7 @@ public class TestReplicaBalanceIntegration extends BaseIntegrationTest {
 					return true;
 				}
 			}
-		}.waitAtMost(5000);
+		}.waitAtMost(20000);
 
 		assertEquals(2, partitionsByNode1.size());
 		assertTrue(partitionsByNode1.contains(0));

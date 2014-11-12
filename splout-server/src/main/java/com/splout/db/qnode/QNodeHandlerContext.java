@@ -21,36 +21,9 @@ package com.splout.db.qnode;
  * #L%
  */
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.SortedSet;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.ReentrantLock;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.thrift.TException;
-import org.apache.thrift.transport.TTransportException;
-
 import com.google.common.collect.Ordering;
 import com.google.common.collect.TreeMultimap;
-import com.splout.db.common.PartitionEntry;
-import com.splout.db.common.PartitionMap;
-import com.splout.db.common.ReplicationEntry;
-import com.splout.db.common.ReplicationMap;
-import com.splout.db.common.SploutConfiguration;
-import com.splout.db.common.Tablespace;
+import com.splout.db.common.*;
 import com.splout.db.dnode.DNodeClient;
 import com.splout.db.hazelcast.CoordinationStructures;
 import com.splout.db.hazelcast.DNodeInfo;
@@ -61,6 +34,16 @@ import com.splout.db.thrift.DNodeService;
 import com.splout.db.thrift.PartitionMetadata;
 import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.Gauge;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.thrift.TException;
+import org.apache.thrift.transport.TTransportException;
+
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * This class contains the basic context of {@link QNodeHandler}. This context involves in-memory information of the
@@ -388,7 +371,7 @@ public class QNodeHandlerContext {
 	 * Usually this happens when Hazelcast notifies it.
 	 */
 	public void discardThriftClientCacheFor(String dnode) throws InterruptedException {
-		thriftClientCacheLock.lock();
+		  thriftClientCacheLock.lock();
 		try {
 			// discarding all connections to a DNode who leaved
 			log.info(Thread.currentThread().getName() + " : trashing queue for [" + dnode + "] as it leaved.");
@@ -433,13 +416,27 @@ public class QNodeHandlerContext {
 	 * safely, we check in a loop whether 1) we are closing / cleaning the QNode or 2) the DNode has disconnected.
 	 */
 	public void returnDNodeClientToPool(String dnode, DNodeService.Client client, boolean renew) {
+    // Wating time for retrials. First is not used.
+    int waitTimes[] = {0,100,500,500,1000,2000,3000,4000,5000,6000};
+    int trial = 0;
+
 		if(renew) {
 			// renew -> try to close if not properly close and set to null
 			client.getOutputProtocol().getTransport().close();
 			client = null;
 		}
 		do {
-			if(closing.get()) { // don't return to the pool if the system is already closing! we must close everything!
+      // Delaying successive retrials.
+      if (trial != 0) {
+        try {
+          Thread.sleep(waitTimes[Math.min(trial, waitTimes.length - 1)]);
+        } catch (InterruptedException e) {
+          // Ignoring interruptions
+          Thread.interrupted();
+        }
+      }
+
+      if(closing.get()) { // don't return to the pool if the system is already closing! we must close everything!
 				if(client != null) {
 					client.getOutputProtocol().getTransport().close();
 				}
@@ -471,6 +468,8 @@ public class QNodeHandlerContext {
 					    + "] but the pool already has the maximum number of connections. This is likely a software bug!.");
 				}
 			}
+
+      trial++;
 		} while(client == null);
 		// one last check to avoid not closing every socket.
 		// here we avoid leaking a socket in case a close has happened in parallel or a DNode disconnected right in the

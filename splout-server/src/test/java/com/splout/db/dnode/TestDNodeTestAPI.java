@@ -21,14 +21,13 @@ package com.splout.db.dnode;
  * #L%
  */
 
-import java.util.List;
-
-import org.junit.Test;
-
 import com.splout.db.common.SploutConfiguration;
 import com.splout.db.common.TestUtils;
 import com.splout.db.qnode.QNode;
 import com.splout.db.qnode.QNodeHandler;
+import org.junit.Test;
+
+import java.util.List;
 
 public class TestDNodeTestAPI {
 
@@ -58,7 +57,7 @@ public class TestDNodeTestAPI {
 		waitUntilThereAreThatManyDNodes(qnode, 1);
 	}
 	
-	private void waitUntilThereAreThatManyDNodes(final QNode qnode, final int nDnodes) throws InterruptedException {
+	private void waitUntilThereAreThatManyDNodes(final QNode qnode, final int nDnodes) throws Exception {
 		// Wait until the QNode has 1 Dnode in the list
 		new TestUtils.NotWaitingForeverCondition() {
 			

@@ -21,30 +21,18 @@ package com.splout.db.hazelcast;
  * #L%
  */
 
-import static com.splout.db.hazelcast.HazelcastUtils.getHZAddress;
-
-import java.util.Map.Entry;
-import java.util.Random;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-
+import com.hazelcast.core.*;
+import com.hazelcast.core.LifecycleEvent.LifecycleState;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.hazelcast.core.EntryListener;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.IMap;
-import com.hazelcast.core.LifecycleEvent;
-import com.hazelcast.core.LifecycleEvent.LifecycleState;
-import com.hazelcast.core.LifecycleListener;
-import com.hazelcast.core.MemberAttributeEvent;
-import com.hazelcast.core.MembershipEvent;
-import com.hazelcast.core.MembershipListener;
+import java.util.Map.Entry;
+import java.util.Random;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static com.splout.db.hazelcast.HazelcastUtils.getHZAddress;
 
 /**
  * Creates a registry of members using a {@link IMap}. The user can create a {@link EntryListener} for
@@ -162,7 +150,7 @@ public class DistributedRegistry {
 			if(event.getState() == LifecycleState.MERGED) {
 				synchronized(DistributedRegistry.this) {
 					if(amIRegistered.get()) {
-						log.info("Hazelcast RESTARTED event received. Reregistering myself to asure I'm properly registered");
+						log.info("Hazelcast RESTARTED event received. Reregistering myself to ensure I'm properly registered");
 						register();
 					}
 				}

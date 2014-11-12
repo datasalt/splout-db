@@ -21,36 +21,9 @@ package com.splout.db.dnode;
  * #L%
  */
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-
-import net.sf.ehcache.Cache;
-import net.sf.ehcache.Element;
-
-import org.apache.commons.io.FileSystemUtils;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.TrueFileFilter;
-import org.apache.commons.lang.exception.ExceptionUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
-import com.hazelcast.core.EntryEvent;
-import com.hazelcast.core.EntryListener;
-import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.ICountDownLatch;
+import com.hazelcast.core.*;
 import com.splout.db.benchmark.PerformanceTool;
 import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
@@ -62,18 +35,31 @@ import com.splout.db.dnode.beans.DNodeStatusResponse;
 import com.splout.db.dnode.beans.DNodeSystemStatus;
 import com.splout.db.engine.EngineManager;
 import com.splout.db.engine.ManagerFactory;
-import com.splout.db.hazelcast.CoordinationStructures;
-import com.splout.db.hazelcast.DNodeInfo;
-import com.splout.db.hazelcast.DistributedRegistry;
-import com.splout.db.hazelcast.HazelcastConfigBuilder;
+import com.splout.db.hazelcast.*;
 import com.splout.db.hazelcast.HazelcastConfigBuilder.HazelcastConfigBuilderException;
-import com.splout.db.hazelcast.HazelcastProperties;
 import com.splout.db.qnode.ReplicaBalancer;
 import com.splout.db.qnode.ReplicaBalancer.BalanceAction;
 import com.splout.db.thrift.DNodeException;
 import com.splout.db.thrift.DeployAction;
 import com.splout.db.thrift.PartitionMetadata;
 import com.splout.db.thrift.RollbackAction;
+import net.sf.ehcache.Cache;
+import net.sf.ehcache.Element;
+import org.apache.commons.io.FileSystemUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.TrueFileFilter;
+import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * The business logic for the DNode: responding to queries, downloading new deployments, handling ZooKeeper events and
@@ -185,7 +171,17 @@ public class DNodeHandler implements IDNodeHandler {
 		@Override
 		public void entryEvicted(EntryEvent<BalanceAction, String> event) {
 		}
-	}
+
+    @Override
+    public void mapEvicted(MapEvent mapEvent) {
+
+    }
+
+    @Override
+    public void mapCleared(MapEvent mapEvent) {
+
+    }
+  }
 
 	/**
 	 * This inner class will perform the business logic associated with receiving files: what to do on failures, bad CRC,
@@ -507,7 +503,7 @@ public class DNodeHandler implements IDNodeHandler {
 								try {
 									deployInProgress.incrementAndGet();
 									lastDeployTimedout.set(false);
-									log.info("Starting deploy actions [" + deployActions + "]");
+									log.info("Starting [" + deployActions.size()  + "] deploy actions.");
 									long start = System.currentTimeMillis();
 									long totalSize = 0;
 
@@ -568,7 +564,6 @@ public class DNodeHandler implements IDNodeHandler {
 												}
 												msg += " Estimated remaining time is [" + timeRemaining + "].";
 											}
-											log.info(msg);
 											coord.logDeploySpeed(version, whoAmI(), msg);
 										}
 									};
@@ -620,7 +615,7 @@ public class DNodeHandler implements IDNodeHandler {
 									dnodesRegistry.changeInfo(new DNodeInfo(config));
 
 									long end = System.currentTimeMillis();
-									log.info("Local deploy actions [" + deployActions + "] successfully finished in "
+									log.info("Local [" + deployActions.size() + "] deploy actions successfully finished in "
 									    + (end - start) + " ms.");
 									deployInProgress.decrementAndGet();
 								} catch(Throwable t) {
@@ -671,6 +666,7 @@ public class DNodeHandler implements IDNodeHandler {
    * Runs a deploy action. Downloads file and warm up the data.
    */
   private void runDeployAction(Fetcher.Reporter reporter, DeployAction action, long version) throws IOException, URISyntaxException, DNodeException {
+    log.info("Running deployAction[" + action + "] for version[" + version + "].");
     // 1- Store metadata
     File metadataFile = getLocalMetadataFile(action.getTablespace(),
         action.getPartition(), version);
@@ -695,6 +691,7 @@ public class DNodeHandler implements IDNodeHandler {
     // 5- Preemptively load the Manager in case initialization is slow
     // Managers might warm up for a while (e.g. loading data into memory)
     loadManagerInEHCache(action.getTablespace(), action.getVersion(), action.getPartition(), dbFolder, action.getMetadata());
+    log.info("Finished deployAction[" + action + "] for version[" + version + "].");
   }
 
   /**

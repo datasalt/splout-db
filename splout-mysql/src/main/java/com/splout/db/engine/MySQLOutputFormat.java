@@ -20,25 +20,6 @@ package com.splout.db.engine;
  * #L%
  */
 
-import java.io.File;
-import java.io.IOException;
-import java.io.Serializable;
-import java.lang.Class;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.Statement;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.FileFilterUtils;
-import org.apache.commons.io.filefilter.WildcardFileFilter;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
-
 import com.datasalt.pangool.io.ITuple;
 import com.datasalt.pangool.io.Schema.Field;
 import com.datasalt.pangool.io.Schema.Field.Type;
@@ -48,6 +29,23 @@ import com.splout.db.common.PortUtils.PortLock;
 import com.splout.db.engine.EmbeddedMySQL.EmbeddedMySQLConfig;
 import com.splout.db.hadoop.TableSpec;
 import com.splout.db.hadoop.engine.SploutSQLOutputFormat;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.FileFilterUtils;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.Statement;
+import java.util.HashMap;
+import java.util.Map;
 
 @SuppressWarnings("serial")
 public class MySQLOutputFormat extends SploutSQLOutputFormat implements Serializable {
@@ -74,20 +72,17 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat implements Serializ
 
 	public MySQLOutputFormat(Integer batchSize, TableSpec... dbSpec) throws SploutSQLOutputFormatException {
 		super(batchSize, dbSpec);
-    loadGlobalConf();
 	}
 
 	@Override
 	public String getCreateTable(TableSpec tableSpec) throws SploutSQLOutputFormatException {
+    loadGlobalConf();
 		String engine = getConf().get(GLOBAL_ENGINE_CONF_PROP, "MyIsam");
 		String charset = getConf().get(GLOBAL_CHARSET_CONF_PROP, "UTF8");
 
 		String createTable = "CREATE TABLE " + tableSpec.getSchema().getName() + " (";
 		for(Field field : tableSpec.getSchema().getFields()) {
-			int fieldSize = -1;
-			if(field.getProp(STRING_FIELD_SIZE_PANGOOL_FIELD_PROP) != null) {
-				fieldSize = Integer.parseInt(field.getProp(STRING_FIELD_SIZE_PANGOOL_FIELD_PROP));
-			}
+			int fieldSize = fixedSizeStringField(field);
 			if(field.getName().equals(PARTITION_TUPLE_FIELD)) {
 				continue;
 			}
@@ -106,7 +101,7 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat implements Serializ
 				createTable += "FLOAT, ";
 				break;
 			case STRING:
-				if(fieldSize > 0) {
+				if(fieldSize > -1) {
 					createTable += "VARCHAR(" + fieldSize + "), ";
 				} else {
 					createTable += "TEXT, ";
@@ -146,8 +141,8 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat implements Serializ
       // and key_buffer_size. See http://dev.mysql.com/doc/refman/5.0/en/server-system-variables.html
       long totalMem = getConf().getLong(GLOBAL_MEMORY_AVAILABLE_FOR_INDEXING, 100 * 1024 * 1024);
       double shareForSortBuffer = 0.9;
-      customConfig.put("myisam_sort_buffer_size", (long) shareForSortBuffer * totalMem);
-      customConfig.put("key_buffer_size", (long) (1 - shareForSortBuffer) * totalMem);
+      customConfig.put("myisam_sort_buffer_size", (long) (shareForSortBuffer * totalMem));
+      customConfig.put("key_buffer_size", (long) ((1 - shareForSortBuffer) * totalMem));
       customConfig.put("myisam_max_sort_file_size", 9223372036854775807l);
 
       try {
@@ -200,8 +195,34 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat implements Serializ
       globalAutoTrim = conf.getBoolean(GLOBAL_AUTO_TRIM_STRING, true);
     }
     if (conf.get(GLOBAL_STRING_FIELD_SIZE) != null) {
-      globalStringFieldSize = conf.getInt(GLOBAL_AUTO_TRIM_STRING, 255);
+      globalStringFieldSize = conf.getInt(GLOBAL_STRING_FIELD_SIZE, 255);
     }
+  }
+
+  protected boolean fixedSizedStringField(Field f) {
+    return fixedSizeStringField(f) != -1;
+  }
+
+  protected int fixedSizeStringField(Field f) {
+    if (globalStringFieldSize != null)
+      return globalStringFieldSize;
+    else {
+      if (f.getProp(STRING_FIELD_SIZE_PANGOOL_FIELD_PROP) != null) {
+        return Integer.parseInt(f.getProp(STRING_FIELD_SIZE_PANGOOL_FIELD_PROP));
+      }
+    }
+    return -1;
+  }
+
+  protected boolean autoTrim(Field f) {
+    if (globalAutoTrim != null) {
+      return globalAutoTrim;
+    } else {
+      if (f.getProp(AUTO_TRIM_STRING_PANGOOL_FIELD_PROP) != null) {
+        return new Boolean(f.getProp(AUTO_TRIM_STRING_PANGOOL_FIELD_PROP));
+      }
+    }
+    return false;
   }
 
 	@Override
@@ -236,17 +257,11 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat implements Serializ
 					continue;
 				}
 				if(field.getType().equals(Type.STRING)) {
-					boolean autoTrim = false;
-					if(field.getProp(AUTO_TRIM_STRING_PANGOOL_FIELD_PROP) != null) {
-						autoTrim = true;
-					}
-					int fieldSize = -1;
-					if(field.getProp(STRING_FIELD_SIZE_PANGOOL_FIELD_PROP) != null) {
-						fieldSize = Integer.parseInt(field.getProp(STRING_FIELD_SIZE_PANGOOL_FIELD_PROP));
-					}
+					boolean autoTrim = autoTrim(field);
+					int fieldSize = fixedSizeStringField(field);
 					String str = tuple.getString(tupleCount);
-					if(fieldSize > 0 && autoTrim && str != null && str.length() > fieldSize) {
-						str = str.substring(0, Math.min(fieldSize, str.length()));
+					if(fieldSize > -1 && autoTrim && str != null && str.length() > fieldSize) {
+						str = str.substring(0, fieldSize);
 					}
 					pS.setObject(count, str);
 				} else {

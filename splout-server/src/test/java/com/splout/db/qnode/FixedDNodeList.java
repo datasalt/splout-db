@@ -21,6 +21,19 @@ package com.splout.db.qnode;
  * #L%
  */
 
+import com.hazelcast.core.EntryListener;
+import com.hazelcast.core.EntryView;
+import com.hazelcast.core.ExecutionCallback;
+import com.hazelcast.core.IMap;
+import com.hazelcast.map.EntryProcessor;
+import com.hazelcast.map.MapInterceptor;
+import com.hazelcast.mapreduce.JobTracker;
+import com.hazelcast.mapreduce.aggregation.Aggregation;
+import com.hazelcast.mapreduce.aggregation.Supplier;
+import com.hazelcast.monitor.LocalMapStats;
+import com.hazelcast.query.Predicate;
+import com.splout.db.hazelcast.DNodeInfo;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -28,16 +41,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-
-import com.hazelcast.core.EntryListener;
-import com.hazelcast.core.EntryView;
-import com.hazelcast.core.ExecutionCallback;
-import com.hazelcast.core.IMap;
-import com.hazelcast.map.EntryProcessor;
-import com.hazelcast.map.MapInterceptor;
-import com.hazelcast.monitor.LocalMapStats;
-import com.hazelcast.query.Predicate;
-import com.splout.db.hazelcast.DNodeInfo;
 
 /**
  * A proxy for Hazelcast's maps for mocking calls to {@link CoordinationStructures.#getDNodes()}
@@ -64,6 +67,16 @@ public class FixedDNodeList extends ConcurrentHashMap<String, DNodeInfo> impleme
   @Override
   public Map<String, DNodeInfo> getAll(Set<String> keys) {
     return null;
+  }
+
+  @Override
+  public void loadAll(boolean b) {
+
+  }
+
+  @Override
+  public void loadAll(Set<String> strings, boolean b) {
+
   }
 
   @Override
@@ -217,6 +230,11 @@ public class FixedDNodeList extends ConcurrentHashMap<String, DNodeInfo> impleme
   }
 
   @Override
+  public void evictAll() {
+
+  }
+
+  @Override
   public Set<String> keySet(Predicate predicate) {
     return null;
   }
@@ -278,6 +296,16 @@ public class FixedDNodeList extends ConcurrentHashMap<String, DNodeInfo> impleme
 
   @Override
   public Map<String, Object> executeOnEntries(EntryProcessor entryProcessor, Predicate predicate) {
+    return null;
+  }
+
+  @Override
+  public <SuppliedValue, Result> Result aggregate(Supplier<String, DNodeInfo, SuppliedValue> stringDNodeInfoSuppliedValueSupplier, Aggregation<String, SuppliedValue, Result> stringSuppliedValueResultAggregation) {
+    return null;
+  }
+
+  @Override
+  public <SuppliedValue, Result> Result aggregate(Supplier<String, DNodeInfo, SuppliedValue> stringDNodeInfoSuppliedValueSupplier, Aggregation<String, SuppliedValue, Result> stringSuppliedValueResultAggregation, JobTracker jobTracker) {
     return null;
   }
 

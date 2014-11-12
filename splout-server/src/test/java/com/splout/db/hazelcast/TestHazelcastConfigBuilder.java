@@ -21,15 +21,12 @@ package com.splout.db.hazelcast;
  * #L%
  */
 
-import static org.junit.Assert.*;
-
-import org.junit.Test;
-
 import com.hazelcast.config.Config;
 import com.splout.db.common.SploutConfiguration;
-import com.splout.db.hazelcast.HazelcastConfigBuilder;
-import com.splout.db.hazelcast.HazelcastProperties;
 import com.splout.db.hazelcast.HazelcastConfigBuilder.HazelcastConfigBuilderException;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 public class TestHazelcastConfigBuilder {
 
@@ -75,4 +72,19 @@ public class TestHazelcastConfigBuilder {
 		assertEquals("mgroup", cfg.getNetworkConfig().getJoin().getMulticastConfig().getMulticastGroup());
 		assertEquals(5432, cfg.getNetworkConfig().getJoin().getMulticastConfig().getMulticastPort());
 	}
+
+  @Test
+  public void testBulkHazelcastPropertiesLoading() throws HazelcastConfigBuilderException {
+    SploutConfiguration config = SploutConfiguration.getTestConfig();
+    config.setProperty("hazelcast.test.property1", "value1");
+    config.setProperty("hazelcast.test.property2", "value2");
+    config.setProperty("hz.test.property3", "value3");
+
+    Config cfg = HazelcastConfigBuilder.build(config);
+
+    assertEquals("value1", cfg.getProperty("hazelcast.test.property1"));
+    assertEquals("value2", cfg.getProperty("hazelcast.test.property2"));
+    assertEquals(null, cfg.getProperty("hz.test.property3"));
+  }
+
 }

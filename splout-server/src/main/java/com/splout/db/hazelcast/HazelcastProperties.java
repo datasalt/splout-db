@@ -44,8 +44,8 @@ public class HazelcastProperties {
 	 * Use this property to configure Hazelcast join in one or other way. Possible values: MULTICAST, TCP, AWS
 	 */
 	public static final String JOIN_METHOD = "hz.join.method";
-	
-	public static enum JOIN_METHODS {
+
+  public static enum JOIN_METHODS {
 		MULTICAST, TCP, AWS
 	}
 	
@@ -53,6 +53,19 @@ public class HazelcastProperties {
 	 * Comma-separated list of hosts values that will be added to a TCP/IP Hazelcast cluster, if hz.join.method = TCP 
 	 */
 	public static final String TCP_CLUSTER = "hz.tcp.cluster"; // comma-separated, default null
+  /**
+   * Required Member for TCP/IP Hazelcast join method. Sets the required member.
+   * If a null value is passed, it means that there is no required member.
+   * With a required member configured, the cluster will only start up when this required member
+   * is up. Setting the required member can be tricky, since if that member doesn't come up, the cluster won't start.
+   * Only one required member is allowed.
+   */
+  public static final String TCP_CLUSTER_REQUIRED_MEMBER = "hz.tcp.cluster.required.member"; // String, default null
+  /**
+   * Sets the connection timeout when clients trying to joining by TCP to other
+   * servers.
+   */
+  public static final String TCP_CONNECTION_TIMEOUT_SECONDS = "hz.tcp.connection.timeout.seconds"; // Default 20.
 	/**
 	 * Optional multicast group for MULTICAST join method
 	 */

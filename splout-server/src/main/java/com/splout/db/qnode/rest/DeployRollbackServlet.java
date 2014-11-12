@@ -21,21 +21,20 @@ package com.splout.db.qnode.rest;
  * #L%
  */
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.codehaus.jackson.type.TypeReference;
-
+import com.google.common.base.CharMatcher;
 import com.splout.db.common.JSONSerDe;
 import com.splout.db.qnode.IQNodeHandler;
 import com.splout.db.qnode.beans.DeployRequest;
 import com.splout.db.qnode.beans.SwitchVersionRequest;
+import org.codehaus.jackson.type.TypeReference;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 @SuppressWarnings("serial")
 public class DeployRollbackServlet extends BaseServlet {
@@ -73,8 +72,11 @@ public class DeployRollbackServlet extends BaseServlet {
 		try {
 			if(action.equals(ACTION_DEPLOY)) {
 				List<DeployRequest> deployReq = JSONSerDe.deSer(postBody.toString(), DEPLOY_REQ_REF);
+
 				// List of DeployRequest
-				log.info(Thread.currentThread().getName() + ": Deploy request received [" + deployReq + "]");
+				log.info(Thread.currentThread().getName() + ": Deploy request received [" +
+            CharMatcher.BREAKING_WHITESPACE
+            .removeFrom(postBody.toString()) + "]");
 				for(DeployRequest request : deployReq) {
 					if(request.getReplicationMap() == null || request.getReplicationMap().size() < 1) {
 						throw new IllegalArgumentException("Invalid deploy request with empty replication map ["

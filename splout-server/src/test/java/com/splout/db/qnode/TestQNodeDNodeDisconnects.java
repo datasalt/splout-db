@@ -21,19 +21,17 @@ package com.splout.db.qnode;
  * #L%
  */
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-
-import java.io.IOException;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import com.splout.db.common.SploutConfiguration;
 import com.splout.db.common.TestUtils;
 import com.splout.db.dnode.DNode;
 import com.splout.db.dnode.DNodeHandler;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.io.IOException;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * This test makes sure that QNode handles DNode connect / disconnect properly by populating and invalidating the Thrift
@@ -72,16 +70,27 @@ public class TestQNodeDNodeDisconnects {
 					return handler.getContext().getThriftClientCache().get(dnode1Address) != null
 					    && handler.getContext().getThriftClientCache().get(dnode1Address).size() == 40;
 				}
-			}.waitAtMost(5000);
+			}.waitAtMost(20000);
 
 			dnode1.stop();
 
-			assertEquals(handler.getDNodeList().size(), 0);
-			assertNull(handler.getContext().getThriftClientCache().get(dnode1.getAddress()));
+      final DNode dnodeAux = dnode1;
+      new TestUtils.NotWaitingForeverCondition() {
+        @Override
+        public boolean endCondition() throws Exception {
+          return  handler.getDNodeList().size() == 0 &&
+                  handler.getContext().getThriftClientCache().get(dnodeAux.getAddress()) == null;
+        }
+      }.waitAtMost(20000);
 
 			dnode1 = TestUtils.getTestDNode(config, dNodeHandler1, "dnode-" + this.getClass().getName() + "-2");
 
-			assertEquals(handler.getDNodeList().size(), 1);
+      new TestUtils.NotWaitingForeverCondition() {
+        @Override
+        public boolean endCondition() throws Exception {
+          return  handler.getDNodeList().size() == 1;
+        }
+      }.waitAtMost(20000);
 
 			// wait until connection pool has been regenerated
 			new TestUtils.NotWaitingForeverCondition() {
@@ -91,7 +100,7 @@ public class TestQNodeDNodeDisconnects {
 					return handler.getContext().getThriftClientCache().get(dnode1Address) != null
 					    && handler.getContext().getThriftClientCache().get(dnode1Address).size() == 40;
 				}
-			}.waitAtMost(5000);
+			}.waitAtMost(20000);
 
 		} finally {
 			dnode1.stop();

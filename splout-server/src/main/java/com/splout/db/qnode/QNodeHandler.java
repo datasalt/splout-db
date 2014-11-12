@@ -89,6 +89,9 @@ public class QNodeHandler implements IQNodeHandler {
   private SploutConfiguration config;
   private CoordinationStructures coord;
   private Thread warmingThread;
+  // Local copy of DNode registry. We need to maintain a local copy
+  // because entryRemoved events don't provides value information :P
+  private Hashtable<String, DNodeInfo> mapToDNodeInfo = new Hashtable<String, DNodeInfo>();
 
   private final Counter meterQueriesServed = Metrics.newCounter(QNodeHandler.class, "queries-served");
   private final Meter meterRequestsPerSecond = Metrics.newMeter(QNodeHandler.class, "queries-second",
@@ -103,6 +106,7 @@ public class QNodeHandler implements IQNodeHandler {
     @Override
     public void entryAdded(EntryEvent<String, DNodeInfo> event) {
       log.info("DNode [" + event.getValue() + "] joins the cluster as ready to server requests.");
+      mapToDNodeInfo.put(event.getKey(), event.getValue());
       // Update TablespaceVersions
       try {
         String dnode = event.getValue().getAddress();
@@ -110,7 +114,6 @@ public class QNodeHandler implements IQNodeHandler {
             + "] as it connected.");
         context.initializeThriftClientCacheFor(dnode);
         context.updateTablespaceVersions(event.getValue(), QNodeHandlerContext.DNodeEvent.ENTRY);
-        log.info(Thread.currentThread() + ": Maybe balance (entryAdded)");
         context.maybeBalance();
       } catch (TablespaceVersionInfoException e) {
         throw new RuntimeException(e);
@@ -123,12 +126,16 @@ public class QNodeHandler implements IQNodeHandler {
 
     @Override
     public void entryRemoved(EntryEvent<String, DNodeInfo> event) {
-      log.info("DNode [" + event.getValue() + "] left.");
+      // even.getValue() comes null here. Grrrrr!!!
+      // http://docs.hazelcast.org/docs/3.3/javadoc/com/hazelcast/core/IMap.html#delete(java.lang.Object)
+      // This is reason because we maintain mapToDNodeInfo map locally.
+      DNodeInfo dNodeInfo = mapToDNodeInfo.get(event.getKey());
+      mapToDNodeInfo.remove(event.getKey());
+      log.info("DNode [" + dNodeInfo + "] left.");
       // Update TablespaceVersions
       try {
-        context.discardThriftClientCacheFor(event.getValue().getAddress());
-        context.updateTablespaceVersions(event.getValue(), QNodeHandlerContext.DNodeEvent.LEAVE);
-        log.info(Thread.currentThread() + ": Maybe balance (entryRemoved)");
+        context.discardThriftClientCacheFor(dNodeInfo.getAddress());
+        context.updateTablespaceVersions(dNodeInfo, QNodeHandlerContext.DNodeEvent.LEAVE);
         context.maybeBalance();
       } catch (TablespaceVersionInfoException e) {
         throw new RuntimeException(e);
@@ -151,6 +158,18 @@ public class QNodeHandler implements IQNodeHandler {
     public void entryEvicted(EntryEvent<String, DNodeInfo> event) {
       // Never happens
       log.error("Event entryEvicted received for [" + event + "]. "
+          + "Should have never happened... Something wrong in the code");
+    }
+
+    @Override
+    public void mapEvicted(MapEvent mapEvent) {
+      log.error("Event mapEvicted received for [" + mapEvent + "]. "
+          + "Should have never happened... Something wrong in the code");
+    }
+
+    @Override
+    public void mapCleared(MapEvent mapEvent) {
+      log.error("Event mapCleared received for [" + mapEvent + "]. "
           + "Should have never happened... Something wrong in the code");
     }
   }
@@ -203,6 +222,18 @@ public class QNodeHandler implements IQNodeHandler {
     @Override
     public void entryEvicted(EntryEvent<String, Map<String, Long>> event) {
       throw new RuntimeException("Should never happen. Something is really wrong :O");
+    }
+
+    @Override
+    public void mapEvicted(MapEvent mapEvent) {
+      log.error("Event mapEvicted received for [" + mapEvent + "]. "
+          + "Should have never happened... Something wrong in the code");
+    }
+
+    @Override
+    public void mapCleared(MapEvent mapEvent) {
+      log.error("Event mapCleared received for [" + mapEvent + "]. "
+          + "Should have never happened... Something wrong in the code");
     }
   }
 
@@ -298,23 +329,26 @@ public class QNodeHandler implements IQNodeHandler {
     }
 
     Map<String, Long> vBeingServedFromHz = null;
+    Map<String, Long> vFinalBeingServed = null;
+    // Trying until successful update.
     do {
+      vFinalBeingServed = new HashMap<String, Long>(vBeingServed); // A fresh copy for this trial
       vBeingServedFromHz = context.getCoordinationStructures().getCopyVersionsBeingServed();
       if (vBeingServedFromHz != null) {
         // We assume info in memory (Hazelcast) is fresher than info in disk
         for (Map.Entry<String, Long> entry : vBeingServedFromHz.entrySet()) {
-          vBeingServed.put(entry.getKey(), entry.getValue());
+          vFinalBeingServed.put(entry.getKey(), entry.getValue());
         }
       }
     } while (!context.getCoordinationStructures().updateVersionsBeingServed(vBeingServedFromHz,
-        vBeingServed));
+        vFinalBeingServed));
 
-    updateLocalTablespace(vBeingServed);
-    log.info("Tablespaces versions after merging loaded disk state with HZ: " + vBeingServed);
+    updateLocalTablespace(vFinalBeingServed);
+    log.info("Tablespaces versions after merging loaded disk state with HZ: " + vFinalBeingServed);
   }
 
   private void updateLocalTablespace(Map<String, Long> tablespacesAndVersions) throws IOException {
-    log.info("Update local tablespace: " + tablespacesAndVersions);
+    log.info("Update local in-memory tablespace versions to serve: " + tablespacesAndVersions);
     if (tablespacesAndVersions == null) {
       return;
     }
