@@ -403,7 +403,7 @@ public class QNodeHandler implements IQNodeHandler {
    * Returns a list of {@link QueryStatus}.
    */
   public ArrayList<QueryStatus> multiQuery(String tablespaceName, List<String> keyMins,
-                                           List<String> keyMaxs, String sql) throws JSONSerDeException {
+                                           List<String> keyMaxs, String sql) throws JSONSerDeException, QuerierException {
 
     if (sql == null) {
       return new ArrayList<QueryStatus>(Arrays.asList(new QueryStatus[]{new ErrorQueryStatus(

@@ -21,25 +21,8 @@ package com.splout.db.qnode;
  * #L%
  */
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
-import com.splout.db.common.PartitionMap;
-import com.splout.db.common.ReplicationEntry;
-import com.splout.db.common.ReplicationMap;
-import com.splout.db.common.SploutConfiguration;
-import com.splout.db.common.Tablespace;
-import com.splout.db.common.TestUtils;
+import com.splout.db.common.*;
 import com.splout.db.dnode.DNode;
 import com.splout.db.dnode.IDNodeHandler;
 import com.splout.db.hazelcast.TablespaceVersion;
@@ -48,6 +31,17 @@ import com.splout.db.qnode.beans.QueryStatus;
 import com.splout.db.thrift.DNodeException;
 import com.splout.db.thrift.DeployAction;
 import com.splout.db.thrift.RollbackAction;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class TestQuerier {
 	
@@ -59,7 +53,7 @@ public class TestQuerier {
 	
 	@Test
 	@Ignore
-	public void testAllFailingDNodes() throws JSONSerDeException {
+	public void testAllFailingDNodes() throws JSONSerDeException, Querier.QuerierException {
 		SploutConfiguration testConfig = SploutConfiguration.getTestConfig();
 		QNodeHandlerContext context = new QNodeHandlerContext(testConfig, null);
 

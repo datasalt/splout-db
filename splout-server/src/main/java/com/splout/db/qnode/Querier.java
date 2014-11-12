@@ -33,7 +33,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -54,6 +53,10 @@ public class Querier extends QNodeHandlerModule {
 		
 		public QuerierException(String msg) {
 			super(msg);
+    }
+
+    public QuerierException(String msg, Exception e) {
+      super(msg, e);
     }
 	}
 
@@ -117,7 +120,7 @@ public class Querier extends QNodeHandlerModule {
 	/**
 	 * API method for querying a tablespace when you already know the partition Id. Can be used for multi-querying.
 	 */
-	public QueryStatus query(String tablespaceName, String sql, int partitionId) throws JSONSerDeException, IOException {
+	public QueryStatus query(String tablespaceName, String sql, int partitionId) throws JSONSerDeException, QuerierException {
     String msg = "tablespace[" + tablespaceName + "] partition[" + partitionId + "] sql[" + sql + "]";
 
     Long version = context.getCurrentVersionsMap().get(tablespaceName);
@@ -175,7 +178,7 @@ public class Querier extends QNodeHandlerModule {
 					r = client.sqlQuery(tablespaceName, version, partitionId, sql);
 				} catch(TTransportException e) {
 					renew = true;
-					throw new IOException("Error connecting to dnode[" + electedNode + "] for resolving "+ msg, e);
+					throw new QuerierException("Error connecting to dnode[" + electedNode + "] for resolving "+ msg, e);
 				}
 
 				qStatus.setResult(JSONSerDe.deSer(r, ArrayList.class));
