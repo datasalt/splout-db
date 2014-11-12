@@ -33,6 +33,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -116,15 +117,17 @@ public class Querier extends QNodeHandlerModule {
 	/**
 	 * API method for querying a tablespace when you already know the partition Id. Can be used for multi-querying.
 	 */
-	public QueryStatus query(String tablespaceName, String sql, int partitionId) throws JSONSerDeException {
-		Long version = context.getCurrentVersionsMap().get(tablespaceName);
+	public QueryStatus query(String tablespaceName, String sql, int partitionId) throws JSONSerDeException, IOException {
+    String msg = "tablespace[" + tablespaceName + "] partition[" + partitionId + "] sql[" + sql + "]";
+
+    Long version = context.getCurrentVersionsMap().get(tablespaceName);
 		if(version == null) {
-			return new ErrorQueryStatus("Unknown tablespace! (" + tablespaceName + ")");
+			return new ErrorQueryStatus("Unknown tablespace! [" + tablespaceName + "] for " + msg);
 		}
 		Tablespace tablespace = context.getTablespaceVersionsMap().get(
 		    new TablespaceVersion(tablespaceName, version));
 		if(tablespace == null) {
-			return new ErrorQueryStatus("Unknown tablespace! (" + tablespaceName + ")");
+			return new ErrorQueryStatus("Unknown tablespace! [" + tablespaceName + "] for " + msg);
 		}
 		ReplicationMap replicationMap = tablespace.getReplicationMap();
 		ReplicationEntry repEntry = null;
@@ -136,11 +139,11 @@ public class Querier extends QNodeHandlerModule {
 		}
 		
 		if(repEntry == null) {
-			return new ErrorQueryStatus("Incomplete Tablespace information for tablespace (" + tablespaceName
-			    + ") Maybe let the Splout warmup a little bit and try later?");
+			return new ErrorQueryStatus("Incomplete Tablespace information for tablespace [" + tablespaceName
+			    + "] Maybe let the Splout warmup a little bit and try later?. For resolving " + msg);
 		}
 		if(repEntry.getNodes().size() == 0) { // No one alive for serving the query!
-			return new ErrorQueryStatus("No alive DNodes for " + tablespace);
+			return new ErrorQueryStatus("No alive DNodes for " + tablespace + " for " + msg);
 		}
 
 		String electedNode;
@@ -172,7 +175,7 @@ public class Querier extends QNodeHandlerModule {
 					r = client.sqlQuery(tablespaceName, version, partitionId, sql);
 				} catch(TTransportException e) {
 					renew = true;
-					throw e;
+					throw new IOException("Error connecting to dnode[" + electedNode + "] for resolving "+ msg, e);
 				}
 
 				qStatus.setResult(JSONSerDe.deSer(r, ArrayList.class));
@@ -183,14 +186,14 @@ public class Querier extends QNodeHandlerModule {
 				qStatus.setShard(partitionId);
 				return qStatus;
 			} catch(DNodeException e) {
-				log.error("Exception in Querier", e);
+				log.error("Error resolving query with dnode[" + electedNode + "] for " + msg, e);
 				if(tried == repEntry.getNodes().size()) {
-					return new ErrorQueryStatus("DNode exception (" + e.getMsg() + ") from " + electedNode);
+					return new ErrorQueryStatus("DNode exception [" + e.getMsg() + "] from dnode[" + electedNode + "] for " + msg);
 				}
 			} catch(TException e) {
-				log.error("Exception in Querier", e);
+				log.error("Error connecting dnode[" + electedNode + "] for " + msg, e);
 				if(tried == repEntry.getNodes().size()) {
-					return new ErrorQueryStatus("Error connecting to client " + electedNode);
+					return new ErrorQueryStatus("Error connecting dnode[" + electedNode + "] for " + msg);
 				}
 			} finally {
 				if(client != null) {
@@ -218,7 +221,7 @@ public class Querier extends QNodeHandlerModule {
 			keyObj = key + "";
 		} else {
 			// ?
-			throw new RuntimeException("Can't handle tablespace (" + tablespace + ") with key of type "
+			throw new RuntimeException("Can't handle tablespace [" + tablespace + "] with key of type "
 			    + clazz + ". This is very likely a software bug");
 		}
 		return keyObj;
