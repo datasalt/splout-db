@@ -148,7 +148,7 @@ public class QNodeHandler implements IQNodeHandler {
     public void entryUpdated(EntryEvent<String, DNodeInfo> event) {
       // Update TablespaceVersions
       try {
-        mapToDNodeInfo.remove(event.getKey());
+        mapToDNodeInfo.put(event.getKey(), event.getValue());
         context.updateTablespaceVersions(event.getValue(), QNodeHandlerContext.DNodeEvent.UPDATE);
       } catch (TablespaceVersionInfoException e) {
         throw new RuntimeException(e);
