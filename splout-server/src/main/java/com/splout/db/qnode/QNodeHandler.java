@@ -105,7 +105,7 @@ public class QNodeHandler implements IQNodeHandler {
 
     @Override
     public void entryAdded(EntryEvent<String, DNodeInfo> event) {
-      log.info("DNode [" + event.getValue() + "] joins the cluster as ready to server requests.");
+      log.info("DNode [" + event.getValue().getAddress() + "] joins the cluster as ready to server requests.");
       mapToDNodeInfo.put(event.getKey(), event.getValue());
       // Update TablespaceVersions
       try {
@@ -131,7 +131,7 @@ public class QNodeHandler implements IQNodeHandler {
       // This is reason because we maintain mapToDNodeInfo map locally.
       DNodeInfo dNodeInfo = mapToDNodeInfo.get(event.getKey());
       mapToDNodeInfo.remove(event.getKey());
-      log.info("DNode [" + dNodeInfo + "] left.");
+      log.info("DNode [" + dNodeInfo.getAddress() + "] left.");
       // Update TablespaceVersions
       try {
         context.discardThriftClientCacheFor(dNodeInfo.getAddress());
