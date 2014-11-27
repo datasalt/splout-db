@@ -21,6 +21,7 @@ package com.splout.db.qnode;
  * #L%
  */
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.TreeMultimap;
 import com.splout.db.common.*;
@@ -74,7 +75,7 @@ public class QNodeHandlerContext {
 	private ConcurrentMap<String, BlockingQueue<DNodeService.Client>> thriftClientCache = new ConcurrentHashMap<String, BlockingQueue<DNodeService.Client>>();
 	private ReentrantLock thriftClientCacheLock = new ReentrantLock();
 
-	private int thriftClientPoolSize;
+	private final int thriftClientPoolSize;
 
 	public QNodeHandlerContext(SploutConfiguration config, CoordinationStructures coordinationStructures) {
 		this.config = config;
@@ -99,12 +100,42 @@ public class QNodeHandlerContext {
 				return count;
 			}
 		});
-		Metrics.newGauge(QNodeHandlerContext.class, "thrift-pools", new Gauge<Integer>() {
+    Metrics.newGauge(QNodeHandlerContext.class, "thrift-total-connections-being-used", new Gauge<Integer>() {
+      @Override
+      public Integer value() {
+        int queues = 0;
+        int count = 0;
+        for(Entry<String, BlockingQueue<DNodeService.Client>> queue : thriftClientCache.entrySet()) {
+          queues ++;
+          count += queue.getValue().size();
+        }
+        return (QNodeHandlerContext.this.thriftClientPoolSize * queues) - count;
+      }
+    });
+    Metrics.newGauge(QNodeHandlerContext.class, "thrift-pools", new Gauge<String>() {
+      @Override
+      public String value() {
+        ArrayList<String> fullPools = new ArrayList<String>();
+        for(Entry<String, BlockingQueue<DNodeService.Client>> queue : thriftClientCache.entrySet()) {
+          int idle = queue.getValue().size();
+          int size = QNodeHandlerContext.this.thriftClientPoolSize;
+          fullPools.add("Pool: " + queue.getKey() + " (" + (size-idle) + " of " + size + ") being used" );
+        }
+        return Joiner.on(", ").join(fullPools);
+      }
+    });
+    Metrics.newGauge(QNodeHandlerContext.class, "thrift-pools", new Gauge<Integer>() {
 			@Override
 			public Integer value() {
 				return thriftClientCache.size();
 			}
 		});
+    Metrics.newGauge(QNodeHandlerContext.class, "thrift-total-configured-connections", new Gauge<Integer>() {
+      @Override
+      public Integer value() {
+        return (QNodeHandlerContext.this.thriftClientPoolSize * thriftClientCache.size());
+      }
+    });
 	}
 
 	@SuppressWarnings("serial")
