@@ -54,59 +54,59 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class QNodeHandlerContext {
 
-	protected final static Log log = LogFactory.getLog(QNodeHandlerContext.class);
+  protected final static Log log = LogFactory.getLog(QNodeHandlerContext.class);
 
-	// This map indicates which is the current version being served. It has to be updated atomically.
-	private final Map<String, Long> currentVersionsMap = new ConcurrentHashMap<String, Long>();
-	// The SploutConfiguration
-	private SploutConfiguration config;
-	// The coordination structures that use Hazelcast underneath
-	private CoordinationStructures coordinationStructures;
-	// Local map with all versions for a tablespace with the PartitionMap, ReplicationMap for each of them
-	private final Map<TablespaceVersion, Tablespace> tablespaceVersionsMap = new ConcurrentHashMap<TablespaceVersion, Tablespace>();
+  // This map indicates which is the current version being served. It has to be updated atomically.
+  private final Map<String, Long> currentVersionsMap = new ConcurrentHashMap<String, Long>();
+  // The SploutConfiguration
+  private SploutConfiguration config;
+  // The coordination structures that use Hazelcast underneath
+  private CoordinationStructures coordinationStructures;
+  // Local map with all versions for a tablespace with the PartitionMap, ReplicationMap for each of them
+  private final Map<TablespaceVersion, Tablespace> tablespaceVersionsMap = new ConcurrentHashMap<TablespaceVersion, Tablespace>();
 
-	private ReplicaBalancer replicaBalancer;
-	
-	// This flag is set to "false" after WARMING_TIME seconds (qnode.warming.time)
-	// Some actions will only be taken after warming time, just in case some nodes still didn't join the cluster.
-	private final AtomicBoolean isWarming = new AtomicBoolean(true);
-	
-	// The per-DNode Thrift client pools
-	private ConcurrentMap<String, BlockingQueue<DNodeService.Client>> thriftClientCache = new ConcurrentHashMap<String, BlockingQueue<DNodeService.Client>>();
-	private ReentrantLock thriftClientCacheLock = new ReentrantLock();
+  private ReplicaBalancer replicaBalancer;
 
-	private final int thriftClientPoolSize;
+  // This flag is set to "false" after WARMING_TIME seconds (qnode.warming.time)
+  // Some actions will only be taken after warming time, just in case some nodes still didn't join the cluster.
+  private final AtomicBoolean isWarming = new AtomicBoolean(true);
 
-	public QNodeHandlerContext(SploutConfiguration config, CoordinationStructures coordinationStructures) {
-		this.config = config;
-		this.coordinationStructures = coordinationStructures;
-		this.thriftClientPoolSize = config.getInt(QNodeProperties.DNODE_POOL_SIZE);
-		this.replicaBalancer = new ReplicaBalancer(this);
-		initMetrics();
-	}
+  // The per-DNode Thrift client pools
+  private ConcurrentMap<String, BlockingQueue<DNodeService.Client>> thriftClientCache = new ConcurrentHashMap<String, BlockingQueue<DNodeService.Client>>();
+  private ReentrantLock thriftClientCacheLock = new ReentrantLock();
 
-	public static enum DNodeEvent {
-		LEAVE, ENTRY, UPDATE
-	}
+  private final int thriftClientPoolSize;
 
-	private void initMetrics() {
-		Metrics.newGauge(QNodeHandlerContext.class, "thrift-total-connections-iddle", new Gauge<Integer>() {
-			@Override
-			public Integer value() {
-				int count = 0;
-				for(Entry<String, BlockingQueue<DNodeService.Client>> queue : thriftClientCache.entrySet()) {
-					count += queue.getValue().size();
-				}
-				return count;
-			}
-		});
+  public QNodeHandlerContext(SploutConfiguration config, CoordinationStructures coordinationStructures) {
+    this.config = config;
+    this.coordinationStructures = coordinationStructures;
+    this.thriftClientPoolSize = config.getInt(QNodeProperties.DNODE_POOL_SIZE);
+    this.replicaBalancer = new ReplicaBalancer(this);
+    initMetrics();
+  }
+
+  public static enum DNodeEvent {
+    LEAVE, ENTRY, UPDATE
+  }
+
+  private void initMetrics() {
+    Metrics.newGauge(QNodeHandlerContext.class, "thrift-total-connections-iddle", new Gauge<Integer>() {
+      @Override
+      public Integer value() {
+        int count = 0;
+        for (Entry<String, BlockingQueue<DNodeService.Client>> queue : thriftClientCache.entrySet()) {
+          count += queue.getValue().size();
+        }
+        return count;
+      }
+    });
     Metrics.newGauge(QNodeHandlerContext.class, "thrift-total-connections-being-used", new Gauge<Integer>() {
       @Override
       public Integer value() {
         int queues = 0;
         int count = 0;
-        for(Entry<String, BlockingQueue<DNodeService.Client>> queue : thriftClientCache.entrySet()) {
-          queues ++;
+        for (Entry<String, BlockingQueue<DNodeService.Client>> queue : thriftClientCache.entrySet()) {
+          queues++;
           count += queue.getValue().size();
         }
         return (QNodeHandlerContext.this.thriftClientPoolSize * queues) - count;
@@ -116,570 +116,556 @@ public class QNodeHandlerContext {
       @Override
       public String value() {
         ArrayList<String> fullPools = new ArrayList<String>();
-        for(Entry<String, BlockingQueue<DNodeService.Client>> queue : thriftClientCache.entrySet()) {
+        for (Entry<String, BlockingQueue<DNodeService.Client>> queue : thriftClientCache.entrySet()) {
           int idle = queue.getValue().size();
           int size = QNodeHandlerContext.this.thriftClientPoolSize;
-          fullPools.add("Pool: " + queue.getKey() + " (" + (size-idle) + " of " + size + ") being used" );
+          fullPools.add("Pool: " + queue.getKey() + " (" + (size - idle) + " of " + size + ") being used");
         }
         return Joiner.on(", ").join(fullPools);
       }
     });
     Metrics.newGauge(QNodeHandlerContext.class, "thrift-pools", new Gauge<Integer>() {
-			@Override
-			public Integer value() {
-				return thriftClientCache.size();
-			}
-		});
+      @Override
+      public Integer value() {
+        return thriftClientCache.size();
+      }
+    });
     Metrics.newGauge(QNodeHandlerContext.class, "thrift-total-configured-connections", new Gauge<Integer>() {
       @Override
       public Integer value() {
         return (QNodeHandlerContext.this.thriftClientPoolSize * thriftClientCache.size());
       }
     });
-	}
+  }
 
-	@SuppressWarnings("serial")
-	public final static class TablespaceVersionInfoException extends Exception {
+  @SuppressWarnings("serial")
+  public final static class TablespaceVersionInfoException extends Exception {
 
-		public TablespaceVersionInfoException(String msg) {
-			super(msg);
-		}
-	}
+    public TablespaceVersionInfoException(String msg) {
+      super(msg);
+    }
+  }
 
-	public Object tVLock = new Object();
+  public Object tVLock = new Object();
 
-	/**
-	 * Get the list of possible actions to take for balancing the cluster in case of under-replicated partitions.
-	 */
-	public List<BalanceAction> getBalanceActions() {
-		// we have this in this class to be able to use this lock (the same that recreats the in-memory TablespaceVersion map)
-		synchronized(tVLock) {
-			return replicaBalancer.scanPartitions();
-		}
-	}
-	
-	/**
-	 * Get the list of DNodes
-	 */
-	public List<String> getDNodeList() {
-		List<String> dNodeList = new ArrayList<String>();
-		for(DNodeInfo dnode : getCoordinationStructures().getDNodes().values()) {
-			dNodeList.add(dnode.getAddress());
-		}
-		return dNodeList;
-	}
-	
-	/**
-	 * Update the in-memory <TablespaceVersion, Tablespace> map when a DNode joins, leaves or updates its DNodeINfo.
-	 */
-	public void updateTablespaceVersions(DNodeInfo dNodeInfo, DNodeEvent event)
-	    throws TablespaceVersionInfoException {
-		synchronized(tVLock) {
-			Map<TablespaceVersion, Tablespace> tablespaceVersionMap = getTablespaceVersionsMap();
+  /**
+   * Get the list of possible actions to take for balancing the cluster in case of under-replicated partitions.
+   */
+  public List<BalanceAction> getBalanceActions() {
+    // we have this in this class to be able to use this lock (the same that recreats the in-memory TablespaceVersion map)
+    synchronized (tVLock) {
+      return replicaBalancer.scanPartitions();
+    }
+  }
 
-			// First check if this DNode is not anymore serving a version that it used to serve (IMPLICIT leaving).
-			// This can happen for instance if a DNode removes an old version.
-			// In this case the version will eventually become empty here.
-			Iterator<Map.Entry<TablespaceVersion, Tablespace>> iterator = tablespaceVersionMap.entrySet()
-			    .iterator();
+  /**
+   * Get the list of DNodes
+   */
+  public List<String> getDNodeList() {
+    List<String> dNodeList = new ArrayList<String>();
+    for (DNodeInfo dnode : getCoordinationStructures().getDNodes().values()) {
+      dNodeList.add(dnode.getAddress());
+    }
+    return dNodeList;
+  }
 
-			while(iterator.hasNext()) {
-				Map.Entry<TablespaceVersion, Tablespace> tablespaceVersion = iterator.next();
-				String tablespaceName = tablespaceVersion.getKey().getTablespace();
-				Long version = tablespaceVersion.getKey().getVersion();
-				// Is this DNode present in this version?
-				Tablespace tablespace = tablespaceVersion.getValue();
-				// We will rebuild the replication map to check if it became empty after the checkings or not
-				int nonEmptyReplicas = 0;
+  /**
+   * Update the in-memory <TablespaceVersion, Tablespace> map when a DNode joins, leaves or updates its DNodeINfo.
+   */
+  public void updateTablespaceVersions(DNodeInfo dNodeInfo, DNodeEvent event)
+      throws TablespaceVersionInfoException {
+    synchronized (tVLock) {
+      Map<TablespaceVersion, Tablespace> tablespaceVersionMap = getTablespaceVersionsMap();
 
-				Iterator<ReplicationEntry> repIter = tablespace.getReplicationMap().getReplicationEntries()
-				    .iterator();
-				while(repIter.hasNext()) {
-					ReplicationEntry entry = repIter.next();
-					int partition = entry.getShard();
-					if(entry.getNodes().contains(dNodeInfo.getAddress())) {
-						// Yes!
-						// So we have to check if this DNode is still serving this version/partition or not
-						if((dNodeInfo.getServingInfo().get(tablespaceName) == null)
-						    || (dNodeInfo.getServingInfo().get(tablespaceName).get(version) == null)
-						    || (dNodeInfo.getServingInfo().get(tablespaceName).get(version).get(partition) == null)) {
-							// NO! So we have to remove the DNode
-							entry.getNodes().remove(dNodeInfo.getAddress());
-							if(entry.getNodes().isEmpty()) {
-								repIter.remove();
-								// Remove also from PartitionMap
-								PartitionEntry pEntry = new PartitionEntry();
-								pEntry.setShard(entry.getShard());
-								tablespace.getPartitionMap().getPartitionEntries().remove(pEntry);
-							}
-						}
-					}
-					if(!entry.getNodes().isEmpty()) {
-						nonEmptyReplicas++;
-					}
-				}
-				if(nonEmptyReplicas == 0) {
-					// Delete TablespaceVersion
-					log.info("Removing empty tablespace version (implicit leaving from " + dNodeInfo.getAddress()
-					    + "): " + tablespaceName + ", " + version);
-					iterator.remove();
-				}
-			}
+      // First check if this DNode is not anymore serving a version that it used to serve (IMPLICIT leaving).
+      // This can happen for instance if a DNode removes an old version.
+      // In this case the version will eventually become empty here.
+      Iterator<Map.Entry<TablespaceVersion, Tablespace>> iterator = tablespaceVersionMap.entrySet()
+          .iterator();
 
-			// Now iterate over all the tablespaces of this DNode to see new additions or EXPLICIT leavings
-			for(Map.Entry<String, Map<Long, Map<Integer, PartitionMetadata>>> tablespaceEntry : dNodeInfo
-			    .getServingInfo().entrySet()) {
-				String tablespaceName = tablespaceEntry.getKey();
-				// Iterate over all versions of this tablespace
-				for(Map.Entry<Long, Map<Integer, PartitionMetadata>> versionEntry : tablespaceEntry.getValue()
-				    .entrySet()) {
-					Long versionName = versionEntry.getKey();
-					TablespaceVersion tablespaceVersion = new TablespaceVersion(tablespaceName, versionName);
-					Tablespace currentTablespace = tablespaceVersionMap.get(tablespaceVersion);
-					List<PartitionEntry> partitionMap = new ArrayList<PartitionEntry>();
-					List<ReplicationEntry> replicationMap = new ArrayList<ReplicationEntry>();
-					long deployDate = -1;
-					if(currentTablespace != null) {
-						// Not first time we see this tablespace. We do a copy of the partition map to be able to modify it without
-						// contention.
-						partitionMap.addAll(currentTablespace.getPartitionMap().getPartitionEntries());
-						replicationMap.addAll(currentTablespace.getReplicationMap().getReplicationEntries());
-						deployDate = currentTablespace.getCreationDate();
-					}
-					// Iterate over all partitions of this tablespace
-					for(Map.Entry<Integer, PartitionMetadata> partition : versionEntry.getValue().entrySet()) {
-						deployDate = deployDate == -1 ? partition.getValue().getDeploymentDate() : deployDate;
-						if(deployDate != -1 && (deployDate != partition.getValue().getDeploymentDate())) {
-							throw new TablespaceVersionInfoException(
-							    "Inconsistent partition metadata within same node, deploy date was " + deployDate
-							        + " versus " + partition.getValue().getDeploymentDate());
-						}
-						PartitionMetadata metadata = partition.getValue();
-						Integer shard = partition.getKey();
-						// Create a PartitionEntry according to this PartitionMetadata
-						PartitionEntry myEntry = new PartitionEntry();
-						myEntry.setMax(metadata.getMaxKey());
-						myEntry.setMin(metadata.getMinKey());
-						myEntry.setShard(shard);
-						PartitionEntry existingPartitionEntry = null;
-						// Look for an existing PartitionEntry for the same shard in the PartitionMap
-						if(!partitionMap.contains(myEntry)) {
-							if(!event.equals(DNodeEvent.LEAVE)) {
-								// In this case all conditions are met for adding a new entry to the PartitionMap
-								partitionMap.add(myEntry);
-								// Note that now the PartitionMap is not necessarily sorted! let's sort it now
-								Collections.sort(partitionMap);
-							}
-						} else {
-							// Check consistency of this Partition Metadata
-							existingPartitionEntry = partitionMap.get(partitionMap.indexOf(myEntry));
-							if(existingPartitionEntry.getMax() == null || myEntry.getMax() == null) {
-								if(!(existingPartitionEntry.getMax() == null && myEntry.getMax() == null)) {
-									throw new TablespaceVersionInfoException(
-									    "Inconsistent partition metadata between nodes: " + existingPartitionEntry
-									        + " versus " + myEntry);
-								}
-							} else {
-								if(!existingPartitionEntry.getMax().equals(myEntry.getMax())) {
-									throw new TablespaceVersionInfoException(
-									    "Inconsistent partition metadata between nodes: " + existingPartitionEntry
-									        + " versus " + myEntry);
-								}
-							}
-							if(existingPartitionEntry.getMin() == null || myEntry.getMin() == null) {
-								if(!(existingPartitionEntry.getMin() == null && myEntry.getMin() == null)) {
-									throw new TablespaceVersionInfoException(
-									    "Inconsistent partition metadata between nodes: " + existingPartitionEntry
-									        + " versus " + myEntry);
-								}
-							} else {
-								if(!existingPartitionEntry.getMin().equals(myEntry.getMin())) {
-									throw new TablespaceVersionInfoException(
-									    "Inconsistent partition metadata between nodes: " + existingPartitionEntry
-									        + " versus " + myEntry);
-								}
-							}
-						}
-						// Create a ReplicationEntry according to this PartitionMetadata
-						// Will only contain this DNode as we don't know about the others yet
-						ReplicationEntry reEntry = new ReplicationEntry();
-						reEntry.setShard(shard);
-						reEntry.setExpectedReplicationFactor(metadata.getNReplicas());
-						reEntry.setNodes(new ArrayList<String>());
-						// Look for an existing ReplicationEntry for the same shard in the ReplicationMap
-						if(replicationMap.contains(reEntry)) {
-							ReplicationEntry existingEntry = replicationMap.get(replicationMap.indexOf(reEntry));
-							if(event.equals(DNodeEvent.LEAVE)) {
-								// Remove it from replication map and partition map
-								existingEntry.getNodes().remove(dNodeInfo.getAddress());
-								if(existingEntry.getNodes().isEmpty()) {
-									replicationMap.remove(existingEntry);
-									if(existingPartitionEntry != null) {
-										partitionMap.remove(existingPartitionEntry);
-									} else {
-										throw new RuntimeException(
-										    "ReplicationEntry for one shard with no associated PartitionEntry. This is very likely to be a software bug.");
-									}
-								}
-							} else {
-								if(!existingEntry.getNodes().contains(dNodeInfo.getAddress())) {
-									// Add it to replication map
-									existingEntry.getNodes().add(dNodeInfo.getAddress());
-								} else {
-									// We are adding / updating but the node already exists in the replication map.
-								}
-							}
-						} else if(!event.equals(DNodeEvent.LEAVE)) { // Otherwise just add and sort
-							// We check the DNodeEvent but although would be very weird if this DNode leaves and its ReplicationEntry
-							// wasn't present
-							reEntry.getNodes().add(dNodeInfo.getAddress());
-							replicationMap.add(reEntry);
-							Collections.sort(reEntry.getNodes());
-							Collections.sort(replicationMap);
-						}
-					}
-					// Delete tablespaceVersion if it is empty now
-					if(currentTablespace != null && replicationMap.size() == 0) {
-						log.info("Removing empty tablespaceVersion: " + tablespaceVersion
-						    + " due to explicit leaving from node " + dNodeInfo.getAddress());
-						tablespaceVersionMap.remove(tablespaceVersion);
-					} else {
-						// Update the info in memory
-						currentTablespace = new Tablespace(new PartitionMap(partitionMap), new ReplicationMap(
-						    replicationMap), versionName, deployDate);
-						tablespaceVersionMap.put(tablespaceVersion, currentTablespace);
-					}
-				}
-			}
-		}
-	}
+      while (iterator.hasNext()) {
+        Map.Entry<TablespaceVersion, Tablespace> tablespaceVersion = iterator.next();
+        String tablespaceName = tablespaceVersion.getKey().getTablespace();
+        Long version = tablespaceVersion.getKey().getVersion();
+        // Is this DNode present in this version?
+        Tablespace tablespace = tablespaceVersion.getValue();
+        // We will rebuild the replication map to check if it became empty after the checkings or not
+        int nonEmptyReplicas = 0;
 
-	/**
-	 * This method can be called to initialize a pool of connections to a dnode. This method may be called from multiple
-	 * threads so it should be safe to call it concurrently.
-	 */
-	public void initializeThriftClientCacheFor(String dnode) throws TTransportException,
-	    InterruptedException {
-		// this lock is on the whole cache but we would actually be interested in a per-DNode lock...
-		// there's only one lock for simplicity.
-		thriftClientCacheLock.lock();
-		try {
-			// initialize queue for this DNode
-			BlockingQueue<DNodeService.Client> dnodeQueue = thriftClientCache.get(dnode);
-			if(dnodeQueue == null) {
-				// this assures that the per-DNode queue is only created once and then reused.
-				dnodeQueue = new LinkedBlockingDeque<DNodeService.Client>(thriftClientPoolSize);
-			}
-			if(dnodeQueue.isEmpty()) {
-				try {
-					for(int i = dnodeQueue.size(); i < thriftClientPoolSize; i++) {
-						dnodeQueue.put(DNodeClient.get(dnode));
-					}
-					// we only put the queue if all connections have been populated
-					thriftClientCache.put(dnode, dnodeQueue);
-				} catch(TTransportException e) {
-					log.error("Error while trying to populate queue for " + dnode
-					    + ", will discard created connections.", e);
-					while(!dnodeQueue.isEmpty()) {
-						dnodeQueue.poll().getOutputProtocol().getTransport().close();
-					}
-					throw e;
-				}
-			} else {
-				// it should be safe to call this method from different places concurrently
-				// so we contemplate the case where another Thread already populated the queue
-				// and only populate it if it's really empty.
-				log.warn(Thread.currentThread().getName() + " : queue for [" + dnode
-				    + "] is not empty - it was populated before.");
-			}
-		} finally {
-			thriftClientCacheLock.unlock();
-		}
-	}
-
-	/**
-	 * This method can be called by {@link QNodeHandler} to cancel the Thrift client cache when a DNode disconnects.
-	 * Usually this happens when Hazelcast notifies it.
-	 */
-	public void discardThriftClientCacheFor(String dnode) throws InterruptedException {
-		  thriftClientCacheLock.lock();
-		try {
-			// discarding all connections to a DNode who leaved
-			log.info(Thread.currentThread().getName() + " : trashing queue for [" + dnode + "] as it leaved.");
-			BlockingQueue<DNodeService.Client> dnodeQueue = thriftClientCache.get(dnode);
-			// release connections until empty
-			while(!dnodeQueue.isEmpty()) {
-				dnodeQueue.take().getOutputProtocol().getTransport().close();
-			}
-			thriftClientCache.remove(dnode); // to indicate that the DNode is not present
-		} finally {
-			thriftClientCacheLock.unlock();
-		}
-	}
-
-	/**
-	 * Get the Thrift client for this DNode.
-	 */
-	public DNodeService.Client getDNodeClientFromPool(String dnode) throws TTransportException {
-		try {
-			BlockingQueue<DNodeService.Client> dnodeQueue = thriftClientCache.get(dnode);
-			if(dnodeQueue == null) {
-				// This shouldn't happen in real life because it is initialized by the QNode, but it is useful for unit
-				// testing.
-				// Under some rare race conditions the pool may be required before the QNode creates it, but this method
-				// assures that the queue will only be created once and, if it's not possible to create it, an exception
-				// will be thrown and nothing bad will happen.
-				initializeThriftClientCacheFor(dnode);
-				dnodeQueue = thriftClientCache.get(dnode);
-			}
-
-			DNodeService.Client client = dnodeQueue.take();
-			return client;
-		} catch(InterruptedException e) {
-			log.error("Interrupted", e);
-			return null;
-		}
-	}
-
-	/**
-	 * Return a Thrift client to the pool. This method is a bit tricky since we may want to return a connection when a
-	 * DNode already disconnected. Also, if the QNode is closing, we don't want to leave opened sockets around. To do it
-	 * safely, we check in a loop whether 1) we are closing / cleaning the QNode or 2) the DNode has disconnected.
-	 */
-	public void returnDNodeClientToPool(String dnode, DNodeService.Client client, boolean renew) {
-    // Wating time for retrials. First is not used.
-    int waitTimes[] = {0,100,500,500,1000,2000,3000,4000,5000,6000};
-    int trial = 0;
-
-		if(renew) {
-			// renew -> try to close if not properly close and set to null
-			client.getOutputProtocol().getTransport().close();
-			client = null;
-		}
-		do {
-      // Delaying successive retrials.
-      if (trial != 0) {
-        try {
-          Thread.sleep(waitTimes[Math.min(trial, waitTimes.length - 1)]);
-        } catch (InterruptedException e) {
-          // Ignoring interruptions
-          Thread.interrupted();
+        Iterator<ReplicationEntry> repIter = tablespace.getReplicationMap().getReplicationEntries()
+            .iterator();
+        while (repIter.hasNext()) {
+          ReplicationEntry entry = repIter.next();
+          int partition = entry.getShard();
+          if (entry.getNodes().contains(dNodeInfo.getAddress())) {
+            // Yes!
+            // So we have to check if this DNode is still serving this version/partition or not
+            if ((dNodeInfo.getServingInfo().get(tablespaceName) == null)
+                || (dNodeInfo.getServingInfo().get(tablespaceName).get(version) == null)
+                || (dNodeInfo.getServingInfo().get(tablespaceName).get(version).get(partition) == null)) {
+              // NO! So we have to remove the DNode
+              entry.getNodes().remove(dNodeInfo.getAddress());
+              if (entry.getNodes().isEmpty()) {
+                repIter.remove();
+                // Remove also from PartitionMap
+                PartitionEntry pEntry = new PartitionEntry();
+                pEntry.setShard(entry.getShard());
+                tablespace.getPartitionMap().getPartitionEntries().remove(pEntry);
+              }
+            }
+          }
+          if (!entry.getNodes().isEmpty()) {
+            nonEmptyReplicas++;
+          }
+        }
+        if (nonEmptyReplicas == 0) {
+          // Delete TablespaceVersion
+          log.info("Removing empty tablespace version (implicit leaving from " + dNodeInfo.getAddress()
+              + "): " + tablespaceName + ", " + version);
+          iterator.remove();
         }
       }
 
-      if(closing.get()) { // don't return to the pool if the system is already closing! we must close everything!
-				if(client != null) {
-					client.getOutputProtocol().getTransport().close();
-				}
-				return;
-			}
-			BlockingQueue<DNodeService.Client> dnodeQueue = thriftClientCache.get(dnode);
-			if(dnodeQueue == null) {
-				// dnode is not connected, so we exit.
-				if(client != null) {
-					client.getOutputProtocol().getTransport().close();
-				}
-				return;
-			}
-			if(client == null) { // we have to renew the connection
-				// endless loop, we need to get a new client otherwise the queue will not have the same size!
-				try {
-					client = DNodeClient.get(dnode);
-				} catch(TTransportException e) {
-					log.error(
-					    "TTransportException while creating client to renew. Trying again, we can't exit here!", e);
-				}
-			} else { // we have a valid client so let's put it into the queue
-				try {
-					dnodeQueue.add(client);
-				} catch(IllegalStateException e) {
-					client.getOutputProtocol().getTransport().close();
-					log.error("Trying to return a connection for dnode ["
-					    + dnode
-					    + "] but the pool already has the maximum number of connections. This is likely a software bug!.");
-				}
-			}
+      // Now iterate over all the tablespaces of this DNode to see new additions or EXPLICIT leavings
+      for (Map.Entry<String, Map<Long, Map<Integer, PartitionMetadata>>> tablespaceEntry : dNodeInfo
+          .getServingInfo().entrySet()) {
+        String tablespaceName = tablespaceEntry.getKey();
+        // Iterate over all versions of this tablespace
+        for (Map.Entry<Long, Map<Integer, PartitionMetadata>> versionEntry : tablespaceEntry.getValue()
+            .entrySet()) {
+          Long versionName = versionEntry.getKey();
+          TablespaceVersion tablespaceVersion = new TablespaceVersion(tablespaceName, versionName);
+          Tablespace currentTablespace = tablespaceVersionMap.get(tablespaceVersion);
+          List<PartitionEntry> partitionMap = new ArrayList<PartitionEntry>();
+          List<ReplicationEntry> replicationMap = new ArrayList<ReplicationEntry>();
+          long deployDate = -1;
+          if (currentTablespace != null) {
+            // Not first time we see this tablespace. We do a copy of the partition map to be able to modify it without
+            // contention.
+            partitionMap.addAll(currentTablespace.getPartitionMap().getPartitionEntries());
+            replicationMap.addAll(currentTablespace.getReplicationMap().getReplicationEntries());
+            deployDate = currentTablespace.getCreationDate();
+          }
+          // Iterate over all partitions of this tablespace
+          for (Map.Entry<Integer, PartitionMetadata> partition : versionEntry.getValue().entrySet()) {
+            deployDate = deployDate == -1 ? partition.getValue().getDeploymentDate() : deployDate;
+            if (deployDate != -1 && (deployDate != partition.getValue().getDeploymentDate())) {
+              throw new TablespaceVersionInfoException(
+                  "Inconsistent partition metadata within same node, deploy date was " + deployDate
+                      + " versus " + partition.getValue().getDeploymentDate());
+            }
+            PartitionMetadata metadata = partition.getValue();
+            Integer shard = partition.getKey();
+            // Create a PartitionEntry according to this PartitionMetadata
+            PartitionEntry myEntry = new PartitionEntry();
+            myEntry.setMax(metadata.getMaxKey());
+            myEntry.setMin(metadata.getMinKey());
+            myEntry.setShard(shard);
+            PartitionEntry existingPartitionEntry = null;
+            // Look for an existing PartitionEntry for the same shard in the PartitionMap
+            if (!partitionMap.contains(myEntry)) {
+              if (!event.equals(DNodeEvent.LEAVE)) {
+                // In this case all conditions are met for adding a new entry to the PartitionMap
+                partitionMap.add(myEntry);
+                // Note that now the PartitionMap is not necessarily sorted! let's sort it now
+                Collections.sort(partitionMap);
+              }
+            } else {
+              // Check consistency of this Partition Metadata
+              existingPartitionEntry = partitionMap.get(partitionMap.indexOf(myEntry));
+              if (existingPartitionEntry.getMax() == null || myEntry.getMax() == null) {
+                if (!(existingPartitionEntry.getMax() == null && myEntry.getMax() == null)) {
+                  throw new TablespaceVersionInfoException(
+                      "Inconsistent partition metadata between nodes: " + existingPartitionEntry
+                          + " versus " + myEntry);
+                }
+              } else {
+                if (!existingPartitionEntry.getMax().equals(myEntry.getMax())) {
+                  throw new TablespaceVersionInfoException(
+                      "Inconsistent partition metadata between nodes: " + existingPartitionEntry
+                          + " versus " + myEntry);
+                }
+              }
+              if (existingPartitionEntry.getMin() == null || myEntry.getMin() == null) {
+                if (!(existingPartitionEntry.getMin() == null && myEntry.getMin() == null)) {
+                  throw new TablespaceVersionInfoException(
+                      "Inconsistent partition metadata between nodes: " + existingPartitionEntry
+                          + " versus " + myEntry);
+                }
+              } else {
+                if (!existingPartitionEntry.getMin().equals(myEntry.getMin())) {
+                  throw new TablespaceVersionInfoException(
+                      "Inconsistent partition metadata between nodes: " + existingPartitionEntry
+                          + " versus " + myEntry);
+                }
+              }
+            }
+            // Create a ReplicationEntry according to this PartitionMetadata
+            // Will only contain this DNode as we don't know about the others yet
+            ReplicationEntry reEntry = new ReplicationEntry();
+            reEntry.setShard(shard);
+            reEntry.setExpectedReplicationFactor(metadata.getNReplicas());
+            reEntry.setNodes(new ArrayList<String>());
+            // Look for an existing ReplicationEntry for the same shard in the ReplicationMap
+            if (replicationMap.contains(reEntry)) {
+              ReplicationEntry existingEntry = replicationMap.get(replicationMap.indexOf(reEntry));
+              if (event.equals(DNodeEvent.LEAVE)) {
+                // Remove it from replication map and partition map
+                existingEntry.getNodes().remove(dNodeInfo.getAddress());
+                if (existingEntry.getNodes().isEmpty()) {
+                  replicationMap.remove(existingEntry);
+                  if (existingPartitionEntry != null) {
+                    partitionMap.remove(existingPartitionEntry);
+                  } else {
+                    throw new RuntimeException(
+                        "ReplicationEntry for one shard with no associated PartitionEntry. This is very likely to be a software bug.");
+                  }
+                }
+              } else {
+                if (!existingEntry.getNodes().contains(dNodeInfo.getAddress())) {
+                  // Add it to replication map
+                  existingEntry.getNodes().add(dNodeInfo.getAddress());
+                } else {
+                  // We are adding / updating but the node already exists in the replication map.
+                }
+              }
+            } else if (!event.equals(DNodeEvent.LEAVE)) { // Otherwise just add and sort
+              // We check the DNodeEvent but although would be very weird if this DNode leaves and its ReplicationEntry
+              // wasn't present
+              reEntry.getNodes().add(dNodeInfo.getAddress());
+              replicationMap.add(reEntry);
+              Collections.sort(reEntry.getNodes());
+              Collections.sort(replicationMap);
+            }
+          }
+          // Delete tablespaceVersion if it is empty now
+          if (currentTablespace != null && replicationMap.size() == 0) {
+            log.info("Removing empty tablespaceVersion: " + tablespaceVersion
+                + " due to explicit leaving from node " + dNodeInfo.getAddress());
+            tablespaceVersionMap.remove(tablespaceVersion);
+          } else {
+            // Update the info in memory
+            currentTablespace = new Tablespace(new PartitionMap(partitionMap), new ReplicationMap(
+                replicationMap), versionName, deployDate);
+            tablespaceVersionMap.put(tablespaceVersion, currentTablespace);
+          }
+        }
+      }
+    }
+  }
 
-      trial++;
-		} while(client == null);
-		// one last check to avoid not closing every socket.
-		// here we avoid leaking a socket in case a close has happened in parallel or a DNode disconnected right in the
-		// middle
-		if(closing.get() || thriftClientCache.get(dnode) == null) {
-			if(client != null) {
-				client.getOutputProtocol().getTransport().close();
-			}
-		}
-	}
+  /**
+   * This method can be called to initialize a pool of connections to a dnode. This method may be called from multiple
+   * threads so it should be safe to call it concurrently.
+   */
+  public void initializeThriftClientCacheFor(String dnode) throws TTransportException,
+      InterruptedException {
+    // this lock is on the whole cache but we would actually be interested in a per-DNode lock...
+    // there's only one lock for simplicity.
+    thriftClientCacheLock.lock();
+    try {
+      // initialize queue for this DNode
+      BlockingQueue<DNodeService.Client> dnodeQueue = thriftClientCache.get(dnode);
+      if (dnodeQueue == null) {
+        // this assures that the per-DNode queue is only created once and then reused.
+        dnodeQueue = new LinkedBlockingDeque<DNodeService.Client>(thriftClientPoolSize);
+      }
+      if (dnodeQueue.isEmpty()) {
+        try {
+          for (int i = dnodeQueue.size(); i < thriftClientPoolSize; i++) {
+            dnodeQueue.put(DNodeClient.get(dnode));
+          }
+          // we only put the queue if all connections have been populated
+          thriftClientCache.put(dnode, dnodeQueue);
+        } catch (TTransportException e) {
+          log.error("Error while trying to populate queue for " + dnode
+              + ", will discard created connections.", e);
+          while (!dnodeQueue.isEmpty()) {
+            dnodeQueue.poll().getOutputProtocol().getTransport().close();
+          }
+          throw e;
+        }
+      } else {
+        // it should be safe to call this method from different places concurrently
+        // so we contemplate the case where another Thread already populated the queue
+        // and only populate it if it's really empty.
+        log.warn(Thread.currentThread().getName() + " : queue for [" + dnode
+            + "] is not empty - it was populated before.");
+      }
+    } finally {
+      thriftClientCacheLock.unlock();
+    }
+  }
 
-	/**
-	 * Rotates the versions (deletes versions that are old or useless). To be executed at startup and after a deployment.
-	 */
-	public List<com.splout.db.thrift.TablespaceVersion> synchronizeTablespaceVersions()
-	    throws InterruptedException {
-		log.info("Starting to look for old tablespace versions to remove...");
+  /**
+   * This method can be called by {@link QNodeHandler} to cancel the Thrift client cache when a DNode disconnects.
+   * Usually this happens when Hazelcast notifies it.
+   */
+  public void discardThriftClientCacheFor(String dnode) throws InterruptedException {
+    thriftClientCacheLock.lock();
+    try {
+      // discarding all connections to a DNode who leaved
+      log.info(Thread.currentThread().getName() + " : trashing queue for [" + dnode + "] as it leaved.");
+      BlockingQueue<DNodeService.Client> dnodeQueue = thriftClientCache.get(dnode);
+      // release connections until empty
+      while (!dnodeQueue.isEmpty()) {
+        dnodeQueue.take().getOutputProtocol().getTransport().close();
+      }
+      thriftClientCache.remove(dnode); // to indicate that the DNode is not present
+    } finally {
+      thriftClientCacheLock.unlock();
+    }
+  }
 
-		int maxVersionsPerTablespace = config.getInt(QNodeProperties.VERSIONS_PER_TABLESPACE);
+  /**
+   * Get the Thrift client for this DNode.
+   */
+  public DNodeService.Client getDNodeClientFromPool(String dnode) throws TTransportException {
+    try {
+      BlockingQueue<DNodeService.Client> dnodeQueue = thriftClientCache.get(dnode);
+      if (dnodeQueue == null) {
+        // This shouldn't happen in real life because it is initialized by the QNode, but it is useful for unit
+        // testing.
+        // Under some rare race conditions the pool may be required before the QNode creates it, but this method
+        // assures that the queue will only be created once and, if it's not possible to create it, an exception
+        // will be thrown and nothing bad will happen.
+        initializeThriftClientCacheFor(dnode);
+        dnodeQueue = thriftClientCache.get(dnode);
+      }
 
-		// Will contain the list of versions per each tablespace, sorted by creation date descendant
-		TreeMultimap<String, Tablespace> tablespaces = TreeMultimap.create(Ordering.natural(),
-		    new Comparator<Tablespace>() {
-			    @Override
-			    public int compare(Tablespace tb1, Tablespace tb2) {
-				    // reverse ordering. Older dates appears LAST. If same date, then version is compared.
-				    int comp = -((Long) tb1.getCreationDate()).compareTo(tb2.getCreationDate());
-				    if(comp == 0) {
-					    return -((Long) tb1.getVersion()).compareTo(tb2.getVersion());
-				    } else {
-					    return comp;
-				    }
-			    }
-		    });
+      DNodeService.Client client = dnodeQueue.take();
+      return client;
+    } catch (InterruptedException e) {
+      log.error("Interrupted", e);
+      return null;
+    }
+  }
 
-		Map<TablespaceVersion, Tablespace> myTablespaces = getTablespaceVersionsMap();
+  /**
+   * Return a Thrift client to the pool. This method is a bit tricky since we may want to return a connection when a
+   * DNode already disconnected. Also, if the QNode is closing, we don't want to leave opened sockets around. To do it
+   * safely, we check whether 1) we are closing / cleaning the QNode or 2) the DNode has disconnected.
+   */
+  public void returnDNodeClientToPool(String dnode, DNodeService.Client client, boolean renew) {
+    if (closing.get()) { // don't return to the pool if the system is already closing! we must close everything!
+      if (client != null) {
+        client.getOutputProtocol().getTransport().close();
+      }
+      return;
+    }
+    BlockingQueue<DNodeService.Client> dnodeQueue = thriftClientCache.get(dnode);
+    if (dnodeQueue == null) {
+      // dnode is not connected, so we exit.
+      if (client != null) {
+        client.getOutputProtocol().getTransport().close();
+      }
+      return;
+    }
+    if (renew) { // we have to try to renew the connection
+      try {
+        DNodeService.Client newClient = DNodeClient.get(dnode);
+        if (client != null) {
+          client.getOutputProtocol().getTransport().close();
+          client = newClient;
+        }
+      } catch (TTransportException e) {
+        // Was not possible to renew connection. We'll keep the broken one.
+        log.warn(
+            "TTransportException while renewing client to dnode[" + dnode + "]. Broken client is returned to the pool as is to continue.");
+      }
+    }
+    try {
+      dnodeQueue.add(client);
+    } catch (IllegalStateException e) {
+      client.getOutputProtocol().getTransport().close();
+      log.error("Trying to return a connection for dnode ["
+          + dnode
+          + "] but the pool already has the maximum number of connections. This is likely a software bug!.");
+    }
 
-		// We build a in memory version of tablespaces for analyzing it
-		// and prune old ones.
-		for(Entry<TablespaceVersion, Tablespace> entry : myTablespaces.entrySet()) {
-			tablespaces.put(entry.getKey().getTablespace(), entry.getValue());
-		}
+    // one last check to avoid not closing every socket.
+    // here we avoid leaking a socket in case a close has happened in parallel or a DNode disconnected right in the
+    // middle
+    if (closing.get() || thriftClientCache.get(dnode) == null) {
+      if (client != null) {
+        client.getOutputProtocol().getTransport().close();
+      }
+    }
+  }
+
+  /**
+   * Rotates the versions (deletes versions that are old or useless). To be executed at startup and after a deployment.
+   */
+  public List<com.splout.db.thrift.TablespaceVersion> synchronizeTablespaceVersions()
+      throws InterruptedException {
+    log.info("Starting to look for old tablespace versions to remove...");
+
+    int maxVersionsPerTablespace = config.getInt(QNodeProperties.VERSIONS_PER_TABLESPACE);
+
+    // Will contain the list of versions per each tablespace, sorted by creation date descendant
+    TreeMultimap<String, Tablespace> tablespaces = TreeMultimap.create(Ordering.natural(),
+        new Comparator<Tablespace>() {
+          @Override
+          public int compare(Tablespace tb1, Tablespace tb2) {
+            // reverse ordering. Older dates appears LAST. If same date, then version is compared.
+            int comp = -((Long) tb1.getCreationDate()).compareTo(tb2.getCreationDate());
+            if (comp == 0) {
+              return -((Long) tb1.getVersion()).compareTo(tb2.getVersion());
+            } else {
+              return comp;
+            }
+          }
+        });
+
+    Map<TablespaceVersion, Tablespace> myTablespaces = getTablespaceVersionsMap();
+
+    // We build a in memory version of tablespaces for analyzing it
+    // and prune old ones.
+    for (Entry<TablespaceVersion, Tablespace> entry : myTablespaces.entrySet()) {
+      tablespaces.put(entry.getKey().getTablespace(), entry.getValue());
+    }
     log.info("Analyzing " + tablespaces.keySet().size() + " tablespaces with a total of " + tablespaces.size() + " versions...");
 
-		// We will remove only versions older than the one being served
-		Map<String, Long> hzVersionsBeingServed = coordinationStructures.getCopyVersionsBeingServed();
-		if(hzVersionsBeingServed == null) {
-			log.info("... No versions yet being served.");
-			return null; // nothing to do yet
-		}
+    // We will remove only versions older than the one being served
+    Map<String, Long> hzVersionsBeingServed = coordinationStructures.getCopyVersionsBeingServed();
+    if (hzVersionsBeingServed == null) {
+      log.info("... No versions yet being served.");
+      return null; // nothing to do yet
+    }
     log.info("Number of versions being served: " + hzVersionsBeingServed.size());
 
-		List<com.splout.db.thrift.TablespaceVersion> tablespacesToRemove = new ArrayList<com.splout.db.thrift.TablespaceVersion>();
+    List<com.splout.db.thrift.TablespaceVersion> tablespacesToRemove = new ArrayList<com.splout.db.thrift.TablespaceVersion>();
 
-		for(Entry<String, Long> entry : hzVersionsBeingServed.entrySet()) {
-			String tablespace = entry.getKey();
-			Long versionBeingServed = entry.getValue();
-			// Tablespaces are sorted by creation date desc.
-			SortedSet<Tablespace> allVersions = tablespaces.get(tablespace);
-			Iterator<Tablespace> it = allVersions.iterator();
-			boolean foundVersionBeingServed = false;
-			int countVersionsAfter = 0;
-			while(it.hasNext()) {
-				Tablespace tb = it.next();
-				if(versionBeingServed.equals(tb.getVersion())) {
-					foundVersionBeingServed = true;
-				} else {
-					if(foundVersionBeingServed) {
-						countVersionsAfter++;
-						if(countVersionsAfter >= maxVersionsPerTablespace) {
-							// This is the case where we remove the version
-							// 1 - This tablespace has a version being served
-							// 2 - This version is older than the current tablespace being served
-							// 3 - We are already keeping maxVersionsPerTablespace versions
-							tablespacesToRemove.add(new com.splout.db.thrift.TablespaceVersion(tablespace, tb
-							    .getVersion()));
-							log.info("Tablespace [" + tablespace + "] Version [" + tb.getVersion() + "] "
-							    + "created at [" + new Date(tb.getCreationDate())
-							    + "] REMOVED. We already keep younger versions.");
-						} else {
+    for (Entry<String, Long> entry : hzVersionsBeingServed.entrySet()) {
+      String tablespace = entry.getKey();
+      Long versionBeingServed = entry.getValue();
+      // Tablespaces are sorted by creation date desc.
+      SortedSet<Tablespace> allVersions = tablespaces.get(tablespace);
+      Iterator<Tablespace> it = allVersions.iterator();
+      boolean foundVersionBeingServed = false;
+      int countVersionsAfter = 0;
+      while (it.hasNext()) {
+        Tablespace tb = it.next();
+        if (versionBeingServed.equals(tb.getVersion())) {
+          foundVersionBeingServed = true;
+        } else {
+          if (foundVersionBeingServed) {
+            countVersionsAfter++;
+            if (countVersionsAfter >= maxVersionsPerTablespace) {
+              // This is the case where we remove the version
+              // 1 - This tablespace has a version being served
+              // 2 - This version is older than the current tablespace being served
+              // 3 - We are already keeping maxVersionsPerTablespace versions
+              tablespacesToRemove.add(new com.splout.db.thrift.TablespaceVersion(tablespace, tb
+                  .getVersion()));
+              log.info("Tablespace [" + tablespace + "] Version [" + tb.getVersion() + "] "
+                  + "created at [" + new Date(tb.getCreationDate())
+                  + "] REMOVED. We already keep younger versions.");
+            } else {
               log.info("Tablespace [" + tablespace + "] Version [" + tb.getVersion() + "] "
                   + "created at [" + new Date(tb.getCreationDate())
                   + "] KEPT.");
             }
-					} else {
+          } else {
             log.info("Tablespace [" + tablespace + "] Version [" + tb.getVersion() + "] "
                 + "created at [" + new Date(tb.getCreationDate()) + "] either younger than served one or without version being served. Keeping.");
           }
-				}
-			}
+        }
+      }
 
-			if(!foundVersionBeingServed) {
-				log.info("Tablespace [" + tablespace
-				    + "] without any version being served. Please, have a look, and remove them if not used");
-			}
+      if (!foundVersionBeingServed) {
+        log.info("Tablespace [" + tablespace
+            + "] without any version being served. Please, have a look, and remove them if not used");
+      }
 
-			if(tablespacesToRemove.size() > 0) {
-				log.info("Sending [" + tablespacesToRemove + "] to all alive DNodes.");
-				for(DNodeInfo dnode : coordinationStructures.getDNodes().values()) {
-					DNodeService.Client client = null;
-					boolean renew = false;
-					try {
-						client = getDNodeClientFromPool(dnode.getAddress());
-						client.deleteOldVersions(tablespacesToRemove);
-					} catch(TTransportException e) {
-						renew = true;
-						log.warn("Failed sending delete TablespaceVersions order to (" + dnode
-						    + "). Not critical as they will be removed after other deployments.", e);
-					} catch(DNodeException e) {
-						log.warn("Failed sending delete TablespaceVersions order to (" + dnode
-						    + "). Not critical as they will be removed after other deployments.", e);
-					} catch(TException e) {
-						log.warn("Failed sending delete TablespaceVersions order to (" + dnode
-						    + "). Not critical as they will be removed after other deployments.", e);
-					} finally {
-						if(client != null) {
-							returnDNodeClientToPool(dnode.getAddress(), client, renew);
-						}
-					}
-				}
-			}
-			log.info("... done looking for old tablespace versions to remove...");
-		}
+      if (tablespacesToRemove.size() > 0) {
+        log.info("Sending [" + tablespacesToRemove + "] to all alive DNodes.");
+        for (DNodeInfo dnode : coordinationStructures.getDNodes().values()) {
+          DNodeService.Client client = null;
+          boolean renew = false;
+          try {
+            client = getDNodeClientFromPool(dnode.getAddress());
+            client.deleteOldVersions(tablespacesToRemove);
+          } catch (TTransportException e) {
+            renew = true;
+            log.warn("Failed sending delete TablespaceVersions order to (" + dnode
+                + "). Not critical as they will be removed after other deployments.", e);
+          } catch (DNodeException e) {
+            log.warn("Failed sending delete TablespaceVersions order to (" + dnode
+                + "). Not critical as they will be removed after other deployments.", e);
+          } catch (TException e) {
+            log.warn("Failed sending delete TablespaceVersions order to (" + dnode
+                + "). Not critical as they will be removed after other deployments.", e);
+          } finally {
+            if (client != null) {
+              returnDNodeClientToPool(dnode.getAddress(), client, renew);
+            }
+          }
+        }
+      }
+      log.info("... done looking for old tablespace versions to remove...");
+    }
 
-		return tablespacesToRemove; // Return for unit test
-	}
+    return tablespacesToRemove; // Return for unit test
+  }
 
-	private AtomicBoolean closing = new AtomicBoolean(false);
+  private AtomicBoolean closing = new AtomicBoolean(false);
 
-	public void close() {
-		closing.set(true); // will indicate other parts of this code that things have to be closed!
-		for(Map.Entry<String, BlockingQueue<DNodeService.Client>> entry : thriftClientCache.entrySet()) {
-			while(entry.getValue().size() > 0) {
-				try {
-					entry.getValue().take().getOutputProtocol().getTransport().close();
-				} catch(InterruptedException e) {
-					log.error("Interrupted!", e);
-				}
-			}
-		}
-	}
-	
-	public void maybeBalance() {
-		// do this only after warming
-		if(!isWarming.get() && config.getBoolean(QNodeProperties.REPLICA_BALANCE_ENABLE)) {
-			// check if we could balance some partitions
-			List<ReplicaBalancer.BalanceAction> balanceActions = getBalanceActions();
-			// we will only re-balance versions being served
-			// otherwise strange things may happen: to re-balance a version in the middle of its deployment...
-			Map<String, Long> versionsBeingServed = coordinationStructures.getCopyVersionsBeingServed();
-			for(ReplicaBalancer.BalanceAction action : balanceActions) {
-				if(versionsBeingServed != null && versionsBeingServed.get(action.getTablespace()) != null
-				    && versionsBeingServed.get(action.getTablespace()) == action.getVersion()) {
-					// put if absent + TTL
-					coordinationStructures.getDNodeReplicaBalanceActionsSet().putIfAbsent(action, "",
-					    config.getLong(QNodeProperties.BALANCE_ACTIONS_TTL), TimeUnit.SECONDS);
-				}
-			}
-		}
-	}
+  public void close() {
+    closing.set(true); // will indicate other parts of this code that things have to be closed!
+    for (Map.Entry<String, BlockingQueue<DNodeService.Client>> entry : thriftClientCache.entrySet()) {
+      while (entry.getValue().size() > 0) {
+        try {
+          entry.getValue().take().getOutputProtocol().getTransport().close();
+        } catch (InterruptedException e) {
+          log.error("Interrupted!", e);
+        }
+      }
+    }
+  }
 
-	// ---- Getters ---- //
+  public void maybeBalance() {
+    // do this only after warming
+    if (!isWarming.get() && config.getBoolean(QNodeProperties.REPLICA_BALANCE_ENABLE)) {
+      // check if we could balance some partitions
+      List<ReplicaBalancer.BalanceAction> balanceActions = getBalanceActions();
+      // we will only re-balance versions being served
+      // otherwise strange things may happen: to re-balance a version in the middle of its deployment...
+      Map<String, Long> versionsBeingServed = coordinationStructures.getCopyVersionsBeingServed();
+      for (ReplicaBalancer.BalanceAction action : balanceActions) {
+        if (versionsBeingServed != null && versionsBeingServed.get(action.getTablespace()) != null
+            && versionsBeingServed.get(action.getTablespace()) == action.getVersion()) {
+          // put if absent + TTL
+          coordinationStructures.getDNodeReplicaBalanceActionsSet().putIfAbsent(action, "",
+              config.getLong(QNodeProperties.BALANCE_ACTIONS_TTL), TimeUnit.SECONDS);
+        }
+      }
+    }
+  }
 
-	public Map<String, Long> getCurrentVersionsMap() {
-		return currentVersionsMap;
-	}
-	public Map<TablespaceVersion, Tablespace> getTablespaceVersionsMap() {
-		return tablespaceVersionsMap;
-	}
-	public CoordinationStructures getCoordinationStructures() {
-		return coordinationStructures;
-	}
-	public SploutConfiguration getConfig() {
-		return config;
-	}
-	public ConcurrentMap<String, BlockingQueue<DNodeService.Client>> getThriftClientCache() {
-		return thriftClientCache;
-	}
-	public AtomicBoolean getIsWarming() {
-  	return isWarming;
+  // ---- Getters ---- //
+
+  public Map<String, Long> getCurrentVersionsMap() {
+    return currentVersionsMap;
+  }
+
+  public Map<TablespaceVersion, Tablespace> getTablespaceVersionsMap() {
+    return tablespaceVersionsMap;
+  }
+
+  public CoordinationStructures getCoordinationStructures() {
+    return coordinationStructures;
+  }
+
+  public SploutConfiguration getConfig() {
+    return config;
+  }
+
+  public ConcurrentMap<String, BlockingQueue<DNodeService.Client>> getThriftClientCache() {
+    return thriftClientCache;
+  }
+
+  public AtomicBoolean getIsWarming() {
+    return isWarming;
   }
 }

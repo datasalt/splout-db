@@ -120,7 +120,7 @@ public class Querier extends QNodeHandlerModule {
 	/**
 	 * API method for querying a tablespace when you already know the partition Id. Can be used for multi-querying.
 	 */
-	public QueryStatus query(String tablespaceName, String sql, int partitionId) throws JSONSerDeException, QuerierException {
+	public QueryStatus query(String tablespaceName, String sql, int partitionId) throws JSONSerDeException {
     String msg = "tablespace[" + tablespaceName + "] partition[" + partitionId + "] sql[" + sql + "]";
 
     Long version = context.getCurrentVersionsMap().get(tablespaceName);
@@ -173,13 +173,7 @@ public class Querier extends QNodeHandlerModule {
 			try {
 				client = context.getDNodeClientFromPool(electedNode);
 
-				String r;
-				try {
-					r = client.sqlQuery(tablespaceName, version, partitionId, sql);
-				} catch(TTransportException e) {
-					renew = true;
-					throw new QuerierException("Error connecting to dnode[" + electedNode + "] for resolving "+ msg, e);
-				}
+				String r = client.sqlQuery(tablespaceName, version, partitionId, sql);
 
 				qStatus.setResult(JSONSerDe.deSer(r, ArrayList.class));
 				long end = System.currentTimeMillis();
@@ -188,16 +182,26 @@ public class Querier extends QNodeHandlerModule {
 				// ... and the shard hit.
 				qStatus.setShard(partitionId);
 				return qStatus;
-			} catch(DNodeException e) {
-				log.error("Error resolving query with dnode[" + electedNode + "] for " + msg, e);
-				if(tried == repEntry.getNodes().size()) {
-					return new ErrorQueryStatus("DNode exception [" + e.getMsg() + "] from dnode[" + electedNode + "] for " + msg);
-				}
-			} catch(TException e) {
-				log.error("Error connecting dnode[" + electedNode + "] for " + msg, e);
+
+      } catch(DNodeException e) {
+        if(tried == repEntry.getNodes().size()) {
+          return new ErrorQueryStatus("DNode exception [" + e.getMsg() + "] from dnode[" + electedNode + "] for " + msg);
+        } else {
+          log.warn("Error resolving query with dnode[" + electedNode + "] at trial[" + (tried +1) + "] of[" + repEntry.getNodes().size()  + "] DNodes. Will retry. Info: " + msg, e);
+        }
+      } catch(TTransportException e) {
+        renew = true;
+        if(tried == repEntry.getNodes().size()) {
+          return new ErrorQueryStatus("Error connecting dnode[" + electedNode + "] for " + msg);
+        } else {
+          log.warn("TTransportException problem when connecting dnode[" + electedNode + "] at trial[" + (tried +1) + "] of[" + repEntry.getNodes().size()  + "] DNodes. Will retry. Info: " + msg, e);
+        }
+      } catch(TException e) {
 				if(tried == repEntry.getNodes().size()) {
 					return new ErrorQueryStatus("Error connecting dnode[" + electedNode + "] for " + msg);
-				}
+				} else {
+          log.warn("TException problem when connecting dnode[" + electedNode + "] at trial[" + (tried +1) + "] of[" + repEntry.getNodes().size()  + "] DNodes. Will retry. Info: " + msg, e);
+        }
 			} finally {
 				if(client != null) {
 					context.returnDNodeClientToPool(electedNode, client, renew);

@@ -21,19 +21,19 @@ package com.splout.db.qnode.rest;
  * #L%
  */
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Map;
+import com.splout.db.common.JSONSerDe;
+import com.splout.db.common.JSONSerDe.JSONSerDeException;
+import com.splout.db.qnode.IQNodeHandler;
+import com.splout.db.qnode.beans.ErrorQueryStatus;
+import com.splout.db.qnode.beans.QueryStatus;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import com.splout.db.common.JSONSerDe;
-import com.splout.db.common.JSONSerDe.JSONSerDeException;
-import com.splout.db.qnode.IQNodeHandler;
-import com.splout.db.qnode.beans.QueryStatus;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Map;
 
 @SuppressWarnings("serial")
 public class QueryServlet extends BaseServlet {
@@ -100,8 +100,14 @@ public class QueryServlet extends BaseServlet {
 
 		try {
 			QueryStatus st = qNodeHandler.query(tablespace, key, sql, partition);
-			log.info(Thread.currentThread().getName() + ": Query request received, tablespace[" + tablespace
-			    + "], key[" + key + "], sql[" + sql + "] time [" + st.getMillis() + "]");
+      String status = "status[OK]";
+      if (st instanceof ErrorQueryStatus) {
+        String errMsg = st.getError();
+        errMsg = errMsg != null ? errMsg.replace("[", "(").replace("]", ")") : null;
+        status = "status[ERROR] errMessage[" + errMsg + "]";
+      }
+			log.info("Query request received, tablespace[" + tablespace
+			    + "], key[" + key + "], sql[" + sql + "] time[" + st.getMillis() + "] " + status);
 			String response;
 			response = JSONSerDe.ser(st);
 			if(callback != null) {

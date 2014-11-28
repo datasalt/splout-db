@@ -11,6 +11,7 @@ IMPROVEMENTS
 
  BUG FIXES
 
+ - 2014-11-28 - Thrift pools are not in infinite loop to renewal anymore.
  - 2014-11-12 - Upgrading to Hazelcast 3.3.2 that includes many bug fixes.
 
 Splout SQL 0.3.0
