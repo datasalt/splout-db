@@ -80,4 +80,10 @@ public class QNodeProperties {
    * As a downside, replica balancing might use more disk space than desired.
    */
   public final static String REPLICA_BALANCE_ENABLE = "qnode.enable.replica.balance";
+
+  /**
+   * The time to wait in millis for a dnode connection in pool. It is used when pool is
+   * empty because all connections are being used.
+   */
+  public static final String QNODE_DNODE_POOL_TAKE_TIMEOUT = "qnode.dnode.pool.take.timeout";
 }

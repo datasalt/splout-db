@@ -185,12 +185,6 @@ public class Querier extends QNodeHandlerModule {
         qStatus.setShard(partitionId);
         return qStatus;
 
-      } catch (DNodeException e) {
-        if (tried == repEntry.getNodes().size()) {
-          return new ErrorQueryStatus("DNode exception [" + e.getMsg() + "] from dnode[" + electedNode + "] for " + msg);
-        } else {
-          log.warn("Error resolving query with dnode[" + electedNode + "] at trial[" + (tried + 1) + "] of[" + repEntry.getNodes().size() + "] DNodes. Will retry. Info: " + msg, e);
-        }
       } catch (TTransportException e) {
         renew = true;
         if (tried == repEntry.getNodes().size()) {
@@ -198,20 +192,33 @@ public class Querier extends QNodeHandlerModule {
         } else {
           log.warn("TTransportException problem when connecting dnode[" + electedNode + "] at trial[" + (tried + 1) + "] of[" + repEntry.getNodes().size() + "] DNodes. Will retry. Info: " + msg, e);
         }
+      } catch (InterruptedException e) {
+        log.info("Interrupt received when retrieving connection from pool for dnode[" + electedNode + "] " + msg, e);
+        // In this case we don't retry.
+      } catch (DNodeException e) {
+        if (tried == repEntry.getNodes().size()) {
+          return new ErrorQueryStatus("DNode exception [" + e.getMsg() + "] from dnode[" + electedNode + "] for " + msg);
+        } else {
+          log.warn("Error resolving query with dnode[" + electedNode + "] at trial[" + (tried + 1) + "] of[" + repEntry.getNodes().size() + "] DNodes. Will retry. Info: " + msg, e);
+        }
       } catch (TException e) {
         if (tried == repEntry.getNodes().size()) {
           return new ErrorQueryStatus("Error connecting dnode[" + electedNode + "] for " + msg);
         } else {
           log.warn("TException problem when connecting dnode[" + electedNode + "] at trial[" + (tried + 1) + "] of[" + repEntry.getNodes().size() + "] DNodes. Will retry. Info: " + msg, e);
         }
-      } catch (InterruptedException e) {
-        log.info("Interrupt received when retrieving connection from pool for dnode[" + electedNode + "] " + msg, e);
-        // In this case we don't retry.
       } catch (PoolCreationException e) {
         if (tried == repEntry.getNodes().size()) {
           return new ErrorQueryStatus("Error creating pool for dnode[" + electedNode + "] for " + msg);
         } else {
-          log.warn("Error creating pool for dnode[" + electedNode + "] for " + electedNode + "] at trial[" + (tried + 1) + "] of[" + repEntry.getNodes().size() + "] DNodes. Will retry. Info: " + msg, e);
+          log.warn("Error creating pool for dnode[" + electedNode + "] at trial[" + (tried + 1) + "] of[" + repEntry.getNodes().size() + "] DNodes. Will retry. Info: " + msg, e);
+        }
+      } catch (DNodePoolFullException e) {
+        if (tried == repEntry.getNodes().size()) {
+          return new ErrorQueryStatus("Pool for dnode[" + electedNode + "] full after waiting for timeout. Consider increase  " + QNodeProperties.DNODE_POOL_SIZE +
+              " or increase " + QNodeProperties.QNODE_DNODE_POOL_TAKE_TIMEOUT + " timeout for waiting for connections. " + msg);
+        } else {
+          log.warn("Pool for dnode[" + electedNode + "] FULL! at trial[" + (tried + 1) + "] of[" + repEntry.getNodes().size() + "] DNodes. Will retry. Info: " + msg, e);
         }
       } finally {
         if (client != null) {

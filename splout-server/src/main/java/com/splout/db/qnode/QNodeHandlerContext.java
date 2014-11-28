@@ -30,14 +30,12 @@ import com.splout.db.hazelcast.CoordinationStructures;
 import com.splout.db.hazelcast.DNodeInfo;
 import com.splout.db.hazelcast.TablespaceVersion;
 import com.splout.db.qnode.ReplicaBalancer.BalanceAction;
-import com.splout.db.thrift.DNodeException;
 import com.splout.db.thrift.DNodeService;
 import com.splout.db.thrift.PartitionMetadata;
 import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.Gauge;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 
 import java.util.*;
@@ -76,11 +74,13 @@ public class QNodeHandlerContext {
   private ReentrantLock thriftClientCacheLock = new ReentrantLock();
 
   private final int thriftClientPoolSize;
+  private final int dnodePoolTimeoutMillis;
 
   public QNodeHandlerContext(SploutConfiguration config, CoordinationStructures coordinationStructures) {
     this.config = config;
     this.coordinationStructures = coordinationStructures;
     this.thriftClientPoolSize = config.getInt(QNodeProperties.DNODE_POOL_SIZE);
+    this.dnodePoolTimeoutMillis = config.getInt(QNodeProperties.QNODE_DNODE_POOL_TAKE_TIMEOUT);
     this.replicaBalancer = new ReplicaBalancer(this);
     initMetrics();
   }
@@ -427,10 +427,13 @@ public class QNodeHandlerContext {
    * <p/>
    * This method never returns null.
    *
-   * @throws java.lang.InterruptedException            if somebody interrupts the thread meanwhile the method is waiting in the pool
-   * @throws com.splout.db.qnode.PoolCreationException if there is failure when a new pool is created.
+   * @throws java.lang.InterruptedException             if somebody interrupts the thread meanwhile the method is waiting in the pool
+   * @throws com.splout.db.qnode.PoolCreationException  if there is failure when a new pool is created.
+   * @throws com.splout.db.qnode.DNodePoolFullException if the pool for the given dnode is empty and the timeout
+   *                                                    for waiting for a connection is reached.
    */
-  public DNodeService.Client getDNodeClientFromPool(String dnode) throws InterruptedException, PoolCreationException {
+  public DNodeService.Client getDNodeClientFromPool(String dnode) throws InterruptedException, PoolCreationException,
+      DNodePoolFullException {
     BlockingQueue<DNodeService.Client> dnodeQueue = thriftClientCache.get(dnode);
     if (dnodeQueue == null) {
       // This shouldn't happen in real life because it is initialized by the QNode, but it is useful for unit
@@ -446,7 +449,12 @@ public class QNodeHandlerContext {
       }
     }
 
-    DNodeService.Client client = dnodeQueue.take();
+    DNodeService.Client client = dnodeQueue.poll(dnodePoolTimeoutMillis, TimeUnit.MILLISECONDS);
+    // Timeout waiting for poll
+    if (client == null) {
+      throw new DNodePoolFullException("Pool for dnode[" + dnode + "] is full and timeout of [" + dnodePoolTimeoutMillis
+          + "] reached when waiting for a connection.");
+    }
     return client;
   }
 
@@ -601,13 +609,7 @@ public class QNodeHandlerContext {
             renew = true;
             log.warn("Failed sending delete TablespaceVersions order to (" + dnode
                 + "). Not critical as they will be removed after other deployments.", e);
-          } catch (DNodeException e) {
-            log.warn("Failed sending delete TablespaceVersions order to (" + dnode
-                + "). Not critical as they will be removed after other deployments.", e);
-          } catch (TException e) {
-            log.warn("Failed sending delete TablespaceVersions order to (" + dnode
-                + "). Not critical as they will be removed after other deployments.", e);
-          } catch (PoolCreationException e) {
+          } catch (Exception e) {
             log.warn("Failed sending delete TablespaceVersions order to (" + dnode
                 + "). Not critical as they will be removed after other deployments.", e);
           } finally {

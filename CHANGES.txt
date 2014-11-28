@@ -5,6 +5,7 @@ Splout SQL Change Log
 
 IMPROVEMENTS
 
+ - 2014-11-28 - Timeout when pool of DNodes is full. Avoiding enqueue for always queries when Splout is full.
  - 2014-11-12 - QNode connections to DNode retrials are delayed in successive failures.
  - 2014-11-12 - All properties in Splout config starting by hazelcast. are passed through Hazelcast as is.
  - 2014-09-29 - Accepting responses compression with Gzip and deflate
