@@ -36,6 +36,7 @@ import com.splout.db.thrift.PartitionMetadata;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.thrift.transport.TTransportException;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -311,8 +312,10 @@ public class Deployer extends QNodeHandlerModule {
 			try {
         client = context.getDNodeClientFromPool(actionPerDNode.getKey());
 				client.deploy(actionPerDNode.getValue(), version);
-			} catch(Exception e) {
-				String errorMsg = "Error sending deploy actions to DNode [" + actionPerDNode.getKey() + "]";
+      } catch (TTransportException e) {
+        renew = true;
+      } catch (Exception e) {
+        String errorMsg = "Error sending deploy actions to DNode [" + actionPerDNode.getKey() + "]";
 				log.error(errorMsg, e);
 				abortDeploy(new ArrayList<String>(actionsPerDNode.keySet()), errorMsg, version);
 				deployInfo.setError("Error connecting to DNode " + actionPerDNode.getKey());
@@ -348,8 +351,10 @@ public class Deployer extends QNodeHandlerModule {
 			try {
         client = context.getDNodeClientFromPool(dnode);
 				client.abortDeploy(version);
-			} catch(Exception e) {
-				log.error("Error sending abort deploy flag to DNode [" + dnode + "]", e);
+      } catch (TTransportException e) {
+        renew = true;
+      } catch (Exception e) {
+        log.error("Error sending abort deploy flag to DNode [" + dnode + "]", e);
 			} finally {
 				if(client != null) {
 					context.returnDNodeClientToPool(dnode, client, renew);
