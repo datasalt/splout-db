@@ -26,6 +26,7 @@ import com.splout.db.common.SploutConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 
@@ -191,7 +192,9 @@ public class HazelcastConfigBuilder {
 
     try {
       // Comma separated hosts accepted.
-      join.getTcpIpConfig().addMember(tcpCluster);
+      ArrayList<String> members = new ArrayList<String>();
+      members.add(tcpCluster);
+      join.getTcpIpConfig().setMembers(members);
     } catch (Throwable e) {
       log.error("Invalid host in TCP cluster", e);
       throw new HazelcastConfigBuilderException("Invalid host in TCP cluster: " + tcpCluster);
