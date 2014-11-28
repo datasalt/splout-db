@@ -189,14 +189,12 @@ public class HazelcastConfigBuilder {
           + HazelcastProperties.TCP_CLUSTER + ")");
     }
 
-    String[] cluster = tcpCluster.split(",");
-    for (String host : cluster) {
-      try {
-        join.getTcpIpConfig().addMember(host);
-      } catch (Throwable e) {
-        log.error("Invalid host in TCP cluster", e);
-        throw new HazelcastConfigBuilderException("Invalid host in TCP cluster: " + host);
-      }
+    try {
+      // Comma separated hosts accepted.
+      join.getTcpIpConfig().addMember(tcpCluster);
+    } catch (Throwable e) {
+      log.error("Invalid host in TCP cluster", e);
+      throw new HazelcastConfigBuilderException("Invalid host in TCP cluster: " + tcpCluster);
     }
 
     String requiredMember = buConf.getString(HazelcastProperties.TCP_CLUSTER_REQUIRED_MEMBER);
