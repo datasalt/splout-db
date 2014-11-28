@@ -419,32 +419,44 @@ public class QNodeHandlerContext {
 
   /**
    * Get the Thrift client for this DNode.
+   *
+   * Can throw a TTransportException in the rare case when
+   * a new pool is initialized here. In this case, you shouldn't call
+   * the method {@link #returnDNodeClientToPool(String, com.splout.db.thrift.DNodeService.Client, boolean)}
+   * to return the connection.
+   *
+   * This method never returns null.
+   *
+   * @throws java.lang.InterruptedException if somebody interrupts the thread meanwhile the method is waiting in the pool
+   * @throws com.splout.db.qnode.PoolCreationException if there is failure when a new pool is created.
+   *
    */
-  public DNodeService.Client getDNodeClientFromPool(String dnode) throws TTransportException {
-    try {
-      BlockingQueue<DNodeService.Client> dnodeQueue = thriftClientCache.get(dnode);
-      if (dnodeQueue == null) {
-        // This shouldn't happen in real life because it is initialized by the QNode, but it is useful for unit
-        // testing.
-        // Under some rare race conditions the pool may be required before the QNode creates it, but this method
-        // assures that the queue will only be created once and, if it's not possible to create it, an exception
-        // will be thrown and nothing bad will happen.
+  public DNodeService.Client getDNodeClientFromPool(String dnode) throws InterruptedException, PoolCreationException {
+    BlockingQueue<DNodeService.Client> dnodeQueue = thriftClientCache.get(dnode);
+    if (dnodeQueue == null) {
+      // This shouldn't happen in real life because it is initialized by the QNode, but it is useful for unit
+      // testing.
+      // Under some rare race conditions the pool may be required before the QNode creates it, but this method
+      // assures that the queue will only be created once and, if it's not possible to create it, an exception
+      // will be thrown and nothing bad will happen.
+      try {
         initializeThriftClientCacheFor(dnode);
         dnodeQueue = thriftClientCache.get(dnode);
+      } catch (TTransportException e) {
+        throw new PoolCreationException(e);
       }
-
-      DNodeService.Client client = dnodeQueue.take();
-      return client;
-    } catch (InterruptedException e) {
-      log.error("Interrupted", e);
-      return null;
     }
+
+    DNodeService.Client client = dnodeQueue.take();
+    return client;
   }
 
   /**
    * Return a Thrift client to the pool. This method is a bit tricky since we may want to return a connection when a
    * DNode already disconnected. Also, if the QNode is closing, we don't want to leave opened sockets around. To do it
    * safely, we check whether 1) we are closing / cleaning the QNode or 2) the DNode has disconnected.
+   *
+   * The given client never can be null.
    */
   public void returnDNodeClientToPool(String dnode, DNodeService.Client client, boolean renew) {
     if (closing.get()) { // don't return to the pool if the system is already closing! we must close everything!
@@ -594,6 +606,9 @@ public class QNodeHandlerContext {
             log.warn("Failed sending delete TablespaceVersions order to (" + dnode
                 + "). Not critical as they will be removed after other deployments.", e);
           } catch (TException e) {
+            log.warn("Failed sending delete TablespaceVersions order to (" + dnode
+                + "). Not critical as they will be removed after other deployments.", e);
+          } catch (PoolCreationException e) {
             log.warn("Failed sending delete TablespaceVersions order to (" + dnode
                 + "). Not critical as they will be removed after other deployments.", e);
           } finally {

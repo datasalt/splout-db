@@ -36,7 +36,6 @@ import com.splout.db.thrift.PartitionMetadata;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.thrift.transport.TTransportException;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -310,12 +309,7 @@ public class Deployer extends QNodeHandlerModule {
 			DNodeService.Client client = null;
 			boolean renew = false;
 			try {
-				try {
-					client = context.getDNodeClientFromPool(actionPerDNode.getKey());
-				} catch(TTransportException e) {
-					renew = true;
-					throw e;
-				}
+        client = context.getDNodeClientFromPool(actionPerDNode.getKey());
 				client.deploy(actionPerDNode.getValue(), version);
 			} catch(Exception e) {
 				String errorMsg = "Error sending deploy actions to DNode [" + actionPerDNode.getKey() + "]";
@@ -325,7 +319,9 @@ public class Deployer extends QNodeHandlerModule {
 				context.getCoordinationStructures().getDeployInfoPanel().put(version, deployInfo);
 				return deployInfo;
 			} finally {
-				context.returnDNodeClientToPool(actionPerDNode.getKey(), client, renew);
+        if (client != null) {
+          context.returnDNodeClientToPool(actionPerDNode.getKey(), client, renew);
+        }
 			}
 		}
 
@@ -350,12 +346,7 @@ public class Deployer extends QNodeHandlerModule {
 			DNodeService.Client client = null;
 			boolean renew = false;
 			try {
-				try {
-					client = context.getDNodeClientFromPool(dnode);
-				} catch(TTransportException e) {
-					renew = true;
-					throw e;
-				}
+        client = context.getDNodeClientFromPool(dnode);
 				client.abortDeploy(version);
 			} catch(Exception e) {
 				log.error("Error sending abort deploy flag to DNode [" + dnode + "]", e);

@@ -202,7 +202,16 @@ public class Querier extends QNodeHandlerModule {
 				} else {
           log.warn("TException problem when connecting dnode[" + electedNode + "] at trial[" + (tried +1) + "] of[" + repEntry.getNodes().size()  + "] DNodes. Will retry. Info: " + msg, e);
         }
-			} finally {
+			} catch (InterruptedException e) {
+        log.info("Interrupt received when retrieving connection from pool for dnode[" + electedNode + "] " + msg, e);
+        // In this case we don't retry.
+      } catch (PoolCreationException e) {
+        if(tried == repEntry.getNodes().size()) {
+          return new ErrorQueryStatus("Error creating pool for dnode[" + electedNode + "] for " + msg);
+        } else {
+          log.warn("Error creating pool for dnode[" + electedNode + "] for " + electedNode + "] at trial[" + (tried +1) + "] of[" + repEntry.getNodes().size()  + "] DNodes. Will retry. Info: " + msg, e);
+        }
+      } finally {
 				if(client != null) {
 					context.returnDNodeClientToPool(electedNode, client, renew);
 				}

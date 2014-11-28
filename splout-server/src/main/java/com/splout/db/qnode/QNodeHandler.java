@@ -497,7 +497,9 @@ public class QNodeHandler implements IQNodeHandler {
         aliveDNodes.put(dnode.getAddress(), JSONSerDe.deSer(client.status(), DNodeSystemStatus.class));
       } catch (TTransportException e) {
         renew = true;
-        throw e;
+        DNodeSystemStatus dstatus = new DNodeSystemStatus();
+        dstatus.setSystemStatus("Unreachable");
+        aliveDNodes.put(dnode.getAddress(), dstatus);
       } finally {
         if (client != null) {
           context.returnDNodeClientToPool(dnode.getAddress(), client, renew);
