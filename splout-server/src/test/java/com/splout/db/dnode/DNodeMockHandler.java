@@ -21,13 +21,13 @@ package com.splout.db.dnode;
  * #L%
  */
 
-import java.util.List;
-
 import com.splout.db.common.SploutConfiguration;
 import com.splout.db.thrift.DNodeException;
 import com.splout.db.thrift.DeployAction;
 import com.splout.db.thrift.RollbackAction;
 import com.splout.db.thrift.TablespaceVersion;
+
+import java.util.List;
 
 /**
  * A skeleton for DNode Mocks so that test cases only override the methods needed.
@@ -35,42 +35,51 @@ import com.splout.db.thrift.TablespaceVersion;
  */
 public class DNodeMockHandler implements IDNodeHandler {
 
-	@Override
+  @Override
   public void init(SploutConfiguration config) throws Exception {
   }
-	@Override
+
+  @Override
   public void giveGreenLigth() {
   }
-	@Override
+
+  @Override
   public String sqlQuery(String tablespace, long version, int partition, String query)
       throws DNodeException {
-	  return null;
+    return null;
   }
-	@Override
+
+  @Override
   public String deploy(List<DeployAction> deployActions, long version) throws DNodeException {
-	  return null;
+    return null;
   }
-	@Override
+
+  @Override
   public String rollback(List<RollbackAction> rollbackActions, String ignoreMe) throws DNodeException {
-	  return null;
+    return null;
   }
-	@Override
+
+  @Override
   public String status() throws DNodeException {
-	  return null;
+    return null;
   }
-	@Override
+
+  @Override
   public String abortDeploy(long version) throws DNodeException {
-	  return null;
+    return null;
   }
-	@Override
+
+  @Override
   public String deleteOldVersions(List<TablespaceVersion> versions) throws DNodeException {
-	  return null;
+    return null;
   }
-	@Override
+
+  @Override
   public String testCommand(String command) throws DNodeException {
-	  return null;
+    return null;
   }
-	@Override
+
+  @Override
   public void stop() throws Exception {
   }
 }

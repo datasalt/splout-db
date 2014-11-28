@@ -21,11 +21,11 @@ package com.splout.db.qnode.beans;
  */
 
 /**
- * A {@link QueryStatus} that failed. 
+ * A {@link QueryStatus} that failed.
  */
 public class ErrorQueryStatus extends QueryStatus {
 
-	public ErrorQueryStatus(String error) {
-		this.error = error;
-	}
+  public ErrorQueryStatus(String error) {
+    this.error = error;
+  }
 }

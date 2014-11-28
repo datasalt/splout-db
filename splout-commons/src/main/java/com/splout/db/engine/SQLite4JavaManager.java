@@ -20,58 +20,57 @@ package com.splout.db.engine;
  * #L%
  */
 
+import com.splout.db.common.TimeoutThread;
+import org.apache.commons.configuration.Configuration;
+
 import java.io.File;
 import java.sql.SQLException;
 import java.util.List;
-
-import org.apache.commons.configuration.Configuration;
-
-import com.splout.db.common.TimeoutThread;
 
 /**
  *
  */
 public class SQLite4JavaManager implements EngineManager {
 
-	private SQLite4JavaClient client;
-	
-	public SQLite4JavaManager() {
-		
-	}
-	
-	SQLite4JavaManager(String dbFile, List<String> initStatements) {
-		this.client = new SQLite4JavaClient(dbFile, initStatements);
-	}
-	
-	public void setTimeoutThread(TimeoutThread t) {
-		client.setTimeoutThread(t);
-	}
-	
-	@Override
+  private SQLite4JavaClient client;
+
+  public SQLite4JavaManager() {
+
+  }
+
+  SQLite4JavaManager(String dbFile, List<String> initStatements) {
+    this.client = new SQLite4JavaClient(dbFile, initStatements);
+  }
+
+  public void setTimeoutThread(TimeoutThread t) {
+    client.setTimeoutThread(t);
+  }
+
+  @Override
   public void init(File dbFile, Configuration config, List<String> initStatements) throws EngineException {
-		this.client = new SQLite4JavaClient(dbFile + "", initStatements);
-	}
+    this.client = new SQLite4JavaClient(dbFile + "", initStatements);
+  }
 
-	@Override
+  @Override
   public String exec(String query) throws EngineException {
-	  try {
-	    return client.exec(query);
-    } catch(SQLException e) {
-    	throw new EngineException(e);
+    try {
+      return client.exec(query);
+    } catch (SQLException e) {
+      throw new EngineException(e);
     }
   }
 
-	@Override
+  @Override
   public String query(String query, int maxResults) throws EngineException {
-	  try {
-	    return client.query(query, maxResults);
-    } catch(SQLException e) {
-	    throw new EngineException(e);
+    try {
+      return client.query(query, maxResults);
+    } catch (SQLException e) {
+      throw new EngineException(e);
     }
   }
 
-	@Override
+  @Override
   public void close() {
-		client.close();
+    client.close();
   }
 }

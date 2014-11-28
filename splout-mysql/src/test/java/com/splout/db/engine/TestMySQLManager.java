@@ -22,37 +22,33 @@ package com.splout.db.engine;
 
 import org.junit.Test;
 
-import com.splout.db.engine.EmbeddedMySQL;
-import com.splout.db.engine.MySQLManager;
-import com.splout.db.engine.SQLManagerTester;
-
 public class TestMySQLManager extends SQLManagerTester {
 
-	@Test
-	public void test() throws Exception {
-		EmbeddedMySQL mysql = new EmbeddedMySQL();
-		mysql.start(true);
-		try {
-			// this only works with a pool of 1 connection, because the tester issues BEGIN / COMMIT with query() engine method
-			final MySQLManager jdbcManager = new MySQLManager(mysql);
-			basicTest(jdbcManager);
-			jdbcManager.close();
+  @Test
+  public void test() throws Exception {
+    EmbeddedMySQL mysql = new EmbeddedMySQL();
+    mysql.start(true);
+    try {
+      // this only works with a pool of 1 connection, because the tester issues BEGIN / COMMIT with query() engine method
+      final MySQLManager jdbcManager = new MySQLManager(mysql);
+      basicTest(jdbcManager);
+      jdbcManager.close();
 
-		} finally {
-			mysql.stop();
-		}
-	}
+    } finally {
+      mysql.stop();
+    }
+  }
 
-	@Test
-	public void testQuerySizeLimiting() throws Exception {
-		EmbeddedMySQL mysql = new EmbeddedMySQL();
-		mysql.start(true);
-		try {
-			// this only works with a pool of 1 connection, because the tester issues BEGIN / COMMIT with query() engine method
-			final MySQLManager jdbcManager = new MySQLManager(mysql);
-			querySizeLimitingTest(jdbcManager);
-		} finally {
-			mysql.stop();
-		}
-	}
+  @Test
+  public void testQuerySizeLimiting() throws Exception {
+    EmbeddedMySQL mysql = new EmbeddedMySQL();
+    mysql.start(true);
+    try {
+      // this only works with a pool of 1 connection, because the tester issues BEGIN / COMMIT with query() engine method
+      final MySQLManager jdbcManager = new MySQLManager(mysql);
+      querySizeLimitingTest(jdbcManager);
+    } finally {
+      mysql.stop();
+    }
+  }
 }

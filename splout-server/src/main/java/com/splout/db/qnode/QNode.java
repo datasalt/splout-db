@@ -21,6 +21,11 @@ package com.splout.db.qnode;
  * #L%
  */
 
+import com.splout.db.common.SploutConfiguration;
+import com.splout.db.qnode.rest.AdminServlet;
+import com.splout.db.qnode.rest.DeployRollbackServlet;
+import com.splout.db.qnode.rest.QueryServlet;
+import com.splout.db.qnode.rest.RewriteRuleHandler;
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Handler;
 import org.mortbay.jetty.Server;
@@ -30,108 +35,103 @@ import org.mortbay.jetty.servlet.ServletHolder;
 import org.mortbay.jetty.webapp.WebAppContext;
 import org.mortbay.resource.Resource;
 import org.mortbay.resource.ResourceCollection;
-
-import com.splout.db.common.SploutConfiguration;
-import com.splout.db.qnode.rest.AdminServlet;
-import com.splout.db.qnode.rest.DeployRollbackServlet;
-import com.splout.db.qnode.rest.QueryServlet;
-import com.splout.db.qnode.rest.RewriteRuleHandler;
 import org.mortbay.servlet.GzipFilter;
 
 /**
  * Like the {@link com.splout.db.dnode.DNode}, this class is only the skeleton of the QNode service. It handles the HTTP
  * requests and delegates them to the business logic in {@link IQNodeHandler}.
- * <p>
+ * <p/>
  * The HTTP handling is implemented using Jersey API in {@link RESTAPI}.
- * 
+ *
  * @see QNodeHandler
  */
 public class QNode {
 
-	private IQNodeHandler handler;
-	private String address;
-	private Server server;
+  private IQNodeHandler handler;
+  private String address;
+  private Server server;
 
-	public void start(SploutConfiguration config, IQNodeHandler handler) throws Exception {
-		this.handler = handler;
-		boolean init = false;
-		int retries = 0;
+  public void start(SploutConfiguration config, IQNodeHandler handler) throws Exception {
+    this.handler = handler;
+    boolean init = false;
+    int retries = 0;
 
-		handler.init(config);
+    handler.init(config);
 
-		do {
-			try {
-				server = new Server(config.getInt(QNodeProperties.PORT));
+    do {
+      try {
+        server = new Server(config.getInt(QNodeProperties.PORT));
 
-        for(Connector connector : server.getConnectors()) {
+        for (Connector connector : server.getConnectors()) {
           connector.setHeaderBufferSize(65535);
-        };
+        }
+        ;
 
         RewriteRuleHandler rewrite = new RewriteRuleHandler();
-				
-				WebAppContext context = new WebAppContext();
-				context.setContextPath("/");
-				DefaultServlet defaultServlet = new DefaultServlet();
-				
-				context.addServlet(new ServletHolder(new QueryServlet(handler)), "/api/query");
-				context.addServlet(new ServletHolder(new AdminServlet(handler)), "/api/admin");
-				context.addServlet(new ServletHolder(new DeployRollbackServlet(handler)), "/api/deploy");
-				
-				context.addServlet(new ServletHolder(defaultServlet), "/panel/*");
+
+        WebAppContext context = new WebAppContext();
+        context.setContextPath("/");
+        DefaultServlet defaultServlet = new DefaultServlet();
+
+        context.addServlet(new ServletHolder(new QueryServlet(handler)), "/api/query");
+        context.addServlet(new ServletHolder(new AdminServlet(handler)), "/api/admin");
+        context.addServlet(new ServletHolder(new DeployRollbackServlet(handler)), "/api/deploy");
+
+        context.addServlet(new ServletHolder(defaultServlet), "/panel/*");
         context.addServlet(new ServletHolder(new com.yammer.metrics.reporting.AdminServlet()), "/metrics/*");
-				
-				// No cache header in all responses... otherwise some browsers
-				// can decide to cache some requests and they shouldn't
-				context.addFilter(NoCacheFilter.class, "/*", Handler.DEFAULT);
+
+        // No cache header in all responses... otherwise some browsers
+        // can decide to cache some requests and they shouldn't
+        context.addFilter(NoCacheFilter.class, "/*", Handler.DEFAULT);
 
         // Adding support to GZip compression responses.
         FilterHolder gzipFilter = context.addFilter(GzipFilter.class, "/*", Handler.REQUEST);
         gzipFilter.setInitParameter("mimeTypes", "text/html,text/plain,text/xml,application/xhtml+xml,text/css,application/javascript,image/svg+xml,application/json");
         gzipFilter.setInitParameter("bufferSize", "16384");
         gzipFilter.setInitParameter("methods", "GET,POST");
-				
-				ResourceCollection resources = new ResourceCollection(new String[] { Resource
-				    .newClassPathResource("panel").toString() });
 
-				context.setBaseResource(resources);
+        ResourceCollection resources = new ResourceCollection(new String[]{Resource
+            .newClassPathResource("panel").toString()});
 
-				rewrite.setHandler(context);
-				server.setHandler(rewrite);
-				server.start();
+        context.setBaseResource(resources);
 
-				address = "http://" + config.getString(QNodeProperties.HOST) + ":"
-				    + config.getInt(QNodeProperties.PORT);
+        rewrite.setHandler(context);
+        server.setHandler(rewrite);
+        server.start();
 
-				init = true;
-			} catch(java.net.BindException e) {
-				if(!config.getBoolean(QNodeProperties.PORT_AUTOINCREMENT)) {
-					throw e;
-				}
-				config.setProperty(QNodeProperties.PORT, config.getInt(QNodeProperties.PORT) + 1);
-				retries++;
-			}
-		} while(!init && retries < 100);
-	}
+        address = "http://" + config.getString(QNodeProperties.HOST) + ":"
+            + config.getInt(QNodeProperties.PORT);
 
-	public String getAddress() {
-		return address;
-	}
+        init = true;
+      } catch (java.net.BindException e) {
+        if (!config.getBoolean(QNodeProperties.PORT_AUTOINCREMENT)) {
+          throw e;
+        }
+        config.setProperty(QNodeProperties.PORT, config.getInt(QNodeProperties.PORT) + 1);
+        retries++;
+      }
+    } while (!init && retries < 100);
+  }
 
-	public IQNodeHandler getHandler() {
-		return handler;
-	}
+  public String getAddress() {
+    return address;
+  }
 
-	public void close() throws Exception {
-		handler.close();
-		server.stop();
-	}
+  public IQNodeHandler getHandler() {
+    return handler;
+  }
 
-	public static void main(String[] args) throws Exception {
-		QNode qnode = new QNode();
-		SploutConfiguration config = SploutConfiguration.get();
-		qnode.start(config, new QNodeHandler());
-		while(true) {
-			Thread.sleep(100);
-		}
-	}
+  public void close() throws Exception {
+    handler.close();
+    server.stop();
+  }
+
+  public static void main(String[] args) throws Exception {
+    QNode qnode = new QNode();
+    SploutConfiguration config = SploutConfiguration.get();
+    qnode.start(config, new QNodeHandler());
+    while (true) {
+      Thread.sleep(100);
+    }
+  }
 }

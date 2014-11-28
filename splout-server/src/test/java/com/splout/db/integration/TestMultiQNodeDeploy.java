@@ -21,94 +21,93 @@ package com.splout.db.integration;
  * #L%
  */
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.File;
-import java.util.Map;
-import java.util.Random;
-
-import org.apache.commons.io.FileUtils;
-import org.junit.Test;
-
 import com.splout.db.common.SploutClient;
 import com.splout.db.common.SploutConfiguration;
 import com.splout.db.common.Tablespace;
 import com.splout.db.engine.SQLite4JavaClient;
 import com.splout.db.qnode.beans.QueryStatus;
+import org.apache.commons.io.FileUtils;
+import org.junit.Test;
+
+import java.io.File;
+import java.util.Map;
+import java.util.Random;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * This is a kind of integration test that tries to find bugs that will only appear when there are more than one QNode
  * handling deploys, queries, etc. The test instantiates M Qnodes, N Dnodes and deploys several versions of the same
  * tablespace. After each deployment we query for checking that the expected version is there. We use a Random object
  * with a deterministic SEED.
- * <p>
+ * <p/>
  * TIP: Use "BaseIntegrationTest" for creating new integration tests.
  */
 public class TestMultiQNodeDeploy extends BaseIntegrationTest {
 
-	public final static int N_QNODES = 2;
-	public final static int N_DNODES = 3;
+  public final static int N_QNODES = 2;
+  public final static int N_DNODES = 3;
 
-	public final static long SEED = 12345678;
-	public final static String TMP_FOLDER = "tmp-" + TestMultiQNodeDeploy.class.getName();
+  public final static long SEED = 12345678;
+  public final static String TMP_FOLDER = "tmp-" + TestMultiQNodeDeploy.class.getName();
 
-	@Test
-	public void test() throws Throwable {
-		FileUtils.deleteDirectory(new File(TMP_FOLDER));
-		new File(TMP_FOLDER).mkdirs();
+  @Test
+  public void test() throws Throwable {
+    FileUtils.deleteDirectory(new File(TMP_FOLDER));
+    new File(TMP_FOLDER).mkdirs();
 
-		createSploutEnsemble(N_QNODES, N_DNODES);
-		Random random = new Random(SEED);
+    createSploutEnsemble(N_QNODES, N_DNODES);
+    Random random = new Random(SEED);
 
-		try {
-			for(int i = 0; i < 3; i++) {
-				deployAndQueryRandomTablespace(random);
-			}
-		} finally {
-			closeSploutEnsemble();
-			FileUtils.deleteDirectory(new File(TMP_FOLDER));
-		}
-	}
+    try {
+      for (int i = 0; i < 3; i++) {
+        deployAndQueryRandomTablespace(random);
+      }
+    } finally {
+      closeSploutEnsemble();
+      FileUtils.deleteDirectory(new File(TMP_FOLDER));
+    }
+  }
 
-	@SuppressWarnings("unchecked")
-	private void deployAndQueryRandomTablespace(Random random) throws Exception {
-		Tablespace testTablespace = createTestTablespace(N_DNODES);
+  @SuppressWarnings("unchecked")
+  private void deployAndQueryRandomTablespace(Random random) throws Exception {
+    Tablespace testTablespace = createTestTablespace(N_DNODES);
 
-		File deployData = new File(TMP_FOLDER + "/" + "deploy-folder-" + random.nextInt());
-		deployData.mkdir();
+    File deployData = new File(TMP_FOLDER + "/" + "deploy-folder-" + random.nextInt());
+    deployData.mkdir();
 
-		// Each random deployment will have a fixed random string associated with it
-		String randomStr = "ID" + Math.abs(random.nextInt());
+    // Each random deployment will have a fixed random string associated with it
+    String randomStr = "ID" + Math.abs(random.nextInt());
 
-		for(int i = 0; i < N_DNODES; i++) {
-			File dbData = new File(deployData, i + ".db");
-			SQLite4JavaClient manager = new SQLite4JavaClient(dbData + "", null);
-			// We create a foo database with one integer and one text
-			manager.query("CREATE TABLE foo (intCol INT, strCol TEXT);", 100);
-			// We insert as many values as the ones we defined in the partition map
-			for(int j = i * 10; j < (i * 10 + 10); j++) {
-				manager.query("INSERT INTO foo VALUES (" + j + ", " + "'" + randomStr + "');", 100);
-			}
-			manager.close();
-		}
+    for (int i = 0; i < N_DNODES; i++) {
+      File dbData = new File(deployData, i + ".db");
+      SQLite4JavaClient manager = new SQLite4JavaClient(dbData + "", null);
+      // We create a foo database with one integer and one text
+      manager.query("CREATE TABLE foo (intCol INT, strCol TEXT);", 100);
+      // We insert as many values as the ones we defined in the partition map
+      for (int j = i * 10; j < (i * 10 + 10); j++) {
+        manager.query("INSERT INTO foo VALUES (" + j + ", " + "'" + randomStr + "');", 100);
+      }
+      manager.close();
+    }
 
-		SploutConfiguration config = SploutConfiguration.getTestConfig();
-		SploutClient client = getRandomQNodeClient(random, config);
-		client.deploy("p1", testTablespace.getPartitionMap(), testTablespace.getReplicationMap(),
-		    deployData.getAbsoluteFile().toURI());
+    SploutConfiguration config = SploutConfiguration.getTestConfig();
+    SploutClient client = getRandomQNodeClient(random, config);
+    client.deploy("p1", testTablespace.getPartitionMap(), testTablespace.getReplicationMap(),
+        deployData.getAbsoluteFile().toURI());
 
-		Thread.sleep(2000); // TODO How to improve this.
+    Thread.sleep(2000); // TODO How to improve this.
 
-		// Perform N queries, one to each DNode and validate the resultant data
-		for(int i = 0; i < N_DNODES; i++) {
-			client = getRandomQNodeClient(random, config);
-			QueryStatus qStatus = client.query("p1", ((i * 10) + 1) + "", "SELECT * FROM foo;", null);
-			assertEquals((Integer) i, qStatus.getShard());
-			assertEquals(10, qStatus.getResult().size());
-			for(Object obj : qStatus.getResult()) {
-				Map<String, Object> map = (Map<String, Object>) obj;
-				assertEquals(randomStr, map.get("strCol"));
-			}
-		}
-	}
+    // Perform N queries, one to each DNode and validate the resultant data
+    for (int i = 0; i < N_DNODES; i++) {
+      client = getRandomQNodeClient(random, config);
+      QueryStatus qStatus = client.query("p1", ((i * 10) + 1) + "", "SELECT * FROM foo;", null);
+      assertEquals((Integer) i, qStatus.getShard());
+      assertEquals(10, qStatus.getResult().size());
+      for (Object obj : qStatus.getResult()) {
+        Map<String, Object> map = (Map<String, Object>) obj;
+        assertEquals(randomStr, map.get("strCol"));
+      }
+    }
+  }
 }

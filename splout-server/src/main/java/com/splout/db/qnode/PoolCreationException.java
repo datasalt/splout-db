@@ -24,19 +24,19 @@ package com.splout.db.qnode;
 @SuppressWarnings("serial")
 public class PoolCreationException extends Exception {
 
-	public PoolCreationException() {
-	}
+  public PoolCreationException() {
+  }
 
-	public PoolCreationException(String message) {
-		super(message);
-	}
+  public PoolCreationException(String message) {
+    super(message);
+  }
 
-	public PoolCreationException(Throwable cause) {
-		super(cause);
-	}
+  public PoolCreationException(Throwable cause) {
+    super(cause);
+  }
 
-	public PoolCreationException(String message, Throwable cause) {
-		super(message, cause);
-	}
+  public PoolCreationException(String message, Throwable cause) {
+    super(message, cause);
+  }
 
 }

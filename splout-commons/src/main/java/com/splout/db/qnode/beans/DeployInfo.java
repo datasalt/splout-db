@@ -20,10 +20,10 @@ package com.splout.db.qnode.beans;
  * #L%
  */
 
+import com.splout.db.common.BaseBean;
+
 import java.io.Serializable;
 import java.util.List;
-
-import com.splout.db.common.BaseBean;
 
 /**
  * This bean is returned in the deploy() method in QNode. It allows the user to track a deploy, as the version number is
@@ -32,57 +32,57 @@ import com.splout.db.common.BaseBean;
 @SuppressWarnings("serial")
 public class DeployInfo extends BaseBean implements Serializable {
 
-	private String error;
-	private String startedAt;
-	private Long version;
-	private List<String> dataURIs;
-	private List<String> tablespacesDeployed;
+  private String error;
+  private String startedAt;
+  private Long version;
+  private List<String> dataURIs;
+  private List<String> tablespacesDeployed;
 
-	public DeployInfo() {
+  public DeployInfo() {
 
-	}
-
-	public DeployInfo(String error) {
-		this.error = error;
-	}
-
-	public String getStartedAt() {
-		return startedAt;
-	}
-
-	public void setStartedAt(String startedAt) {
-		this.startedAt = startedAt;
-	}
-
-	public Long getVersion() {
-		return version;
-	}
-
-	public void setVersion(Long version) {
-		this.version = version;
-	}
-
-	public String getError() {
-		return error;
-	}
-
-	public void setError(String error) {
-		this.error = error;
-	}
-
-	public List<String> getDataURIs() {
-  	return dataURIs;
   }
 
-	public void setDataURIs(List<String> dataURIs) {
-  	this.dataURIs = dataURIs;
+  public DeployInfo(String error) {
+    this.error = error;
   }
 
-	public List<String> getTablespacesDeployed() {
-  	return tablespacesDeployed;
+  public String getStartedAt() {
+    return startedAt;
   }
 
-	public void setTablespacesDeployed(List<String> tablespacesDeployed) {
-  	this.tablespacesDeployed = tablespacesDeployed;
+  public void setStartedAt(String startedAt) {
+    this.startedAt = startedAt;
+  }
+
+  public Long getVersion() {
+    return version;
+  }
+
+  public void setVersion(Long version) {
+    this.version = version;
+  }
+
+  public String getError() {
+    return error;
+  }
+
+  public void setError(String error) {
+    this.error = error;
+  }
+
+  public List<String> getDataURIs() {
+    return dataURIs;
+  }
+
+  public void setDataURIs(List<String> dataURIs) {
+    this.dataURIs = dataURIs;
+  }
+
+  public List<String> getTablespacesDeployed() {
+    return tablespacesDeployed;
+  }
+
+  public void setTablespacesDeployed(List<String> tablespacesDeployed) {
+    this.tablespacesDeployed = tablespacesDeployed;
   }
 }

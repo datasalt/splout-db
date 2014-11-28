@@ -2,8 +2,8 @@
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 
 <configuration>
-  <property>
-    <name>mapred.job.tracker</name>
-    <value>localhost:8021</value>
-  </property>
+    <property>
+        <name>mapred.job.tracker</name>
+        <value>localhost:8021</value>
+    </property>
 </configuration>

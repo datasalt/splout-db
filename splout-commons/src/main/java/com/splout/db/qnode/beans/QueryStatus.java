@@ -20,9 +20,9 @@ package com.splout.db.qnode.beans;
  * #L%
  */
 
-import java.util.ArrayList;
-
 import com.splout.db.common.BaseBean;
+
+import java.util.ArrayList;
 
 /**
  * JSON bean that is returned by the QNode as response to a query. It contains useful information such as the time it took, the shard it hit, etc.
@@ -34,29 +34,36 @@ public class QueryStatus extends BaseBean {
   protected Integer shard;
   protected Long millis;
   protected String error;
-	
-	public String getError() {
-  	return error;
+
+  public String getError() {
+    return error;
   }
-	public void setError(String error) {
-  	this.error = error;
+
+  public void setError(String error) {
+    this.error = error;
   }
-	public ArrayList getResult() {
-  	return result;
+
+  public ArrayList getResult() {
+    return result;
   }
-	public void setResult(ArrayList result) {
-  	this.result = result;
+
+  public void setResult(ArrayList result) {
+    this.result = result;
   }
-	public Integer getShard() {
-  	return shard;
+
+  public Integer getShard() {
+    return shard;
   }
-	public void setShard(Integer shard) {
-  	this.shard = shard;
+
+  public void setShard(Integer shard) {
+    this.shard = shard;
   }
-	public Long getMillis() {
-  	return millis;
+
+  public Long getMillis() {
+    return millis;
   }
-	public void setMillis(Long millis) {
-  	this.millis = millis;
+
+  public void setMillis(Long millis) {
+    this.millis = millis;
   }
 }

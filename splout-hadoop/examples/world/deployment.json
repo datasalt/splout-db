@@ -1,10 +1,12 @@
-[{
-	"tablespace": "world-pby-continent-region",
-	"sourcePath": "database-files/world-pby-continent-region",
-	"replication": 2
-},
-{
-	"tablespace": "world-pby-country",
-	"sourcePath": "database-files/world-pby-country",
-	"replication": 3
-}]
+[
+    {
+        "tablespace": "world-pby-continent-region",
+        "sourcePath": "database-files/world-pby-continent-region",
+        "replication": 2
+    },
+    {
+        "tablespace": "world-pby-country",
+        "sourcePath": "database-files/world-pby-country",
+        "replication": 3
+    }
+]

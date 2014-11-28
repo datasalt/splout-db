@@ -20,27 +20,27 @@ package com.splout.db.hadoop;
  * #L%
  */
 
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 public class TestJavascriptEngine {
 
-	@Test
-	public void test() throws Throwable {
+  @Test
+  public void test() throws Throwable {
 
-		Map<String, Object> record = new HashMap<String, Object>();
-		record.put("a", "A");
-		
-		JavascriptEngine engine = new JavascriptEngine("function run(record) { return record.get('a'); }");
-		assertEquals("A", engine.execute("run", record));
-		
-		record.put("a", "B");
-		
-		engine = new JavascriptEngine("function run(record) { return record.get('a'); }");
-		assertEquals("B", engine.execute("run", record));
-	}
+    Map<String, Object> record = new HashMap<String, Object>();
+    record.put("a", "A");
+
+    JavascriptEngine engine = new JavascriptEngine("function run(record) { return record.get('a'); }");
+    assertEquals("A", engine.execute("run", record));
+
+    record.put("a", "B");
+
+    engine = new JavascriptEngine("function run(record) { return record.get('a'); }");
+    assertEquals("B", engine.execute("run", record));
+  }
 }

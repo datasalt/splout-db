@@ -21,44 +21,41 @@ package com.splout.db.engine;
  * #L%
  */
 
+import com.splout.db.common.JSONSerDe.JSONSerDeException;
+import com.splout.db.engine.EngineManager.EngineException;
+import org.junit.Test;
+
 import java.io.File;
 import java.sql.SQLException;
 
-import org.junit.Test;
-
-import com.splout.db.common.JSONSerDe.JSONSerDeException;
-import com.splout.db.engine.SQLManagerTester;
-import com.splout.db.engine.SQLite4JavaManager;
-import com.splout.db.engine.EngineManager.EngineException;
-
 public class TestSQLite4JavaManager extends SQLManagerTester {
 
-	public static String TEST_DB_1 = TestSQLite4JavaManager.class.getName() + ".1.db";
-	public static String TEST_DB_2 = TestSQLite4JavaManager.class.getName() + ".2.db";
+  public static String TEST_DB_1 = TestSQLite4JavaManager.class.getName() + ".1.db";
+  public static String TEST_DB_2 = TestSQLite4JavaManager.class.getName() + ".2.db";
 
-	@Test
-	public void test() throws Exception {
-		File dbFile = new File(TEST_DB_1);
-		if(dbFile.exists()) {
-			dbFile.delete();
-		}
+  @Test
+  public void test() throws Exception {
+    File dbFile = new File(TEST_DB_1);
+    if (dbFile.exists()) {
+      dbFile.delete();
+    }
 
-		final SQLite4JavaManager sqlite4Java = new SQLite4JavaManager(TEST_DB_1, null);
-		basicTest(sqlite4Java);
-		sqlite4Java.close();
-		dbFile.delete();
-	}
-	
-	@Test
-	public void testQuerySizeLimiting() throws SQLException, ClassNotFoundException, JSONSerDeException, EngineException {
-		File dbFile = new File(TEST_DB_2);
-		if(dbFile.exists()) {
-			dbFile.delete();
-		}
+    final SQLite4JavaManager sqlite4Java = new SQLite4JavaManager(TEST_DB_1, null);
+    basicTest(sqlite4Java);
+    sqlite4Java.close();
+    dbFile.delete();
+  }
 
-		final SQLite4JavaManager sqlite4Java = new SQLite4JavaManager(TEST_DB_2, null);
-		querySizeLimitingTest(sqlite4Java);
-		sqlite4Java.close();
-		dbFile.delete();
-	}
+  @Test
+  public void testQuerySizeLimiting() throws SQLException, ClassNotFoundException, JSONSerDeException, EngineException {
+    File dbFile = new File(TEST_DB_2);
+    if (dbFile.exists()) {
+      dbFile.delete();
+    }
+
+    final SQLite4JavaManager sqlite4Java = new SQLite4JavaManager(TEST_DB_2, null);
+    querySizeLimitingTest(sqlite4Java);
+    sqlite4Java.close();
+    dbFile.delete();
+  }
 }

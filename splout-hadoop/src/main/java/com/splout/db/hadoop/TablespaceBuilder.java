@@ -20,157 +20,153 @@ package com.splout.db.hadoop;
  * #L%
  */
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import com.datasalt.pangool.io.Schema.Field;
 import com.splout.db.engine.SploutEngine;
+
+import java.util.*;
 
 /**
  * This class is the main entry point for generating Splout views. Here we will use a Builder for adding the mapping
  * between a set of files in a FileSystem and the tables that we want to view in a Tablespace in Splout.
- * <p>
+ * <p/>
  * We need to use {@link TableBuilder} for obtaining {@link Table} beans. Then we can add Tables to the Tablespace.
- * <p>
+ * <p/>
  * We will obtain a {@link TablespaceSpec} bean after building it.
  */
 // Still in development
 public class TablespaceBuilder {
 
-	// When not specifying a number of partitions, a table is partitioned using all the partitions of the Splout cluster
-	public final static int ALL_PARTITIONS_AVAILABLE = -1;
+  // When not specifying a number of partitions, a table is partitioned using all the partitions of the Splout cluster
+  public final static int ALL_PARTITIONS_AVAILABLE = -1;
 
-	// In-memory incremental builder state
-	private List<Table> partitionedTables = new ArrayList<Table>();
-	private List<Table> replicatedTables = new ArrayList<Table>();
+  // In-memory incremental builder state
+  private List<Table> partitionedTables = new ArrayList<Table>();
+  private List<Table> replicatedTables = new ArrayList<Table>();
 
-	// Init statements that will be executed when opening the database
-	private String[] initStatements = null;
+  // Init statements that will be executed when opening the database
+  private String[] initStatements = null;
 
-	// How to partition the Tablespace
-	private int nPartitions = -1;
+  // How to partition the Tablespace
+  private int nPartitions = -1;
 
-	private SploutEngine engine = SploutEngine.getDefault();
+  private SploutEngine engine = SploutEngine.getDefault();
 
-	/**
-	 * Add a new table to the builder - use a string table identifier for this. The method will return a bean that we can
-	 * use for filling the information of the table.
-	 * 
-	 * @throws TablespaceBuilderException
-	 */
-	public TablespaceBuilder add(Table table) throws TablespaceBuilderException {
-		if(table.getTableSpec().getPartitionFields() == null
-		    && table.getTableSpec().getPartitionByJavaScript() == null) {
-			replicatedTables.add(table);
-		} else {
-			partitionedTables.add(table);
-		}
-		return this;
-	}
+  /**
+   * Add a new table to the builder - use a string table identifier for this. The method will return a bean that we can
+   * use for filling the information of the table.
+   *
+   * @throws TablespaceBuilderException
+   */
+  public TablespaceBuilder add(Table table) throws TablespaceBuilderException {
+    if (table.getTableSpec().getPartitionFields() == null
+        && table.getTableSpec().getPartitionByJavaScript() == null) {
+      replicatedTables.add(table);
+    } else {
+      partitionedTables.add(table);
+    }
+    return this;
+  }
 
-	public void initStatements(String... initStatements) {
-		this.initStatements = initStatements;
-	}
+  public void initStatements(String... initStatements) {
+    this.initStatements = initStatements;
+  }
 
-	public void setNPartitions(int nPartitions) {
-		this.nPartitions = nPartitions;
-	}
+  public void setNPartitions(int nPartitions) {
+    this.nPartitions = nPartitions;
+  }
 
-	public void setEngine(SploutEngine engine) throws TablespaceBuilderException {
-		setEngineClassName(engine.getClass().getName());
-	}
-	
-	public void setEngineClassName(String engineClass) throws TablespaceBuilderException {
-		try {
-			this.engine = Class.forName(engineClass).asSubclass(SploutEngine.class).newInstance();
-		} catch(InstantiationException e) {
-			throw new TablespaceBuilderException("Engine class '" + engineClass + "' not instantiable.");
-		} catch(IllegalAccessException e) {
-			throw new TablespaceBuilderException("Engine class '" + engineClass + "' not instantiable.");
-		} catch(ClassNotFoundException e) {
-			throw new TablespaceBuilderException("Engine class '" + engineClass + "' not in classpath.");
-		}
-	}
+  public void setEngine(SploutEngine engine) throws TablespaceBuilderException {
+    setEngineClassName(engine.getClass().getName());
+  }
 
-	/**
-	 * Exception that is thrown if a Tablespace cannot be built because there is missing data or inconsistent data has
-	 * been specified. The reason is specified as the message of the Exception.
-	 */
-	@SuppressWarnings("serial")
-	public static class TablespaceBuilderException extends Exception {
+  public void setEngineClassName(String engineClass) throws TablespaceBuilderException {
+    try {
+      this.engine = Class.forName(engineClass).asSubclass(SploutEngine.class).newInstance();
+    } catch (InstantiationException e) {
+      throw new TablespaceBuilderException("Engine class '" + engineClass + "' not instantiable.");
+    } catch (IllegalAccessException e) {
+      throw new TablespaceBuilderException("Engine class '" + engineClass + "' not instantiable.");
+    } catch (ClassNotFoundException e) {
+      throw new TablespaceBuilderException("Engine class '" + engineClass + "' not in classpath.");
+    }
+  }
 
-		public TablespaceBuilderException(String msg) {
-			super(msg);
-		}
-	}
+  /**
+   * Exception that is thrown if a Tablespace cannot be built because there is missing data or inconsistent data has
+   * been specified. The reason is specified as the message of the Exception.
+   */
+  @SuppressWarnings("serial")
+  public static class TablespaceBuilderException extends Exception {
 
-	/**
-	 * After specifying everything, call this method for building the final tablespace spec.
-	 */
-	public TablespaceSpec build() throws TablespaceBuilderException {
-		if(nPartitions == -1) {
-			throw new TablespaceBuilderException(
-			    "Can't create a Tablespace with #partitions = -1. Please set #partitions.");
-		}
+    public TablespaceBuilderException(String msg) {
+      super(msg);
+    }
+  }
 
-		Field[] partitionFields = null;
+  /**
+   * After specifying everything, call this method for building the final tablespace spec.
+   */
+  public TablespaceSpec build() throws TablespaceBuilderException {
+    if (nPartitions == -1) {
+      throw new TablespaceBuilderException(
+          "Can't create a Tablespace with #partitions = -1. Please set #partitions.");
+    }
 
-		if(partitionedTables.size() == 0) {
-			throw new TablespaceBuilderException(
-			    "Can't create a Tablespace without any partitioned Table. At least one must be partitioned.");
-		}
+    Field[] partitionFields = null;
 
-		Set<String> tableNames = new HashSet<String>();
-		List<String> tableNameList = new ArrayList<String>();
+    if (partitionedTables.size() == 0) {
+      throw new TablespaceBuilderException(
+          "Can't create a Tablespace without any partitioned Table. At least one must be partitioned.");
+    }
 
-		// Check that the partition field is coherent among different tables
-		for(Table table : partitionedTables) {
-			String tableName = table.getTableSpec().getSchema().getName();
-			tableNames.add(tableName);
-			tableNameList.add(tableName);
+    Set<String> tableNames = new HashSet<String>();
+    List<String> tableNameList = new ArrayList<String>();
 
-			Field[] thisPartitionFields = table.getTableSpec().getPartitionFields();
-			if(partitionFields == null) {
-				partitionFields = thisPartitionFields;
-			} else {
-				if(thisPartitionFields.length != partitionFields.length) {
-					throw new TablespaceBuilderException("Different number of partition fields within tables: "
-					    + thisPartitionFields.length + ", " + partitionFields.length
-					    + " - must be the same for co-partitioning.");
-				}
-				for(int i = 0; i < thisPartitionFields.length; i++) {
-					if(!thisPartitionFields[i].getType().equals(partitionFields[i].getType())) {
-						throw new TablespaceBuilderException(
-						    "Partition fields "
-						        + thisPartitionFields[i]
-						        + ", "
-						        + partitionFields[i]
-						        + " are not of the same type. They must be the same type for tables to be co-partitioned.");
-					}
-				}
-			}
-		}
+    // Check that the partition field is coherent among different tables
+    for (Table table : partitionedTables) {
+      String tableName = table.getTableSpec().getSchema().getName();
+      tableNames.add(tableName);
+      tableNameList.add(tableName);
 
-		for(Table table : replicatedTables) {
-			String tableName = table.getTableSpec().getSchema().getName();
-			tableNames.add(tableName);
-			tableNameList.add(tableName);
-		}
+      Field[] thisPartitionFields = table.getTableSpec().getPartitionFields();
+      if (partitionFields == null) {
+        partitionFields = thisPartitionFields;
+      } else {
+        if (thisPartitionFields.length != partitionFields.length) {
+          throw new TablespaceBuilderException("Different number of partition fields within tables: "
+              + thisPartitionFields.length + ", " + partitionFields.length
+              + " - must be the same for co-partitioning.");
+        }
+        for (int i = 0; i < thisPartitionFields.length; i++) {
+          if (!thisPartitionFields[i].getType().equals(partitionFields[i].getType())) {
+            throw new TablespaceBuilderException(
+                "Partition fields "
+                    + thisPartitionFields[i]
+                    + ", "
+                    + partitionFields[i]
+                    + " are not of the same type. They must be the same type for tables to be co-partitioned.");
+          }
+        }
+      }
+    }
 
-		if(tableNames.size() != tableNameList.size()) {
-			throw new TablespaceBuilderException(
-			    "There is collision between table names. Maybe you added the same name twice. Table names: "
-			        + tableNameList);
-		}
+    for (Table table : replicatedTables) {
+      String tableName = table.getTableSpec().getSchema().getName();
+      tableNames.add(tableName);
+      tableNameList.add(tableName);
+    }
 
-		if(initStatements == null) {
-			return new TablespaceSpec(partitionedTables, replicatedTables, nPartitions, null, engine);
-		} else {
-			return new TablespaceSpec(partitionedTables, replicatedTables, nPartitions,
-			    Arrays.asList(initStatements), engine);
-		}
-	}
+    if (tableNames.size() != tableNameList.size()) {
+      throw new TablespaceBuilderException(
+          "There is collision between table names. Maybe you added the same name twice. Table names: "
+              + tableNameList);
+    }
+
+    if (initStatements == null) {
+      return new TablespaceSpec(partitionedTables, replicatedTables, nPartitions, null, engine);
+    } else {
+      return new TablespaceSpec(partitionedTables, replicatedTables, nPartitions,
+          Arrays.asList(initStatements), engine);
+    }
+  }
 }

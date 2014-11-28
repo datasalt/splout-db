@@ -20,63 +20,63 @@ package com.splout.db.common;
  * #L%
  */
 
-import java.io.IOException;
-
 import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 
+import java.io.IOException;
+
 /**
  * Helper class for serializing / deserializing from / to JSON using Jackson
  */
 public class JSONSerDe {
 
-	private static ObjectMapper mapper = new ObjectMapper();
+  private static ObjectMapper mapper = new ObjectMapper();
 
-	@SuppressWarnings("serial")
-	public static class JSONSerDeException extends Exception {
+  @SuppressWarnings("serial")
+  public static class JSONSerDeException extends Exception {
 
-		public JSONSerDeException(Exception excp) {
-			super(excp);
-		}
-	}
+    public JSONSerDeException(Exception excp) {
+      super(excp);
+    }
+  }
 
-	public static String ser(Object obj) throws JSONSerDeException {
-		try {
-			return mapper.writeValueAsString(obj);
-		} catch(JsonGenerationException e) {
-			throw new JSONSerDeException(e);
-		} catch(JsonMappingException e) {
-			throw new JSONSerDeException(e);
-		} catch(IOException e) {
-			throw new JSONSerDeException(e);
-		}
-	}
+  public static String ser(Object obj) throws JSONSerDeException {
+    try {
+      return mapper.writeValueAsString(obj);
+    } catch (JsonGenerationException e) {
+      throw new JSONSerDeException(e);
+    } catch (JsonMappingException e) {
+      throw new JSONSerDeException(e);
+    } catch (IOException e) {
+      throw new JSONSerDeException(e);
+    }
+  }
 
-	@SuppressWarnings("unchecked")
+  @SuppressWarnings("unchecked")
   public static <T> T deSer(String str, TypeReference<T> ref) throws JSONSerDeException {
-		try {
-			return (T) mapper.readValue(str, ref);
-		} catch(JsonParseException e) {
-			throw new JSONSerDeException(e);
-		} catch(JsonMappingException e) {
-			throw new JSONSerDeException(e);
-		} catch(IOException e) {
-			throw new JSONSerDeException(e);
-		}
-	}
+    try {
+      return (T) mapper.readValue(str, ref);
+    } catch (JsonParseException e) {
+      throw new JSONSerDeException(e);
+    } catch (JsonMappingException e) {
+      throw new JSONSerDeException(e);
+    } catch (IOException e) {
+      throw new JSONSerDeException(e);
+    }
+  }
 
-	public static <T> T deSer(String str, Class<T> clazz) throws JSONSerDeException {
-		try {
-			return (T) mapper.readValue(str, clazz);
-		} catch(JsonParseException e) {
-			throw new JSONSerDeException(e);
-		} catch(JsonMappingException e) {
-			throw new JSONSerDeException(e);
-		} catch(IOException e) {
-			throw new JSONSerDeException(e);
-		}
-	}
+  public static <T> T deSer(String str, Class<T> clazz) throws JSONSerDeException {
+    try {
+      return (T) mapper.readValue(str, clazz);
+    } catch (JsonParseException e) {
+      throw new JSONSerDeException(e);
+    } catch (JsonMappingException e) {
+      throw new JSONSerDeException(e);
+    } catch (IOException e) {
+      throw new JSONSerDeException(e);
+    }
+  }
 }

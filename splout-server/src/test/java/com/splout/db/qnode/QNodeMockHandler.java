@@ -21,21 +21,15 @@ package com.splout.db.qnode;
  * #L%
  */
 
+import com.splout.db.common.SploutConfiguration;
+import com.splout.db.common.Tablespace;
+import com.splout.db.dnode.beans.DNodeSystemStatus;
+import com.splout.db.qnode.beans.*;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import com.splout.db.common.SploutConfiguration;
-import com.splout.db.common.Tablespace;
-import com.splout.db.dnode.beans.DNodeSystemStatus;
-import com.splout.db.qnode.beans.DeployInfo;
-import com.splout.db.qnode.beans.DeployRequest;
-import com.splout.db.qnode.beans.DeploymentsStatus;
-import com.splout.db.qnode.beans.QNodeStatus;
-import com.splout.db.qnode.beans.QueryStatus;
-import com.splout.db.qnode.beans.StatusMessage;
-import com.splout.db.qnode.beans.SwitchVersionRequest;
 
 /**
  * A skeleton for QNode Mocks so that test cases only override the methods needed.
@@ -43,59 +37,72 @@ import com.splout.db.qnode.beans.SwitchVersionRequest;
  */
 public class QNodeMockHandler implements IQNodeHandler {
 
-	@Override
+  @Override
   public void init(SploutConfiguration config) throws Exception {
   }
-	@Override
+
+  @Override
   public void close() throws Exception {
   }
-	@Override
+
+  @Override
   public QueryStatus query(String tablespace, String key, String sql, String partition) throws Exception {
-	  return null;
+    return null;
   }
-	@Override
+
+  @Override
   public ArrayList<QueryStatus> multiQuery(String tablespace, List<String> keyMins,
-      List<String> keyMaxs, String sql) throws Exception {
-	  return null;
+                                           List<String> keyMaxs, String sql) throws Exception {
+    return null;
   }
-	@Override
+
+  @Override
   public DeployInfo deploy(List<DeployRequest> deployReq) throws Exception {
-	  return null;
+    return null;
   }
-	@Override
+
+  @Override
   public StatusMessage rollback(List<SwitchVersionRequest> rollbackRequest) throws Exception {
-	  return null;
+    return null;
   }
-	@Override
+
+  @Override
   public QNodeStatus overview() throws Exception {
-	  return null;
+    return null;
   }
-	@Override
+
+  @Override
   public List<String> getDNodeList() throws Exception {
-	  return null;
+    return null;
   }
-	@Override
+
+  @Override
   public Set<String> tablespaces() throws Exception {
-	  return null;
+    return null;
   }
-	@Override
+
+  @Override
   public Map<Long, Tablespace> allTablespaceVersions(String tablespace) throws Exception {
-	  return null;
+    return null;
   }
-	@Override
+
+  @Override
   public DNodeSystemStatus dnodeStatus(String dNode) throws Exception {
-	  return null;
+    return null;
   }
-	@Override
+
+  @Override
   public Tablespace tablespace(String tablespace) throws Exception {
-	  return null;
+    return null;
   }
-	@Override
+
+  @Override
   public DeploymentsStatus deploymentsStatus() throws Exception {
-	  return null;
+    return null;
   }
-	@Override
+
+  @Override
   public StatusMessage cleanOldVersions() throws Exception {
-	  return null;
+    return null;
   }
 }

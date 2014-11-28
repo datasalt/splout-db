@@ -20,29 +20,29 @@ package com.splout.db.common;
  * #L%
  */
 
-import java.lang.reflect.InvocationTargetException;
-
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * For convenience, beans will extend this class for having a neat toString() method.
  */
 public class BaseBean {
-	
-	private final static Log log = LogFactory.getLog(BaseBean.class);
-	
-	public String toString() {
-		try {
+
+  private final static Log log = LogFactory.getLog(BaseBean.class);
+
+  public String toString() {
+    try {
       return BeanUtils.describe(this).toString();
-    } catch(IllegalAccessException e) {
-    	log.error("Error in toString() method", e);
-    } catch(InvocationTargetException e) {
-    	log.error("Error in toString() method", e);
-    } catch(NoSuchMethodException e) {
-    	log.error("Error in toString() method", e);
+    } catch (IllegalAccessException e) {
+      log.error("Error in toString() method", e);
+    } catch (InvocationTargetException e) {
+      log.error("Error in toString() method", e);
+    } catch (NoSuchMethodException e) {
+      log.error("Error in toString() method", e);
     }
     return super.toString();
-	}
+  }
 }

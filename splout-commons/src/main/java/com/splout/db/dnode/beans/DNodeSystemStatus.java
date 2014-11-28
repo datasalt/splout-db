@@ -27,97 +27,122 @@ import java.util.Map;
  * JSON bean that is returned when requesting for the status of the DNode.
  */
 public class DNodeSystemStatus {
-	
-	private String systemStatus;
-	private long lastExceptionTime;
-	private boolean deployInProgress;
-	private long upSince;
-	private int nQueries;
-	private int failedQueries;
-	private double slowQueries;
-	private double average;
-	private long occupiedSpaceInDisk;
-	private long freeSpaceInDisk;
-	private List<String> files;
-	private String httpExchangerAddress;
-	private Map<String, BalanceFileReceivingProgress> balanceActionsStateMap;
-	
-	public List<String> getFiles() {
-  	return files;
+
+  private String systemStatus;
+  private long lastExceptionTime;
+  private boolean deployInProgress;
+  private long upSince;
+  private int nQueries;
+  private int failedQueries;
+  private double slowQueries;
+  private double average;
+  private long occupiedSpaceInDisk;
+  private long freeSpaceInDisk;
+  private List<String> files;
+  private String httpExchangerAddress;
+  private Map<String, BalanceFileReceivingProgress> balanceActionsStateMap;
+
+  public List<String> getFiles() {
+    return files;
   }
-	public void setFiles(List<String> files) {
-  	this.files = files;
+
+  public void setFiles(List<String> files) {
+    this.files = files;
   }
-	public long getFreeSpaceInDisk() {
-  	return freeSpaceInDisk;
+
+  public long getFreeSpaceInDisk() {
+    return freeSpaceInDisk;
   }
-	public void setFreeSpaceInDisk(long freeSpaceInDisk) {
-  	this.freeSpaceInDisk = freeSpaceInDisk;
+
+  public void setFreeSpaceInDisk(long freeSpaceInDisk) {
+    this.freeSpaceInDisk = freeSpaceInDisk;
   }
-	public long getUpSince() {
-  	return upSince;
+
+  public long getUpSince() {
+    return upSince;
   }
-	public void setUpSince(long upSince) {
-  	this.upSince = upSince;
+
+  public void setUpSince(long upSince) {
+    this.upSince = upSince;
   }
-	public int getnQueries() {
-  	return nQueries;
+
+  public int getnQueries() {
+    return nQueries;
   }
-	public void setnQueries(int nQueries) {
-  	this.nQueries = nQueries;
+
+  public void setnQueries(int nQueries) {
+    this.nQueries = nQueries;
   }
-	public int getFailedQueries() {
-  	return failedQueries;
+
+  public int getFailedQueries() {
+    return failedQueries;
   }
-	public void setFailedQueries(int failedQueries) {
-  	this.failedQueries = failedQueries;
+
+  public void setFailedQueries(int failedQueries) {
+    this.failedQueries = failedQueries;
   }
-	public double getSlowQueries() {
-  	return slowQueries;
+
+  public double getSlowQueries() {
+    return slowQueries;
   }
-	public void setSlowQueries(double slowQueries) {
-  	this.slowQueries = slowQueries;
+
+  public void setSlowQueries(double slowQueries) {
+    this.slowQueries = slowQueries;
   }
-	public double getAverage() {
-  	return average;
+
+  public double getAverage() {
+    return average;
   }
-	public void setAverage(double average) {
-  	this.average = average;
+
+  public void setAverage(double average) {
+    this.average = average;
   }
-	public String getSystemStatus() {
-		return systemStatus;
-	}
-	public void setSystemStatus(String systemStatus) {
-		this.systemStatus = systemStatus;
-	}
-	public boolean isDeployInProgress() {
-		return deployInProgress;
-	}
-	public void setDeployInProgress(boolean deployInProgress) {
-		this.deployInProgress = deployInProgress;
-	}
-	public long getOccupiedSpaceInDisk() {
-  	return occupiedSpaceInDisk;
+
+  public String getSystemStatus() {
+    return systemStatus;
   }
-	public void setOccupiedSpaceInDisk(long occupiedSpaceInDisk) {
-  	this.occupiedSpaceInDisk = occupiedSpaceInDisk;
+
+  public void setSystemStatus(String systemStatus) {
+    this.systemStatus = systemStatus;
   }
-	public long getLastExceptionTime() {
-  	return lastExceptionTime;
+
+  public boolean isDeployInProgress() {
+    return deployInProgress;
   }
-	public void setLastExceptionTime(long lastExceptionTime) {
-  	this.lastExceptionTime = lastExceptionTime;
+
+  public void setDeployInProgress(boolean deployInProgress) {
+    this.deployInProgress = deployInProgress;
   }
-	public Map<String, BalanceFileReceivingProgress> getBalanceActionsStateMap() {
-  	return balanceActionsStateMap;
+
+  public long getOccupiedSpaceInDisk() {
+    return occupiedSpaceInDisk;
   }
-	public void setBalanceActionsStateMap(Map<String, BalanceFileReceivingProgress> balanceActionsStateMap) {
-  	this.balanceActionsStateMap = balanceActionsStateMap;
+
+  public void setOccupiedSpaceInDisk(long occupiedSpaceInDisk) {
+    this.occupiedSpaceInDisk = occupiedSpaceInDisk;
   }
-	public String getHttpExchangerAddress() {
-  	return httpExchangerAddress;
+
+  public long getLastExceptionTime() {
+    return lastExceptionTime;
   }
-	public void setHttpExchangerAddress(String httpExchangerAddress) {
-  	this.httpExchangerAddress = httpExchangerAddress;
+
+  public void setLastExceptionTime(long lastExceptionTime) {
+    this.lastExceptionTime = lastExceptionTime;
+  }
+
+  public Map<String, BalanceFileReceivingProgress> getBalanceActionsStateMap() {
+    return balanceActionsStateMap;
+  }
+
+  public void setBalanceActionsStateMap(Map<String, BalanceFileReceivingProgress> balanceActionsStateMap) {
+    this.balanceActionsStateMap = balanceActionsStateMap;
+  }
+
+  public String getHttpExchangerAddress() {
+    return httpExchangerAddress;
+  }
+
+  public void setHttpExchangerAddress(String httpExchangerAddress) {
+    this.httpExchangerAddress = httpExchangerAddress;
   }
 }

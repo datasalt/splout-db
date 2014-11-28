@@ -1,164 +1,170 @@
 <?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>com.splout.db</groupId>
-		<artifactId>splout-top-level</artifactId>
-		<version>0.3.1-SNAPSHOT</version>
-		<relativePath>../pom.xml</relativePath>
-	</parent>
+    <parent>
+        <groupId>com.splout.db</groupId>
+        <artifactId>splout-top-level</artifactId>
+        <version>0.3.1-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
 
-	<groupId>com.splout.db</groupId>
-	<artifactId>splout-commons</artifactId>
-	<packaging>jar</packaging>
+    <groupId>com.splout.db</groupId>
+    <artifactId>splout-commons</artifactId>
+    <packaging>jar</packaging>
 
-	<name>Splout SQL commons</name>
-	<description>Splout is a read only, horizontally scalable SQL database that plays well with Hadoop.</description>
+    <name>Splout SQL commons</name>
+    <description>Splout is a read only, horizontally scalable SQL database that plays well with Hadoop.
+    </description>
 
-	<repositories>
-		<repository>
-  			<id>clojars.org</id>
-  			<url>http://clojars.org/repo</url>
-		</repository>
-	</repositories>
+    <repositories>
+        <repository>
+            <id>clojars.org</id>
+            <url>http://clojars.org/repo</url>
+        </repository>
+    </repositories>
 
-	<licenses>
-		<license>
-			<name>Apache License version 2.0</name>
-			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-			<distribution>repo</distribution>
-		</license>
-	</licenses>
+    <licenses>
+        <license>
+            <name>Apache License version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<hadoop.version>0.20.2</hadoop.version>
-		<jackson.version>1.7.9</jackson.version>
-	</properties>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <hadoop.version>0.20.2</hadoop.version>
+        <jackson.version>1.7.9</jackson.version>
+    </properties>
 
-	<build>
-		<sourceDirectory>src/main/java</sourceDirectory>
-		<testSourceDirectory>src/test/java</testSourceDirectory>
-		<resources>
-			<resource>
-				<directory>src/main/resources</directory>
-			</resource>
-			<resource>
-				<directory>.</directory>
-				<includes>
-					<include>SPLOUT-COMMONS-LICENSING</include>
-				</includes>
-			</resource>
-		</resources>
+    <build>
+        <sourceDirectory>src/main/java</sourceDirectory>
+        <testSourceDirectory>src/test/java</testSourceDirectory>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+            <resource>
+                <directory>.</directory>
+                <includes>
+                    <include>SPLOUT-COMMONS-LICENSING</include>
+                </includes>
+            </resource>
+        </resources>
 
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-remote-resources-plugin</artifactId>
-				<version>1.4</version>
-				<configuration>
-					<resourceBundles>
-						<resourceBundle>com.splout.db:splout-resources:${project.parent.version}</resourceBundle>
-					</resourceBundles>
-				</configuration>
-				<executions>
-					<execution>
-						<goals>
-							<goal>process</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>2.5</version>
-			</plugin>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-remote-resources-plugin</artifactId>
+                <version>1.4</version>
+                <configuration>
+                    <resourceBundles>
+                        <resourceBundle>com.splout.db:splout-resources:${project.parent.version}
+                        </resourceBundle>
+                    </resourceBundles>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>process</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.5</version>
+            </plugin>
 
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.12</version>
-				<configuration>
-					<argLine>-Djava.library.path=${project.build.directory}/maven-shared-archive-resources</argLine>
-					<includes>
-						<include>**/Test**</include>
-					</includes>
-					<excludes>
-						<exclude>**/*$*</exclude>
-					</excludes>
-					<enableAssertions>false</enableAssertions>
-					<forkMode>always</forkMode>
-					<useManifestOnlyJar>false</useManifestOnlyJar>
-					<!-- configures unit test standard error and standard out to go to a 
-						file per test rather than the console. -->
-					<redirectTestOutputToFile>true</redirectTestOutputToFile>
-					<failIfNoTests>false</failIfNoTests>
-				</configuration>
-			</plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.12</version>
+                <configuration>
+                    <argLine>
+                        -Djava.library.path=${project.build.directory}/maven-shared-archive-resources
+                    </argLine>
+                    <includes>
+                        <include>**/Test**</include>
+                    </includes>
+                    <excludes>
+                        <exclude>**/*$*</exclude>
+                    </excludes>
+                    <enableAssertions>false</enableAssertions>
+                    <forkMode>always</forkMode>
+                    <useManifestOnlyJar>false</useManifestOnlyJar>
+                    <!-- configures unit test standard error and standard out to go to a
+                        file per test rather than the console. -->
+                    <redirectTestOutputToFile>true</redirectTestOutputToFile>
+                    <failIfNoTests>false</failIfNoTests>
+                </configuration>
+            </plugin>
 
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>license-maven-plugin</artifactId>
-				<version>1.3</version>
-				<executions>
-					<execution>
-						<id>add-third-party</id>
-						<goals>
-							<goal>add-third-party</goal>
-						</goals>
-						<configuration>
-							<includeTransitiveDependencies>
-								true
-							</includeTransitiveDependencies>
-							<useMissingFile>true</useMissingFile>
-							<excludedGroups>junit</excludedGroups>
-							<licenseMerges>
-								<licenseMerge>Apache License version 2.0|The Apache Software
-									License, Version 2.0|Apache License 2.0|Apache License, Version
-									2.0|Apache v2|Apache Software License - Version 2.0</licenseMerge>
-							</licenseMerges>
-							<excludedScopes>provided</excludedScopes>
-						</configuration>
-					</execution>
-					<execution>
-						<id>download-licenses</id>
-						<goals>
-							<goal>download-licenses</goal>
-						</goals>
-						<configuration>
-							<includeTransitiveDependencies>
-								true
-							</includeTransitiveDependencies>
-							<excludedScopes>provided</excludedScopes>
-						</configuration>
-					</execution>
-					<execution>
-						<id>update-project-license</id>
-						<goals>
-							<goal>update-project-license</goal>
-						</goals>
-						<configuration>
-							<licenseName>apache_v2</licenseName>
-						</configuration>
-					</execution>
-					<execution>
-						<id>update-file-header</id>
-						<goals>
-							<goal>update-file-header</goal>
-						</goals>
-						<phase>process-sources</phase>
-						<configuration>
-							<licenseName>apache_v2</licenseName>
-							<roots>
-								<root>src/main/java</root>
-								<root>src/test/java</root>
-							</roots>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>1.3</version>
+                <executions>
+                    <execution>
+                        <id>add-third-party</id>
+                        <goals>
+                            <goal>add-third-party</goal>
+                        </goals>
+                        <configuration>
+                            <includeTransitiveDependencies>
+                                true
+                            </includeTransitiveDependencies>
+                            <useMissingFile>true</useMissingFile>
+                            <excludedGroups>junit</excludedGroups>
+                            <licenseMerges>
+                                <licenseMerge>Apache License version 2.0|The Apache Software
+                                    License, Version 2.0|Apache License 2.0|Apache License, Version
+                                    2.0|Apache v2|Apache Software License - Version 2.0
+                                </licenseMerge>
+                            </licenseMerges>
+                            <excludedScopes>provided</excludedScopes>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>download-licenses</id>
+                        <goals>
+                            <goal>download-licenses</goal>
+                        </goals>
+                        <configuration>
+                            <includeTransitiveDependencies>
+                                true
+                            </includeTransitiveDependencies>
+                            <excludedScopes>provided</excludedScopes>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>update-project-license</id>
+                        <goals>
+                            <goal>update-project-license</goal>
+                        </goals>
+                        <configuration>
+                            <licenseName>apache_v2</licenseName>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>update-file-header</id>
+                        <goals>
+                            <goal>update-file-header</goal>
+                        </goals>
+                        <phase>process-sources</phase>
+                        <configuration>
+                            <licenseName>apache_v2</licenseName>
+                            <roots>
+                                <root>src/main/java</root>
+                                <root>src/test/java</root>
+                            </roots>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
 
             <plugin>
                 <artifactId>maven-resources-plugin</artifactId>
@@ -190,118 +196,118 @@
             </plugin>
 
         </plugins>
-	</build>
+    </build>
 
-	<dependencies>
+    <dependencies>
 
-		<dependency>
-			<groupId>org.powermock</groupId>
-			<artifactId>powermock-module-junit4</artifactId>
-			<version>1.5.6</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.powermock</groupId>
-			<artifactId>powermock-api-mockito</artifactId>
-			<version>1.5.6</version>
-			<scope>test</scope>
-		</dependency>            
-            
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-module-junit4</artifactId>
+            <version>1.5.6</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-api-mockito</artifactId>
+            <version>1.5.6</version>
+            <scope>test</scope>
+        </dependency>
+
         <dependency>
             <groupId>commons-configuration</groupId>
             <artifactId>commons-configuration</artifactId>
             <version>1.8</version>
         </dependency>
-        
-		<dependency>
-			<groupId>com.splout.db</groupId>
-			<artifactId>splout-resources</artifactId>
-			<version>${project.parent.version}</version>
-		</dependency>
 
-		<!-- Don't delete me: my classes are loaded by reflection -->
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
-			<version>1.6.0</version>
-		</dependency>
+        <dependency>
+            <groupId>com.splout.db</groupId>
+            <artifactId>splout-resources</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
 
-		<!-- Don't delete me: my classes are loaded by reflection -->
-		<dependency>
-			<groupId>com.google.guava</groupId>
-			<artifactId>guava</artifactId>
-			<version>13.0</version>
-		</dependency>
+        <!-- Don't delete me: my classes are loaded by reflection -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.6.0</version>
+        </dependency>
 
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.8.2</version>
-			<scope>compile</scope>
-		</dependency>
+        <!-- Don't delete me: my classes are loaded by reflection -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>13.0</version>
+        </dependency>
 
-		<dependency>
-			<groupId>commons-beanutils</groupId>
-			<artifactId>commons-beanutils</artifactId>
-			<version>1.8.3</version>
-		</dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.8.2</version>
+            <scope>compile</scope>
+        </dependency>
 
-		<!-- Jackson: fast JSON ser/de -->
-		<dependency>
-			<groupId>org.codehaus.jackson</groupId>
-			<artifactId>jackson-core-asl</artifactId>
-			<version>${jackson.version}</version>
-		</dependency>
+        <dependency>
+            <groupId>commons-beanutils</groupId>
+            <artifactId>commons-beanutils</artifactId>
+            <version>1.8.3</version>
+        </dependency>
 
-		<dependency>
-			<groupId>org.codehaus.jackson</groupId>
-			<artifactId>jackson-mapper-lgpl</artifactId>
-			<version>${jackson.version}</version>
-		</dependency>
+        <!-- Jackson: fast JSON ser/de -->
+        <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-core-asl</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
 
-		<dependency>
-			<groupId>commons-lang</groupId>
-			<artifactId>commons-lang</artifactId>
-			<version>2.6</version>
-		</dependency>
+        <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-lgpl</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
 
-	        <dependency>
-		        <groupId>commons-io</groupId>
-		        <artifactId>commons-io</artifactId>
-		        <version>2.2</version>
-		</dependency>
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.6</version>
+        </dependency>
 
-		<!-- SQLite -->
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.2</version>
+        </dependency>
 
-		<dependency>
-			<groupId>com.almworks.sqlite4java</groupId>
-			<artifactId>sqlite4java</artifactId>
-			<version>0.282</version>
-		</dependency>
+        <!-- SQLite -->
 
-		<!-- Don't delete me: my classes are loaded by reflection -->
-		<dependency>
-			<groupId>org.xerial</groupId>
-			<artifactId>sqlite-jdbc</artifactId>
-			<version>3.7.2</version>
-		</dependency>
+        <dependency>
+            <groupId>com.almworks.sqlite4java</groupId>
+            <artifactId>sqlite4java</artifactId>
+            <version>0.282</version>
+        </dependency>
 
-		<!-- Connection pooling: BoneCP -->
-		<dependency>
-			<groupId>com.jolbox</groupId>
-			<artifactId>bonecp</artifactId>
-			<version>0.7.1.RELEASE</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-api</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>com.google.guava</groupId>
-					<artifactId>guava</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-	</dependencies>
+        <!-- Don't delete me: my classes are loaded by reflection -->
+        <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <version>3.7.2</version>
+        </dependency>
+
+        <!-- Connection pooling: BoneCP -->
+        <dependency>
+            <groupId>com.jolbox</groupId>
+            <artifactId>bonecp</artifactId>
+            <version>0.7.1.RELEASE</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
 
 </project>

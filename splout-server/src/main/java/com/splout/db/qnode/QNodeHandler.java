@@ -458,8 +458,8 @@ public class QNodeHandler implements IQNodeHandler {
    * Returns a {@link DeployInfo}.
    */
   public DeployInfo deploy(List<DeployRequest> deployRequest) throws Exception {
-		/*
-		 * The deployment is handled by the specialized module {@link Deployer}
+    /*
+     * The deployment is handled by the specialized module {@link Deployer}
 		 */
     return deployer.deploy(deployRequest);
   }

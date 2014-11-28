@@ -21,77 +21,77 @@ package com.splout.db.hazelcast;
  * #L%
  */
 
-import java.io.Serializable;
-
 import com.hazelcast.core.Hazelcast;
 
+import java.io.Serializable;
+
 /**
- * Just keeps a tablespace name and a version. Created 
+ * Just keeps a tablespace name and a version. Created
  * to be used as key on {@link Hazelcast} maps.
  */
 @SuppressWarnings("serial")
 public class TablespaceVersion implements Serializable {
 
-	@Override
+  @Override
   public String toString() {
-	  return "TablespaceVersion [tablespace=" + tablespace + ", version=" + version + "]";
+    return "TablespaceVersion [tablespace=" + tablespace + ", version=" + version + "]";
   }
 
-	private String tablespace;
-	private long version;
-	
-	public TablespaceVersion() {
+  private String tablespace;
+  private long version;
+
+  public TablespaceVersion() {
   }
 
-	public TablespaceVersion(String tablespace, long version) {
-	  super();
-	  this.tablespace = tablespace;
-	  this.version = version;
+  public TablespaceVersion(String tablespace, long version) {
+    super();
+    this.tablespace = tablespace;
+    this.version = version;
   }
 
-	public String getTablespace() {
-		return tablespace;
-	}
+  public String getTablespace() {
+    return tablespace;
+  }
 
-	public void setTablespace(String tablespace) {
-		this.tablespace = tablespace;
-	}
+  public void setTablespace(String tablespace) {
+    this.tablespace = tablespace;
+  }
 
-	public long getVersion() {
-		return version;
-	}
+  public long getVersion() {
+    return version;
+  }
 
-	public void setVersion(long version) {
-		this.version = version;
-	}
+  public void setVersion(long version) {
+    this.version = version;
+  }
 
-	@Override
+  @Override
   public int hashCode() {
-	  final int prime = 31;
-	  int result = 1;
-	  result = prime * result + ((tablespace == null) ? 0 : tablespace.hashCode());
-	  result = prime * result + (int) (version ^ (version >>> 32));
-	  return result;
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((tablespace == null) ? 0 : tablespace.hashCode());
+    result = prime * result + (int) (version ^ (version >>> 32));
+    return result;
   }
 
-	@Override
+  @Override
   public boolean equals(Object obj) {
-	  if(this == obj)
-		  return true;
-	  if(obj == null)
-		  return false;
-	  if(getClass() != obj.getClass())
-		  return false;
-	  TablespaceVersion other = (TablespaceVersion) obj;
-	  if(tablespace == null) {
-		  if(other.tablespace != null)
-			  return false;
-	  } else if(!tablespace.equals(other.tablespace))
-		  return false;
-	  if(version != other.version)
-		  return false;
-	  return true;
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    TablespaceVersion other = (TablespaceVersion) obj;
+    if (tablespace == null) {
+      if (other.tablespace != null)
+        return false;
+    } else if (!tablespace.equals(other.tablespace))
+      return false;
+    if (version != other.version)
+      return false;
+    return true;
   }
 
-	
+
 }

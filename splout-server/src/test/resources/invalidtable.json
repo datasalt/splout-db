@@ -1,7 +1,9 @@
 {
-	"name": "meteo",
-	"nPartitions": 16,
-	"partitionedTables": [{
-		"name": "meteo"
-	}]
+    "name": "meteo",
+    "nPartitions": 16,
+    "partitionedTables": [
+        {
+            "name": "meteo"
+        }
+    ]
 }

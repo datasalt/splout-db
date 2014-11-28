@@ -32,12 +32,12 @@ import org.apache.hadoop.mapreduce.MapContext;
 public class CounterInterface {
 
   private MapContext context;
-	
-	CounterInterface(MapContext context) {
-		this.context = context;
-	}
-	
-	public Counter getCounter(String group, String name) {
-		return context.getCounter(group, name);
-	}
+
+  CounterInterface(MapContext context) {
+    this.context = context;
+  }
+
+  public Counter getCounter(String group, String name) {
+    return context.getCounter(group, name);
+  }
 }

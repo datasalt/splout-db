@@ -21,21 +21,20 @@ package com.splout.db.qnode.rest;
  * #L%
  */
 
-import javax.servlet.http.HttpServlet;
-
+import com.splout.db.qnode.IQNodeHandler;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.splout.db.qnode.IQNodeHandler;
+import javax.servlet.http.HttpServlet;
 
 @SuppressWarnings("serial")
 public class BaseServlet extends HttpServlet {
 
-	protected final static Log log = LogFactory.getLog(BaseServlet.class);
-	protected final transient IQNodeHandler qNodeHandler;
+  protected final static Log log = LogFactory.getLog(BaseServlet.class);
+  protected final transient IQNodeHandler qNodeHandler;
 
-	public BaseServlet(IQNodeHandler qNodeHandler) {
-		this.qNodeHandler = qNodeHandler;
-	}
+  public BaseServlet(IQNodeHandler qNodeHandler) {
+    this.qNodeHandler = qNodeHandler;
+  }
 
 }

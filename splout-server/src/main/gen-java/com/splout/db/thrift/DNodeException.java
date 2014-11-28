@@ -5,34 +5,23 @@
  */
 package com.splout.db.thrift;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.EnumMap;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.EnumSet;
-import java.util.Collections;
-import java.util.BitSet;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.*;
 
 public class DNodeException extends Exception implements org.apache.thrift.TBase<DNodeException, DNodeException._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("DNodeException");
 
-  private static final org.apache.thrift.protocol.TField CODE_FIELD_DESC = new org.apache.thrift.protocol.TField("code", org.apache.thrift.protocol.TType.I32, (short)1);
-  private static final org.apache.thrift.protocol.TField MSG_FIELD_DESC = new org.apache.thrift.protocol.TField("msg", org.apache.thrift.protocol.TType.STRING, (short)2);
+  private static final org.apache.thrift.protocol.TField CODE_FIELD_DESC = new org.apache.thrift.protocol.TField("code", org.apache.thrift.protocol.TType.I32, (short) 1);
+  private static final org.apache.thrift.protocol.TField MSG_FIELD_DESC = new org.apache.thrift.protocol.TField("msg", org.apache.thrift.protocol.TType.STRING, (short) 2);
 
   public int code; // required
   public String msg; // required
 
-  /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+  /**
+   * The set of fields this struct contains, along with convenience methods for finding and manipulating them.
+   */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-    CODE((short)1, "code"),
-    MSG((short)2, "msg");
+    CODE((short) 1, "code"),
+    MSG((short) 2, "msg");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -46,7 +35,7 @@ public class DNodeException extends Exception implements org.apache.thrift.TBase
      * Find the _Fields constant that matches fieldId, or null if its not found.
      */
     public static _Fields findByThriftId(int fieldId) {
-      switch(fieldId) {
+      switch (fieldId) {
         case 1: // CODE
           return CODE;
         case 2: // MSG
@@ -95,11 +84,12 @@ public class DNodeException extends Exception implements org.apache.thrift.TBase
   private BitSet __isset_bit_vector = new BitSet(1);
 
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.CODE, new org.apache.thrift.meta_data.FieldMetaData("code", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.CODE, new org.apache.thrift.meta_data.FieldMetaData("code", org.apache.thrift.TFieldRequirementType.DEFAULT,
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
-    tmpMap.put(_Fields.MSG, new org.apache.thrift.meta_data.FieldMetaData("msg", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.MSG, new org.apache.thrift.meta_data.FieldMetaData("msg", org.apache.thrift.TFieldRequirementType.DEFAULT,
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(DNodeException.class, metaDataMap);
@@ -109,9 +99,8 @@ public class DNodeException extends Exception implements org.apache.thrift.TBase
   }
 
   public DNodeException(
-    int code,
-    String msg)
-  {
+      int code,
+      String msg) {
     this();
     this.code = code;
     setCodeIsSet(true);
@@ -155,7 +144,9 @@ public class DNodeException extends Exception implements org.apache.thrift.TBase
     __isset_bit_vector.clear(__CODE_ISSET_ID);
   }
 
-  /** Returns true if field code is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field code is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetCode() {
     return __isset_bit_vector.get(__CODE_ISSET_ID);
   }
@@ -177,7 +168,9 @@ public class DNodeException extends Exception implements org.apache.thrift.TBase
     this.msg = null;
   }
 
-  /** Returns true if field msg is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field msg is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetMsg() {
     return this.msg != null;
   }
@@ -190,48 +183,50 @@ public class DNodeException extends Exception implements org.apache.thrift.TBase
 
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
-    case CODE:
-      if (value == null) {
-        unsetCode();
-      } else {
-        setCode((Integer)value);
-      }
-      break;
+      case CODE:
+        if (value == null) {
+          unsetCode();
+        } else {
+          setCode((Integer) value);
+        }
+        break;
 
-    case MSG:
-      if (value == null) {
-        unsetMsg();
-      } else {
-        setMsg((String)value);
-      }
-      break;
+      case MSG:
+        if (value == null) {
+          unsetMsg();
+        } else {
+          setMsg((String) value);
+        }
+        break;
 
     }
   }
 
   public Object getFieldValue(_Fields field) {
     switch (field) {
-    case CODE:
-      return Integer.valueOf(getCode());
+      case CODE:
+        return Integer.valueOf(getCode());
 
-    case MSG:
-      return getMsg();
+      case MSG:
+        return getMsg();
 
     }
     throw new IllegalStateException();
   }
 
-  /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+   */
   public boolean isSet(_Fields field) {
     if (field == null) {
       throw new IllegalArgumentException();
     }
 
     switch (field) {
-    case CODE:
-      return isSetCode();
-    case MSG:
-      return isSetMsg();
+      case CODE:
+        return isSetCode();
+      case MSG:
+        return isSetMsg();
     }
     throw new IllegalStateException();
   }
@@ -241,7 +236,7 @@ public class DNodeException extends Exception implements org.apache.thrift.TBase
     if (that == null)
       return false;
     if (that instanceof DNodeException)
-      return this.equals((DNodeException)that);
+      return this.equals((DNodeException) that);
     return false;
   }
 
@@ -281,7 +276,7 @@ public class DNodeException extends Exception implements org.apache.thrift.TBase
     }
 
     int lastComparison = 0;
-    DNodeException typedOther = (DNodeException)other;
+    DNodeException typedOther = (DNodeException) other;
 
     lastComparison = Boolean.valueOf(isSetCode()).compareTo(typedOther.isSetCode());
     if (lastComparison != 0) {
@@ -313,10 +308,9 @@ public class DNodeException extends Exception implements org.apache.thrift.TBase
   public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
     org.apache.thrift.protocol.TField field;
     iprot.readStructBegin();
-    while (true)
-    {
+    while (true) {
       field = iprot.readFieldBegin();
-      if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+      if (field.type == org.apache.thrift.protocol.TType.STOP) {
         break;
       }
       switch (field.id) {
@@ -324,14 +318,14 @@ public class DNodeException extends Exception implements org.apache.thrift.TBase
           if (field.type == org.apache.thrift.protocol.TType.I32) {
             this.code = iprot.readI32();
             setCodeIsSet(true);
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 2: // MSG
           if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.msg = iprot.readString();
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;

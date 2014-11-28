@@ -20,19 +20,17 @@ package com.splout.db.examples;
  * #L%
  */
 
-import java.io.IOException;
+import com.splout.db.common.JSONSerDe;
+import com.splout.db.common.JSONSerDe.JSONSerDeException;
+import com.splout.db.common.SploutClient;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import com.splout.db.common.JSONSerDe;
-import com.splout.db.common.JSONSerDe.JSONSerDeException;
-import com.splout.db.common.SploutClient;
+import java.io.IOException;
 
 /**
  * Servlet that proxies AJAX request to an arbitrary QNode for implementing the frontend of the Wikipedia pagecounts
@@ -41,26 +39,26 @@ import com.splout.db.common.SploutClient;
 @SuppressWarnings("serial")
 public class PageCountsServlet extends HttpServlet {
 
-	private final static Log log = LogFactory.getLog(PageCountsServlet.class);
-	private SploutClient client;
+  private final static Log log = LogFactory.getLog(PageCountsServlet.class);
+  private SploutClient client;
 
-	public PageCountsServlet(SploutClient client) {
-		this.client = client;
-	}
+  public PageCountsServlet(SploutClient client) {
+    this.client = client;
+  }
 
-	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
-	    IOException {
+  @Override
+  protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
+      IOException {
 
-		String sql = req.getParameter("sql");
-		String key = req.getParameter("key");
+    String sql = req.getParameter("sql");
+    String key = req.getParameter("key");
 
-		log.info("query, key[" + key + "] sql[" + sql + "]");
-		try {
-			resp.getWriter().write(JSONSerDe.ser(client.query("pagecounts", key, sql, null)));
-		} catch(JSONSerDeException e) {
-			throw new IOException(e);
-		}
+    log.info("query, key[" + key + "] sql[" + sql + "]");
+    try {
+      resp.getWriter().write(JSONSerDe.ser(client.query("pagecounts", key, sql, null)));
+    } catch (JSONSerDeException e) {
+      throw new IOException(e);
+    }
 
-	}
+  }
 }

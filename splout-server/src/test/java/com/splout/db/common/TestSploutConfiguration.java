@@ -21,36 +21,34 @@ package com.splout.db.common;
  * #L%
  */
 
-import static org.junit.Assert.*;
+import com.google.common.io.Files;
+import org.apache.commons.io.FileUtils;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
-import org.apache.commons.io.FileUtils;
-import org.junit.Test;
-
-import com.google.common.io.Files;
-import com.splout.db.common.SploutConfiguration;
+import static org.junit.Assert.assertEquals;
 
 public class TestSploutConfiguration {
 
-	@Test
-	public void test() throws UnsupportedEncodingException, IOException {
-		// Run twice for making sure we don't leave unexpected state around
-		innerTest();
-		innerTest();
-	}
-	
-	public void innerTest() throws UnsupportedEncodingException, IOException {
-		File testConfig = new File("testConfig");
-		testConfig.mkdir();
-		// foo.property=value1 in defaults file
-		Files.write("foo.property\tvalue1".getBytes("UTF-8"), new File(testConfig, SploutConfiguration.SPLOUT_PROPERTIES + ".default"));
-		assertEquals(SploutConfiguration.get("testConfig").getString("foo.property"), "value1");
-		// foo.property=value2 in main file - assert that it overrides default
-		Files.write("foo.property\tvalue2".getBytes("UTF-8"), new File(testConfig, SploutConfiguration.SPLOUT_PROPERTIES));
-		assertEquals(SploutConfiguration.get("testConfig").getString("foo.property"), "value2");
-		FileUtils.deleteDirectory(testConfig);		
-	}
+  @Test
+  public void test() throws UnsupportedEncodingException, IOException {
+    // Run twice for making sure we don't leave unexpected state around
+    innerTest();
+    innerTest();
+  }
+
+  public void innerTest() throws UnsupportedEncodingException, IOException {
+    File testConfig = new File("testConfig");
+    testConfig.mkdir();
+    // foo.property=value1 in defaults file
+    Files.write("foo.property\tvalue1".getBytes("UTF-8"), new File(testConfig, SploutConfiguration.SPLOUT_PROPERTIES + ".default"));
+    assertEquals(SploutConfiguration.get("testConfig").getString("foo.property"), "value1");
+    // foo.property=value2 in main file - assert that it overrides default
+    Files.write("foo.property\tvalue2".getBytes("UTF-8"), new File(testConfig, SploutConfiguration.SPLOUT_PROPERTIES));
+    assertEquals(SploutConfiguration.get("testConfig").getString("foo.property"), "value2");
+    FileUtils.deleteDirectory(testConfig);
+  }
 }

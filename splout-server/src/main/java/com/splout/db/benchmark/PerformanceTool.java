@@ -26,36 +26,38 @@ package com.splout.db.benchmark;
  */
 public class PerformanceTool {
 
-	private HistogramWithStats histogram;
-	private ThreadLocal<Long> startTime = new ThreadLocal<Long>() {
-		protected Long initialValue() {
-			return System.currentTimeMillis();
-		};
-	};
-	
-	public PerformanceTool() {
-		histogram = new HistogramWithStats();
-	}
-	
-	public void startQuery() {
-		startTime.set(System.currentTimeMillis());
-	}
-	
-	public long endQuery() {
-		long time = System.currentTimeMillis() - startTime.get();
-		histogram.add(time);
-		return time;
-	}
-	
-	public int getNQueries() {
-		return (int) histogram.getCount();
-	}
-	
-	public double getAverage() {
-		return histogram.getAverage();
-	}
-	
-	public HistogramWithStats getHistogram() {
-		return histogram;
-	}
+  private HistogramWithStats histogram;
+  private ThreadLocal<Long> startTime = new ThreadLocal<Long>() {
+    protected Long initialValue() {
+      return System.currentTimeMillis();
+    }
+
+    ;
+  };
+
+  public PerformanceTool() {
+    histogram = new HistogramWithStats();
+  }
+
+  public void startQuery() {
+    startTime.set(System.currentTimeMillis());
+  }
+
+  public long endQuery() {
+    long time = System.currentTimeMillis() - startTime.get();
+    histogram.add(time);
+    return time;
+  }
+
+  public int getNQueries() {
+    return (int) histogram.getCount();
+  }
+
+  public double getAverage() {
+    return histogram.getAverage();
+  }
+
+  public HistogramWithStats getHistogram() {
+    return histogram;
+  }
 }

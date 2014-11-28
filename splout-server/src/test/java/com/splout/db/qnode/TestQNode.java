@@ -21,46 +21,44 @@ package com.splout.db.qnode;
  * #L%
  */
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.junit.Test;
-
 import com.hazelcast.core.Hazelcast;
 import com.splout.db.common.SploutConfiguration;
 import com.splout.db.common.TestUtils;
-import com.splout.db.qnode.beans.DeployInfo;
-import com.splout.db.qnode.beans.DeployRequest;
-import com.splout.db.qnode.beans.QueryStatus;
-import com.splout.db.qnode.beans.StatusMessage;
-import com.splout.db.qnode.beans.SwitchVersionRequest;
+import com.splout.db.qnode.beans.*;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class TestQNode {
 
-	@Test
-	public void test() throws Throwable {
-		final SploutConfiguration config = SploutConfiguration.getTestConfig();
-		QNode qnode = TestUtils.getTestQNode(config, new QNodeMockHandler() {
-			@Override
-			public QueryStatus query(String tablespace, String key, String sql, String partition) throws Exception {
-				return new QueryStatus();
-			}
-			@Override
-			public ArrayList<QueryStatus> multiQuery(String tablespace, List<String> keyMins, List<String> keyMaxs, String sql)
-			    throws Exception {
-				return new ArrayList<QueryStatus>();
-			}
-			@Override
-			public DeployInfo deploy(List<DeployRequest> deployRequest) throws Exception {
-				return new DeployInfo();
-			}
-			@Override
-			public StatusMessage rollback(List<SwitchVersionRequest> rollbackRequest) throws Exception {
-				return new StatusMessage();
-			}
-		});
+  @Test
+  public void test() throws Throwable {
+    final SploutConfiguration config = SploutConfiguration.getTestConfig();
+    QNode qnode = TestUtils.getTestQNode(config, new QNodeMockHandler() {
+      @Override
+      public QueryStatus query(String tablespace, String key, String sql, String partition) throws Exception {
+        return new QueryStatus();
+      }
 
-		qnode.close();
-		Hazelcast.shutdownAll();
-	}
+      @Override
+      public ArrayList<QueryStatus> multiQuery(String tablespace, List<String> keyMins, List<String> keyMaxs, String sql)
+          throws Exception {
+        return new ArrayList<QueryStatus>();
+      }
+
+      @Override
+      public DeployInfo deploy(List<DeployRequest> deployRequest) throws Exception {
+        return new DeployInfo();
+      }
+
+      @Override
+      public StatusMessage rollback(List<SwitchVersionRequest> rollbackRequest) throws Exception {
+        return new StatusMessage();
+      }
+    });
+
+    qnode.close();
+    Hazelcast.shutdownAll();
+  }
 }

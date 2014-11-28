@@ -20,38 +20,37 @@ package com.splout.db.engine;
  * #L%
  */
 
-import static org.junit.Assert.assertEquals;
+import com.splout.db.common.JSONSerDe;
+import com.splout.db.hadoop.engine.SploutSQLOutputFormatTester;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Test;
-
-import com.splout.db.common.JSONSerDe;
-import com.splout.db.hadoop.engine.SploutSQLOutputFormatTester;
+import static org.junit.Assert.assertEquals;
 
 @SuppressWarnings("serial")
 public class TestMySQLOutputFormat extends SploutSQLOutputFormatTester {
 
-	@SuppressWarnings("rawtypes")
-	@Test
-	public void test() throws Exception {
-		Runtime.getRuntime().exec("rm -rf " + OUTPUT + "-mysql").waitFor();
-		
-		getTupleSchema1().getField("a").addProp(MySQLOutputFormat.STRING_FIELD_SIZE_PANGOOL_FIELD_PROP, "8");
-		
-		runTest(new MySQLEngine());
+  @SuppressWarnings("rawtypes")
+  @Test
+  public void test() throws Exception {
+    Runtime.getRuntime().exec("rm -rf " + OUTPUT + "-mysql").waitFor();
 
-		File dbFile = new File(OUTPUT + "/0.db");
-				
-		MySQLManager manager = new MySQLManager();
-		try {
-			manager.init(dbFile, null, null);
-			List list = JSONSerDe.deSer(manager.query("SELECT * FROM schema1;", 100), ArrayList.class);
-			assertEquals(6, list.size());
-		} finally {
-			manager.close();
-		}
-	}
+    getTupleSchema1().getField("a").addProp(MySQLOutputFormat.STRING_FIELD_SIZE_PANGOOL_FIELD_PROP, "8");
+
+    runTest(new MySQLEngine());
+
+    File dbFile = new File(OUTPUT + "/0.db");
+
+    MySQLManager manager = new MySQLManager();
+    try {
+      manager.init(dbFile, null, null);
+      List list = JSONSerDe.deSer(manager.query("SELECT * FROM schema1;", 100), ArrayList.class);
+      assertEquals(6, list.size());
+    } finally {
+      manager.close();
+    }
+  }
 }

@@ -21,16 +21,6 @@ package com.splout.db.hazelcast;
  * #L%
  */
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import java.net.UnknownHostException;
-
-import org.junit.After;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.Member;
@@ -38,34 +28,41 @@ import com.hazelcast.instance.MemberImpl;
 import com.hazelcast.nio.Address;
 import com.splout.db.common.SploutConfiguration;
 import com.splout.db.hazelcast.HazelcastConfigBuilder.HazelcastConfigBuilderException;
+import org.junit.After;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import java.net.UnknownHostException;
+
+import static org.junit.Assert.*;
 
 public class TestHazelcastUtils {
 
-	@BeforeClass
-	public static void init() throws Exception {
-		Hazelcast.shutdownAll();
-	}
+  @BeforeClass
+  public static void init() throws Exception {
+    Hazelcast.shutdownAll();
+  }
 
-	@After
-	public void cleanup() throws Exception {
-		Hazelcast.shutdownAll();
-	}
+  @After
+  public void cleanup() throws Exception {
+    Hazelcast.shutdownAll();
+  }
 
-	@Test
-	public void testGetHZAddress() throws UnknownHostException  {
-		Member m = new MemberImpl(new Address("127.0.0.1", 123), true);
-		assertEquals("/127.0.0.1:123", HazelcastUtils.getHZAddress(m));
-	}
-	
-	@Test
-	public void testIsOneOfOldestMembers() throws UnknownHostException, HazelcastConfigBuilderException  {
-		HazelcastInstance h1 = Hazelcast.newHazelcastInstance(HazelcastConfigBuilder.build(SploutConfiguration.getTestConfig()));
-		HazelcastInstance h2 = Hazelcast.newHazelcastInstance(HazelcastConfigBuilder.build(SploutConfiguration.getTestConfig()));
-		
-		assertTrue(HazelcastUtils.isOneOfOldestMembers(h1, h1.getCluster().getLocalMember(), 1));
-		assertFalse(HazelcastUtils.isOneOfOldestMembers(h1, h2.getCluster().getLocalMember(), 1));
-		assertTrue(HazelcastUtils.isOneOfOldestMembers(h1, h1.getCluster().getLocalMember(), 2));
-		assertTrue(HazelcastUtils.isOneOfOldestMembers(h1, h2.getCluster().getLocalMember(), 2));
-		assertFalse(HazelcastUtils.isOneOfOldestMembers(h1, h1.getCluster().getLocalMember(), 0));
-	}
+  @Test
+  public void testGetHZAddress() throws UnknownHostException {
+    Member m = new MemberImpl(new Address("127.0.0.1", 123), true);
+    assertEquals("/127.0.0.1:123", HazelcastUtils.getHZAddress(m));
+  }
+
+  @Test
+  public void testIsOneOfOldestMembers() throws UnknownHostException, HazelcastConfigBuilderException {
+    HazelcastInstance h1 = Hazelcast.newHazelcastInstance(HazelcastConfigBuilder.build(SploutConfiguration.getTestConfig()));
+    HazelcastInstance h2 = Hazelcast.newHazelcastInstance(HazelcastConfigBuilder.build(SploutConfiguration.getTestConfig()));
+
+    assertTrue(HazelcastUtils.isOneOfOldestMembers(h1, h1.getCluster().getLocalMember(), 1));
+    assertFalse(HazelcastUtils.isOneOfOldestMembers(h1, h2.getCluster().getLocalMember(), 1));
+    assertTrue(HazelcastUtils.isOneOfOldestMembers(h1, h1.getCluster().getLocalMember(), 2));
+    assertTrue(HazelcastUtils.isOneOfOldestMembers(h1, h2.getCluster().getLocalMember(), 2));
+    assertFalse(HazelcastUtils.isOneOfOldestMembers(h1, h1.getCluster().getLocalMember(), 0));
+  }
 }

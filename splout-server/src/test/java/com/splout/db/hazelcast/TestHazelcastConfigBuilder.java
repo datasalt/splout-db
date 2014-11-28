@@ -30,48 +30,48 @@ import static org.junit.Assert.assertEquals;
 
 public class TestHazelcastConfigBuilder {
 
-	@Test
-	public void testDefaults() throws HazelcastConfigBuilderException {
-		SploutConfiguration config = SploutConfiguration.getTestConfig();
-		HazelcastConfigBuilder.build(config);
-	}
-	
-	@Test
-	public void testUseXML() throws HazelcastConfigBuilderException {
-		SploutConfiguration config = SploutConfiguration.getTestConfig();
-		config.setProperty(HazelcastProperties.USE_DEFAULT_OR_XML_CONFIG, true);
-		HazelcastConfigBuilder.build(config);
-	}
-	
-	@Test
-	public void testAWS() throws HazelcastConfigBuilderException {
-		SploutConfiguration config = SploutConfiguration.getTestConfig();
-		config.setProperty(HazelcastProperties.JOIN_METHOD, "aws");
-		config.setProperty(HazelcastProperties.AWS_KEY, "key");
-		config.setProperty(HazelcastProperties.AWS_SECRET, "secret");
-		config.setProperty(HazelcastProperties.AWS_SECURITY_GROUP, "sgroup");
-		
-		Config cfg = HazelcastConfigBuilder.build(config);
-		
-		assertEquals(true, cfg.getNetworkConfig().getJoin().getAwsConfig().isEnabled());
-		assertEquals("key", cfg.getNetworkConfig().getJoin().getAwsConfig().getAccessKey());
-		assertEquals("secret", cfg.getNetworkConfig().getJoin().getAwsConfig().getSecretKey());
-		assertEquals("sgroup", cfg.getNetworkConfig().getJoin().getAwsConfig().getSecurityGroupName());
-	}
-	
-	@Test
-	public void testMulticast() throws HazelcastConfigBuilderException {
-		SploutConfiguration config = SploutConfiguration.getTestConfig();
-		config.setProperty(HazelcastProperties.JOIN_METHOD, "multicast");
-		config.setProperty(HazelcastProperties.MULTICAST_PORT, "5432");
-		config.setProperty(HazelcastProperties.MULTICAST_GROUP, "mgroup");
-		
-		Config cfg = HazelcastConfigBuilder.build(config);
-		
-		assertEquals(true, cfg.getNetworkConfig().getJoin().getMulticastConfig().isEnabled());
-		assertEquals("mgroup", cfg.getNetworkConfig().getJoin().getMulticastConfig().getMulticastGroup());
-		assertEquals(5432, cfg.getNetworkConfig().getJoin().getMulticastConfig().getMulticastPort());
-	}
+  @Test
+  public void testDefaults() throws HazelcastConfigBuilderException {
+    SploutConfiguration config = SploutConfiguration.getTestConfig();
+    HazelcastConfigBuilder.build(config);
+  }
+
+  @Test
+  public void testUseXML() throws HazelcastConfigBuilderException {
+    SploutConfiguration config = SploutConfiguration.getTestConfig();
+    config.setProperty(HazelcastProperties.USE_DEFAULT_OR_XML_CONFIG, true);
+    HazelcastConfigBuilder.build(config);
+  }
+
+  @Test
+  public void testAWS() throws HazelcastConfigBuilderException {
+    SploutConfiguration config = SploutConfiguration.getTestConfig();
+    config.setProperty(HazelcastProperties.JOIN_METHOD, "aws");
+    config.setProperty(HazelcastProperties.AWS_KEY, "key");
+    config.setProperty(HazelcastProperties.AWS_SECRET, "secret");
+    config.setProperty(HazelcastProperties.AWS_SECURITY_GROUP, "sgroup");
+
+    Config cfg = HazelcastConfigBuilder.build(config);
+
+    assertEquals(true, cfg.getNetworkConfig().getJoin().getAwsConfig().isEnabled());
+    assertEquals("key", cfg.getNetworkConfig().getJoin().getAwsConfig().getAccessKey());
+    assertEquals("secret", cfg.getNetworkConfig().getJoin().getAwsConfig().getSecretKey());
+    assertEquals("sgroup", cfg.getNetworkConfig().getJoin().getAwsConfig().getSecurityGroupName());
+  }
+
+  @Test
+  public void testMulticast() throws HazelcastConfigBuilderException {
+    SploutConfiguration config = SploutConfiguration.getTestConfig();
+    config.setProperty(HazelcastProperties.JOIN_METHOD, "multicast");
+    config.setProperty(HazelcastProperties.MULTICAST_PORT, "5432");
+    config.setProperty(HazelcastProperties.MULTICAST_GROUP, "mgroup");
+
+    Config cfg = HazelcastConfigBuilder.build(config);
+
+    assertEquals(true, cfg.getNetworkConfig().getJoin().getMulticastConfig().isEnabled());
+    assertEquals("mgroup", cfg.getNetworkConfig().getJoin().getMulticastConfig().getMulticastGroup());
+    assertEquals(5432, cfg.getNetworkConfig().getJoin().getMulticastConfig().getMulticastPort());
+  }
 
   @Test
   public void testBulkHazelcastPropertiesLoading() throws HazelcastConfigBuilderException {

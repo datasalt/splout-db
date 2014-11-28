@@ -5,34 +5,23 @@
  */
 package com.splout.db.thrift;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.EnumMap;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.EnumSet;
-import java.util.Collections;
-import java.util.BitSet;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.*;
 
 public class RollbackAction implements org.apache.thrift.TBase<RollbackAction, RollbackAction._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("RollbackAction");
 
-  private static final org.apache.thrift.protocol.TField TABLESPACE_FIELD_DESC = new org.apache.thrift.protocol.TField("tablespace", org.apache.thrift.protocol.TType.STRING, (short)1);
-  private static final org.apache.thrift.protocol.TField VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("version", org.apache.thrift.protocol.TType.I64, (short)2);
+  private static final org.apache.thrift.protocol.TField TABLESPACE_FIELD_DESC = new org.apache.thrift.protocol.TField("tablespace", org.apache.thrift.protocol.TType.STRING, (short) 1);
+  private static final org.apache.thrift.protocol.TField VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("version", org.apache.thrift.protocol.TType.I64, (short) 2);
 
   public String tablespace; // required
   public long version; // required
 
-  /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+  /**
+   * The set of fields this struct contains, along with convenience methods for finding and manipulating them.
+   */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-    TABLESPACE((short)1, "tablespace"),
-    VERSION((short)2, "version");
+    TABLESPACE((short) 1, "tablespace"),
+    VERSION((short) 2, "version");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -46,7 +35,7 @@ public class RollbackAction implements org.apache.thrift.TBase<RollbackAction, R
      * Find the _Fields constant that matches fieldId, or null if its not found.
      */
     public static _Fields findByThriftId(int fieldId) {
-      switch(fieldId) {
+      switch (fieldId) {
         case 1: // TABLESPACE
           return TABLESPACE;
         case 2: // VERSION
@@ -95,11 +84,12 @@ public class RollbackAction implements org.apache.thrift.TBase<RollbackAction, R
   private BitSet __isset_bit_vector = new BitSet(1);
 
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.TABLESPACE, new org.apache.thrift.meta_data.FieldMetaData("tablespace", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.TABLESPACE, new org.apache.thrift.meta_data.FieldMetaData("tablespace", org.apache.thrift.TFieldRequirementType.DEFAULT,
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.VERSION, new org.apache.thrift.meta_data.FieldMetaData("version", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.VERSION, new org.apache.thrift.meta_data.FieldMetaData("version", org.apache.thrift.TFieldRequirementType.DEFAULT,
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(RollbackAction.class, metaDataMap);
@@ -109,9 +99,8 @@ public class RollbackAction implements org.apache.thrift.TBase<RollbackAction, R
   }
 
   public RollbackAction(
-    String tablespace,
-    long version)
-  {
+      String tablespace,
+      long version) {
     this();
     this.tablespace = tablespace;
     this.version = version;
@@ -154,7 +143,9 @@ public class RollbackAction implements org.apache.thrift.TBase<RollbackAction, R
     this.tablespace = null;
   }
 
-  /** Returns true if field tablespace is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field tablespace is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetTablespace() {
     return this.tablespace != null;
   }
@@ -179,7 +170,9 @@ public class RollbackAction implements org.apache.thrift.TBase<RollbackAction, R
     __isset_bit_vector.clear(__VERSION_ISSET_ID);
   }
 
-  /** Returns true if field version is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field version is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetVersion() {
     return __isset_bit_vector.get(__VERSION_ISSET_ID);
   }
@@ -190,48 +183,50 @@ public class RollbackAction implements org.apache.thrift.TBase<RollbackAction, R
 
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
-    case TABLESPACE:
-      if (value == null) {
-        unsetTablespace();
-      } else {
-        setTablespace((String)value);
-      }
-      break;
+      case TABLESPACE:
+        if (value == null) {
+          unsetTablespace();
+        } else {
+          setTablespace((String) value);
+        }
+        break;
 
-    case VERSION:
-      if (value == null) {
-        unsetVersion();
-      } else {
-        setVersion((Long)value);
-      }
-      break;
+      case VERSION:
+        if (value == null) {
+          unsetVersion();
+        } else {
+          setVersion((Long) value);
+        }
+        break;
 
     }
   }
 
   public Object getFieldValue(_Fields field) {
     switch (field) {
-    case TABLESPACE:
-      return getTablespace();
+      case TABLESPACE:
+        return getTablespace();
 
-    case VERSION:
-      return Long.valueOf(getVersion());
+      case VERSION:
+        return Long.valueOf(getVersion());
 
     }
     throw new IllegalStateException();
   }
 
-  /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+   */
   public boolean isSet(_Fields field) {
     if (field == null) {
       throw new IllegalArgumentException();
     }
 
     switch (field) {
-    case TABLESPACE:
-      return isSetTablespace();
-    case VERSION:
-      return isSetVersion();
+      case TABLESPACE:
+        return isSetTablespace();
+      case VERSION:
+        return isSetVersion();
     }
     throw new IllegalStateException();
   }
@@ -241,7 +236,7 @@ public class RollbackAction implements org.apache.thrift.TBase<RollbackAction, R
     if (that == null)
       return false;
     if (that instanceof RollbackAction)
-      return this.equals((RollbackAction)that);
+      return this.equals((RollbackAction) that);
     return false;
   }
 
@@ -281,7 +276,7 @@ public class RollbackAction implements org.apache.thrift.TBase<RollbackAction, R
     }
 
     int lastComparison = 0;
-    RollbackAction typedOther = (RollbackAction)other;
+    RollbackAction typedOther = (RollbackAction) other;
 
     lastComparison = Boolean.valueOf(isSetTablespace()).compareTo(typedOther.isSetTablespace());
     if (lastComparison != 0) {
@@ -313,17 +308,16 @@ public class RollbackAction implements org.apache.thrift.TBase<RollbackAction, R
   public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
     org.apache.thrift.protocol.TField field;
     iprot.readStructBegin();
-    while (true)
-    {
+    while (true) {
       field = iprot.readFieldBegin();
-      if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+      if (field.type == org.apache.thrift.protocol.TType.STOP) {
         break;
       }
       switch (field.id) {
         case 1: // TABLESPACE
           if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.tablespace = iprot.readString();
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
@@ -331,7 +325,7 @@ public class RollbackAction implements org.apache.thrift.TBase<RollbackAction, R
           if (field.type == org.apache.thrift.protocol.TType.I64) {
             this.version = iprot.readI64();
             setVersionIsSet(true);
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;

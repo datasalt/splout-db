@@ -20,13 +20,13 @@ package com.splout.db.hadoop;
  * #L%
  */
 
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.datasalt.pangool.io.ITuple;
+import com.datasalt.pangool.tuplemr.MapOnlyJobBuilder;
+import com.datasalt.pangool.tuplemr.MultipleOutputsCollector;
+import com.datasalt.pangool.tuplemr.mapred.MapOnlyMapper;
+import com.datasalt.pangool.tuplemr.mapred.lib.output.HadoopOutputFormat;
+import com.datasalt.pangool.utils.TaskAttemptContextFactory;
+import com.splout.db.common.PartitionMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -36,25 +36,17 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.Counter;
-import org.apache.hadoop.mapreduce.InputFormat;
-import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.RecordReader;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.TaskAttemptID;
-import org.apache.hadoop.mapreduce.TaskID;
+import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.mockito.Mockito;
 
-import com.datasalt.pangool.io.ITuple;
-import com.datasalt.pangool.tuplemr.MapOnlyJobBuilder;
-import com.datasalt.pangool.tuplemr.MultipleOutputsCollector;
-import com.datasalt.pangool.tuplemr.mapred.MapOnlyMapper;
-import com.datasalt.pangool.tuplemr.mapred.lib.output.HadoopOutputFormat;
-import com.datasalt.pangool.utils.TaskAttemptContextFactory;
-import com.splout.db.common.PartitionMap;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This class samples a list of {@link TableInput} files that produce a certain Table Schema. There are two sampling
@@ -67,73 +59,73 @@ import com.splout.db.common.PartitionMap;
  * Sampling can be used by {@link TablespaceGenerator} for determining a {@link PartitionMap} based on the approximated
  * distribution of the keys.
  */
-@SuppressWarnings({ "serial", "rawtypes" })
+@SuppressWarnings({"serial", "rawtypes"})
 public class TupleSampler implements Serializable {
 
-	private final static Log logger = LogFactory.getLog(TupleSampler.class);
+  private final static Log logger = LogFactory.getLog(TupleSampler.class);
 
-	private final SamplingType samplingType;
-	private final SamplingOptions options;
-	private Class callingClass;
-	
-	public enum SamplingType {
+  private final SamplingType samplingType;
+  private final SamplingOptions options;
+  private Class callingClass;
+
+  public enum SamplingType {
     FULL_SCAN, RANDOM
-	}
+  }
 
-	public static class TupleSamplerException extends Exception {
+  public static class TupleSamplerException extends Exception {
 
-		public TupleSamplerException(String reason) {
-			super(reason);
-		}
+    public TupleSamplerException(String reason) {
+      super(reason);
+    }
 
-		public TupleSamplerException(Exception e) {
-			super(e);
-		}
+    public TupleSamplerException(Exception e) {
+      super(e);
+    }
 
     public TupleSamplerException(String message, Throwable cause) {
       super(message, cause);
     }
   }
 
-	// Each sampling algorithm may have its own options but there are some which are common to both
-	public static abstract class SamplingOptions extends HashMap<String, Object> {
+  // Each sampling algorithm may have its own options but there are some which are common to both
+  public static abstract class SamplingOptions extends HashMap<String, Object> {
 
-		public Long getMaxInputSplitSize() {
-			return (Long) this.get("maxInputSplitSize");
-		}
+    public Long getMaxInputSplitSize() {
+      return (Long) this.get("maxInputSplitSize");
+    }
 
-		public void setMaxInputSplitSize(Long maxInputSplitSize) {
-			this.put("maxInputSplitSize", maxInputSplitSize);
-		}
-	}
+    public void setMaxInputSplitSize(Long maxInputSplitSize) {
+      this.put("maxInputSplitSize", maxInputSplitSize);
+    }
+  }
 
-	// Options for RANDOM sampling
-	public static class RandomSamplingOptions extends SamplingOptions {
+  // Options for RANDOM sampling
+  public static class RandomSamplingOptions extends SamplingOptions {
 
-		public RandomSamplingOptions() {
-			super();
-			setMaxSplitsToVisit(1000);
-		}
+    public RandomSamplingOptions() {
+      super();
+      setMaxSplitsToVisit(1000);
+    }
 
-		public int getMaxSplitsToVisit() {
-			return (Integer) this.get("maxSplitsToVisit");
-		}
+    public int getMaxSplitsToVisit() {
+      return (Integer) this.get("maxSplitsToVisit");
+    }
 
-		public void setMaxSplitsToVisit(int maxSplitsToVisit) {
-			this.put("maxSplitsToVisit", maxSplitsToVisit);
-		}
-	}
+    public void setMaxSplitsToVisit(int maxSplitsToVisit) {
+      this.put("maxSplitsToVisit", maxSplitsToVisit);
+    }
+  }
 
-	// Options for FULLSCAN sampling
-	public static class FullScanSamplingOptions extends SamplingOptions {
-		
-	}
-	
-	public TupleSampler(SamplingType samplingType, SamplingOptions options, Class callingClass) {
-		this.samplingType = samplingType;
-		this.options = options;
-		this.callingClass = callingClass;
-	}
+  // Options for FULLSCAN sampling
+  public static class FullScanSamplingOptions extends SamplingOptions {
+
+  }
+
+  public TupleSampler(SamplingType samplingType, SamplingOptions options, Class callingClass) {
+    this.samplingType = samplingType;
+    this.options = options;
+    this.callingClass = callingClass;
+  }
 
   public long sample(TablespaceSpec tablespace, Configuration hadoopConf,
                      long sampleSize, Path outFile) throws TupleSamplerException {
@@ -148,7 +140,7 @@ public class TupleSampler implements Serializable {
     Map<InputSplit, JavascriptEngine> splitToJsEngine = new HashMap<InputSplit, JavascriptEngine>();
 
     try {
-      for(Table table : tablespace.getPartitionedTables()) {
+      for (Table table : tablespace.getPartitionedTables()) {
 
         // Initialize JavaScript engine if needed
         JavascriptEngine jsEngine = null;
@@ -156,30 +148,30 @@ public class TupleSampler implements Serializable {
         if (tableSpec.getPartitionByJavaScript() != null) {
           try {
             jsEngine = new JavascriptEngine(tableSpec.getPartitionByJavaScript());
-          } catch(Throwable e) {
+          } catch (Throwable e) {
             throw new RuntimeException(e);
           }
         }
 
-        for(TableInput tableFile : table.getFiles()) {
+        for (TableInput tableFile : table.getFiles()) {
           Job job = new Job(hadoopConf);
           FileInputFormat.setInputPaths(job, tableFile.getPaths());
-          if(options.getMaxInputSplitSize() != null) {
+          if (options.getMaxInputSplitSize() != null) {
             logger.info("Using max input split size: " + options.getMaxInputSplitSize());
             FileInputFormat.setMaxInputSplitSize(job, options.getMaxInputSplitSize());
           }
           job.setInputFormatClass(FileInputFormat.class);
 
 
-          if(tableFile.getSpecificHadoopInputFormatContext() != null) {
-            for(Map.Entry<String, String> specificHadoopConf : tableFile
+          if (tableFile.getSpecificHadoopInputFormatContext() != null) {
+            for (Map.Entry<String, String> specificHadoopConf : tableFile
                 .getSpecificHadoopInputFormatContext().entrySet()) {
               job.getConfiguration().set(specificHadoopConf.getKey(), specificHadoopConf.getValue());
             }
           }
 
-          for(InputSplit split : tableFile.getFormat().getSplits(job)) {
-            if(tableFile.getSpecificHadoopInputFormatContext() != null) {
+          for (InputSplit split : tableFile.getFormat().getSplits(job)) {
+            if (tableFile.getSpecificHadoopInputFormatContext() != null) {
               specificHadoopConfMap.put(split, tableFile.getSpecificHadoopInputFormatContext());
             }
             splitToFormat.put(split, tableFile.getFormat());
@@ -192,7 +184,7 @@ public class TupleSampler implements Serializable {
       }
 
       long retrievedSamples;
-      if(samplingType.equals(SamplingType.RANDOM)) {
+      if (samplingType.equals(SamplingType.RANDOM)) {
         try {
           RandomSamplingOptions defOptions = (RandomSamplingOptions) options;
           // Default sampling method
@@ -207,7 +199,7 @@ public class TupleSampler implements Serializable {
               recordProcessorPerSplit,
               splitToJsEngine,
               defOptions.getMaxSplitsToVisit());
-        } catch(ClassCastException ef) {
+        } catch (ClassCastException ef) {
           throw new RuntimeException("Invalid options class: " + options.getClass() + " Expected:"
               + RandomSamplingOptions.class);
         }
@@ -225,27 +217,27 @@ public class TupleSampler implements Serializable {
   }
 
 
-	/*
-	 * Reservoir sampling that scans the full dataset to get the samples
-	 * that are used for calculate the partition map. Based on
-	 * http://en.wikipedia.org/wiki/Reservoir_sampling.
-	 *
-	 * Writes a SequenceFile with Text, NullWritable. The key
-	 * contains the strings to be used for the partitioning.
-	 *
-	 * @return The number of samples retrieved
-	 */
-	private long fullScanSampling(TablespaceSpec tablespace, final long sampleSize, Configuration hadoopConf,
+  /*
+   * Reservoir sampling that scans the full dataset to get the samples
+   * that are used for calculate the partition map. Based on
+   * http://en.wikipedia.org/wiki/Reservoir_sampling.
+   *
+   * Writes a SequenceFile with Text, NullWritable. The key
+   * contains the strings to be used for the partitioning.
+   *
+   * @return The number of samples retrieved
+   */
+  private long fullScanSampling(TablespaceSpec tablespace, final long sampleSize, Configuration hadoopConf,
                                 Path outputPath, final int nSplits) throws TupleSamplerException {
 
-		MapOnlyJobBuilder builder = new MapOnlyJobBuilder(hadoopConf, "Reservoir Sampling to path " + outputPath);
+    MapOnlyJobBuilder builder = new MapOnlyJobBuilder(hadoopConf, "Reservoir Sampling to path " + outputPath);
 
-    for(Table table : tablespace.getPartitionedTables()) {
+    for (Table table : tablespace.getPartitionedTables()) {
       final TableSpec tableSpec = table.getTableSpec();
       final String getPartitionByJavaScript = tableSpec.getPartitionByJavaScript();
-      for(TableInput inputFile : table.getFiles()) {
+      for (TableInput inputFile : table.getFiles()) {
         final RecordProcessor processor = inputFile.getRecordProcessor();
-        for(Path path : inputFile.getPaths()) {
+        for (Path path : inputFile.getPaths()) {
           builder.addInput(path, inputFile.getFormat(),
               new MapOnlyMapper<ITuple, NullWritable, Text, NullWritable>() {
 
@@ -265,11 +257,13 @@ public class TupleSampler implements Serializable {
                   if (getPartitionByJavaScript != null) {
                     try {
                       jsEngine = new JavascriptEngine(getPartitionByJavaScript);
-                    } catch(Throwable e) {
+                    } catch (Throwable e) {
                       throw new RuntimeException(e);
                     }
                   }
-                };
+                }
+
+                ;
 
                 // Collect Tuples with decreasing probability
                 // (http://en.wikipedia.org/wiki/Reservoir_sampling)
@@ -278,21 +272,21 @@ public class TupleSampler implements Serializable {
                   ITuple uTuple;
                   try {
                     uTuple = processor.process(key, counterInterface);
-                  } catch(Throwable e) {
+                  } catch (Throwable e) {
                     throw new RuntimeException(e);
                   }
-                  if(uTuple == null) { // user may have filtered the record
+                  if (uTuple == null) { // user may have filtered the record
                     return;
                   }
 
                   long reservoirIndex;
-                  if(recordCounter < nSamples) {
+                  if (recordCounter < nSamples) {
                     reservoirIndex = recordCounter;
                   } else {
                     reservoirIndex = (long) (Math.random() * recordCounter);
                   }
 
-                  if(reservoirIndex < nSamples) {
+                  if (reservoirIndex < nSamples) {
                     String pkey = null;
                     try {
                       pkey = TablespaceGenerator.getPartitionByKey(
@@ -312,8 +306,8 @@ public class TupleSampler implements Serializable {
                 protected void cleanup(Context context, MultipleOutputsCollector coll) throws IOException,
                     InterruptedException {
                   Text key = new Text();
-                  for(String keyStr : samples) {
-                    if(keyStr != null) {
+                  for (String keyStr : samples) {
+                    if (keyStr != null) {
                       key.set(keyStr);
                       context.write(key, NullWritable.get());
                     }
@@ -323,25 +317,25 @@ public class TupleSampler implements Serializable {
         }
       }
     }
-		// Set output path
-		Path outReservoirPath = new Path(outputPath + "-reservoir");
-		builder.setOutput(
+    // Set output path
+    Path outReservoirPath = new Path(outputPath + "-reservoir");
+    builder.setOutput(
         outReservoirPath,
         new HadoopOutputFormat(SequenceFileOutputFormat.class),
         Text.class,
         NullWritable.class);
-		builder.setJarByClass(callingClass);
+    builder.setJarByClass(callingClass);
 
-		try {
+    try {
       Job job = null;
       job = builder.createJob();
 
-      if(!job.waitForCompletion(true)) {
-				throw new TupleSamplerException("Reservoir Sampling failed!");
-			}
-		} catch (Exception e) {
+      if (!job.waitForCompletion(true)) {
+        throw new TupleSamplerException("Reservoir Sampling failed!");
+      }
+    } catch (Exception e) {
       throw new TupleSamplerException("Error creating or launching the sampling job.", e);
-    }finally {
+    } finally {
       try {
         builder.cleanUpInstanceFiles();
       } catch (IOException e) {
@@ -351,8 +345,8 @@ public class TupleSampler implements Serializable {
 
     long retrievedSamples = 0;
     try {
-		  FileSystem outFs = outReservoirPath.getFileSystem(hadoopConf);
-      if(outFs.listStatus(outReservoirPath) == null) {
+      FileSystem outFs = outReservoirPath.getFileSystem(hadoopConf);
+      if (outFs.listStatus(outReservoirPath) == null) {
         throw new IOException("Output folder not created: the Job failed!");
       }
 
@@ -362,14 +356,14 @@ public class TupleSampler implements Serializable {
           Text.class, NullWritable.class);
 
       // Aggregate the output into a single file for being consistent with the other sampling methods
-      for(FileStatus fileStatus : outFs.listStatus(outReservoirPath)) {
+      for (FileStatus fileStatus : outFs.listStatus(outReservoirPath)) {
         Path thisPath = fileStatus.getPath();
-        if(thisPath.getName().startsWith("part-m-")) {
+        if (thisPath.getName().startsWith("part-m-")) {
           SequenceFile.Reader reader = new SequenceFile.Reader(outFs, thisPath, hadoopConf);
           Text key = new Text();
-          while(reader.next(key)) {
+          while (reader.next(key)) {
             writer.append(key, NullWritable.get());
-            retrievedSamples ++;
+            retrievedSamples++;
           }
           reader.close();
         }
@@ -382,16 +376,16 @@ public class TupleSampler implements Serializable {
     }
 
     return retrievedSamples;
-	}
+  }
 
-	/**
-	 * Random sampling method a-la-TeraSort, getting some consecutive samples from each InputSplit
-	 * without using a Job.
-	 * The output is SequenceFile with keys.
+  /**
+   * Random sampling method a-la-TeraSort, getting some consecutive samples from each InputSplit
+   * without using a Job.
+   * The output is SequenceFile with keys.
    *
    * @return The number of retrieved samples
-	 */
-	private long randomSampling(long sampleSize, Configuration hadoopConf,
+   */
+  private long randomSampling(long sampleSize, Configuration hadoopConf,
                               Path outFile, List<InputSplit> splits,
                               Map<InputSplit, TableSpec> splitToTableSpec,
                               Map<InputSplit, InputFormat<ITuple, NullWritable>> splitToFormat,
@@ -400,34 +394,36 @@ public class TupleSampler implements Serializable {
                               Map<InputSplit, JavascriptEngine> splitToJsEngine,
                               int maxSplitsToVisit) throws IOException {
 
-		// Instantiate the writer we will write samples to
-		FileSystem fs = FileSystem.get(outFile.toUri(), hadoopConf);
+    // Instantiate the writer we will write samples to
+    FileSystem fs = FileSystem.get(outFile.toUri(), hadoopConf);
 
-		if(splits.size() == 0) {
-			throw new IllegalArgumentException("There are no splits to sample from!");
-		}
+    if (splits.size() == 0) {
+      throw new IllegalArgumentException("There are no splits to sample from!");
+    }
 
     SequenceFile.Writer writer = new SequenceFile.Writer(fs, hadoopConf, outFile, Text.class, NullWritable.class);
 
-		logger.info("Sequential sampling options, max splits to visit: " + maxSplitsToVisit
-		    + ", samples to take: " + sampleSize + ", total number of splits: " + splits.size());
-		int blocks = Math.min(maxSplitsToVisit, splits.size());
-		blocks = Math.min((int) sampleSize, blocks);
-		long recordsPerSample = sampleSize / blocks;
-		int sampleStep = splits.size() / blocks;
+    logger.info("Sequential sampling options, max splits to visit: " + maxSplitsToVisit
+        + ", samples to take: " + sampleSize + ", total number of splits: " + splits.size());
+    int blocks = Math.min(maxSplitsToVisit, splits.size());
+    blocks = Math.min((int) sampleSize, blocks);
+    long recordsPerSample = sampleSize / blocks;
+    int sampleStep = splits.size() / blocks;
 
-		long records = 0;
+    long records = 0;
 
-		CounterInterface counterInterface = new CounterInterface(null) {
+    CounterInterface counterInterface = new CounterInterface(null) {
 
-			public Counter getCounter(String group, String name) {
-				return Mockito.mock(Counter.class);
-			};
-		};
+      public Counter getCounter(String group, String name) {
+        return Mockito.mock(Counter.class);
+      }
 
-		// Take N samples from different parts of the input
-		for(int i = 0; i < blocks; ++i) {
-			TaskAttemptID attemptId = new TaskAttemptID(new TaskID(), 1);
+      ;
+    };
+
+    // Take N samples from different parts of the input
+    for (int i = 0; i < blocks; ++i) {
+      TaskAttemptID attemptId = new TaskAttemptID(new TaskID(), 1);
 
       TaskAttemptContext attemptContext = null;
       try {
@@ -436,12 +432,12 @@ public class TupleSampler implements Serializable {
         throw new RuntimeException(e);
       }
       InputSplit split = splits.get(sampleStep * i);
-			if(specificHadoopConf.get(split) != null) {
-				for(Map.Entry<String, String> specificConf : specificHadoopConf.get(split).entrySet()) {
-					attemptContext.getConfiguration().set(specificConf.getKey(), specificConf.getValue());
-				}
-			}
-			logger.info("Sampling split: " + split);
+      if (specificHadoopConf.get(split) != null) {
+        for (Map.Entry<String, String> specificConf : specificHadoopConf.get(split).entrySet()) {
+          attemptContext.getConfiguration().set(specificConf.getKey(), specificConf.getValue());
+        }
+      }
+      logger.info("Sampling split: " + split);
       RecordReader<ITuple, NullWritable> reader = null;
       try {
         reader = splitToFormat.get(split).createRecordReader(split,
@@ -450,17 +446,17 @@ public class TupleSampler implements Serializable {
 
         RecordProcessor processor = recordProcessorPerSplit.get(split);
         Text key = new Text();
-        while(reader.nextKeyValue()) {
+        while (reader.nextKeyValue()) {
           //
           ITuple tuple = reader.getCurrentKey();
 
           ITuple uTuple;
           try {
             uTuple = processor.process(tuple, counterInterface);
-          } catch(Throwable e) {
+          } catch (Throwable e) {
             throw new RuntimeException(e);
           }
-          if(uTuple != null) { // user may have filtered the record
+          if (uTuple != null) { // user may have filtered the record
             try {
               key.set(TablespaceGenerator.getPartitionByKey(
                   uTuple,
@@ -472,7 +468,7 @@ public class TupleSampler implements Serializable {
 
             writer.append(key, NullWritable.get());
             records += 1;
-            if((i + 1) * recordsPerSample <= records) {
+            if ((i + 1) * recordsPerSample <= records) {
               break;
             }
           }
@@ -483,7 +479,7 @@ public class TupleSampler implements Serializable {
 
     }
 
-		writer.close();
+    writer.close();
     return records;
-	}
+  }
 }

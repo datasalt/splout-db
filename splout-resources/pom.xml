@@ -1,48 +1,50 @@
 <?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-	<modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>com.splout.db</groupId>
-		<artifactId>splout-top-level</artifactId>
-		<version>0.3.1-SNAPSHOT</version>
-		<relativePath>../pom.xml</relativePath>
-	</parent>
+    <parent>
+        <groupId>com.splout.db</groupId>
+        <artifactId>splout-top-level</artifactId>
+        <version>0.3.1-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
 
-	<groupId>com.splout.db</groupId>
-	<artifactId>splout-resources</artifactId>
+    <groupId>com.splout.db</groupId>
+    <artifactId>splout-resources</artifactId>
 
-	<licenses>
-		<license>
-			<name>Apache License version 2.0</name>
-			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-			<distribution>repo</distribution>
-		</license>
-	</licenses>
+    <licenses>
+        <license>
+            <name>Apache License version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
-	<name>Splout SQL resources</name>
-	<description>Splout is a read only, horizontally scalable SQL database that plays well with Hadoop.</description>
-	<build>
-		<plugins>
-			<plugin>
-				<artifactId>maven-remote-resources-plugin</artifactId>
-				<version>1.4</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>bundle</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<includes>
-						<include>**/*</include>
-					</includes>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+    <name>Splout SQL resources</name>
+    <description>Splout is a read only, horizontally scalable SQL database that plays well with Hadoop.
+    </description>
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-remote-resources-plugin</artifactId>
+                <version>1.4</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>bundle</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <includes>
+                        <include>**/*</include>
+                    </includes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>
 

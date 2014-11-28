@@ -22,18 +22,18 @@ package com.splout.db.engine;
 
 public class RedisEngine extends SploutEngine {
 
-	@Override
+  @Override
   public String getId() {
-	  return "REDIS";
+    return "REDIS";
   }
 
-	@Override
+  @Override
   public String getOutputFormatClass() {
-	  return RedisOutputFormat.class.getName();
+    return RedisOutputFormat.class.getName();
   }
 
-	@Override
+  @Override
   public String getEngineManagerClass() {
-	  return RedisManager.class.getName();
+    return RedisManager.class.getName();
   }
 }

@@ -39,72 +39,72 @@ import static org.junit.Assert.assertEquals;
  */
 public class TestQNodeDNodeDisconnects {
 
-	@After
-	@Before
-	public void cleanUp() throws IOException {
-		TestUtils.cleanUpTmpFolders(this.getClass().getName(), 4);
-	}
+  @After
+  @Before
+  public void cleanUp() throws IOException {
+    TestUtils.cleanUpTmpFolders(this.getClass().getName(), 4);
+  }
 
-	@Test
-	public void test() throws Throwable {
-		final SploutConfiguration config = SploutConfiguration.getTestConfig();
-		final QNodeHandler handler = new QNodeHandler();
-		QNode qnode = TestUtils.getTestQNode(config, handler);
+  @Test
+  public void test() throws Throwable {
+    final SploutConfiguration config = SploutConfiguration.getTestConfig();
+    final QNodeHandler handler = new QNodeHandler();
+    QNode qnode = TestUtils.getTestQNode(config, handler);
 
-		DNodeHandler dNodeHandler1 = new DNodeHandler();
+    DNodeHandler dNodeHandler1 = new DNodeHandler();
 
-		final SploutConfiguration config1 = SploutConfiguration.getTestConfig();
+    final SploutConfiguration config1 = SploutConfiguration.getTestConfig();
 
-		DNode dnode1 = TestUtils.getTestDNode(config1, dNodeHandler1, "dnode-" + this.getClass().getName()
-		    + "-1");
-		final String dnode1Address = dnode1.getAddress();
+    DNode dnode1 = TestUtils.getTestDNode(config1, dNodeHandler1, "dnode-" + this.getClass().getName()
+        + "-1");
+    final String dnode1Address = dnode1.getAddress();
 
-		try {
+    try {
 
-			assertEquals(handler.getDNodeList().size(), 1);
-			// wait until connection pool has been generated
-			new TestUtils.NotWaitingForeverCondition() {
+      assertEquals(handler.getDNodeList().size(), 1);
+      // wait until connection pool has been generated
+      new TestUtils.NotWaitingForeverCondition() {
 
-				@Override
-				public boolean endCondition() {
-					return handler.getContext().getThriftClientCache().get(dnode1Address) != null
-					    && handler.getContext().getThriftClientCache().get(dnode1Address).size() == 40;
-				}
-			}.waitAtMost(20000);
+        @Override
+        public boolean endCondition() {
+          return handler.getContext().getThriftClientCache().get(dnode1Address) != null
+              && handler.getContext().getThriftClientCache().get(dnode1Address).size() == 40;
+        }
+      }.waitAtMost(20000);
 
-			dnode1.stop();
+      dnode1.stop();
 
       final DNode dnodeAux = dnode1;
       new TestUtils.NotWaitingForeverCondition() {
         @Override
         public boolean endCondition() throws Exception {
-          return  handler.getDNodeList().size() == 0 &&
-                  handler.getContext().getThriftClientCache().get(dnodeAux.getAddress()) == null;
+          return handler.getDNodeList().size() == 0 &&
+              handler.getContext().getThriftClientCache().get(dnodeAux.getAddress()) == null;
         }
       }.waitAtMost(20000);
 
-			dnode1 = TestUtils.getTestDNode(config, dNodeHandler1, "dnode-" + this.getClass().getName() + "-2");
+      dnode1 = TestUtils.getTestDNode(config, dNodeHandler1, "dnode-" + this.getClass().getName() + "-2");
 
       new TestUtils.NotWaitingForeverCondition() {
         @Override
         public boolean endCondition() throws Exception {
-          return  handler.getDNodeList().size() == 1;
+          return handler.getDNodeList().size() == 1;
         }
       }.waitAtMost(20000);
 
-			// wait until connection pool has been regenerated
-			new TestUtils.NotWaitingForeverCondition() {
+      // wait until connection pool has been regenerated
+      new TestUtils.NotWaitingForeverCondition() {
 
-				@Override
-				public boolean endCondition() {
-					return handler.getContext().getThriftClientCache().get(dnode1Address) != null
-					    && handler.getContext().getThriftClientCache().get(dnode1Address).size() == 40;
-				}
-			}.waitAtMost(20000);
+        @Override
+        public boolean endCondition() {
+          return handler.getContext().getThriftClientCache().get(dnode1Address) != null
+              && handler.getContext().getThriftClientCache().get(dnode1Address).size() == 40;
+        }
+      }.waitAtMost(20000);
 
-		} finally {
-			dnode1.stop();
-			qnode.close();
-		}
-	}
+    } finally {
+      dnode1.stop();
+      qnode.close();
+    }
+  }
 }

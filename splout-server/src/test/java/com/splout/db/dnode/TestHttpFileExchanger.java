@@ -39,148 +39,154 @@ import static org.junit.Assert.assertEquals;
 
 public class TestHttpFileExchanger {
 
-	public final static String TMP_FILE = "tmp-file-" + TestHttpFileExchanger.class.getName();
-	public final static String TMP_DOWNLOAD_DIR = "tmp-download-" + TestHttpFileExchanger.class.getName();
+  public final static String TMP_FILE = "tmp-file-" + TestHttpFileExchanger.class.getName();
+  public final static String TMP_DOWNLOAD_DIR = "tmp-download-" + TestHttpFileExchanger.class.getName();
 
-	public final static String FOO_CONTENT = "This is a text file. It is not very big, but it is ok for a test. "
-		    + "Specially if we use a small buffer size to try to detect race conditions.";
+  public final static String FOO_CONTENT = "This is a text file. It is not very big, but it is ok for a test. "
+      + "Specially if we use a small buffer size to try to detect race conditions.";
 
   public static final int WAIT_AT_MOST = 15000;
 
-	@Test
-	public void testConcurrentTransfersSameFileNotAllowed() throws Exception {
-		final File fileToSend = new File(TMP_FILE);
+  @Test
+  public void testConcurrentTransfersSameFileNotAllowed() throws Exception {
+    final File fileToSend = new File(TMP_FILE);
 
-		// big file to make it unlikely that several concurrent transfers will not colide.
-		BufferedWriter writer = new BufferedWriter(new FileWriter(fileToSend));
-		for(int i = 0; i < 1000; i++) {
-			writer.write(FOO_CONTENT + "\n");
-		}
+    // big file to make it unlikely that several concurrent transfers will not colide.
+    BufferedWriter writer = new BufferedWriter(new FileWriter(fileToSend));
+    for (int i = 0; i < 1000; i++) {
+      writer.write(FOO_CONTENT + "\n");
+    }
 
-		SploutConfiguration conf = SploutConfiguration.getTestConfig();
-		conf.setProperty(FetcherProperties.DOWNLOAD_BUFFER, 16);
-		conf.setProperty(FetcherProperties.TEMP_DIR, TMP_DOWNLOAD_DIR);
+    SploutConfiguration conf = SploutConfiguration.getTestConfig();
+    conf.setProperty(FetcherProperties.DOWNLOAD_BUFFER, 16);
+    conf.setProperty(FetcherProperties.TEMP_DIR, TMP_DOWNLOAD_DIR);
 
-		final AtomicInteger failed = new AtomicInteger(0);
+    final AtomicInteger failed = new AtomicInteger(0);
 
-		HttpFileExchanger exchanger = new HttpFileExchanger(conf, new ReceiveFileCallback() {
-			@Override
+    HttpFileExchanger exchanger = new HttpFileExchanger(conf, new ReceiveFileCallback() {
+      @Override
       public void onProgress(String tablespace, Integer partition, Long version, File file,
-          long totalSize, long sizeDownloaded) {
+                             long totalSize, long sizeDownloaded) {
       }
-			@Override
+
+      @Override
       public void onFileReceived(String tablespace, Integer partition, Long version, File file) {
       }
-			@Override
+
+      @Override
       public void onBadCRC(String tablespace, Integer partition, Long version, File file) {
       }
-			@Override
+
+      @Override
       public void onError(Throwable t, String tablespace, Integer partition, Long version, File file) {
-				if(t.getMessage().contains("Incoming file already being transferred")) {
-					failed.incrementAndGet();
-				}
-			}
-		});
-		exchanger.init();
-		exchanger.run();
+        if (t.getMessage().contains("Incoming file already being transferred")) {
+          failed.incrementAndGet();
+        }
+      }
+    });
+    exchanger.init();
+    exchanger.run();
 
-		String dnodeHost = conf.getString(DNodeProperties.HOST);
-		int httpPort = conf.getInt(HttpFileExchangerProperties.HTTP_PORT);
+    String dnodeHost = conf.getString(DNodeProperties.HOST);
+    int httpPort = conf.getInt(HttpFileExchangerProperties.HTTP_PORT);
 
-		exchanger.send("t1", 1, 1l, fileToSend, "http://" + dnodeHost + ":" + httpPort, true);
-		exchanger.send("t1", 1, 1l, fileToSend, "http://" + dnodeHost + ":" + httpPort, true);
-		
-		final File downloadedFile = new File(new File(TMP_DOWNLOAD_DIR,
-		    DNodeHandler.getLocalStoragePartitionRelativePath("t1", 1, 1l)), fileToSend.getName());
+    exchanger.send("t1", 1, 1l, fileToSend, "http://" + dnodeHost + ":" + httpPort, true);
+    exchanger.send("t1", 1, 1l, fileToSend, "http://" + dnodeHost + ":" + httpPort, true);
 
-		new TestUtils.NotWaitingForeverCondition() {
+    final File downloadedFile = new File(new File(TMP_DOWNLOAD_DIR,
+        DNodeHandler.getLocalStoragePartitionRelativePath("t1", 1, 1l)), fileToSend.getName());
 
-			@Override
-			public boolean endCondition() {
-				return failed.get() > 0;
-			}
-		}.waitAtMost(WAIT_AT_MOST);
-		
-		new TestUtils.NotWaitingForeverCondition() {
-			@Override
-			public boolean endCondition() {
-				return downloadedFile.exists() && downloadedFile.length() == fileToSend.length();
-			}
-		}.waitAtMost(WAIT_AT_MOST);
-		
-		exchanger.close();
-		exchanger.join();
+    new TestUtils.NotWaitingForeverCondition() {
 
-		fileToSend.delete();
-		downloadedFile.delete();
-		downloadedFile.getParentFile().delete();
-		
-		assertEquals(0, exchanger.getCurrentTransfers().size());
-		assertEquals(1, failed.get());
-		
-		writer.close();
-	}
-	
-	@Test
-	public void test() throws Exception {
-		final File fileToSend = new File(TMP_FILE);
+      @Override
+      public boolean endCondition() {
+        return failed.get() > 0;
+      }
+    }.waitAtMost(WAIT_AT_MOST);
 
-		String fileContents = "This is a text file. It is not very big, but it is ok for a test. "
-		    + "Specially if we use a small buffer size to try to detect race conditions.";
-		Files.write(fileContents.getBytes(), fileToSend);
+    new TestUtils.NotWaitingForeverCondition() {
+      @Override
+      public boolean endCondition() {
+        return downloadedFile.exists() && downloadedFile.length() == fileToSend.length();
+      }
+    }.waitAtMost(WAIT_AT_MOST);
 
-		SploutConfiguration conf = SploutConfiguration.getTestConfig();
-		conf.setProperty(FetcherProperties.DOWNLOAD_BUFFER, 16);
-		conf.setProperty(FetcherProperties.TEMP_DIR, TMP_DOWNLOAD_DIR);
+    exchanger.close();
+    exchanger.join();
 
-		final AtomicBoolean receivedOk = new AtomicBoolean(false);
+    fileToSend.delete();
+    downloadedFile.delete();
+    downloadedFile.getParentFile().delete();
 
-		HttpFileExchanger exchanger = new HttpFileExchanger(conf, new ReceiveFileCallback() {
-			@Override
+    assertEquals(0, exchanger.getCurrentTransfers().size());
+    assertEquals(1, failed.get());
+
+    writer.close();
+  }
+
+  @Test
+  public void test() throws Exception {
+    final File fileToSend = new File(TMP_FILE);
+
+    String fileContents = "This is a text file. It is not very big, but it is ok for a test. "
+        + "Specially if we use a small buffer size to try to detect race conditions.";
+    Files.write(fileContents.getBytes(), fileToSend);
+
+    SploutConfiguration conf = SploutConfiguration.getTestConfig();
+    conf.setProperty(FetcherProperties.DOWNLOAD_BUFFER, 16);
+    conf.setProperty(FetcherProperties.TEMP_DIR, TMP_DOWNLOAD_DIR);
+
+    final AtomicBoolean receivedOk = new AtomicBoolean(false);
+
+    HttpFileExchanger exchanger = new HttpFileExchanger(conf, new ReceiveFileCallback() {
+      @Override
       public void onProgress(String tablespace, Integer partition, Long version, File file,
-          long totalSize, long sizeDownloaded) {
+                             long totalSize, long sizeDownloaded) {
       }
-			@Override
+
+      @Override
       public void onFileReceived(String tablespace, Integer partition, Long version, File file) {
-				receivedOk.set(true);
+        receivedOk.set(true);
       }
-			@Override
+
+      @Override
       public void onBadCRC(String tablespace, Integer partition, Long version, File file) {
       }
-			@Override
+
+      @Override
       public void onError(Throwable t, String tablespace, Integer partition, Long version, File file) {
-			}
-		});
-		exchanger.init();
-		exchanger.run();
+      }
+    });
+    exchanger.init();
+    exchanger.run();
 
-		String dnodeHost = conf.getString(DNodeProperties.HOST);
-		int httpPort = conf.getInt(HttpFileExchangerProperties.HTTP_PORT);
+    String dnodeHost = conf.getString(DNodeProperties.HOST);
+    int httpPort = conf.getInt(HttpFileExchangerProperties.HTTP_PORT);
 
-		exchanger.send("t1", 0, 1l, fileToSend, "http://" + dnodeHost + ":" + httpPort, true);
+    exchanger.send("t1", 0, 1l, fileToSend, "http://" + dnodeHost + ":" + httpPort, true);
 
-		final File downloadedFile = new File(new File(TMP_DOWNLOAD_DIR,
-		    DNodeHandler.getLocalStoragePartitionRelativePath("t1", 0, 1l)), fileToSend.getName());
+    final File downloadedFile = new File(new File(TMP_DOWNLOAD_DIR,
+        DNodeHandler.getLocalStoragePartitionRelativePath("t1", 0, 1l)), fileToSend.getName());
 
-		new TestUtils.NotWaitingForeverCondition() {
+    new TestUtils.NotWaitingForeverCondition() {
 
-			@Override
-			public boolean endCondition() {
-				return downloadedFile.exists() && downloadedFile.length() == fileToSend.length();
-			}
-		}.waitAtMost(WAIT_AT_MOST);
+      @Override
+      public boolean endCondition() {
+        return downloadedFile.exists() && downloadedFile.length() == fileToSend.length();
+      }
+    }.waitAtMost(WAIT_AT_MOST);
 
-		Assert.assertEquals(Files.toString(fileToSend, Charset.defaultCharset()),
-		    Files.toString(downloadedFile, Charset.defaultCharset()));
+    Assert.assertEquals(Files.toString(fileToSend, Charset.defaultCharset()),
+        Files.toString(downloadedFile, Charset.defaultCharset()));
 
-		Assert.assertTrue(receivedOk.get());
+    Assert.assertTrue(receivedOk.get());
 
-		exchanger.close();
-		exchanger.join();
+    exchanger.close();
+    exchanger.join();
 
-		fileToSend.delete();
-		assertEquals(0, exchanger.getCurrentTransfers().size());
-		downloadedFile.delete();
-		downloadedFile.getParentFile().delete();
-	}
+    fileToSend.delete();
+    assertEquals(0, exchanger.getCurrentTransfers().size());
+    downloadedFile.delete();
+    downloadedFile.getParentFile().delete();
+  }
 }

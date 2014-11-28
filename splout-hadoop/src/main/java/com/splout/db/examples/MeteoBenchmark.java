@@ -40,104 +40,104 @@ import java.util.Random;
  */
 public class MeteoBenchmark {
 
-	@Parameter(required = true, names = { "-q", "--qnodes" }, description = "Comma-separated list QNode addresses.")
-	private String qNodes;
+  @Parameter(required = true, names = {"-q", "--qnodes"}, description = "Comma-separated list QNode addresses.")
+  private String qNodes;
 
-	@Parameter(names = { "-n", "--niterations" }, description = "The number of iterations for running the benchmark more than once.")
-	private Integer nIterations = 1;
+  @Parameter(names = {"-n", "--niterations"}, description = "The number of iterations for running the benchmark more than once.")
+  private Integer nIterations = 1;
 
-	@Parameter(names = { "-nth", "--nthreads" }, description = "The number of threads to use for the test.")
-	private Integer nThreads = 1;
+  @Parameter(names = {"-nth", "--nthreads"}, description = "The number of threads to use for the test.")
+  private Integer nThreads = 1;
 
-	@Parameter(required = true, names = { "-nq", "--nqueries" }, description = "The number of queries to perform for the benchmark.")
-	private Integer nQueries;
+  @Parameter(required = true, names = {"-nq", "--nqueries"}, description = "The number of queries to perform for the benchmark.")
+  private Integer nQueries;
 
-	@Parameter(required = false, names = { "-m", "--month" }, description = "Perform month queries instead of day ones.")
-	private boolean monthQueries = false;
+  @Parameter(required = false, names = {"-m", "--month"}, description = "Perform month queries instead of day ones.")
+  private boolean monthQueries = false;
 
-	public void start() throws InterruptedException {
-		Map<String, Object> context = new HashMap<String, Object>();
-		context.put("qnodes", qNodes);
-		context.put("month", monthQueries + "");
-		SploutBenchmark benchmark = new SploutBenchmark();
-		for(int i = 0; i < nIterations; i++) {
-			benchmark.stressTest(nThreads, nQueries, MeteoStressThreadImpl.class, context);
-			benchmark.printStats(System.out);
-		}
-	}
+  public void start() throws InterruptedException {
+    Map<String, Object> context = new HashMap<String, Object>();
+    context.put("qnodes", qNodes);
+    context.put("month", monthQueries + "");
+    SploutBenchmark benchmark = new SploutBenchmark();
+    for (int i = 0; i < nIterations; i++) {
+      benchmark.stressTest(nThreads, nQueries, MeteoStressThreadImpl.class, context);
+      benchmark.printStats(System.out);
+    }
+  }
 
-	/**
-	 * Stress thread implementation following convention from {@link com.splout.db.benchmark.SploutBenchmark}.
-	 */
-	public static class MeteoStressThreadImpl extends StressThreadImpl {
+  /**
+   * Stress thread implementation following convention from {@link com.splout.db.benchmark.SploutBenchmark}.
+   */
+  public static class MeteoStressThreadImpl extends StressThreadImpl {
 
-		SploutClient client;
-		final String tablespace = "meteo-pby-stn-wban";
+    SploutClient client;
+    final String tablespace = "meteo-pby-stn-wban";
 
-		ArrayList<Map<String, Integer>> stations;
-		Random rand = new Random();
+    ArrayList<Map<String, Integer>> stations;
+    Random rand = new Random();
 
-		Map<String, Object> context;
+    Map<String, Object> context;
 
-		@SuppressWarnings("unchecked")
-		@Override
-		public void init(Map<String, Object> context) throws Exception {
-			this.context = context;
-			client = new SploutClient(20*1000, ((String)context.get("qnodes")).split(","));
-			String query = "SELECT stn, wban FROM stations";
-			System.out.println("Retrieving stations list");
-			long statTime = System.currentTimeMillis();
-			QueryStatus st = client.query(tablespace, "any", query, null);
-			if(st.getResult() == null) {
-				throw new RuntimeException("Impossible to retrieve stations list. " + st);
-			}
-			stations = st.getResult();
-			System.out.println("Loaded " + stations.size() + " stations in "
-			    + (System.currentTimeMillis() - statTime) + " ms.");
-		}
+    @SuppressWarnings("unchecked")
+    @Override
+    public void init(Map<String, Object> context) throws Exception {
+      this.context = context;
+      client = new SploutClient(20 * 1000, ((String) context.get("qnodes")).split(","));
+      String query = "SELECT stn, wban FROM stations";
+      System.out.println("Retrieving stations list");
+      long statTime = System.currentTimeMillis();
+      QueryStatus st = client.query(tablespace, "any", query, null);
+      if (st.getResult() == null) {
+        throw new RuntimeException("Impossible to retrieve stations list. " + st);
+      }
+      stations = st.getResult();
+      System.out.println("Loaded " + stations.size() + " stations in "
+          + (System.currentTimeMillis() - statTime) + " ms.");
+    }
 
-		@Override
-		public int nextQuery() throws Exception {
-				int rndIdx = rand.nextInt(stations.size());
-				int stn = stations.get(rndIdx).get("stn");
-				int wban = stations.get(rndIdx).get("wban");
-				String query;
-				if(context.get("month").equals("false")) {
-					query = "select year,month,day,min,max from meteo where stn=" + stn + " and wban = " + wban
-					    + " order by year,month,day";
-				} else {
-					query = "select year,month,min(min) as min,max(max) as max from meteo where stn=" + stn
-					    + " and wban=" + wban + " group by year,month order by year,month";
-				}
+    @Override
+    public int nextQuery() throws Exception {
+      int rndIdx = rand.nextInt(stations.size());
+      int stn = stations.get(rndIdx).get("stn");
+      int wban = stations.get(rndIdx).get("wban");
+      String query;
+      if (context.get("month").equals("false")) {
+        query = "select year,month,day,min,max from meteo where stn=" + stn + " and wban = " + wban
+            + " order by year,month,day";
+      } else {
+        query = "select year,month,min(min) as min,max(max) as max from meteo where stn=" + stn
+            + " and wban=" + wban + " group by year,month order by year,month";
+      }
 
-				QueryStatus st = client.query(tablespace, stn + "" + wban, query, null);
-				if(st.getResult() != null) {
-					return st.getResult().size();
-				} else {
-					return 0;
-				}
-		}
-	}
+      QueryStatus st = client.query(tablespace, stn + "" + wban, query, null);
+      if (st.getResult() != null) {
+        return st.getResult().size();
+      } else {
+        return 0;
+      }
+    }
+  }
 
-	public static void main(String[] args) throws InterruptedException {
-		MeteoBenchmark benchmarkTool = new MeteoBenchmark();
+  public static void main(String[] args) throws InterruptedException {
+    MeteoBenchmark benchmarkTool = new MeteoBenchmark();
 
-		JCommander jComm = new JCommander(benchmarkTool);
-		jComm.setProgramName("Meteo Benchmark Tool");
-		try {
-			jComm.parse(args);
-		} catch(ParameterException e) {
-			System.out.println(e.getMessage());
-			System.out.println();
-			jComm.usage();
-			System.exit(-1);
-		} catch(Throwable t) {
-			t.printStackTrace();
-			jComm.usage();
-			System.exit(-1);
-		}
+    JCommander jComm = new JCommander(benchmarkTool);
+    jComm.setProgramName("Meteo Benchmark Tool");
+    try {
+      jComm.parse(args);
+    } catch (ParameterException e) {
+      System.out.println(e.getMessage());
+      System.out.println();
+      jComm.usage();
+      System.exit(-1);
+    } catch (Throwable t) {
+      t.printStackTrace();
+      jComm.usage();
+      System.exit(-1);
+    }
 
-		benchmarkTool.start();
-		System.exit(0);
-	}
+    benchmarkTool.start();
+    System.exit(0);
+  }
 }

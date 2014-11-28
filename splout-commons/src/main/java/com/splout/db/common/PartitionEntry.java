@@ -24,59 +24,59 @@ import java.io.Serializable;
 
 /**
  * An entry in a {@link PartitionMap}. It consists of a min value and a max value, as well as a shard id.
- * [min, max). Min included, max excluded. 
- * 
+ * [min, max). Min included, max excluded.
+ *
  * @see PartitionMap
  */
 @SuppressWarnings("serial")
 public class PartitionEntry extends BaseBean implements Serializable, Comparable<PartitionEntry> {
 
-	public String toString() {
-		return "min:" + min + ",max:" + max + ",shard:" + shard;
-	}
-	
-	String min;
-	String max;
-	Integer shard;
+  public String toString() {
+    return "min:" + min + ",max:" + max + ",shard:" + shard;
+  }
 
-	// ----------------- //
-	public String getMin() {
-		return min;
-	}
+  String min;
+  String max;
+  Integer shard;
 
-	public void setMin(String min) {
-		this.min = min;
-	}
+  // ----------------- //
+  public String getMin() {
+    return min;
+  }
 
-	public String getMax() {
-		return max;
-	}
+  public void setMin(String min) {
+    this.min = min;
+  }
 
-	public void setMax(String max) {
-		this.max = max;
-	}
+  public String getMax() {
+    return max;
+  }
 
-	public Integer getShard() {
-		return shard;
-	}
+  public void setMax(String max) {
+    this.max = max;
+  }
 
-	public void setShard(Integer shard) {
-		this.shard = shard;
-	}
-	
-	@Override
-	public boolean equals(Object obj) {
-		PartitionEntry pEntry = (PartitionEntry)obj;
-		return shard.equals(pEntry.shard);
-	}
-	
-	@Override
-	public int hashCode() {
-	  return shard.hashCode();
-	}
+  public Integer getShard() {
+    return shard;
+  }
 
-	@Override
+  public void setShard(Integer shard) {
+    this.shard = shard;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    PartitionEntry pEntry = (PartitionEntry) obj;
+    return shard.equals(pEntry.shard);
+  }
+
+  @Override
+  public int hashCode() {
+    return shard.hashCode();
+  }
+
+  @Override
   public int compareTo(PartitionEntry pEntry) {
-	  return shard.compareTo(pEntry.shard);
+    return shard.compareTo(pEntry.shard);
   }
 }

@@ -20,26 +20,19 @@ package com.splout.db.hadoop;
  * #L%
  */
 
-import java.io.IOException;
-import java.util.List;
-
+import com.datasalt.pangool.io.ITuple;
+import com.datasalt.pangool.io.Schema;
+import com.datasalt.pangool.utils.TaskAttemptContextFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.mapreduce.InputFormat;
-import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.RecordReader;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.TaskAttemptID;
-import org.apache.hadoop.mapreduce.TaskID;
+import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 
-import com.datasalt.pangool.io.ITuple;
-import com.datasalt.pangool.io.Schema;
-import com.datasalt.pangool.utils.TaskAttemptContextFactory;
+import java.io.IOException;
+import java.util.List;
 
 /**
  * Small piece of code that can sample a Pangool Schema from an arbitrary InputFormat<ITuple, NullWritable>. It just
@@ -47,44 +40,44 @@ import com.datasalt.pangool.utils.TaskAttemptContextFactory;
  */
 public class SchemaSampler {
 
-	private final static Log log = LogFactory.getLog(SchemaSampler.class);
+  private final static Log log = LogFactory.getLog(SchemaSampler.class);
 
-	public static Schema sample(Configuration conf, Path input,
-	    InputFormat<ITuple, NullWritable> inputFormat) throws IOException, InterruptedException {
-		Schema schema = null;
+  public static Schema sample(Configuration conf, Path input,
+                              InputFormat<ITuple, NullWritable> inputFormat) throws IOException, InterruptedException {
+    Schema schema = null;
 
-		// sample schema from input path given the provided InputFormat
-		Job job = new Job(conf);
-		FileInputFormat.setInputPaths(job, input);
-		// get first inputSplit
-		List<InputSplit> inputSplits = inputFormat.getSplits(job);
-		if(inputSplits == null || inputSplits.size() == 0) {
-			throw new IOException(
-			    "Given input format doesn't produce any input split. Can't sample first record. PATH: " + input);
-		}
-		InputSplit inputSplit = inputSplits.get(0);
-		TaskAttemptID attemptId = new TaskAttemptID(new TaskID(), 1);
-		TaskAttemptContext attemptContext;
-		try {
-			attemptContext = TaskAttemptContextFactory.get(conf, attemptId);
-		} catch(Exception e) {
-			throw new IOException(e);
-		}
+    // sample schema from input path given the provided InputFormat
+    Job job = new Job(conf);
+    FileInputFormat.setInputPaths(job, input);
+    // get first inputSplit
+    List<InputSplit> inputSplits = inputFormat.getSplits(job);
+    if (inputSplits == null || inputSplits.size() == 0) {
+      throw new IOException(
+          "Given input format doesn't produce any input split. Can't sample first record. PATH: " + input);
+    }
+    InputSplit inputSplit = inputSplits.get(0);
+    TaskAttemptID attemptId = new TaskAttemptID(new TaskID(), 1);
+    TaskAttemptContext attemptContext;
+    try {
+      attemptContext = TaskAttemptContextFactory.get(conf, attemptId);
+    } catch (Exception e) {
+      throw new IOException(e);
+    }
 
-		RecordReader<ITuple, NullWritable> rReader = inputFormat.createRecordReader(inputSplit,
-		    attemptContext);
-		rReader.initialize(inputSplit, attemptContext);
+    RecordReader<ITuple, NullWritable> rReader = inputFormat.createRecordReader(inputSplit,
+        attemptContext);
+    rReader.initialize(inputSplit, attemptContext);
 
-		if(!rReader.nextKeyValue()) {
-			throw new IOException("Can't read first record of first input split of the given path [" + input
-			    + "].");
-		}
+    if (!rReader.nextKeyValue()) {
+      throw new IOException("Can't read first record of first input split of the given path [" + input
+          + "].");
+    }
 
-		// finally get the sample schema
-		schema = rReader.getCurrentKey().getSchema();
-		log.info("Sampled schema from [" + input + "] : " + schema);
-		rReader.close();
+    // finally get the sample schema
+    schema = rReader.getCurrentKey().getSchema();
+    log.info("Sampled schema from [" + input + "] : " + schema);
+    rReader.close();
 
-		return schema;
-	}
+    return schema;
+  }
 }

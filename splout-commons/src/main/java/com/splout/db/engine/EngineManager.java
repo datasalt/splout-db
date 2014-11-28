@@ -1,9 +1,9 @@
 package com.splout.db.engine;
 
+import org.apache.commons.configuration.Configuration;
+
 import java.io.File;
 import java.util.List;
-
-import org.apache.commons.configuration.Configuration;
 
 /*
  * #%L
@@ -30,30 +30,30 @@ import org.apache.commons.configuration.Configuration;
  */
 public interface EngineManager {
 
-	@SuppressWarnings("serial")
-	public static class EngineException extends Exception {
+  @SuppressWarnings("serial")
+  public static class EngineException extends Exception {
 
-		public EngineException(Throwable underlying) {
-			super(underlying);
-		}
+    public EngineException(Throwable underlying) {
+      super(underlying);
+    }
 
-		public EngineException(String message, Throwable underlying) {
-			super(message, underlying);
-		}
-	}
+    public EngineException(String message, Throwable underlying) {
+      super(message, underlying);
+    }
+  }
 
-	public void init(File dbFile, Configuration config, List<String> initStatements) throws EngineException;
-	
-	/**
-	 * SQL command, returning JSON object status result. This is implementation-dependent with no particular constraints.
-	 */
-	public String exec(String query) throws EngineException;
+  public void init(File dbFile, Configuration config, List<String> initStatements) throws EngineException;
 
-	/**
-	 * SQL query, returning JSON result (see {@link JDBCManager.#convertResultSetToList(java.sql.ResultSet, int)}) as an
-	 * example. This should be implementation-independent. It should return a JSONized List<Map<String, Object>>.
-	 */
-	public String query(String query, int maxResults) throws EngineException;
+  /**
+   * SQL command, returning JSON object status result. This is implementation-dependent with no particular constraints.
+   */
+  public String exec(String query) throws EngineException;
 
-	public void close();
+  /**
+   * SQL query, returning JSON result (see {@link JDBCManager.#convertResultSetToList(java.sql.ResultSet, int)}) as an
+   * example. This should be implementation-independent. It should return a JSONized List<Map<String, Object>>.
+   */
+  public String query(String query, int maxResults) throws EngineException;
+
+  public void close();
 }

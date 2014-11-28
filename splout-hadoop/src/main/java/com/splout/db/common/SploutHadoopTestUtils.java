@@ -30,18 +30,18 @@ import com.datasalt.pangool.io.Tuple;
  */
 public class SploutHadoopTestUtils {
 
-	/**
-	 * A simple Pangool Schema called "tablespace1" made up by a string and an integer
-	 */
-	public final static Schema SCHEMA = new Schema("tablespace1", Fields.parse("id:string, value:int"));
-	
-	/**
-	 * Returns a Tuple conforming to a simple schema: {@link #SCHEMA}.
-	 */
-	public static ITuple getTuple(String id, int value) {
-		ITuple tuple = new Tuple(SCHEMA);
-		tuple.set("id", id);
-		tuple.set("value", value);
-		return tuple;
-	}
+  /**
+   * A simple Pangool Schema called "tablespace1" made up by a string and an integer
+   */
+  public final static Schema SCHEMA = new Schema("tablespace1", Fields.parse("id:string, value:int"));
+
+  /**
+   * Returns a Tuple conforming to a simple schema: {@link #SCHEMA}.
+   */
+  public static ITuple getTuple(String id, int value) {
+    ITuple tuple = new Tuple(SCHEMA);
+    tuple.set("id", id);
+    tuple.set("value", value);
+    return tuple;
+  }
 }

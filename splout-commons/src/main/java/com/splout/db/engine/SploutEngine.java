@@ -22,11 +22,13 @@ package com.splout.db.engine;
 
 public abstract class SploutEngine {
 
-	public abstract String getId();
-	public abstract String getOutputFormatClass();
-	public abstract String getEngineManagerClass();
-	
-	public static SploutEngine getDefault() {
-		return new DefaultEngine();
-	}
+  public abstract String getId();
+
+  public abstract String getOutputFormatClass();
+
+  public abstract String getEngineManagerClass();
+
+  public static SploutEngine getDefault() {
+    return new DefaultEngine();
+  }
 }

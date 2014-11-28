@@ -20,41 +20,40 @@ package com.splout.db.hadoop;
  * #L%
  */
 
-import java.io.IOException;
-
-import org.apache.hadoop.io.NullWritable;
-
 import com.datasalt.pangool.io.ITuple;
 import com.datasalt.pangool.tuplemr.TupleMRException;
 import com.datasalt.pangool.tuplemr.TupleReducer;
+import org.apache.hadoop.io.NullWritable;
+
+import java.io.IOException;
 
 /**
  * Reusable TupleReducer that aggregates the counts of a certain field in the Tuple.
- * <p>
+ * <p/>
  * There are nicer implementations of this in the work-in-progress Pangool-flow project of Pangool but I decided not to
  * depend on it until it has a first stable version.
  */
 @SuppressWarnings("serial")
 public class SumReducer extends TupleReducer<ITuple, NullWritable> {
 
-	String field;
+  String field;
 
-	/**
-	 * Will (int) sum the field "field"
-	 */
-	public SumReducer(String field) {
-		this.field = field;
-	}
+  /**
+   * Will (int) sum the field "field"
+   */
+  public SumReducer(String field) {
+    this.field = field;
+  }
 
-	public void reduce(ITuple group, Iterable<ITuple> tuples, TupleMRContext context, Collector collector)
-	    throws IOException, InterruptedException, TupleMRException {
-		int totalCount = 0;
-		ITuple outTuple = null;
-		for(ITuple tuple : tuples) {
-			totalCount += (Integer) tuple.get(field);
-			outTuple = tuple;
-		}
-		outTuple.set(field, totalCount);
-		collector.write(outTuple, NullWritable.get());
-	}
+  public void reduce(ITuple group, Iterable<ITuple> tuples, TupleMRContext context, Collector collector)
+      throws IOException, InterruptedException, TupleMRException {
+    int totalCount = 0;
+    ITuple outTuple = null;
+    for (ITuple tuple : tuples) {
+      totalCount += (Integer) tuple.get(field);
+      outTuple = tuple;
+    }
+    outTuple.set(field, totalCount);
+    collector.write(outTuple, NullWritable.get());
+  }
 }

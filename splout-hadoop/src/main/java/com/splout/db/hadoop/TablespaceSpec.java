@@ -20,16 +20,6 @@ package com.splout.db.hadoop;
  * #L%
  */
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.mapreduce.InputFormat;
-
 import com.datasalt.pangool.io.ITuple;
 import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.io.Schema.Field;
@@ -37,6 +27,15 @@ import com.datasalt.pangool.tuplemr.mapred.lib.input.TupleTextInputFormat;
 import com.google.common.collect.ImmutableList;
 import com.splout.db.engine.SploutEngine;
 import com.splout.db.hadoop.TableSpec.FieldIndex;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.mapreduce.InputFormat;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * Immutable bean that defines a Tablespace whose view has to be generated. It may contain one or more {@link Table} beans.
@@ -44,81 +43,85 @@ import com.splout.db.hadoop.TableSpec.FieldIndex;
  */
 public class TablespaceSpec {
 
-	private final ImmutableList<Table> partitionedTables;
-	private final ImmutableList<Table> replicateAllTables;
-	private final int nPartitions;
-	private final List<String> initStatements;
-	private final SploutEngine engine;
+  private final ImmutableList<Table> partitionedTables;
+  private final ImmutableList<Table> replicateAllTables;
+  private final int nPartitions;
+  private final List<String> initStatements;
+  private final SploutEngine engine;
 
-	TablespaceSpec(List<Table> partitionedTables, List<Table> replicateAllTables, int nPartitions, List<String> initStatements, SploutEngine engine) {
-		this.partitionedTables = ImmutableList.copyOf(partitionedTables);
-		this.replicateAllTables = ImmutableList.copyOf(replicateAllTables == null ? new ArrayList<Table>() : replicateAllTables);
-		this.nPartitions = nPartitions;
-		this.initStatements = initStatements;
-		this.engine = engine;
-	}
+  TablespaceSpec(List<Table> partitionedTables, List<Table> replicateAllTables, int nPartitions, List<String> initStatements, SploutEngine engine) {
+    this.partitionedTables = ImmutableList.copyOf(partitionedTables);
+    this.replicateAllTables = ImmutableList.copyOf(replicateAllTables == null ? new ArrayList<Table>() : replicateAllTables);
+    this.nPartitions = nPartitions;
+    this.initStatements = initStatements;
+    this.engine = engine;
+  }
 
-	/**
-	 * (Common case that can be built without using the builder)
-	 */
-	public static TablespaceSpec of(Schema schema, String partitionField, Path input, InputFormat<ITuple, NullWritable> inputFormat, int nPartitions) {
-		return of(schema, new String[] {  partitionField } , input, inputFormat, nPartitions);
-	}
-	
-	/**
-	 * Schema-less quick tablespace builder that samples the first record of the first InputSplit in order to obtain the Table Schema.
-	 * Note that this will only work for InputFormats that can obtain the Schema implicitly (e.g. TupleInputFormat).
-	 */
-	public static TablespaceSpec of(Configuration conf, String[] partitionFields, Path input, InputFormat<ITuple, NullWritable> inputFormat, int nPartitions) throws IOException, InterruptedException {
-		if(inputFormat instanceof TupleTextInputFormat) {
-			throw new IllegalArgumentException("Can't derive an implicit schema from a text file.");
-		}
-		return of(SchemaSampler.sample(conf, input, inputFormat), partitionFields, input, inputFormat, nPartitions);
-	}
-	
-	public static TablespaceSpec of(Schema schema, String[] partitionFields, Path input, InputFormat<ITuple, NullWritable> inputFormat, int nPartitions) {
-		List<Table> partitionedTables = new ArrayList<Table>();
-		if(schema == null) {
-			throw new IllegalArgumentException("Schema can't be null.");
-		}
-		if(partitionFields == null) {
-			throw new IllegalArgumentException("Partition fields can't be null");
-		}
-		if(input == null) {
-			throw new IllegalArgumentException("Input path can't be null");
-		}
-		if(inputFormat == null) {
-			throw new IllegalArgumentException("Input format can't be null");
-		}
-		List<Field> fields = new ArrayList<Field>();
-		for(String partitionField: partitionFields) {
-			Field field = schema.getField(partitionField);
-			if(field == null) {
-				throw new IllegalArgumentException("Partition field not contained in input schema: " + partitionField);
-			}
-			fields.add(field);
-		}
-		Field[] partitionByFields = fields.toArray(new Field[0]);
-		partitionedTables.add(new Table(new TableInput(inputFormat, new HashMap<String, String>(), schema, new IdentityRecordProcessor(), input), new TableSpec(schema, partitionByFields, new FieldIndex[] { new FieldIndex(partitionByFields) },null, null, null, null, null)));
-		TablespaceSpec tablespace = new TablespaceSpec(partitionedTables, new ArrayList<Table>(), nPartitions, null, SploutEngine.getDefault());
-		return tablespace;
-	}
-	
-	// ---- Getters ---- //
-	
-	public ImmutableList<Table> getPartitionedTables() {
-  	return partitionedTables;
+  /**
+   * (Common case that can be built without using the builder)
+   */
+  public static TablespaceSpec of(Schema schema, String partitionField, Path input, InputFormat<ITuple, NullWritable> inputFormat, int nPartitions) {
+    return of(schema, new String[]{partitionField}, input, inputFormat, nPartitions);
   }
-	public ImmutableList<Table> getReplicateAllTables() {
-  	return replicateAllTables;
+
+  /**
+   * Schema-less quick tablespace builder that samples the first record of the first InputSplit in order to obtain the Table Schema.
+   * Note that this will only work for InputFormats that can obtain the Schema implicitly (e.g. TupleInputFormat).
+   */
+  public static TablespaceSpec of(Configuration conf, String[] partitionFields, Path input, InputFormat<ITuple, NullWritable> inputFormat, int nPartitions) throws IOException, InterruptedException {
+    if (inputFormat instanceof TupleTextInputFormat) {
+      throw new IllegalArgumentException("Can't derive an implicit schema from a text file.");
+    }
+    return of(SchemaSampler.sample(conf, input, inputFormat), partitionFields, input, inputFormat, nPartitions);
   }
-	public int getnPartitions() {
-  	return nPartitions;
+
+  public static TablespaceSpec of(Schema schema, String[] partitionFields, Path input, InputFormat<ITuple, NullWritable> inputFormat, int nPartitions) {
+    List<Table> partitionedTables = new ArrayList<Table>();
+    if (schema == null) {
+      throw new IllegalArgumentException("Schema can't be null.");
+    }
+    if (partitionFields == null) {
+      throw new IllegalArgumentException("Partition fields can't be null");
+    }
+    if (input == null) {
+      throw new IllegalArgumentException("Input path can't be null");
+    }
+    if (inputFormat == null) {
+      throw new IllegalArgumentException("Input format can't be null");
+    }
+    List<Field> fields = new ArrayList<Field>();
+    for (String partitionField : partitionFields) {
+      Field field = schema.getField(partitionField);
+      if (field == null) {
+        throw new IllegalArgumentException("Partition field not contained in input schema: " + partitionField);
+      }
+      fields.add(field);
+    }
+    Field[] partitionByFields = fields.toArray(new Field[0]);
+    partitionedTables.add(new Table(new TableInput(inputFormat, new HashMap<String, String>(), schema, new IdentityRecordProcessor(), input), new TableSpec(schema, partitionByFields, new FieldIndex[]{new FieldIndex(partitionByFields)}, null, null, null, null, null)));
+    TablespaceSpec tablespace = new TablespaceSpec(partitionedTables, new ArrayList<Table>(), nPartitions, null, SploutEngine.getDefault());
+    return tablespace;
   }
-	public List<String> getInitStatements() {
-  	return initStatements;
+
+  // ---- Getters ---- //
+
+  public ImmutableList<Table> getPartitionedTables() {
+    return partitionedTables;
   }
-	public SploutEngine getEngine() {
-	  return engine;
+
+  public ImmutableList<Table> getReplicateAllTables() {
+    return replicateAllTables;
+  }
+
+  public int getnPartitions() {
+    return nPartitions;
+  }
+
+  public List<String> getInitStatements() {
+    return initStatements;
+  }
+
+  public SploutEngine getEngine() {
+    return engine;
   }
 }

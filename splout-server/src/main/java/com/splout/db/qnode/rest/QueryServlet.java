@@ -38,85 +38,85 @@ import java.util.Map;
 @SuppressWarnings("serial")
 public class QueryServlet extends BaseServlet {
 
-	public QueryServlet(IQNodeHandler qNodeHandler) {
-		super(qNodeHandler);
-	}
+  public QueryServlet(IQNodeHandler qNodeHandler) {
+    super(qNodeHandler);
+  }
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+  @SuppressWarnings({"unchecked", "rawtypes"})
   @Override
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
-	    IOException {
+  protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
+      IOException {
 
-		String tablespace = req.getParameter("tablespace");
+    String tablespace = req.getParameter("tablespace");
 
-		StringBuffer postBody = new StringBuffer();
-		String line = null;
+    StringBuffer postBody = new StringBuffer();
+    String line = null;
 
-		BufferedReader reader = req.getReader();
-		while((line = reader.readLine()) != null) {
-			postBody.append(line);
-		}
+    BufferedReader reader = req.getReader();
+    while ((line = reader.readLine()) != null) {
+      postBody.append(line);
+    }
 
     Map<String, Object> params;
     try {
-	    params = JSONSerDe.deSer(postBody.toString(), Map.class);
-			String[] keys = (String[]) ((ArrayList) params.get("key")).toArray(new String[0]);
-			String sql = (String) params.get("sql");
-			String callback = (String) params.get("callback");
-			String partition = (String) params.get("partition");
-			
-			handle(req, resp, keys, tablespace, sql, callback, partition);
-    } catch(JSONSerDeException e) {
-	    throw new IOException(e);
+      params = JSONSerDe.deSer(postBody.toString(), Map.class);
+      String[] keys = (String[]) ((ArrayList) params.get("key")).toArray(new String[0]);
+      String sql = (String) params.get("sql");
+      String callback = (String) params.get("callback");
+      String partition = (String) params.get("partition");
+
+      handle(req, resp, keys, tablespace, sql, callback, partition);
+    } catch (JSONSerDeException e) {
+      throw new IOException(e);
     }
-	}
+  }
 
-	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
-	    IOException {
-		
-		String[] keys = req.getParameterValues("key");
-		String tablespace = req.getParameter("tablespace");
-		String sql = req.getParameter("sql");
-		String callback = req.getParameter("callback");
-		String partition = req.getParameter("partition");
-		
-		handle(req, resp, keys, tablespace, sql, callback, partition);
-	}
+  @Override
+  protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
+      IOException {
 
-	private void handle(HttpServletRequest req, HttpServletResponse resp, String[] keys, String tablespace, String sql, String callback, String partition) throws ServletException,
-	    IOException {
+    String[] keys = req.getParameterValues("key");
+    String tablespace = req.getParameter("tablespace");
+    String sql = req.getParameter("sql");
+    String callback = req.getParameter("callback");
+    String partition = req.getParameter("partition");
 
-		resp.setHeader("content-type", "application/json;charset=UTF-8");
-		resp.setCharacterEncoding("UTF-8");
+    handle(req, resp, keys, tablespace, sql, callback, partition);
+  }
 
-		String key = null;
-		if(keys != null) {
-			key = "";
-			for(String strKey : keys) {
-				key += strKey;
-			}
-		}
+  private void handle(HttpServletRequest req, HttpServletResponse resp, String[] keys, String tablespace, String sql, String callback, String partition) throws ServletException,
+      IOException {
 
-		try {
-			QueryStatus st = qNodeHandler.query(tablespace, key, sql, partition);
+    resp.setHeader("content-type", "application/json;charset=UTF-8");
+    resp.setCharacterEncoding("UTF-8");
+
+    String key = null;
+    if (keys != null) {
+      key = "";
+      for (String strKey : keys) {
+        key += strKey;
+      }
+    }
+
+    try {
+      QueryStatus st = qNodeHandler.query(tablespace, key, sql, partition);
       String status = "status[OK]";
       if (st instanceof ErrorQueryStatus) {
         String errMsg = st.getError();
         errMsg = errMsg != null ? errMsg.replace("[", "(").replace("]", ")") : null;
         status = "status[ERROR] errMessage[" + errMsg + "]";
       }
-			log.info("Query request received, tablespace[" + tablespace
-			    + "], key[" + key + "], sql[" + sql + "] time[" + st.getMillis() + "] " + status);
-			String response;
-			response = JSONSerDe.ser(st);
-			if(callback != null) {
-				response = callback + "(" + response + ")";
-			}
-			resp.getWriter().append(response);
-		} catch(Exception e) {
-			log.error(e);
-			throw new ServletException(e);
-		}
-	}
+      log.info("Query request received, tablespace[" + tablespace
+          + "], key[" + key + "], sql[" + sql + "] time[" + st.getMillis() + "] " + status);
+      String response;
+      response = JSONSerDe.ser(st);
+      if (callback != null) {
+        response = callback + "(" + response + ")";
+      }
+      resp.getWriter().append(response);
+    } catch (Exception e) {
+      log.error(e);
+      throw new ServletException(e);
+    }
+  }
 }

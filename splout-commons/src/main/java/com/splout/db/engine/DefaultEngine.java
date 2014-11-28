@@ -22,18 +22,18 @@ package com.splout.db.engine;
 
 public class DefaultEngine extends SploutEngine {
 
-	@Override
+  @Override
   public String getId() {
-	  return "default";
+    return "default";
   }
 
-	@Override
+  @Override
   public String getOutputFormatClass() {
-	  return "com.splout.db.hadoop.engine.SQLite4JavaOutputFormat";
+    return "com.splout.db.hadoop.engine.SQLite4JavaOutputFormat";
   }
 
-	@Override
+  @Override
   public String getEngineManagerClass() {
-	  return "com.splout.db.engine.SQLite4JavaManager";
+    return "com.splout.db.engine.SQLite4JavaManager";
   }
 }

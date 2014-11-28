@@ -25,7 +25,7 @@ package com.splout.db.qnode.beans;
  */
 public enum DeployStatus {
 
-	ONGOING, // currently being deployed 
-	FINISHED, // deployed successfully 
-	FAILED // failed to deploy
+  ONGOING, // currently being deployed
+  FINISHED, // deployed successfully
+  FAILED // failed to deploy
 }

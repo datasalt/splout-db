@@ -39,71 +39,71 @@ import java.util.List;
 @SuppressWarnings("serial")
 public class DeployRollbackServlet extends BaseServlet {
 
-	public final static String ACTION_DEPLOY = "deploy";
-	public final static String ACTION_ROLLBACK = "rollback";
+  public final static String ACTION_DEPLOY = "deploy";
+  public final static String ACTION_ROLLBACK = "rollback";
 
-	public DeployRollbackServlet(IQNodeHandler qNodeHandler) {
-		super(qNodeHandler);
-	}
+  public DeployRollbackServlet(IQNodeHandler qNodeHandler) {
+    super(qNodeHandler);
+  }
 
-	public final static TypeReference<ArrayList<SwitchVersionRequest>> ROLLBACK_REQ_REF = new TypeReference<ArrayList<SwitchVersionRequest>>() {
-	};
-	public final static TypeReference<ArrayList<DeployRequest>> DEPLOY_REQ_REF = new TypeReference<ArrayList<DeployRequest>>() {
-	};
-	
-	@Override
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
-	    IOException {
+  public final static TypeReference<ArrayList<SwitchVersionRequest>> ROLLBACK_REQ_REF = new TypeReference<ArrayList<SwitchVersionRequest>>() {
+  };
+  public final static TypeReference<ArrayList<DeployRequest>> DEPLOY_REQ_REF = new TypeReference<ArrayList<DeployRequest>>() {
+  };
 
-		StringBuffer postBody = new StringBuffer();
-		String line = null;
+  @Override
+  protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
+      IOException {
 
-		BufferedReader reader = req.getReader();
-		while((line = reader.readLine()) != null) {
-			postBody.append(line);
-		}
-		
-		resp.setHeader("content-type", "application/json;charset=UTF-8");
-		resp.setCharacterEncoding("UTF-8");
+    StringBuffer postBody = new StringBuffer();
+    String line = null;
 
-		String action = req.getParameter("action");
-		String response = null;
+    BufferedReader reader = req.getReader();
+    while ((line = reader.readLine()) != null) {
+      postBody.append(line);
+    }
 
-		try {
-			if(action.equals(ACTION_DEPLOY)) {
-				List<DeployRequest> deployReq = JSONSerDe.deSer(postBody.toString(), DEPLOY_REQ_REF);
+    resp.setHeader("content-type", "application/json;charset=UTF-8");
+    resp.setCharacterEncoding("UTF-8");
 
-				// List of DeployRequest
-				log.info(Thread.currentThread().getName() + ": Deploy request received [" +
+    String action = req.getParameter("action");
+    String response = null;
+
+    try {
+      if (action.equals(ACTION_DEPLOY)) {
+        List<DeployRequest> deployReq = JSONSerDe.deSer(postBody.toString(), DEPLOY_REQ_REF);
+
+        // List of DeployRequest
+        log.info(Thread.currentThread().getName() + ": Deploy request received [" +
             CharMatcher.BREAKING_WHITESPACE
-            .removeFrom(postBody.toString()) + "]");
-				for(DeployRequest request : deployReq) {
-					if(request.getReplicationMap() == null || request.getReplicationMap().size() < 1) {
-						throw new IllegalArgumentException("Invalid deploy request with empty replication map ["
-						    + request + "]");
-					}
-					if(request.getPartitionMap().size() != request.getReplicationMap().size()) {
-						throw new IllegalArgumentException(
-						    "Invalid deploy request with non-coherent replication / partition maps [" + request + "]");
-					}
-					if(request.getEngine() == null) {
-						throw new IllegalArgumentException("Invalid deploy request with null engine id received");
-					}
-				}
-				response = JSONSerDe.ser(qNodeHandler.deploy(deployReq));
-			} else if(action.equals(ACTION_ROLLBACK)) {
-				ArrayList<SwitchVersionRequest> rReq = JSONSerDe.deSer(postBody.toString(), ROLLBACK_REQ_REF);
-				// List of RollbackRequest
-				log.info(Thread.currentThread().getName() + ": Rollback request received [" + rReq + "]");
-				response = JSONSerDe.ser(qNodeHandler.rollback(rReq));
-			} else {
-				throw new ServletException("Unknown action: " + action);
-			}
-			
-			resp.getWriter().append(response);
-		} catch(Exception e) {
-			log.error(e);
-			throw new ServletException(e);
-		}
-	}
+                .removeFrom(postBody.toString()) + "]");
+        for (DeployRequest request : deployReq) {
+          if (request.getReplicationMap() == null || request.getReplicationMap().size() < 1) {
+            throw new IllegalArgumentException("Invalid deploy request with empty replication map ["
+                + request + "]");
+          }
+          if (request.getPartitionMap().size() != request.getReplicationMap().size()) {
+            throw new IllegalArgumentException(
+                "Invalid deploy request with non-coherent replication / partition maps [" + request + "]");
+          }
+          if (request.getEngine() == null) {
+            throw new IllegalArgumentException("Invalid deploy request with null engine id received");
+          }
+        }
+        response = JSONSerDe.ser(qNodeHandler.deploy(deployReq));
+      } else if (action.equals(ACTION_ROLLBACK)) {
+        ArrayList<SwitchVersionRequest> rReq = JSONSerDe.deSer(postBody.toString(), ROLLBACK_REQ_REF);
+        // List of RollbackRequest
+        log.info(Thread.currentThread().getName() + ": Rollback request received [" + rReq + "]");
+        response = JSONSerDe.ser(qNodeHandler.rollback(rReq));
+      } else {
+        throw new ServletException("Unknown action: " + action);
+      }
+
+      resp.getWriter().append(response);
+    } catch (Exception e) {
+      log.error(e);
+      throw new ServletException(e);
+    }
+  }
 }

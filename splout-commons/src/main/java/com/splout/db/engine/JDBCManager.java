@@ -20,120 +20,115 @@ package com.splout.db.engine;
  * #L%
  */
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import com.jolbox.bonecp.BoneCP;
 import com.jolbox.bonecp.BoneCPConfig;
 import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
 import com.splout.db.engine.EngineManager.EngineException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * Generic JDBC Manager which can be reused by any engine which is JDBC-compliant.
  */
 public class JDBCManager {
-	
-	private final static Log log = LogFactory.getLog(JDBCManager.class);
-	BoneCP connectionPool = null;
-	
-	public JDBCManager(String driver, String connectionUri, int nConnectionsPool, String userName, String password) throws SQLException, ClassNotFoundException {
-		
-		Class.forName(driver);
-		
-		BoneCPConfig config = new BoneCPConfig();
-		config.setJdbcUrl(connectionUri);
-		config.setMinConnectionsPerPartition(nConnectionsPool);
-		config.setMaxConnectionsPerPartition(nConnectionsPool);
-		config.setUsername(userName);
-		config.setPassword(password);
-		config.setPartitionCount(1);
-		config.setDefaultAutoCommit(false);
 
-		connectionPool = new BoneCP(config); // setup the connection pool
-	}
-	
-	/**
-	 * The contract of this function is to return a JSON-ized ArrayList of JSON Objects which in Java are represented as
-	 * Map<String, Object>. So, for a query with no results, an empty ArrayList is returned.
-	 */
-	public String query(String query, int maxResults) throws EngineException {
-		long start = System.currentTimeMillis();
-		Connection connection = null;
-		ResultSet rs = null;
-		Statement stmt = null;
-		try {
-			connection = connectionPool.getConnection(); // fetch a connection
-			stmt = connection.createStatement();
-			String result = null;
-			if(stmt.execute(query)) {
-				rs = stmt.getResultSet();
-				result = JSONSerDe.ser(convertResultSetToList(rs, maxResults));
-			} else {
-				result = JSONSerDe.ser(new ArrayList<HashMap<String, Object>>());
-			}
-			long end = System.currentTimeMillis();
-			log.info(Thread.currentThread().getName() + ": Query [" + query + "] handled in [" + (end - start)
-			    + "] ms.");
-			return result;
-		} catch(SQLException e) {
-			throw new EngineException(e);
-		} catch(JSONSerDeException e) {
-			throw new EngineException(e);
-		} finally {
-			try {
-				if(rs != null) {
-					rs.close();
-				}
-				if(stmt != null) {
-					stmt.close();
-				}
-				connection.close();
-			} catch(SQLException e) {
-				throw new EngineException(e);
-			}
-		}
-	}
+  private final static Log log = LogFactory.getLog(JDBCManager.class);
+  BoneCP connectionPool = null;
 
-	// -------- //
+  public JDBCManager(String driver, String connectionUri, int nConnectionsPool, String userName, String password) throws SQLException, ClassNotFoundException {
 
-	public static List<HashMap<String, Object>> convertResultSetToList(ResultSet rs, int maxResults)
-	    throws SQLException {
-		ResultSetMetaData md = rs.getMetaData();
-		int columns = md.getColumnCount();
-		List<HashMap<String, Object>> list = new ArrayList<HashMap<String, Object>>();
-		while(rs.next() && list.size() < maxResults) {
-			HashMap<String, Object> row = new HashMap<String, Object>(columns);
-			for(int i = 1; i <= columns; ++i) {
-				row.put(md.getColumnName(i), rs.getObject(i));
-			}
-			list.add(row);
-		}
-		if(list.size() == maxResults) {
-			throw new SQLException("Hard limit on number of results reached (" + maxResults
-			    + "), please use a LIMIT for this query.");
-		}
-		return list;
-	}
+    Class.forName(driver);
 
-	public void close() {
-		connectionPool.shutdown();
-	}
+    BoneCPConfig config = new BoneCPConfig();
+    config.setJdbcUrl(connectionUri);
+    config.setMinConnectionsPerPartition(nConnectionsPool);
+    config.setMaxConnectionsPerPartition(nConnectionsPool);
+    config.setUsername(userName);
+    config.setPassword(password);
+    config.setPartitionCount(1);
+    config.setDefaultAutoCommit(false);
 
-	public String exec(String query) throws EngineException {
-		return query(query, 1);
-	}
-	
-	public Connection getConnectionFromPool() throws SQLException {
-		return connectionPool.getConnection();
-	}
+    connectionPool = new BoneCP(config); // setup the connection pool
+  }
+
+  /**
+   * The contract of this function is to return a JSON-ized ArrayList of JSON Objects which in Java are represented as
+   * Map<String, Object>. So, for a query with no results, an empty ArrayList is returned.
+   */
+  public String query(String query, int maxResults) throws EngineException {
+    long start = System.currentTimeMillis();
+    Connection connection = null;
+    ResultSet rs = null;
+    Statement stmt = null;
+    try {
+      connection = connectionPool.getConnection(); // fetch a connection
+      stmt = connection.createStatement();
+      String result = null;
+      if (stmt.execute(query)) {
+        rs = stmt.getResultSet();
+        result = JSONSerDe.ser(convertResultSetToList(rs, maxResults));
+      } else {
+        result = JSONSerDe.ser(new ArrayList<HashMap<String, Object>>());
+      }
+      long end = System.currentTimeMillis();
+      log.info(Thread.currentThread().getName() + ": Query [" + query + "] handled in [" + (end - start)
+          + "] ms.");
+      return result;
+    } catch (SQLException e) {
+      throw new EngineException(e);
+    } catch (JSONSerDeException e) {
+      throw new EngineException(e);
+    } finally {
+      try {
+        if (rs != null) {
+          rs.close();
+        }
+        if (stmt != null) {
+          stmt.close();
+        }
+        connection.close();
+      } catch (SQLException e) {
+        throw new EngineException(e);
+      }
+    }
+  }
+
+  // -------- //
+
+  public static List<HashMap<String, Object>> convertResultSetToList(ResultSet rs, int maxResults)
+      throws SQLException {
+    ResultSetMetaData md = rs.getMetaData();
+    int columns = md.getColumnCount();
+    List<HashMap<String, Object>> list = new ArrayList<HashMap<String, Object>>();
+    while (rs.next() && list.size() < maxResults) {
+      HashMap<String, Object> row = new HashMap<String, Object>(columns);
+      for (int i = 1; i <= columns; ++i) {
+        row.put(md.getColumnName(i), rs.getObject(i));
+      }
+      list.add(row);
+    }
+    if (list.size() == maxResults) {
+      throw new SQLException("Hard limit on number of results reached (" + maxResults
+          + "), please use a LIMIT for this query.");
+    }
+    return list;
+  }
+
+  public void close() {
+    connectionPool.shutdown();
+  }
+
+  public String exec(String query) throws EngineException {
+    return query(query, 1);
+  }
+
+  public Connection getConnectionFromPool() throws SQLException {
+    return connectionPool.getConnection();
+  }
 }

@@ -20,115 +20,113 @@ package com.splout.db.engine;
  * #L%
  */
 
+import com.splout.db.common.JSONSerDe;
+import com.splout.db.common.JSONSerDe.JSONSerDeException;
+import com.splout.db.common.PortUtils;
+import com.splout.db.common.PortUtils.PortLock;
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.io.FileUtils;
+import org.apache.log4j.Logger;
+import redis.clients.jedis.Jedis;
+import redis.embedded.RedisServer;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
-
-import redis.clients.jedis.Jedis;
-import redis.embedded.RedisServer;
-
-import com.splout.db.common.JSONSerDe;
-import com.splout.db.common.JSONSerDe.JSONSerDeException;
-import com.splout.db.common.PortUtils;
-import com.splout.db.common.PortUtils.PortLock;
-
 public class RedisManager implements EngineManager {
 
-	private static Logger logger = Logger.getLogger(RedisManager.class);
-	
-	Jedis jedis;
-	private RedisServer redisServer = null;
-	
-	public static String REDIS_EXECUTABLE_CONF = "com.splout.db.engine.RedisManager.redis.executable";
-	public static String BASE_PORT_CONF = "com.splout.db.engine.RedisManager.redis.base.port"; 
-	final static int DEFAULT_BASE_PORT = 6379;
-	
-	public RedisManager() {
-	}
+  private static Logger logger = Logger.getLogger(RedisManager.class);
 
-	RedisManager(int port) {
-		jedis = new Jedis("localhost",port);
-	}
-	
-	@SuppressWarnings("unchecked")
-	@Override
-	public String exec(String query) throws EngineException {
-		try {
-			List<HashMap<String, Object>> result = new ArrayList<HashMap<String, Object>>();
-			String res = jedis.get(query);
-			if(res == null) {
-				return JSONSerDe.ser(result);
-			}
-			result.add(JSONSerDe.deSer(jedis.get(query), HashMap.class));
-			return JSONSerDe.ser(result);
-		} catch(JSONSerDeException e) {
-			throw new EngineException(e);
-		}
-	}
+  Jedis jedis;
+  private RedisServer redisServer = null;
 
-	@Override
-	public String query(String query, int maxResults) throws EngineException {
-		return exec(query);
-	}
+  public static String REDIS_EXECUTABLE_CONF = "com.splout.db.engine.RedisManager.redis.executable";
+  public static String BASE_PORT_CONF = "com.splout.db.engine.RedisManager.redis.base.port";
+  final static int DEFAULT_BASE_PORT = 6379;
 
-	@Override
-	public void close() {
-		jedis.quit();
-		if(redisServer != null) {
-			redisServer.stop();
-		}
-	}
+  public RedisManager() {
+  }
 
-	@Override
-	public void init(File dbFile, Configuration config, List<String> initStatements)
-	    throws EngineException {
+  RedisManager(int port) {
+    jedis = new Jedis("localhost", port);
+  }
 
-		File dbFolder = dbFile.getParentFile();
+  @SuppressWarnings("unchecked")
+  @Override
+  public String exec(String query) throws EngineException {
+    try {
+      List<HashMap<String, Object>> result = new ArrayList<HashMap<String, Object>>();
+      String res = jedis.get(query);
+      if (res == null) {
+        return JSONSerDe.ser(result);
+      }
+      result.add(JSONSerDe.deSer(jedis.get(query), HashMap.class));
+      return JSONSerDe.ser(result);
+    } catch (JSONSerDeException e) {
+      throw new EngineException(e);
+    }
+  }
 
-		String redisExecutable = config.getString(REDIS_EXECUTABLE_CONF, null);
-		if(redisExecutable == null) {
-			throw new EngineException("A Redis executable path should be specified in configuration '" + REDIS_EXECUTABLE_CONF + "'", null);
-		}
-		
-		if(!new File(redisExecutable).exists()) {
-			throw new EngineException("The specified Redis executable doesn't exist: " + redisExecutable, null);
-		}
-				
-		int basePort = config.getInt(BASE_PORT_CONF, DEFAULT_BASE_PORT);
+  @Override
+  public String query(String query, int maxResults) throws EngineException {
+    return exec(query);
+  }
 
-		logger.info("Redis executable -> " + redisExecutable + "; base port -> " + basePort);
+  @Override
+  public void close() {
+    jedis.quit();
+    if (redisServer != null) {
+      redisServer.stop();
+    }
+  }
 
-		File thisServer = new File(dbFolder, "redis-server");
-		File thisDataFile = new File(dbFolder, "dump.rdb");
-		File actualDataFile = dbFile;
-		try {
-			Runtime
-			    .getRuntime()
-			    .exec(
-			        new String[] { "ln", "-s", actualDataFile.getAbsolutePath(),
-			            thisDataFile.getAbsolutePath() }).waitFor();
-			FileUtils.copyFile(new File(redisExecutable), thisServer);
-			thisServer.setExecutable(true);
+  @Override
+  public void init(File dbFile, Configuration config, List<String> initStatements)
+      throws EngineException {
 
-			PortLock portLock = PortUtils.getNextAvailablePort(basePort);
-			try {
-				logger.info("Using port from port lock: " + portLock.getPort());
-				redisServer = new RedisServer(thisServer, portLock.getPort());
-				redisServer.start();
-				jedis = new Jedis("localhost", portLock.getPort());
-			} finally {
-				portLock.release();
-			}
-		} catch(InterruptedException e) {
-			throw new EngineException(e);
-		} catch(IOException e) {
-			throw new EngineException(e);
-		}
-	}
+    File dbFolder = dbFile.getParentFile();
+
+    String redisExecutable = config.getString(REDIS_EXECUTABLE_CONF, null);
+    if (redisExecutable == null) {
+      throw new EngineException("A Redis executable path should be specified in configuration '" + REDIS_EXECUTABLE_CONF + "'", null);
+    }
+
+    if (!new File(redisExecutable).exists()) {
+      throw new EngineException("The specified Redis executable doesn't exist: " + redisExecutable, null);
+    }
+
+    int basePort = config.getInt(BASE_PORT_CONF, DEFAULT_BASE_PORT);
+
+    logger.info("Redis executable -> " + redisExecutable + "; base port -> " + basePort);
+
+    File thisServer = new File(dbFolder, "redis-server");
+    File thisDataFile = new File(dbFolder, "dump.rdb");
+    File actualDataFile = dbFile;
+    try {
+      Runtime
+          .getRuntime()
+          .exec(
+              new String[]{"ln", "-s", actualDataFile.getAbsolutePath(),
+                  thisDataFile.getAbsolutePath()}).waitFor();
+      FileUtils.copyFile(new File(redisExecutable), thisServer);
+      thisServer.setExecutable(true);
+
+      PortLock portLock = PortUtils.getNextAvailablePort(basePort);
+      try {
+        logger.info("Using port from port lock: " + portLock.getPort());
+        redisServer = new RedisServer(thisServer, portLock.getPort());
+        redisServer.start();
+        jedis = new Jedis("localhost", portLock.getPort());
+      } finally {
+        portLock.release();
+      }
+    } catch (InterruptedException e) {
+      throw new EngineException(e);
+    } catch (IOException e) {
+      throw new EngineException(e);
+    }
+  }
 }

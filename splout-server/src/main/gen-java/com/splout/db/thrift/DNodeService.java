@@ -5,20 +5,10 @@
  */
 package com.splout.db.thrift;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.EnumMap;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.EnumSet;
-import java.util.Collections;
-import java.util.BitSet;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
 
 public class DNodeService {
 
@@ -60,17 +50,19 @@ public class DNodeService {
 
   public static class Client extends org.apache.thrift.TServiceClient implements Iface {
     public static class Factory implements org.apache.thrift.TServiceClientFactory<Client> {
-      public Factory() {}
+      public Factory() {
+      }
+
       public Client getClient(org.apache.thrift.protocol.TProtocol prot) {
         return new Client(prot);
       }
+
       public Client getClient(org.apache.thrift.protocol.TProtocol iprot, org.apache.thrift.protocol.TProtocol oprot) {
         return new Client(iprot, oprot);
       }
     }
 
-    public Client(org.apache.thrift.protocol.TProtocol prot)
-    {
+    public Client(org.apache.thrift.protocol.TProtocol prot) {
       super(prot, prot);
     }
 
@@ -78,14 +70,12 @@ public class DNodeService {
       super(iprot, oprot);
     }
 
-    public String sqlQuery(String tablespace, long version, int partition, String query) throws DNodeException, org.apache.thrift.TException
-    {
+    public String sqlQuery(String tablespace, long version, int partition, String query) throws DNodeException, org.apache.thrift.TException {
       send_sqlQuery(tablespace, version, partition, query);
       return recv_sqlQuery();
     }
 
-    public void send_sqlQuery(String tablespace, long version, int partition, String query) throws org.apache.thrift.TException
-    {
+    public void send_sqlQuery(String tablespace, long version, int partition, String query) throws org.apache.thrift.TException {
       sqlQuery_args args = new sqlQuery_args();
       args.setTablespace(tablespace);
       args.setVersion(version);
@@ -94,8 +84,7 @@ public class DNodeService {
       sendBase("sqlQuery", args);
     }
 
-    public String recv_sqlQuery() throws DNodeException, org.apache.thrift.TException
-    {
+    public String recv_sqlQuery() throws DNodeException, org.apache.thrift.TException {
       sqlQuery_result result = new sqlQuery_result();
       receiveBase(result, "sqlQuery");
       if (result.isSetSuccess()) {
@@ -107,21 +96,18 @@ public class DNodeService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "sqlQuery failed: unknown result");
     }
 
-    public String deleteOldVersions(List<TablespaceVersion> versions) throws DNodeException, org.apache.thrift.TException
-    {
+    public String deleteOldVersions(List<TablespaceVersion> versions) throws DNodeException, org.apache.thrift.TException {
       send_deleteOldVersions(versions);
       return recv_deleteOldVersions();
     }
 
-    public void send_deleteOldVersions(List<TablespaceVersion> versions) throws org.apache.thrift.TException
-    {
+    public void send_deleteOldVersions(List<TablespaceVersion> versions) throws org.apache.thrift.TException {
       deleteOldVersions_args args = new deleteOldVersions_args();
       args.setVersions(versions);
       sendBase("deleteOldVersions", args);
     }
 
-    public String recv_deleteOldVersions() throws DNodeException, org.apache.thrift.TException
-    {
+    public String recv_deleteOldVersions() throws DNodeException, org.apache.thrift.TException {
       deleteOldVersions_result result = new deleteOldVersions_result();
       receiveBase(result, "deleteOldVersions");
       if (result.isSetSuccess()) {
@@ -133,22 +119,19 @@ public class DNodeService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "deleteOldVersions failed: unknown result");
     }
 
-    public String deploy(List<DeployAction> deployActions, long version) throws DNodeException, org.apache.thrift.TException
-    {
+    public String deploy(List<DeployAction> deployActions, long version) throws DNodeException, org.apache.thrift.TException {
       send_deploy(deployActions, version);
       return recv_deploy();
     }
 
-    public void send_deploy(List<DeployAction> deployActions, long version) throws org.apache.thrift.TException
-    {
+    public void send_deploy(List<DeployAction> deployActions, long version) throws org.apache.thrift.TException {
       deploy_args args = new deploy_args();
       args.setDeployActions(deployActions);
       args.setVersion(version);
       sendBase("deploy", args);
     }
 
-    public String recv_deploy() throws DNodeException, org.apache.thrift.TException
-    {
+    public String recv_deploy() throws DNodeException, org.apache.thrift.TException {
       deploy_result result = new deploy_result();
       receiveBase(result, "deploy");
       if (result.isSetSuccess()) {
@@ -160,22 +143,19 @@ public class DNodeService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "deploy failed: unknown result");
     }
 
-    public String rollback(List<RollbackAction> rollbackActions, String distributedBarrier) throws DNodeException, org.apache.thrift.TException
-    {
+    public String rollback(List<RollbackAction> rollbackActions, String distributedBarrier) throws DNodeException, org.apache.thrift.TException {
       send_rollback(rollbackActions, distributedBarrier);
       return recv_rollback();
     }
 
-    public void send_rollback(List<RollbackAction> rollbackActions, String distributedBarrier) throws org.apache.thrift.TException
-    {
+    public void send_rollback(List<RollbackAction> rollbackActions, String distributedBarrier) throws org.apache.thrift.TException {
       rollback_args args = new rollback_args();
       args.setRollbackActions(rollbackActions);
       args.setDistributedBarrier(distributedBarrier);
       sendBase("rollback", args);
     }
 
-    public String recv_rollback() throws DNodeException, org.apache.thrift.TException
-    {
+    public String recv_rollback() throws DNodeException, org.apache.thrift.TException {
       rollback_result result = new rollback_result();
       receiveBase(result, "rollback");
       if (result.isSetSuccess()) {
@@ -187,20 +167,17 @@ public class DNodeService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "rollback failed: unknown result");
     }
 
-    public String status() throws DNodeException, org.apache.thrift.TException
-    {
+    public String status() throws DNodeException, org.apache.thrift.TException {
       send_status();
       return recv_status();
     }
 
-    public void send_status() throws org.apache.thrift.TException
-    {
+    public void send_status() throws org.apache.thrift.TException {
       status_args args = new status_args();
       sendBase("status", args);
     }
 
-    public String recv_status() throws DNodeException, org.apache.thrift.TException
-    {
+    public String recv_status() throws DNodeException, org.apache.thrift.TException {
       status_result result = new status_result();
       receiveBase(result, "status");
       if (result.isSetSuccess()) {
@@ -212,21 +189,18 @@ public class DNodeService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "status failed: unknown result");
     }
 
-    public String abortDeploy(long version) throws DNodeException, org.apache.thrift.TException
-    {
+    public String abortDeploy(long version) throws DNodeException, org.apache.thrift.TException {
       send_abortDeploy(version);
       return recv_abortDeploy();
     }
 
-    public void send_abortDeploy(long version) throws org.apache.thrift.TException
-    {
+    public void send_abortDeploy(long version) throws org.apache.thrift.TException {
       abortDeploy_args args = new abortDeploy_args();
       args.setVersion(version);
       sendBase("abortDeploy", args);
     }
 
-    public String recv_abortDeploy() throws DNodeException, org.apache.thrift.TException
-    {
+    public String recv_abortDeploy() throws DNodeException, org.apache.thrift.TException {
       abortDeploy_result result = new abortDeploy_result();
       receiveBase(result, "abortDeploy");
       if (result.isSetSuccess()) {
@@ -238,21 +212,18 @@ public class DNodeService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "abortDeploy failed: unknown result");
     }
 
-    public String testCommand(String command) throws DNodeException, org.apache.thrift.TException
-    {
+    public String testCommand(String command) throws DNodeException, org.apache.thrift.TException {
       send_testCommand(command);
       return recv_testCommand();
     }
 
-    public void send_testCommand(String command) throws org.apache.thrift.TException
-    {
+    public void send_testCommand(String command) throws org.apache.thrift.TException {
       testCommand_args args = new testCommand_args();
       args.setCommand(command);
       sendBase("testCommand", args);
     }
 
-    public String recv_testCommand() throws DNodeException, org.apache.thrift.TException
-    {
+    public String recv_testCommand() throws DNodeException, org.apache.thrift.TException {
       testCommand_result result = new testCommand_result();
       receiveBase(result, "testCommand");
       if (result.isSetSuccess()) {
@@ -265,14 +236,17 @@ public class DNodeService {
     }
 
   }
+
   public static class AsyncClient extends org.apache.thrift.async.TAsyncClient implements AsyncIface {
     public static class Factory implements org.apache.thrift.async.TAsyncClientFactory<AsyncClient> {
       private org.apache.thrift.async.TAsyncClientManager clientManager;
       private org.apache.thrift.protocol.TProtocolFactory protocolFactory;
+
       public Factory(org.apache.thrift.async.TAsyncClientManager clientManager, org.apache.thrift.protocol.TProtocolFactory protocolFactory) {
         this.clientManager = clientManager;
         this.protocolFactory = protocolFactory;
       }
+
       public AsyncClient getAsyncClient(org.apache.thrift.transport.TNonblockingTransport transport) {
         return new AsyncClient(protocolFactory, clientManager, transport);
       }
@@ -294,6 +268,7 @@ public class DNodeService {
       private long version;
       private int partition;
       private String query;
+
       public sqlQuery_call(String tablespace, long version, int partition, String query, org.apache.thrift.async.AsyncMethodCallback<sqlQuery_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.tablespace = tablespace;
@@ -332,6 +307,7 @@ public class DNodeService {
 
     public static class deleteOldVersions_call extends org.apache.thrift.async.TAsyncMethodCall {
       private List<TablespaceVersion> versions;
+
       public deleteOldVersions_call(List<TablespaceVersion> versions, org.apache.thrift.async.AsyncMethodCallback<deleteOldVersions_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.versions = versions;
@@ -365,6 +341,7 @@ public class DNodeService {
     public static class deploy_call extends org.apache.thrift.async.TAsyncMethodCall {
       private List<DeployAction> deployActions;
       private long version;
+
       public deploy_call(List<DeployAction> deployActions, long version, org.apache.thrift.async.AsyncMethodCallback<deploy_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.deployActions = deployActions;
@@ -400,6 +377,7 @@ public class DNodeService {
     public static class rollback_call extends org.apache.thrift.async.TAsyncMethodCall {
       private List<RollbackAction> rollbackActions;
       private String distributedBarrier;
+
       public rollback_call(List<RollbackAction> rollbackActions, String distributedBarrier, org.apache.thrift.async.AsyncMethodCallback<rollback_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.rollbackActions = rollbackActions;
@@ -463,6 +441,7 @@ public class DNodeService {
 
     public static class abortDeploy_call extends org.apache.thrift.async.TAsyncMethodCall {
       private long version;
+
       public abortDeploy_call(long version, org.apache.thrift.async.AsyncMethodCallback<abortDeploy_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.version = version;
@@ -495,6 +474,7 @@ public class DNodeService {
 
     public static class testCommand_call extends org.apache.thrift.async.TAsyncMethodCall {
       private String command;
+
       public testCommand_call(String command, org.apache.thrift.async.AsyncMethodCallback<testCommand_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.command = command;
@@ -522,15 +502,16 @@ public class DNodeService {
 
   public static class Processor<I extends Iface> extends org.apache.thrift.TBaseProcessor implements org.apache.thrift.TProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger(Processor.class.getName());
+
     public Processor(I iface) {
       super(iface, getProcessMap(new HashMap<String, org.apache.thrift.ProcessFunction<I, ? extends org.apache.thrift.TBase>>()));
     }
 
-    protected Processor(I iface, Map<String,  org.apache.thrift.ProcessFunction<I, ? extends  org.apache.thrift.TBase>> processMap) {
+    protected Processor(I iface, Map<String, org.apache.thrift.ProcessFunction<I, ? extends org.apache.thrift.TBase>> processMap) {
       super(iface, getProcessMap(processMap));
     }
 
-    private static <I extends Iface> Map<String,  org.apache.thrift.ProcessFunction<I, ? extends  org.apache.thrift.TBase>> getProcessMap(Map<String,  org.apache.thrift.ProcessFunction<I, ? extends  org.apache.thrift.TBase>> processMap) {
+    private static <I extends Iface> Map<String, org.apache.thrift.ProcessFunction<I, ? extends org.apache.thrift.TBase>> getProcessMap(Map<String, org.apache.thrift.ProcessFunction<I, ? extends org.apache.thrift.TBase>> processMap) {
       processMap.put("sqlQuery", new sqlQuery());
       processMap.put("deleteOldVersions", new deleteOldVersions());
       processMap.put("deploy", new deploy());
@@ -683,25 +664,27 @@ public class DNodeService {
 
   }
 
-  public static class sqlQuery_args implements org.apache.thrift.TBase<sqlQuery_args, sqlQuery_args._Fields>, java.io.Serializable, Cloneable   {
+  public static class sqlQuery_args implements org.apache.thrift.TBase<sqlQuery_args, sqlQuery_args._Fields>, java.io.Serializable, Cloneable {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("sqlQuery_args");
 
-    private static final org.apache.thrift.protocol.TField TABLESPACE_FIELD_DESC = new org.apache.thrift.protocol.TField("tablespace", org.apache.thrift.protocol.TType.STRING, (short)1);
-    private static final org.apache.thrift.protocol.TField VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("version", org.apache.thrift.protocol.TType.I64, (short)2);
-    private static final org.apache.thrift.protocol.TField PARTITION_FIELD_DESC = new org.apache.thrift.protocol.TField("partition", org.apache.thrift.protocol.TType.I32, (short)3);
-    private static final org.apache.thrift.protocol.TField QUERY_FIELD_DESC = new org.apache.thrift.protocol.TField("query", org.apache.thrift.protocol.TType.STRING, (short)4);
+    private static final org.apache.thrift.protocol.TField TABLESPACE_FIELD_DESC = new org.apache.thrift.protocol.TField("tablespace", org.apache.thrift.protocol.TType.STRING, (short) 1);
+    private static final org.apache.thrift.protocol.TField VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("version", org.apache.thrift.protocol.TType.I64, (short) 2);
+    private static final org.apache.thrift.protocol.TField PARTITION_FIELD_DESC = new org.apache.thrift.protocol.TField("partition", org.apache.thrift.protocol.TType.I32, (short) 3);
+    private static final org.apache.thrift.protocol.TField QUERY_FIELD_DESC = new org.apache.thrift.protocol.TField("query", org.apache.thrift.protocol.TType.STRING, (short) 4);
 
     public String tablespace; // required
     public long version; // required
     public int partition; // required
     public String query; // required
 
-    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    /**
+     * The set of fields this struct contains, along with convenience methods for finding and manipulating them.
+     */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      TABLESPACE((short)1, "tablespace"),
-      VERSION((short)2, "version"),
-      PARTITION((short)3, "partition"),
-      QUERY((short)4, "query");
+      TABLESPACE((short) 1, "tablespace"),
+      VERSION((short) 2, "version"),
+      PARTITION((short) 3, "partition"),
+      QUERY((short) 4, "query");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -715,7 +698,7 @@ public class DNodeService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        switch(fieldId) {
+        switch (fieldId) {
           case 1: // TABLESPACE
             return TABLESPACE;
           case 2: // VERSION
@@ -769,15 +752,16 @@ public class DNodeService {
     private BitSet __isset_bit_vector = new BitSet(2);
 
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.TABLESPACE, new org.apache.thrift.meta_data.FieldMetaData("tablespace", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.TABLESPACE, new org.apache.thrift.meta_data.FieldMetaData("tablespace", org.apache.thrift.TFieldRequirementType.DEFAULT,
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-      tmpMap.put(_Fields.VERSION, new org.apache.thrift.meta_data.FieldMetaData("version", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.VERSION, new org.apache.thrift.meta_data.FieldMetaData("version", org.apache.thrift.TFieldRequirementType.DEFAULT,
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
-      tmpMap.put(_Fields.PARTITION, new org.apache.thrift.meta_data.FieldMetaData("partition", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.PARTITION, new org.apache.thrift.meta_data.FieldMetaData("partition", org.apache.thrift.TFieldRequirementType.DEFAULT,
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
-      tmpMap.put(_Fields.QUERY, new org.apache.thrift.meta_data.FieldMetaData("query", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.QUERY, new org.apache.thrift.meta_data.FieldMetaData("query", org.apache.thrift.TFieldRequirementType.DEFAULT,
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(sqlQuery_args.class, metaDataMap);
@@ -787,11 +771,10 @@ public class DNodeService {
     }
 
     public sqlQuery_args(
-      String tablespace,
-      long version,
-      int partition,
-      String query)
-    {
+        String tablespace,
+        long version,
+        int partition,
+        String query) {
       this();
       this.tablespace = tablespace;
       this.version = version;
@@ -844,7 +827,9 @@ public class DNodeService {
       this.tablespace = null;
     }
 
-    /** Returns true if field tablespace is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field tablespace is set (has been assigned a value) and false otherwise
+     */
     public boolean isSetTablespace() {
       return this.tablespace != null;
     }
@@ -869,7 +854,9 @@ public class DNodeService {
       __isset_bit_vector.clear(__VERSION_ISSET_ID);
     }
 
-    /** Returns true if field version is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field version is set (has been assigned a value) and false otherwise
+     */
     public boolean isSetVersion() {
       return __isset_bit_vector.get(__VERSION_ISSET_ID);
     }
@@ -892,7 +879,9 @@ public class DNodeService {
       __isset_bit_vector.clear(__PARTITION_ISSET_ID);
     }
 
-    /** Returns true if field partition is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field partition is set (has been assigned a value) and false otherwise
+     */
     public boolean isSetPartition() {
       return __isset_bit_vector.get(__PARTITION_ISSET_ID);
     }
@@ -914,7 +903,9 @@ public class DNodeService {
       this.query = null;
     }
 
-    /** Returns true if field query is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field query is set (has been assigned a value) and false otherwise
+     */
     public boolean isSetQuery() {
       return this.query != null;
     }
@@ -927,74 +918,76 @@ public class DNodeService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case TABLESPACE:
-        if (value == null) {
-          unsetTablespace();
-        } else {
-          setTablespace((String)value);
-        }
-        break;
+        case TABLESPACE:
+          if (value == null) {
+            unsetTablespace();
+          } else {
+            setTablespace((String) value);
+          }
+          break;
 
-      case VERSION:
-        if (value == null) {
-          unsetVersion();
-        } else {
-          setVersion((Long)value);
-        }
-        break;
+        case VERSION:
+          if (value == null) {
+            unsetVersion();
+          } else {
+            setVersion((Long) value);
+          }
+          break;
 
-      case PARTITION:
-        if (value == null) {
-          unsetPartition();
-        } else {
-          setPartition((Integer)value);
-        }
-        break;
+        case PARTITION:
+          if (value == null) {
+            unsetPartition();
+          } else {
+            setPartition((Integer) value);
+          }
+          break;
 
-      case QUERY:
-        if (value == null) {
-          unsetQuery();
-        } else {
-          setQuery((String)value);
-        }
-        break;
+        case QUERY:
+          if (value == null) {
+            unsetQuery();
+          } else {
+            setQuery((String) value);
+          }
+          break;
 
       }
     }
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case TABLESPACE:
-        return getTablespace();
+        case TABLESPACE:
+          return getTablespace();
 
-      case VERSION:
-        return Long.valueOf(getVersion());
+        case VERSION:
+          return Long.valueOf(getVersion());
 
-      case PARTITION:
-        return Integer.valueOf(getPartition());
+        case PARTITION:
+          return Integer.valueOf(getPartition());
 
-      case QUERY:
-        return getQuery();
+        case QUERY:
+          return getQuery();
 
       }
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+     */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
       }
 
       switch (field) {
-      case TABLESPACE:
-        return isSetTablespace();
-      case VERSION:
-        return isSetVersion();
-      case PARTITION:
-        return isSetPartition();
-      case QUERY:
-        return isSetQuery();
+        case TABLESPACE:
+          return isSetTablespace();
+        case VERSION:
+          return isSetVersion();
+        case PARTITION:
+          return isSetPartition();
+        case QUERY:
+          return isSetQuery();
       }
       throw new IllegalStateException();
     }
@@ -1004,7 +997,7 @@ public class DNodeService {
       if (that == null)
         return false;
       if (that instanceof sqlQuery_args)
-        return this.equals((sqlQuery_args)that);
+        return this.equals((sqlQuery_args) that);
       return false;
     }
 
@@ -1062,7 +1055,7 @@ public class DNodeService {
       }
 
       int lastComparison = 0;
-      sqlQuery_args typedOther = (sqlQuery_args)other;
+      sqlQuery_args typedOther = (sqlQuery_args) other;
 
       lastComparison = Boolean.valueOf(isSetTablespace()).compareTo(typedOther.isSetTablespace());
       if (lastComparison != 0) {
@@ -1114,17 +1107,16 @@ public class DNodeService {
     public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
-      while (true)
-      {
+      while (true) {
         field = iprot.readFieldBegin();
-        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) {
           break;
         }
         switch (field.id) {
           case 1: // TABLESPACE
             if (field.type == org.apache.thrift.protocol.TType.STRING) {
               this.tablespace = iprot.readString();
-            } else { 
+            } else {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
@@ -1132,7 +1124,7 @@ public class DNodeService {
             if (field.type == org.apache.thrift.protocol.TType.I64) {
               this.version = iprot.readI64();
               setVersionIsSet(true);
-            } else { 
+            } else {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
@@ -1140,14 +1132,14 @@ public class DNodeService {
             if (field.type == org.apache.thrift.protocol.TType.I32) {
               this.partition = iprot.readI32();
               setPartitionIsSet(true);
-            } else { 
+            } else {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           case 4: // QUERY
             if (field.type == org.apache.thrift.protocol.TType.STRING) {
               this.query = iprot.readString();
-            } else { 
+            } else {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
@@ -1242,19 +1234,21 @@ public class DNodeService {
 
   }
 
-  public static class sqlQuery_result implements org.apache.thrift.TBase<sqlQuery_result, sqlQuery_result._Fields>, java.io.Serializable, Cloneable   {
+  public static class sqlQuery_result implements org.apache.thrift.TBase<sqlQuery_result, sqlQuery_result._Fields>, java.io.Serializable, Cloneable {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("sqlQuery_result");
 
-    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRING, (short)0);
-    private static final org.apache.thrift.protocol.TField EXCEP_FIELD_DESC = new org.apache.thrift.protocol.TField("excep", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRING, (short) 0);
+    private static final org.apache.thrift.protocol.TField EXCEP_FIELD_DESC = new org.apache.thrift.protocol.TField("excep", org.apache.thrift.protocol.TType.STRUCT, (short) 1);
 
     public String success; // required
     public DNodeException excep; // required
 
-    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    /**
+     * The set of fields this struct contains, along with convenience methods for finding and manipulating them.
+     */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      SUCCESS((short)0, "success"),
-      EXCEP((short)1, "excep");
+      SUCCESS((short) 0, "success"),
+      EXCEP((short) 1, "excep");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -1268,7 +1262,7 @@ public class DNodeService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        switch(fieldId) {
+        switch (fieldId) {
           case 0: // SUCCESS
             return SUCCESS;
           case 1: // EXCEP
@@ -1315,11 +1309,12 @@ public class DNodeService {
     // isset id assignments
 
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT,
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-      tmpMap.put(_Fields.EXCEP, new org.apache.thrift.meta_data.FieldMetaData("excep", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.EXCEP, new org.apache.thrift.meta_data.FieldMetaData("excep", org.apache.thrift.TFieldRequirementType.DEFAULT,
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(sqlQuery_result.class, metaDataMap);
@@ -1329,9 +1324,8 @@ public class DNodeService {
     }
 
     public sqlQuery_result(
-      String success,
-      DNodeException excep)
-    {
+        String success,
+        DNodeException excep) {
       this();
       this.success = success;
       this.excep = excep;
@@ -1372,7 +1366,9 @@ public class DNodeService {
       this.success = null;
     }
 
-    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field success is set (has been assigned a value) and false otherwise
+     */
     public boolean isSetSuccess() {
       return this.success != null;
     }
@@ -1396,7 +1392,9 @@ public class DNodeService {
       this.excep = null;
     }
 
-    /** Returns true if field excep is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field excep is set (has been assigned a value) and false otherwise
+     */
     public boolean isSetExcep() {
       return this.excep != null;
     }
@@ -1409,48 +1407,50 @@ public class DNodeService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case SUCCESS:
-        if (value == null) {
-          unsetSuccess();
-        } else {
-          setSuccess((String)value);
-        }
-        break;
+        case SUCCESS:
+          if (value == null) {
+            unsetSuccess();
+          } else {
+            setSuccess((String) value);
+          }
+          break;
 
-      case EXCEP:
-        if (value == null) {
-          unsetExcep();
-        } else {
-          setExcep((DNodeException)value);
-        }
-        break;
+        case EXCEP:
+          if (value == null) {
+            unsetExcep();
+          } else {
+            setExcep((DNodeException) value);
+          }
+          break;
 
       }
     }
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case SUCCESS:
-        return getSuccess();
+        case SUCCESS:
+          return getSuccess();
 
-      case EXCEP:
-        return getExcep();
+        case EXCEP:
+          return getExcep();
 
       }
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+     */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
       }
 
       switch (field) {
-      case SUCCESS:
-        return isSetSuccess();
-      case EXCEP:
-        return isSetExcep();
+        case SUCCESS:
+          return isSetSuccess();
+        case EXCEP:
+          return isSetExcep();
       }
       throw new IllegalStateException();
     }
@@ -1460,7 +1460,7 @@ public class DNodeService {
       if (that == null)
         return false;
       if (that instanceof sqlQuery_result)
-        return this.equals((sqlQuery_result)that);
+        return this.equals((sqlQuery_result) that);
       return false;
     }
 
@@ -1500,7 +1500,7 @@ public class DNodeService {
       }
 
       int lastComparison = 0;
-      sqlQuery_result typedOther = (sqlQuery_result)other;
+      sqlQuery_result typedOther = (sqlQuery_result) other;
 
       lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
@@ -1532,17 +1532,16 @@ public class DNodeService {
     public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
-      while (true)
-      {
+      while (true) {
         field = iprot.readFieldBegin();
-        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) {
           break;
         }
         switch (field.id) {
           case 0: // SUCCESS
             if (field.type == org.apache.thrift.protocol.TType.STRING) {
               this.success = iprot.readString();
-            } else { 
+            } else {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
@@ -1550,7 +1549,7 @@ public class DNodeService {
             if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
               this.excep = new DNodeException();
               this.excep.read(iprot);
-            } else { 
+            } else {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
@@ -1627,16 +1626,18 @@ public class DNodeService {
 
   }
 
-  public static class deleteOldVersions_args implements org.apache.thrift.TBase<deleteOldVersions_args, deleteOldVersions_args._Fields>, java.io.Serializable, Cloneable   {
+  public static class deleteOldVersions_args implements org.apache.thrift.TBase<deleteOldVersions_args, deleteOldVersions_args._Fields>, java.io.Serializable, Cloneable {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("deleteOldVersions_args");
 
-    private static final org.apache.thrift.protocol.TField VERSIONS_FIELD_DESC = new org.apache.thrift.protocol.TField("versions", org.apache.thrift.protocol.TType.LIST, (short)1);
+    private static final org.apache.thrift.protocol.TField VERSIONS_FIELD_DESC = new org.apache.thrift.protocol.TField("versions", org.apache.thrift.protocol.TType.LIST, (short) 1);
 
     public List<TablespaceVersion> versions; // required
 
-    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    /**
+     * The set of fields this struct contains, along with convenience methods for finding and manipulating them.
+     */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      VERSIONS((short)1, "versions");
+      VERSIONS((short) 1, "versions");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -1650,7 +1651,7 @@ public class DNodeService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        switch(fieldId) {
+        switch (fieldId) {
           case 1: // VERSIONS
             return VERSIONS;
           default:
@@ -1695,10 +1696,11 @@ public class DNodeService {
     // isset id assignments
 
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.VERSIONS, new org.apache.thrift.meta_data.FieldMetaData("versions", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+      tmpMap.put(_Fields.VERSIONS, new org.apache.thrift.meta_data.FieldMetaData("versions", org.apache.thrift.TFieldRequirementType.DEFAULT,
+          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST,
               new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, TablespaceVersion.class))));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(deleteOldVersions_args.class, metaDataMap);
@@ -1708,8 +1710,7 @@ public class DNodeService {
     }
 
     public deleteOldVersions_args(
-      List<TablespaceVersion> versions)
-    {
+        List<TablespaceVersion> versions) {
       this();
       this.versions = versions;
     }
@@ -1764,7 +1765,9 @@ public class DNodeService {
       this.versions = null;
     }
 
-    /** Returns true if field versions is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field versions is set (has been assigned a value) and false otherwise
+     */
     public boolean isSetVersions() {
       return this.versions != null;
     }
@@ -1777,35 +1780,37 @@ public class DNodeService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case VERSIONS:
-        if (value == null) {
-          unsetVersions();
-        } else {
-          setVersions((List<TablespaceVersion>)value);
-        }
-        break;
+        case VERSIONS:
+          if (value == null) {
+            unsetVersions();
+          } else {
+            setVersions((List<TablespaceVersion>) value);
+          }
+          break;
 
       }
     }
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case VERSIONS:
-        return getVersions();
+        case VERSIONS:
+          return getVersions();
 
       }
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+     */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
       }
 
       switch (field) {
-      case VERSIONS:
-        return isSetVersions();
+        case VERSIONS:
+          return isSetVersions();
       }
       throw new IllegalStateException();
     }
@@ -1815,7 +1820,7 @@ public class DNodeService {
       if (that == null)
         return false;
       if (that instanceof deleteOldVersions_args)
-        return this.equals((deleteOldVersions_args)that);
+        return this.equals((deleteOldVersions_args) that);
       return false;
     }
 
@@ -1846,7 +1851,7 @@ public class DNodeService {
       }
 
       int lastComparison = 0;
-      deleteOldVersions_args typedOther = (deleteOldVersions_args)other;
+      deleteOldVersions_args typedOther = (deleteOldVersions_args) other;
 
       lastComparison = Boolean.valueOf(isSetVersions()).compareTo(typedOther.isSetVersions());
       if (lastComparison != 0) {
@@ -1868,10 +1873,9 @@ public class DNodeService {
     public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
-      while (true)
-      {
+      while (true) {
         field = iprot.readFieldBegin();
-        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) {
           break;
         }
         switch (field.id) {
@@ -1880,8 +1884,7 @@ public class DNodeService {
               {
                 org.apache.thrift.protocol.TList _list4 = iprot.readListBegin();
                 this.versions = new ArrayList<TablespaceVersion>(_list4.size);
-                for (int _i5 = 0; _i5 < _list4.size; ++_i5)
-                {
+                for (int _i5 = 0; _i5 < _list4.size; ++_i5) {
                   TablespaceVersion _elem6; // required
                   _elem6 = new TablespaceVersion();
                   _elem6.read(iprot);
@@ -1889,7 +1892,7 @@ public class DNodeService {
                 }
                 iprot.readListEnd();
               }
-            } else { 
+            } else {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
@@ -1912,8 +1915,7 @@ public class DNodeService {
         oprot.writeFieldBegin(VERSIONS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.versions.size()));
-          for (TablespaceVersion _iter7 : this.versions)
-          {
+          for (TablespaceVersion _iter7 : this.versions) {
             _iter7.write(oprot);
           }
           oprot.writeListEnd();
@@ -1962,19 +1964,21 @@ public class DNodeService {
 
   }
 
-  public static class deleteOldVersions_result implements org.apache.thrift.TBase<deleteOldVersions_result, deleteOldVersions_result._Fields>, java.io.Serializable, Cloneable   {
+  public static class deleteOldVersions_result implements org.apache.thrift.TBase<deleteOldVersions_result, deleteOldVersions_result._Fields>, java.io.Serializable, Cloneable {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("deleteOldVersions_result");
 
-    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRING, (short)0);
-    private static final org.apache.thrift.protocol.TField EXCEP_FIELD_DESC = new org.apache.thrift.protocol.TField("excep", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRING, (short) 0);
+    private static final org.apache.thrift.protocol.TField EXCEP_FIELD_DESC = new org.apache.thrift.protocol.TField("excep", org.apache.thrift.protocol.TType.STRUCT, (short) 1);
 
     public String success; // required
     public DNodeException excep; // required
 
-    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    /**
+     * The set of fields this struct contains, along with convenience methods for finding and manipulating them.
+     */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      SUCCESS((short)0, "success"),
-      EXCEP((short)1, "excep");
+      SUCCESS((short) 0, "success"),
+      EXCEP((short) 1, "excep");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -1988,7 +1992,7 @@ public class DNodeService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        switch(fieldId) {
+        switch (fieldId) {
           case 0: // SUCCESS
             return SUCCESS;
           case 1: // EXCEP
@@ -2035,11 +2039,12 @@ public class DNodeService {
     // isset id assignments
 
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT,
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-      tmpMap.put(_Fields.EXCEP, new org.apache.thrift.meta_data.FieldMetaData("excep", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.EXCEP, new org.apache.thrift.meta_data.FieldMetaData("excep", org.apache.thrift.TFieldRequirementType.DEFAULT,
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(deleteOldVersions_result.class, metaDataMap);
@@ -2049,9 +2054,8 @@ public class DNodeService {
     }
 
     public deleteOldVersions_result(
-      String success,
-      DNodeException excep)
-    {
+        String success,
+        DNodeException excep) {
       this();
       this.success = success;
       this.excep = excep;
@@ -2092,7 +2096,9 @@ public class DNodeService {
       this.success = null;
     }
 
-    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field success is set (has been assigned a value) and false otherwise
+     */
     public boolean isSetSuccess() {
       return this.success != null;
     }
@@ -2116,7 +2122,9 @@ public class DNodeService {
       this.excep = null;
     }
 
-    /** Returns true if field excep is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field excep is set (has been assigned a value) and false otherwise
+     */
     public boolean isSetExcep() {
       return this.excep != null;
     }
@@ -2129,48 +2137,50 @@ public class DNodeService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case SUCCESS:
-        if (value == null) {
-          unsetSuccess();
-        } else {
-          setSuccess((String)value);
-        }
-        break;
+        case SUCCESS:
+          if (value == null) {
+            unsetSuccess();
+          } else {
+            setSuccess((String) value);
+          }
+          break;
 
-      case EXCEP:
-        if (value == null) {
-          unsetExcep();
-        } else {
-          setExcep((DNodeException)value);
-        }
-        break;
+        case EXCEP:
+          if (value == null) {
+            unsetExcep();
+          } else {
+            setExcep((DNodeException) value);
+          }
+          break;
 
       }
     }
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case SUCCESS:
-        return getSuccess();
+        case SUCCESS:
+          return getSuccess();
 
-      case EXCEP:
-        return getExcep();
+        case EXCEP:
+          return getExcep();
 
       }
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+     */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
       }
 
       switch (field) {
-      case SUCCESS:
-        return isSetSuccess();
-      case EXCEP:
-        return isSetExcep();
+        case SUCCESS:
+          return isSetSuccess();
+        case EXCEP:
+          return isSetExcep();
       }
       throw new IllegalStateException();
     }
@@ -2180,7 +2190,7 @@ public class DNodeService {
       if (that == null)
         return false;
       if (that instanceof deleteOldVersions_result)
-        return this.equals((deleteOldVersions_result)that);
+        return this.equals((deleteOldVersions_result) that);
       return false;
     }
 
@@ -2220,7 +2230,7 @@ public class DNodeService {
       }
 
       int lastComparison = 0;
-      deleteOldVersions_result typedOther = (deleteOldVersions_result)other;
+      deleteOldVersions_result typedOther = (deleteOldVersions_result) other;
 
       lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
@@ -2252,17 +2262,16 @@ public class DNodeService {
     public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
-      while (true)
-      {
+      while (true) {
         field = iprot.readFieldBegin();
-        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) {
           break;
         }
         switch (field.id) {
           case 0: // SUCCESS
             if (field.type == org.apache.thrift.protocol.TType.STRING) {
               this.success = iprot.readString();
-            } else { 
+            } else {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
@@ -2270,7 +2279,7 @@ public class DNodeService {
             if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
               this.excep = new DNodeException();
               this.excep.read(iprot);
-            } else { 
+            } else {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
@@ -2347,19 +2356,21 @@ public class DNodeService {
 
   }
 
-  public static class deploy_args implements org.apache.thrift.TBase<deploy_args, deploy_args._Fields>, java.io.Serializable, Cloneable   {
+  public static class deploy_args implements org.apache.thrift.TBase<deploy_args, deploy_args._Fields>, java.io.Serializable, Cloneable {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("deploy_args");
 
-    private static final org.apache.thrift.protocol.TField DEPLOY_ACTIONS_FIELD_DESC = new org.apache.thrift.protocol.TField("deployActions", org.apache.thrift.protocol.TType.LIST, (short)1);
-    private static final org.apache.thrift.protocol.TField VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("version", org.apache.thrift.protocol.TType.I64, (short)2);
+    private static final org.apache.thrift.protocol.TField DEPLOY_ACTIONS_FIELD_DESC = new org.apache.thrift.protocol.TField("deployActions", org.apache.thrift.protocol.TType.LIST, (short) 1);
+    private static final org.apache.thrift.protocol.TField VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("version", org.apache.thrift.protocol.TType.I64, (short) 2);
 
     public List<DeployAction> deployActions; // required
     public long version; // required
 
-    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    /**
+     * The set of fields this struct contains, along with convenience methods for finding and manipulating them.
+     */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      DEPLOY_ACTIONS((short)1, "deployActions"),
-      VERSION((short)2, "version");
+      DEPLOY_ACTIONS((short) 1, "deployActions"),
+      VERSION((short) 2, "version");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -2373,7 +2384,7 @@ public class DNodeService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        switch(fieldId) {
+        switch (fieldId) {
           case 1: // DEPLOY_ACTIONS
             return DEPLOY_ACTIONS;
           case 2: // VERSION
@@ -2422,12 +2433,13 @@ public class DNodeService {
     private BitSet __isset_bit_vector = new BitSet(1);
 
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.DEPLOY_ACTIONS, new org.apache.thrift.meta_data.FieldMetaData("deployActions", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+      tmpMap.put(_Fields.DEPLOY_ACTIONS, new org.apache.thrift.meta_data.FieldMetaData("deployActions", org.apache.thrift.TFieldRequirementType.DEFAULT,
+          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST,
               new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, DeployAction.class))));
-      tmpMap.put(_Fields.VERSION, new org.apache.thrift.meta_data.FieldMetaData("version", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.VERSION, new org.apache.thrift.meta_data.FieldMetaData("version", org.apache.thrift.TFieldRequirementType.DEFAULT,
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(deploy_args.class, metaDataMap);
@@ -2437,9 +2449,8 @@ public class DNodeService {
     }
 
     public deploy_args(
-      List<DeployAction> deployActions,
-      long version)
-    {
+        List<DeployAction> deployActions,
+        long version) {
       this();
       this.deployActions = deployActions;
       this.version = version;
@@ -2501,7 +2512,9 @@ public class DNodeService {
       this.deployActions = null;
     }
 
-    /** Returns true if field deployActions is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field deployActions is set (has been assigned a value) and false otherwise
+     */
     public boolean isSetDeployActions() {
       return this.deployActions != null;
     }
@@ -2526,7 +2539,9 @@ public class DNodeService {
       __isset_bit_vector.clear(__VERSION_ISSET_ID);
     }
 
-    /** Returns true if field version is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field version is set (has been assigned a value) and false otherwise
+     */
     public boolean isSetVersion() {
       return __isset_bit_vector.get(__VERSION_ISSET_ID);
     }
@@ -2537,48 +2552,50 @@ public class DNodeService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case DEPLOY_ACTIONS:
-        if (value == null) {
-          unsetDeployActions();
-        } else {
-          setDeployActions((List<DeployAction>)value);
-        }
-        break;
+        case DEPLOY_ACTIONS:
+          if (value == null) {
+            unsetDeployActions();
+          } else {
+            setDeployActions((List<DeployAction>) value);
+          }
+          break;
 
-      case VERSION:
-        if (value == null) {
-          unsetVersion();
-        } else {
-          setVersion((Long)value);
-        }
-        break;
+        case VERSION:
+          if (value == null) {
+            unsetVersion();
+          } else {
+            setVersion((Long) value);
+          }
+          break;
 
       }
     }
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case DEPLOY_ACTIONS:
-        return getDeployActions();
+        case DEPLOY_ACTIONS:
+          return getDeployActions();
 
-      case VERSION:
-        return Long.valueOf(getVersion());
+        case VERSION:
+          return Long.valueOf(getVersion());
 
       }
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+     */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
       }
 
       switch (field) {
-      case DEPLOY_ACTIONS:
-        return isSetDeployActions();
-      case VERSION:
-        return isSetVersion();
+        case DEPLOY_ACTIONS:
+          return isSetDeployActions();
+        case VERSION:
+          return isSetVersion();
       }
       throw new IllegalStateException();
     }
@@ -2588,7 +2605,7 @@ public class DNodeService {
       if (that == null)
         return false;
       if (that instanceof deploy_args)
-        return this.equals((deploy_args)that);
+        return this.equals((deploy_args) that);
       return false;
     }
 
@@ -2628,7 +2645,7 @@ public class DNodeService {
       }
 
       int lastComparison = 0;
-      deploy_args typedOther = (deploy_args)other;
+      deploy_args typedOther = (deploy_args) other;
 
       lastComparison = Boolean.valueOf(isSetDeployActions()).compareTo(typedOther.isSetDeployActions());
       if (lastComparison != 0) {
@@ -2660,10 +2677,9 @@ public class DNodeService {
     public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
-      while (true)
-      {
+      while (true) {
         field = iprot.readFieldBegin();
-        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) {
           break;
         }
         switch (field.id) {
@@ -2672,8 +2688,7 @@ public class DNodeService {
               {
                 org.apache.thrift.protocol.TList _list8 = iprot.readListBegin();
                 this.deployActions = new ArrayList<DeployAction>(_list8.size);
-                for (int _i9 = 0; _i9 < _list8.size; ++_i9)
-                {
+                for (int _i9 = 0; _i9 < _list8.size; ++_i9) {
                   DeployAction _elem10; // required
                   _elem10 = new DeployAction();
                   _elem10.read(iprot);
@@ -2681,7 +2696,7 @@ public class DNodeService {
                 }
                 iprot.readListEnd();
               }
-            } else { 
+            } else {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
@@ -2689,7 +2704,7 @@ public class DNodeService {
             if (field.type == org.apache.thrift.protocol.TType.I64) {
               this.version = iprot.readI64();
               setVersionIsSet(true);
-            } else { 
+            } else {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
@@ -2712,8 +2727,7 @@ public class DNodeService {
         oprot.writeFieldBegin(DEPLOY_ACTIONS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.deployActions.size()));
-          for (DeployAction _iter11 : this.deployActions)
-          {
+          for (DeployAction _iter11 : this.deployActions) {
             _iter11.write(oprot);
           }
           oprot.writeListEnd();
@@ -2771,19 +2785,21 @@ public class DNodeService {
 
   }
 
-  public static class deploy_result implements org.apache.thrift.TBase<deploy_result, deploy_result._Fields>, java.io.Serializable, Cloneable   {
+  public static class deploy_result implements org.apache.thrift.TBase<deploy_result, deploy_result._Fields>, java.io.Serializable, Cloneable {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("deploy_result");
 
-    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRING, (short)0);
-    private static final org.apache.thrift.protocol.TField EXCEP_FIELD_DESC = new org.apache.thrift.protocol.TField("excep", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRING, (short) 0);
+    private static final org.apache.thrift.protocol.TField EXCEP_FIELD_DESC = new org.apache.thrift.protocol.TField("excep", org.apache.thrift.protocol.TType.STRUCT, (short) 1);
 
     public String success; // required
     public DNodeException excep; // required
 
-    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    /**
+     * The set of fields this struct contains, along with convenience methods for finding and manipulating them.
+     */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      SUCCESS((short)0, "success"),
-      EXCEP((short)1, "excep");
+      SUCCESS((short) 0, "success"),
+      EXCEP((short) 1, "excep");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -2797,7 +2813,7 @@ public class DNodeService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        switch(fieldId) {
+        switch (fieldId) {
           case 0: // SUCCESS
             return SUCCESS;
           case 1: // EXCEP
@@ -2844,11 +2860,12 @@ public class DNodeService {
     // isset id assignments
 
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT,
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-      tmpMap.put(_Fields.EXCEP, new org.apache.thrift.meta_data.FieldMetaData("excep", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.EXCEP, new org.apache.thrift.meta_data.FieldMetaData("excep", org.apache.thrift.TFieldRequirementType.DEFAULT,
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(deploy_result.class, metaDataMap);
@@ -2858,9 +2875,8 @@ public class DNodeService {
     }
 
     public deploy_result(
-      String success,
-      DNodeException excep)
-    {
+        String success,
+        DNodeException excep) {
       this();
       this.success = success;
       this.excep = excep;
@@ -2901,7 +2917,9 @@ public class DNodeService {
       this.success = null;
     }
 
-    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field success is set (has been assigned a value) and false otherwise
+     */
     public boolean isSetSuccess() {
       return this.success != null;
     }
@@ -2925,7 +2943,9 @@ public class DNodeService {
       this.excep = null;
     }
 
-    /** Returns true if field excep is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field excep is set (has been assigned a value) and false otherwise
+     */
     public boolean isSetExcep() {
       return this.excep != null;
     }
@@ -2938,48 +2958,50 @@ public class DNodeService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case SUCCESS:
-        if (value == null) {
-          unsetSuccess();
-        } else {
-          setSuccess((String)value);
-        }
-        break;
+        case SUCCESS:
+          if (value == null) {
+            unsetSuccess();
+          } else {
+            setSuccess((String) value);
+          }
+          break;
 
-      case EXCEP:
-        if (value == null) {
-          unsetExcep();
-        } else {
-          setExcep((DNodeException)value);
-        }
-        break;
+        case EXCEP:
+          if (value == null) {
+            unsetExcep();
+          } else {
+            setExcep((DNodeException) value);
+          }
+          break;
 
       }
     }
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case SUCCESS:
-        return getSuccess();
+        case SUCCESS:
+          return getSuccess();
 
-      case EXCEP:
-        return getExcep();
+        case EXCEP:
+          return getExcep();
 
       }
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+     */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
       }
 
       switch (field) {
-      case SUCCESS:
-        return isSetSuccess();
-      case EXCEP:
-        return isSetExcep();
+        case SUCCESS:
+          return isSetSuccess();
+        case EXCEP:
+          return isSetExcep();
       }
       throw new IllegalStateException();
     }
@@ -2989,7 +3011,7 @@ public class DNodeService {
       if (that == null)
         return false;
       if (that instanceof deploy_result)
-        return this.equals((deploy_result)that);
+        return this.equals((deploy_result) that);
       return false;
     }
 
@@ -3029,7 +3051,7 @@ public class DNodeService {
       }
 
       int lastComparison = 0;
-      deploy_result typedOther = (deploy_result)other;
+      deploy_result typedOther = (deploy_result) other;
 
       lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
@@ -3061,17 +3083,16 @@ public class DNodeService {
     public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
-      while (true)
-      {
+      while (true) {
         field = iprot.readFieldBegin();
-        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) {
           break;
         }
         switch (field.id) {
           case 0: // SUCCESS
             if (field.type == org.apache.thrift.protocol.TType.STRING) {
               this.success = iprot.readString();
-            } else { 
+            } else {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
@@ -3079,7 +3100,7 @@ public class DNodeService {
             if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
               this.excep = new DNodeException();
               this.excep.read(iprot);
-            } else { 
+            } else {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
@@ -3156,19 +3177,21 @@ public class DNodeService {
 
   }
 
-  public static class rollback_args implements org.apache.thrift.TBase<rollback_args, rollback_args._Fields>, java.io.Serializable, Cloneable   {
+  public static class rollback_args implements org.apache.thrift.TBase<rollback_args, rollback_args._Fields>, java.io.Serializable, Cloneable {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("rollback_args");
 
-    private static final org.apache.thrift.protocol.TField ROLLBACK_ACTIONS_FIELD_DESC = new org.apache.thrift.protocol.TField("rollbackActions", org.apache.thrift.protocol.TType.LIST, (short)1);
-    private static final org.apache.thrift.protocol.TField DISTRIBUTED_BARRIER_FIELD_DESC = new org.apache.thrift.protocol.TField("distributedBarrier", org.apache.thrift.protocol.TType.STRING, (short)2);
+    private static final org.apache.thrift.protocol.TField ROLLBACK_ACTIONS_FIELD_DESC = new org.apache.thrift.protocol.TField("rollbackActions", org.apache.thrift.protocol.TType.LIST, (short) 1);
+    private static final org.apache.thrift.protocol.TField DISTRIBUTED_BARRIER_FIELD_DESC = new org.apache.thrift.protocol.TField("distributedBarrier", org.apache.thrift.protocol.TType.STRING, (short) 2);
 
     public List<RollbackAction> rollbackActions; // required
     public String distributedBarrier; // required
 
-    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    /**
+     * The set of fields this struct contains, along with convenience methods for finding and manipulating them.
+     */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      ROLLBACK_ACTIONS((short)1, "rollbackActions"),
-      DISTRIBUTED_BARRIER((short)2, "distributedBarrier");
+      ROLLBACK_ACTIONS((short) 1, "rollbackActions"),
+      DISTRIBUTED_BARRIER((short) 2, "distributedBarrier");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -3182,7 +3205,7 @@ public class DNodeService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        switch(fieldId) {
+        switch (fieldId) {
           case 1: // ROLLBACK_ACTIONS
             return ROLLBACK_ACTIONS;
           case 2: // DISTRIBUTED_BARRIER
@@ -3229,12 +3252,13 @@ public class DNodeService {
     // isset id assignments
 
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.ROLLBACK_ACTIONS, new org.apache.thrift.meta_data.FieldMetaData("rollbackActions", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+      tmpMap.put(_Fields.ROLLBACK_ACTIONS, new org.apache.thrift.meta_data.FieldMetaData("rollbackActions", org.apache.thrift.TFieldRequirementType.DEFAULT,
+          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST,
               new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, RollbackAction.class))));
-      tmpMap.put(_Fields.DISTRIBUTED_BARRIER, new org.apache.thrift.meta_data.FieldMetaData("distributedBarrier", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.DISTRIBUTED_BARRIER, new org.apache.thrift.meta_data.FieldMetaData("distributedBarrier", org.apache.thrift.TFieldRequirementType.DEFAULT,
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(rollback_args.class, metaDataMap);
@@ -3244,9 +3268,8 @@ public class DNodeService {
     }
 
     public rollback_args(
-      List<RollbackAction> rollbackActions,
-      String distributedBarrier)
-    {
+        List<RollbackAction> rollbackActions,
+        String distributedBarrier) {
       this();
       this.rollbackActions = rollbackActions;
       this.distributedBarrier = distributedBarrier;
@@ -3306,7 +3329,9 @@ public class DNodeService {
       this.rollbackActions = null;
     }
 
-    /** Returns true if field rollbackActions is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field rollbackActions is set (has been assigned a value) and false otherwise
+     */
     public boolean isSetRollbackActions() {
       return this.rollbackActions != null;
     }
@@ -3330,7 +3355,9 @@ public class DNodeService {
       this.distributedBarrier = null;
     }
 
-    /** Returns true if field distributedBarrier is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field distributedBarrier is set (has been assigned a value) and false otherwise
+     */
     public boolean isSetDistributedBarrier() {
       return this.distributedBarrier != null;
     }
@@ -3343,48 +3370,50 @@ public class DNodeService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case ROLLBACK_ACTIONS:
-        if (value == null) {
-          unsetRollbackActions();
-        } else {
-          setRollbackActions((List<RollbackAction>)value);
-        }
-        break;
+        case ROLLBACK_ACTIONS:
+          if (value == null) {
+            unsetRollbackActions();
+          } else {
+            setRollbackActions((List<RollbackAction>) value);
+          }
+          break;
 
-      case DISTRIBUTED_BARRIER:
-        if (value == null) {
-          unsetDistributedBarrier();
-        } else {
-          setDistributedBarrier((String)value);
-        }
-        break;
+        case DISTRIBUTED_BARRIER:
+          if (value == null) {
+            unsetDistributedBarrier();
+          } else {
+            setDistributedBarrier((String) value);
+          }
+          break;
 
       }
     }
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case ROLLBACK_ACTIONS:
-        return getRollbackActions();
+        case ROLLBACK_ACTIONS:
+          return getRollbackActions();
 
-      case DISTRIBUTED_BARRIER:
-        return getDistributedBarrier();
+        case DISTRIBUTED_BARRIER:
+          return getDistributedBarrier();
 
       }
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+     */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
       }
 
       switch (field) {
-      case ROLLBACK_ACTIONS:
-        return isSetRollbackActions();
-      case DISTRIBUTED_BARRIER:
-        return isSetDistributedBarrier();
+        case ROLLBACK_ACTIONS:
+          return isSetRollbackActions();
+        case DISTRIBUTED_BARRIER:
+          return isSetDistributedBarrier();
       }
       throw new IllegalStateException();
     }
@@ -3394,7 +3423,7 @@ public class DNodeService {
       if (that == null)
         return false;
       if (that instanceof rollback_args)
-        return this.equals((rollback_args)that);
+        return this.equals((rollback_args) that);
       return false;
     }
 
@@ -3434,7 +3463,7 @@ public class DNodeService {
       }
 
       int lastComparison = 0;
-      rollback_args typedOther = (rollback_args)other;
+      rollback_args typedOther = (rollback_args) other;
 
       lastComparison = Boolean.valueOf(isSetRollbackActions()).compareTo(typedOther.isSetRollbackActions());
       if (lastComparison != 0) {
@@ -3466,10 +3495,9 @@ public class DNodeService {
     public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
-      while (true)
-      {
+      while (true) {
         field = iprot.readFieldBegin();
-        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) {
           break;
         }
         switch (field.id) {
@@ -3478,8 +3506,7 @@ public class DNodeService {
               {
                 org.apache.thrift.protocol.TList _list12 = iprot.readListBegin();
                 this.rollbackActions = new ArrayList<RollbackAction>(_list12.size);
-                for (int _i13 = 0; _i13 < _list12.size; ++_i13)
-                {
+                for (int _i13 = 0; _i13 < _list12.size; ++_i13) {
                   RollbackAction _elem14; // required
                   _elem14 = new RollbackAction();
                   _elem14.read(iprot);
@@ -3487,14 +3514,14 @@ public class DNodeService {
                 }
                 iprot.readListEnd();
               }
-            } else { 
+            } else {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
           case 2: // DISTRIBUTED_BARRIER
             if (field.type == org.apache.thrift.protocol.TType.STRING) {
               this.distributedBarrier = iprot.readString();
-            } else { 
+            } else {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
@@ -3517,8 +3544,7 @@ public class DNodeService {
         oprot.writeFieldBegin(ROLLBACK_ACTIONS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.rollbackActions.size()));
-          for (RollbackAction _iter15 : this.rollbackActions)
-          {
+          for (RollbackAction _iter15 : this.rollbackActions) {
             _iter15.write(oprot);
           }
           oprot.writeListEnd();
@@ -3580,19 +3606,21 @@ public class DNodeService {
 
   }
 
-  public static class rollback_result implements org.apache.thrift.TBase<rollback_result, rollback_result._Fields>, java.io.Serializable, Cloneable   {
+  public static class rollback_result implements org.apache.thrift.TBase<rollback_result, rollback_result._Fields>, java.io.Serializable, Cloneable {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("rollback_result");
 
-    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRING, (short)0);
-    private static final org.apache.thrift.protocol.TField EXCEP_FIELD_DESC = new org.apache.thrift.protocol.TField("excep", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRING, (short) 0);
+    private static final org.apache.thrift.protocol.TField EXCEP_FIELD_DESC = new org.apache.thrift.protocol.TField("excep", org.apache.thrift.protocol.TType.STRUCT, (short) 1);
 
     public String success; // required
     public DNodeException excep; // required
 
-    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    /**
+     * The set of fields this struct contains, along with convenience methods for finding and manipulating them.
+     */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      SUCCESS((short)0, "success"),
-      EXCEP((short)1, "excep");
+      SUCCESS((short) 0, "success"),
+      EXCEP((short) 1, "excep");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -3606,7 +3634,7 @@ public class DNodeService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        switch(fieldId) {
+        switch (fieldId) {
           case 0: // SUCCESS
             return SUCCESS;
           case 1: // EXCEP
@@ -3653,11 +3681,12 @@ public class DNodeService {
     // isset id assignments
 
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT,
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-      tmpMap.put(_Fields.EXCEP, new org.apache.thrift.meta_data.FieldMetaData("excep", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.EXCEP, new org.apache.thrift.meta_data.FieldMetaData("excep", org.apache.thrift.TFieldRequirementType.DEFAULT,
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(rollback_result.class, metaDataMap);
@@ -3667,9 +3696,8 @@ public class DNodeService {
     }
 
     public rollback_result(
-      String success,
-      DNodeException excep)
-    {
+        String success,
+        DNodeException excep) {
       this();
       this.success = success;
       this.excep = excep;
@@ -3710,7 +3738,9 @@ public class DNodeService {
       this.success = null;
     }
 
-    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field success is set (has been assigned a value) and false otherwise
+     */
     public boolean isSetSuccess() {
       return this.success != null;
     }
@@ -3734,7 +3764,9 @@ public class DNodeService {
       this.excep = null;
     }
 
-    /** Returns true if field excep is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field excep is set (has been assigned a value) and false otherwise
+     */
     public boolean isSetExcep() {
       return this.excep != null;
     }
@@ -3747,48 +3779,50 @@ public class DNodeService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case SUCCESS:
-        if (value == null) {
-          unsetSuccess();
-        } else {
-          setSuccess((String)value);
-        }
-        break;
+        case SUCCESS:
+          if (value == null) {
+            unsetSuccess();
+          } else {
+            setSuccess((String) value);
+          }
+          break;
 
-      case EXCEP:
-        if (value == null) {
-          unsetExcep();
-        } else {
-          setExcep((DNodeException)value);
-        }
-        break;
+        case EXCEP:
+          if (value == null) {
+            unsetExcep();
+          } else {
+            setExcep((DNodeException) value);
+          }
+          break;
 
       }
     }
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case SUCCESS:
-        return getSuccess();
+        case SUCCESS:
+          return getSuccess();
 
-      case EXCEP:
-        return getExcep();
+        case EXCEP:
+          return getExcep();
 
       }
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+     */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
       }
 
       switch (field) {
-      case SUCCESS:
-        return isSetSuccess();
-      case EXCEP:
-        return isSetExcep();
+        case SUCCESS:
+          return isSetSuccess();
+        case EXCEP:
+          return isSetExcep();
       }
       throw new IllegalStateException();
     }
@@ -3798,7 +3832,7 @@ public class DNodeService {
       if (that == null)
         return false;
       if (that instanceof rollback_result)
-        return this.equals((rollback_result)that);
+        return this.equals((rollback_result) that);
       return false;
     }
 
@@ -3838,7 +3872,7 @@ public class DNodeService {
       }
 
       int lastComparison = 0;
-      rollback_result typedOther = (rollback_result)other;
+      rollback_result typedOther = (rollback_result) other;
 
       lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
@@ -3870,17 +3904,16 @@ public class DNodeService {
     public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
-      while (true)
-      {
+      while (true) {
         field = iprot.readFieldBegin();
-        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) {
           break;
         }
         switch (field.id) {
           case 0: // SUCCESS
             if (field.type == org.apache.thrift.protocol.TType.STRING) {
               this.success = iprot.readString();
-            } else { 
+            } else {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
@@ -3888,7 +3921,7 @@ public class DNodeService {
             if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
               this.excep = new DNodeException();
               this.excep.read(iprot);
-            } else { 
+            } else {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
@@ -3965,14 +3998,15 @@ public class DNodeService {
 
   }
 
-  public static class status_args implements org.apache.thrift.TBase<status_args, status_args._Fields>, java.io.Serializable, Cloneable   {
+  public static class status_args implements org.apache.thrift.TBase<status_args, status_args._Fields>, java.io.Serializable, Cloneable {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("status_args");
 
 
-
-    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    /**
+     * The set of fields this struct contains, along with convenience methods for finding and manipulating them.
+     */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-;
+      ;
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -3986,7 +4020,7 @@ public class DNodeService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        switch(fieldId) {
+        switch (fieldId) {
           default:
             return null;
         }
@@ -4025,7 +4059,9 @@ public class DNodeService {
         return _fieldName;
       }
     }
+
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       metaDataMap = Collections.unmodifiableMap(tmpMap);
@@ -4060,7 +4096,9 @@ public class DNodeService {
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+     */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
@@ -4076,7 +4114,7 @@ public class DNodeService {
       if (that == null)
         return false;
       if (that instanceof status_args)
-        return this.equals((status_args)that);
+        return this.equals((status_args) that);
       return false;
     }
 
@@ -4098,7 +4136,7 @@ public class DNodeService {
       }
 
       int lastComparison = 0;
-      status_args typedOther = (status_args)other;
+      status_args typedOther = (status_args) other;
 
       return 0;
     }
@@ -4110,10 +4148,9 @@ public class DNodeService {
     public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
-      while (true)
-      {
+      while (true) {
         field = iprot.readFieldBegin();
-        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) {
           break;
         }
         switch (field.id) {
@@ -4167,19 +4204,21 @@ public class DNodeService {
 
   }
 
-  public static class status_result implements org.apache.thrift.TBase<status_result, status_result._Fields>, java.io.Serializable, Cloneable   {
+  public static class status_result implements org.apache.thrift.TBase<status_result, status_result._Fields>, java.io.Serializable, Cloneable {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("status_result");
 
-    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRING, (short)0);
-    private static final org.apache.thrift.protocol.TField EXCEP_FIELD_DESC = new org.apache.thrift.protocol.TField("excep", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRING, (short) 0);
+    private static final org.apache.thrift.protocol.TField EXCEP_FIELD_DESC = new org.apache.thrift.protocol.TField("excep", org.apache.thrift.protocol.TType.STRUCT, (short) 1);
 
     public String success; // required
     public DNodeException excep; // required
 
-    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    /**
+     * The set of fields this struct contains, along with convenience methods for finding and manipulating them.
+     */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      SUCCESS((short)0, "success"),
-      EXCEP((short)1, "excep");
+      SUCCESS((short) 0, "success"),
+      EXCEP((short) 1, "excep");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -4193,7 +4232,7 @@ public class DNodeService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        switch(fieldId) {
+        switch (fieldId) {
           case 0: // SUCCESS
             return SUCCESS;
           case 1: // EXCEP
@@ -4240,11 +4279,12 @@ public class DNodeService {
     // isset id assignments
 
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT,
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-      tmpMap.put(_Fields.EXCEP, new org.apache.thrift.meta_data.FieldMetaData("excep", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.EXCEP, new org.apache.thrift.meta_data.FieldMetaData("excep", org.apache.thrift.TFieldRequirementType.DEFAULT,
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(status_result.class, metaDataMap);
@@ -4254,9 +4294,8 @@ public class DNodeService {
     }
 
     public status_result(
-      String success,
-      DNodeException excep)
-    {
+        String success,
+        DNodeException excep) {
       this();
       this.success = success;
       this.excep = excep;
@@ -4297,7 +4336,9 @@ public class DNodeService {
       this.success = null;
     }
 
-    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field success is set (has been assigned a value) and false otherwise
+     */
     public boolean isSetSuccess() {
       return this.success != null;
     }
@@ -4321,7 +4362,9 @@ public class DNodeService {
       this.excep = null;
     }
 
-    /** Returns true if field excep is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field excep is set (has been assigned a value) and false otherwise
+     */
     public boolean isSetExcep() {
       return this.excep != null;
     }
@@ -4334,48 +4377,50 @@ public class DNodeService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case SUCCESS:
-        if (value == null) {
-          unsetSuccess();
-        } else {
-          setSuccess((String)value);
-        }
-        break;
+        case SUCCESS:
+          if (value == null) {
+            unsetSuccess();
+          } else {
+            setSuccess((String) value);
+          }
+          break;
 
-      case EXCEP:
-        if (value == null) {
-          unsetExcep();
-        } else {
-          setExcep((DNodeException)value);
-        }
-        break;
+        case EXCEP:
+          if (value == null) {
+            unsetExcep();
+          } else {
+            setExcep((DNodeException) value);
+          }
+          break;
 
       }
     }
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case SUCCESS:
-        return getSuccess();
+        case SUCCESS:
+          return getSuccess();
 
-      case EXCEP:
-        return getExcep();
+        case EXCEP:
+          return getExcep();
 
       }
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+     */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
       }
 
       switch (field) {
-      case SUCCESS:
-        return isSetSuccess();
-      case EXCEP:
-        return isSetExcep();
+        case SUCCESS:
+          return isSetSuccess();
+        case EXCEP:
+          return isSetExcep();
       }
       throw new IllegalStateException();
     }
@@ -4385,7 +4430,7 @@ public class DNodeService {
       if (that == null)
         return false;
       if (that instanceof status_result)
-        return this.equals((status_result)that);
+        return this.equals((status_result) that);
       return false;
     }
 
@@ -4425,7 +4470,7 @@ public class DNodeService {
       }
 
       int lastComparison = 0;
-      status_result typedOther = (status_result)other;
+      status_result typedOther = (status_result) other;
 
       lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
@@ -4457,17 +4502,16 @@ public class DNodeService {
     public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
-      while (true)
-      {
+      while (true) {
         field = iprot.readFieldBegin();
-        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) {
           break;
         }
         switch (field.id) {
           case 0: // SUCCESS
             if (field.type == org.apache.thrift.protocol.TType.STRING) {
               this.success = iprot.readString();
-            } else { 
+            } else {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
@@ -4475,7 +4519,7 @@ public class DNodeService {
             if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
               this.excep = new DNodeException();
               this.excep.read(iprot);
-            } else { 
+            } else {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
@@ -4552,16 +4596,18 @@ public class DNodeService {
 
   }
 
-  public static class abortDeploy_args implements org.apache.thrift.TBase<abortDeploy_args, abortDeploy_args._Fields>, java.io.Serializable, Cloneable   {
+  public static class abortDeploy_args implements org.apache.thrift.TBase<abortDeploy_args, abortDeploy_args._Fields>, java.io.Serializable, Cloneable {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("abortDeploy_args");
 
-    private static final org.apache.thrift.protocol.TField VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("version", org.apache.thrift.protocol.TType.I64, (short)1);
+    private static final org.apache.thrift.protocol.TField VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("version", org.apache.thrift.protocol.TType.I64, (short) 1);
 
     public long version; // required
 
-    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    /**
+     * The set of fields this struct contains, along with convenience methods for finding and manipulating them.
+     */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      VERSION((short)1, "version");
+      VERSION((short) 1, "version");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -4575,7 +4621,7 @@ public class DNodeService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        switch(fieldId) {
+        switch (fieldId) {
           case 1: // VERSION
             return VERSION;
           default:
@@ -4622,9 +4668,10 @@ public class DNodeService {
     private BitSet __isset_bit_vector = new BitSet(1);
 
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.VERSION, new org.apache.thrift.meta_data.FieldMetaData("version", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.VERSION, new org.apache.thrift.meta_data.FieldMetaData("version", org.apache.thrift.TFieldRequirementType.DEFAULT,
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(abortDeploy_args.class, metaDataMap);
@@ -4634,8 +4681,7 @@ public class DNodeService {
     }
 
     public abortDeploy_args(
-      long version)
-    {
+        long version) {
       this();
       this.version = version;
       setVersionIsSet(true);
@@ -4674,7 +4720,9 @@ public class DNodeService {
       __isset_bit_vector.clear(__VERSION_ISSET_ID);
     }
 
-    /** Returns true if field version is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field version is set (has been assigned a value) and false otherwise
+     */
     public boolean isSetVersion() {
       return __isset_bit_vector.get(__VERSION_ISSET_ID);
     }
@@ -4685,35 +4733,37 @@ public class DNodeService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case VERSION:
-        if (value == null) {
-          unsetVersion();
-        } else {
-          setVersion((Long)value);
-        }
-        break;
+        case VERSION:
+          if (value == null) {
+            unsetVersion();
+          } else {
+            setVersion((Long) value);
+          }
+          break;
 
       }
     }
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case VERSION:
-        return Long.valueOf(getVersion());
+        case VERSION:
+          return Long.valueOf(getVersion());
 
       }
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+     */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
       }
 
       switch (field) {
-      case VERSION:
-        return isSetVersion();
+        case VERSION:
+          return isSetVersion();
       }
       throw new IllegalStateException();
     }
@@ -4723,7 +4773,7 @@ public class DNodeService {
       if (that == null)
         return false;
       if (that instanceof abortDeploy_args)
-        return this.equals((abortDeploy_args)that);
+        return this.equals((abortDeploy_args) that);
       return false;
     }
 
@@ -4754,7 +4804,7 @@ public class DNodeService {
       }
 
       int lastComparison = 0;
-      abortDeploy_args typedOther = (abortDeploy_args)other;
+      abortDeploy_args typedOther = (abortDeploy_args) other;
 
       lastComparison = Boolean.valueOf(isSetVersion()).compareTo(typedOther.isSetVersion());
       if (lastComparison != 0) {
@@ -4776,10 +4826,9 @@ public class DNodeService {
     public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
-      while (true)
-      {
+      while (true) {
         field = iprot.readFieldBegin();
-        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) {
           break;
         }
         switch (field.id) {
@@ -4787,7 +4836,7 @@ public class DNodeService {
             if (field.type == org.apache.thrift.protocol.TType.I64) {
               this.version = iprot.readI64();
               setVersionIsSet(true);
-            } else { 
+            } else {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
@@ -4849,19 +4898,21 @@ public class DNodeService {
 
   }
 
-  public static class abortDeploy_result implements org.apache.thrift.TBase<abortDeploy_result, abortDeploy_result._Fields>, java.io.Serializable, Cloneable   {
+  public static class abortDeploy_result implements org.apache.thrift.TBase<abortDeploy_result, abortDeploy_result._Fields>, java.io.Serializable, Cloneable {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("abortDeploy_result");
 
-    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRING, (short)0);
-    private static final org.apache.thrift.protocol.TField EXCEP_FIELD_DESC = new org.apache.thrift.protocol.TField("excep", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRING, (short) 0);
+    private static final org.apache.thrift.protocol.TField EXCEP_FIELD_DESC = new org.apache.thrift.protocol.TField("excep", org.apache.thrift.protocol.TType.STRUCT, (short) 1);
 
     public String success; // required
     public DNodeException excep; // required
 
-    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    /**
+     * The set of fields this struct contains, along with convenience methods for finding and manipulating them.
+     */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      SUCCESS((short)0, "success"),
-      EXCEP((short)1, "excep");
+      SUCCESS((short) 0, "success"),
+      EXCEP((short) 1, "excep");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -4875,7 +4926,7 @@ public class DNodeService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        switch(fieldId) {
+        switch (fieldId) {
           case 0: // SUCCESS
             return SUCCESS;
           case 1: // EXCEP
@@ -4922,11 +4973,12 @@ public class DNodeService {
     // isset id assignments
 
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT,
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-      tmpMap.put(_Fields.EXCEP, new org.apache.thrift.meta_data.FieldMetaData("excep", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.EXCEP, new org.apache.thrift.meta_data.FieldMetaData("excep", org.apache.thrift.TFieldRequirementType.DEFAULT,
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(abortDeploy_result.class, metaDataMap);
@@ -4936,9 +4988,8 @@ public class DNodeService {
     }
 
     public abortDeploy_result(
-      String success,
-      DNodeException excep)
-    {
+        String success,
+        DNodeException excep) {
       this();
       this.success = success;
       this.excep = excep;
@@ -4979,7 +5030,9 @@ public class DNodeService {
       this.success = null;
     }
 
-    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field success is set (has been assigned a value) and false otherwise
+     */
     public boolean isSetSuccess() {
       return this.success != null;
     }
@@ -5003,7 +5056,9 @@ public class DNodeService {
       this.excep = null;
     }
 
-    /** Returns true if field excep is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field excep is set (has been assigned a value) and false otherwise
+     */
     public boolean isSetExcep() {
       return this.excep != null;
     }
@@ -5016,48 +5071,50 @@ public class DNodeService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case SUCCESS:
-        if (value == null) {
-          unsetSuccess();
-        } else {
-          setSuccess((String)value);
-        }
-        break;
+        case SUCCESS:
+          if (value == null) {
+            unsetSuccess();
+          } else {
+            setSuccess((String) value);
+          }
+          break;
 
-      case EXCEP:
-        if (value == null) {
-          unsetExcep();
-        } else {
-          setExcep((DNodeException)value);
-        }
-        break;
+        case EXCEP:
+          if (value == null) {
+            unsetExcep();
+          } else {
+            setExcep((DNodeException) value);
+          }
+          break;
 
       }
     }
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case SUCCESS:
-        return getSuccess();
+        case SUCCESS:
+          return getSuccess();
 
-      case EXCEP:
-        return getExcep();
+        case EXCEP:
+          return getExcep();
 
       }
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+     */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
       }
 
       switch (field) {
-      case SUCCESS:
-        return isSetSuccess();
-      case EXCEP:
-        return isSetExcep();
+        case SUCCESS:
+          return isSetSuccess();
+        case EXCEP:
+          return isSetExcep();
       }
       throw new IllegalStateException();
     }
@@ -5067,7 +5124,7 @@ public class DNodeService {
       if (that == null)
         return false;
       if (that instanceof abortDeploy_result)
-        return this.equals((abortDeploy_result)that);
+        return this.equals((abortDeploy_result) that);
       return false;
     }
 
@@ -5107,7 +5164,7 @@ public class DNodeService {
       }
 
       int lastComparison = 0;
-      abortDeploy_result typedOther = (abortDeploy_result)other;
+      abortDeploy_result typedOther = (abortDeploy_result) other;
 
       lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
@@ -5139,17 +5196,16 @@ public class DNodeService {
     public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
-      while (true)
-      {
+      while (true) {
         field = iprot.readFieldBegin();
-        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) {
           break;
         }
         switch (field.id) {
           case 0: // SUCCESS
             if (field.type == org.apache.thrift.protocol.TType.STRING) {
               this.success = iprot.readString();
-            } else { 
+            } else {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
@@ -5157,7 +5213,7 @@ public class DNodeService {
             if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
               this.excep = new DNodeException();
               this.excep.read(iprot);
-            } else { 
+            } else {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
@@ -5234,16 +5290,18 @@ public class DNodeService {
 
   }
 
-  public static class testCommand_args implements org.apache.thrift.TBase<testCommand_args, testCommand_args._Fields>, java.io.Serializable, Cloneable   {
+  public static class testCommand_args implements org.apache.thrift.TBase<testCommand_args, testCommand_args._Fields>, java.io.Serializable, Cloneable {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("testCommand_args");
 
-    private static final org.apache.thrift.protocol.TField COMMAND_FIELD_DESC = new org.apache.thrift.protocol.TField("command", org.apache.thrift.protocol.TType.STRING, (short)1);
+    private static final org.apache.thrift.protocol.TField COMMAND_FIELD_DESC = new org.apache.thrift.protocol.TField("command", org.apache.thrift.protocol.TType.STRING, (short) 1);
 
     public String command; // required
 
-    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    /**
+     * The set of fields this struct contains, along with convenience methods for finding and manipulating them.
+     */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      COMMAND((short)1, "command");
+      COMMAND((short) 1, "command");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -5257,7 +5315,7 @@ public class DNodeService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        switch(fieldId) {
+        switch (fieldId) {
           case 1: // COMMAND
             return COMMAND;
           default:
@@ -5302,9 +5360,10 @@ public class DNodeService {
     // isset id assignments
 
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.COMMAND, new org.apache.thrift.meta_data.FieldMetaData("command", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.COMMAND, new org.apache.thrift.meta_data.FieldMetaData("command", org.apache.thrift.TFieldRequirementType.DEFAULT,
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(testCommand_args.class, metaDataMap);
@@ -5314,8 +5373,7 @@ public class DNodeService {
     }
 
     public testCommand_args(
-      String command)
-    {
+        String command) {
       this();
       this.command = command;
     }
@@ -5351,7 +5409,9 @@ public class DNodeService {
       this.command = null;
     }
 
-    /** Returns true if field command is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field command is set (has been assigned a value) and false otherwise
+     */
     public boolean isSetCommand() {
       return this.command != null;
     }
@@ -5364,35 +5424,37 @@ public class DNodeService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case COMMAND:
-        if (value == null) {
-          unsetCommand();
-        } else {
-          setCommand((String)value);
-        }
-        break;
+        case COMMAND:
+          if (value == null) {
+            unsetCommand();
+          } else {
+            setCommand((String) value);
+          }
+          break;
 
       }
     }
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case COMMAND:
-        return getCommand();
+        case COMMAND:
+          return getCommand();
 
       }
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+     */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
       }
 
       switch (field) {
-      case COMMAND:
-        return isSetCommand();
+        case COMMAND:
+          return isSetCommand();
       }
       throw new IllegalStateException();
     }
@@ -5402,7 +5464,7 @@ public class DNodeService {
       if (that == null)
         return false;
       if (that instanceof testCommand_args)
-        return this.equals((testCommand_args)that);
+        return this.equals((testCommand_args) that);
       return false;
     }
 
@@ -5433,7 +5495,7 @@ public class DNodeService {
       }
 
       int lastComparison = 0;
-      testCommand_args typedOther = (testCommand_args)other;
+      testCommand_args typedOther = (testCommand_args) other;
 
       lastComparison = Boolean.valueOf(isSetCommand()).compareTo(typedOther.isSetCommand());
       if (lastComparison != 0) {
@@ -5455,17 +5517,16 @@ public class DNodeService {
     public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
-      while (true)
-      {
+      while (true) {
         field = iprot.readFieldBegin();
-        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) {
           break;
         }
         switch (field.id) {
           case 1: // COMMAND
             if (field.type == org.apache.thrift.protocol.TType.STRING) {
               this.command = iprot.readString();
-            } else { 
+            } else {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
@@ -5531,19 +5592,21 @@ public class DNodeService {
 
   }
 
-  public static class testCommand_result implements org.apache.thrift.TBase<testCommand_result, testCommand_result._Fields>, java.io.Serializable, Cloneable   {
+  public static class testCommand_result implements org.apache.thrift.TBase<testCommand_result, testCommand_result._Fields>, java.io.Serializable, Cloneable {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("testCommand_result");
 
-    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRING, (short)0);
-    private static final org.apache.thrift.protocol.TField EXCEP_FIELD_DESC = new org.apache.thrift.protocol.TField("excep", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRING, (short) 0);
+    private static final org.apache.thrift.protocol.TField EXCEP_FIELD_DESC = new org.apache.thrift.protocol.TField("excep", org.apache.thrift.protocol.TType.STRUCT, (short) 1);
 
     public String success; // required
     public DNodeException excep; // required
 
-    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    /**
+     * The set of fields this struct contains, along with convenience methods for finding and manipulating them.
+     */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      SUCCESS((short)0, "success"),
-      EXCEP((short)1, "excep");
+      SUCCESS((short) 0, "success"),
+      EXCEP((short) 1, "excep");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -5557,7 +5620,7 @@ public class DNodeService {
        * Find the _Fields constant that matches fieldId, or null if its not found.
        */
       public static _Fields findByThriftId(int fieldId) {
-        switch(fieldId) {
+        switch (fieldId) {
           case 0: // SUCCESS
             return SUCCESS;
           case 1: // EXCEP
@@ -5604,11 +5667,12 @@ public class DNodeService {
     // isset id assignments
 
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT,
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-      tmpMap.put(_Fields.EXCEP, new org.apache.thrift.meta_data.FieldMetaData("excep", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.EXCEP, new org.apache.thrift.meta_data.FieldMetaData("excep", org.apache.thrift.TFieldRequirementType.DEFAULT,
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(testCommand_result.class, metaDataMap);
@@ -5618,9 +5682,8 @@ public class DNodeService {
     }
 
     public testCommand_result(
-      String success,
-      DNodeException excep)
-    {
+        String success,
+        DNodeException excep) {
       this();
       this.success = success;
       this.excep = excep;
@@ -5661,7 +5724,9 @@ public class DNodeService {
       this.success = null;
     }
 
-    /** Returns true if field success is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field success is set (has been assigned a value) and false otherwise
+     */
     public boolean isSetSuccess() {
       return this.success != null;
     }
@@ -5685,7 +5750,9 @@ public class DNodeService {
       this.excep = null;
     }
 
-    /** Returns true if field excep is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field excep is set (has been assigned a value) and false otherwise
+     */
     public boolean isSetExcep() {
       return this.excep != null;
     }
@@ -5698,48 +5765,50 @@ public class DNodeService {
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case SUCCESS:
-        if (value == null) {
-          unsetSuccess();
-        } else {
-          setSuccess((String)value);
-        }
-        break;
+        case SUCCESS:
+          if (value == null) {
+            unsetSuccess();
+          } else {
+            setSuccess((String) value);
+          }
+          break;
 
-      case EXCEP:
-        if (value == null) {
-          unsetExcep();
-        } else {
-          setExcep((DNodeException)value);
-        }
-        break;
+        case EXCEP:
+          if (value == null) {
+            unsetExcep();
+          } else {
+            setExcep((DNodeException) value);
+          }
+          break;
 
       }
     }
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case SUCCESS:
-        return getSuccess();
+        case SUCCESS:
+          return getSuccess();
 
-      case EXCEP:
-        return getExcep();
+        case EXCEP:
+          return getExcep();
 
       }
       throw new IllegalStateException();
     }
 
-    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    /**
+     * Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+     */
     public boolean isSet(_Fields field) {
       if (field == null) {
         throw new IllegalArgumentException();
       }
 
       switch (field) {
-      case SUCCESS:
-        return isSetSuccess();
-      case EXCEP:
-        return isSetExcep();
+        case SUCCESS:
+          return isSetSuccess();
+        case EXCEP:
+          return isSetExcep();
       }
       throw new IllegalStateException();
     }
@@ -5749,7 +5818,7 @@ public class DNodeService {
       if (that == null)
         return false;
       if (that instanceof testCommand_result)
-        return this.equals((testCommand_result)that);
+        return this.equals((testCommand_result) that);
       return false;
     }
 
@@ -5789,7 +5858,7 @@ public class DNodeService {
       }
 
       int lastComparison = 0;
-      testCommand_result typedOther = (testCommand_result)other;
+      testCommand_result typedOther = (testCommand_result) other;
 
       lastComparison = Boolean.valueOf(isSetSuccess()).compareTo(typedOther.isSetSuccess());
       if (lastComparison != 0) {
@@ -5821,17 +5890,16 @@ public class DNodeService {
     public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TField field;
       iprot.readStructBegin();
-      while (true)
-      {
+      while (true) {
         field = iprot.readFieldBegin();
-        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+        if (field.type == org.apache.thrift.protocol.TType.STOP) {
           break;
         }
         switch (field.id) {
           case 0: // SUCCESS
             if (field.type == org.apache.thrift.protocol.TType.STRING) {
               this.success = iprot.readString();
-            } else { 
+            } else {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
@@ -5839,7 +5907,7 @@ public class DNodeService {
             if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
               this.excep = new DNodeException();
               this.excep.read(iprot);
-            } else { 
+            } else {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;

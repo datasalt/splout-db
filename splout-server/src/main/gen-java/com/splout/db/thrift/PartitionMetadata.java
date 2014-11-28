@@ -5,30 +5,17 @@
  */
 package com.splout.db.thrift;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.EnumMap;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.EnumSet;
-import java.util.Collections;
-import java.util.BitSet;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.*;
 
 public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetadata, PartitionMetadata._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("PartitionMetadata");
 
-  private static final org.apache.thrift.protocol.TField MIN_KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("minKey", org.apache.thrift.protocol.TType.STRING, (short)1);
-  private static final org.apache.thrift.protocol.TField MAX_KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("maxKey", org.apache.thrift.protocol.TType.STRING, (short)2);
-  private static final org.apache.thrift.protocol.TField N_REPLICAS_FIELD_DESC = new org.apache.thrift.protocol.TField("nReplicas", org.apache.thrift.protocol.TType.I32, (short)3);
-  private static final org.apache.thrift.protocol.TField DEPLOYMENT_DATE_FIELD_DESC = new org.apache.thrift.protocol.TField("deploymentDate", org.apache.thrift.protocol.TType.I64, (short)4);
-  private static final org.apache.thrift.protocol.TField INIT_STATEMENTS_FIELD_DESC = new org.apache.thrift.protocol.TField("initStatements", org.apache.thrift.protocol.TType.LIST, (short)5);
-  private static final org.apache.thrift.protocol.TField ENGINE_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("engineId", org.apache.thrift.protocol.TType.STRING, (short)6);
+  private static final org.apache.thrift.protocol.TField MIN_KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("minKey", org.apache.thrift.protocol.TType.STRING, (short) 1);
+  private static final org.apache.thrift.protocol.TField MAX_KEY_FIELD_DESC = new org.apache.thrift.protocol.TField("maxKey", org.apache.thrift.protocol.TType.STRING, (short) 2);
+  private static final org.apache.thrift.protocol.TField N_REPLICAS_FIELD_DESC = new org.apache.thrift.protocol.TField("nReplicas", org.apache.thrift.protocol.TType.I32, (short) 3);
+  private static final org.apache.thrift.protocol.TField DEPLOYMENT_DATE_FIELD_DESC = new org.apache.thrift.protocol.TField("deploymentDate", org.apache.thrift.protocol.TType.I64, (short) 4);
+  private static final org.apache.thrift.protocol.TField INIT_STATEMENTS_FIELD_DESC = new org.apache.thrift.protocol.TField("initStatements", org.apache.thrift.protocol.TType.LIST, (short) 5);
+  private static final org.apache.thrift.protocol.TField ENGINE_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("engineId", org.apache.thrift.protocol.TType.STRING, (short) 6);
 
   public String minKey; // required
   public String maxKey; // required
@@ -37,14 +24,16 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
   public List<String> initStatements; // required
   public String engineId; // required
 
-  /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+  /**
+   * The set of fields this struct contains, along with convenience methods for finding and manipulating them.
+   */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-    MIN_KEY((short)1, "minKey"),
-    MAX_KEY((short)2, "maxKey"),
-    N_REPLICAS((short)3, "nReplicas"),
-    DEPLOYMENT_DATE((short)4, "deploymentDate"),
-    INIT_STATEMENTS((short)5, "initStatements"),
-    ENGINE_ID((short)6, "engineId");
+    MIN_KEY((short) 1, "minKey"),
+    MAX_KEY((short) 2, "maxKey"),
+    N_REPLICAS((short) 3, "nReplicas"),
+    DEPLOYMENT_DATE((short) 4, "deploymentDate"),
+    INIT_STATEMENTS((short) 5, "initStatements"),
+    ENGINE_ID((short) 6, "engineId");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -58,7 +47,7 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
      * Find the _Fields constant that matches fieldId, or null if its not found.
      */
     public static _Fields findByThriftId(int fieldId) {
-      switch(fieldId) {
+      switch (fieldId) {
         case 1: // MIN_KEY
           return MIN_KEY;
         case 2: // MAX_KEY
@@ -116,20 +105,21 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
   private BitSet __isset_bit_vector = new BitSet(2);
 
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.MIN_KEY, new org.apache.thrift.meta_data.FieldMetaData("minKey", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.MIN_KEY, new org.apache.thrift.meta_data.FieldMetaData("minKey", org.apache.thrift.TFieldRequirementType.DEFAULT,
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.MAX_KEY, new org.apache.thrift.meta_data.FieldMetaData("maxKey", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.MAX_KEY, new org.apache.thrift.meta_data.FieldMetaData("maxKey", org.apache.thrift.TFieldRequirementType.DEFAULT,
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.N_REPLICAS, new org.apache.thrift.meta_data.FieldMetaData("nReplicas", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.N_REPLICAS, new org.apache.thrift.meta_data.FieldMetaData("nReplicas", org.apache.thrift.TFieldRequirementType.DEFAULT,
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
-    tmpMap.put(_Fields.DEPLOYMENT_DATE, new org.apache.thrift.meta_data.FieldMetaData("deploymentDate", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.DEPLOYMENT_DATE, new org.apache.thrift.meta_data.FieldMetaData("deploymentDate", org.apache.thrift.TFieldRequirementType.DEFAULT,
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
-    tmpMap.put(_Fields.INIT_STATEMENTS, new org.apache.thrift.meta_data.FieldMetaData("initStatements", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
-        new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+    tmpMap.put(_Fields.INIT_STATEMENTS, new org.apache.thrift.meta_data.FieldMetaData("initStatements", org.apache.thrift.TFieldRequirementType.OPTIONAL,
+        new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST,
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING))));
-    tmpMap.put(_Fields.ENGINE_ID, new org.apache.thrift.meta_data.FieldMetaData("engineId", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+    tmpMap.put(_Fields.ENGINE_ID, new org.apache.thrift.meta_data.FieldMetaData("engineId", org.apache.thrift.TFieldRequirementType.OPTIONAL,
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(PartitionMetadata.class, metaDataMap);
@@ -139,11 +129,10 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
   }
 
   public PartitionMetadata(
-    String minKey,
-    String maxKey,
-    int nReplicas,
-    long deploymentDate)
-  {
+      String minKey,
+      String maxKey,
+      int nReplicas,
+      long deploymentDate) {
     this();
     this.minKey = minKey;
     this.maxKey = maxKey;
@@ -208,7 +197,9 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
     this.minKey = null;
   }
 
-  /** Returns true if field minKey is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field minKey is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetMinKey() {
     return this.minKey != null;
   }
@@ -232,7 +223,9 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
     this.maxKey = null;
   }
 
-  /** Returns true if field maxKey is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field maxKey is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetMaxKey() {
     return this.maxKey != null;
   }
@@ -257,7 +250,9 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
     __isset_bit_vector.clear(__NREPLICAS_ISSET_ID);
   }
 
-  /** Returns true if field nReplicas is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field nReplicas is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetNReplicas() {
     return __isset_bit_vector.get(__NREPLICAS_ISSET_ID);
   }
@@ -280,7 +275,9 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
     __isset_bit_vector.clear(__DEPLOYMENTDATE_ISSET_ID);
   }
 
-  /** Returns true if field deploymentDate is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field deploymentDate is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetDeploymentDate() {
     return __isset_bit_vector.get(__DEPLOYMENTDATE_ISSET_ID);
   }
@@ -317,7 +314,9 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
     this.initStatements = null;
   }
 
-  /** Returns true if field initStatements is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field initStatements is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetInitStatements() {
     return this.initStatements != null;
   }
@@ -341,7 +340,9 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
     this.engineId = null;
   }
 
-  /** Returns true if field engineId is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field engineId is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetEngineId() {
     return this.engineId != null;
   }
@@ -354,100 +355,102 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
 
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
-    case MIN_KEY:
-      if (value == null) {
-        unsetMinKey();
-      } else {
-        setMinKey((String)value);
-      }
-      break;
+      case MIN_KEY:
+        if (value == null) {
+          unsetMinKey();
+        } else {
+          setMinKey((String) value);
+        }
+        break;
 
-    case MAX_KEY:
-      if (value == null) {
-        unsetMaxKey();
-      } else {
-        setMaxKey((String)value);
-      }
-      break;
+      case MAX_KEY:
+        if (value == null) {
+          unsetMaxKey();
+        } else {
+          setMaxKey((String) value);
+        }
+        break;
 
-    case N_REPLICAS:
-      if (value == null) {
-        unsetNReplicas();
-      } else {
-        setNReplicas((Integer)value);
-      }
-      break;
+      case N_REPLICAS:
+        if (value == null) {
+          unsetNReplicas();
+        } else {
+          setNReplicas((Integer) value);
+        }
+        break;
 
-    case DEPLOYMENT_DATE:
-      if (value == null) {
-        unsetDeploymentDate();
-      } else {
-        setDeploymentDate((Long)value);
-      }
-      break;
+      case DEPLOYMENT_DATE:
+        if (value == null) {
+          unsetDeploymentDate();
+        } else {
+          setDeploymentDate((Long) value);
+        }
+        break;
 
-    case INIT_STATEMENTS:
-      if (value == null) {
-        unsetInitStatements();
-      } else {
-        setInitStatements((List<String>)value);
-      }
-      break;
+      case INIT_STATEMENTS:
+        if (value == null) {
+          unsetInitStatements();
+        } else {
+          setInitStatements((List<String>) value);
+        }
+        break;
 
-    case ENGINE_ID:
-      if (value == null) {
-        unsetEngineId();
-      } else {
-        setEngineId((String)value);
-      }
-      break;
+      case ENGINE_ID:
+        if (value == null) {
+          unsetEngineId();
+        } else {
+          setEngineId((String) value);
+        }
+        break;
 
     }
   }
 
   public Object getFieldValue(_Fields field) {
     switch (field) {
-    case MIN_KEY:
-      return getMinKey();
+      case MIN_KEY:
+        return getMinKey();
 
-    case MAX_KEY:
-      return getMaxKey();
+      case MAX_KEY:
+        return getMaxKey();
 
-    case N_REPLICAS:
-      return Integer.valueOf(getNReplicas());
+      case N_REPLICAS:
+        return Integer.valueOf(getNReplicas());
 
-    case DEPLOYMENT_DATE:
-      return Long.valueOf(getDeploymentDate());
+      case DEPLOYMENT_DATE:
+        return Long.valueOf(getDeploymentDate());
 
-    case INIT_STATEMENTS:
-      return getInitStatements();
+      case INIT_STATEMENTS:
+        return getInitStatements();
 
-    case ENGINE_ID:
-      return getEngineId();
+      case ENGINE_ID:
+        return getEngineId();
 
     }
     throw new IllegalStateException();
   }
 
-  /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+   */
   public boolean isSet(_Fields field) {
     if (field == null) {
       throw new IllegalArgumentException();
     }
 
     switch (field) {
-    case MIN_KEY:
-      return isSetMinKey();
-    case MAX_KEY:
-      return isSetMaxKey();
-    case N_REPLICAS:
-      return isSetNReplicas();
-    case DEPLOYMENT_DATE:
-      return isSetDeploymentDate();
-    case INIT_STATEMENTS:
-      return isSetInitStatements();
-    case ENGINE_ID:
-      return isSetEngineId();
+      case MIN_KEY:
+        return isSetMinKey();
+      case MAX_KEY:
+        return isSetMaxKey();
+      case N_REPLICAS:
+        return isSetNReplicas();
+      case DEPLOYMENT_DATE:
+        return isSetDeploymentDate();
+      case INIT_STATEMENTS:
+        return isSetInitStatements();
+      case ENGINE_ID:
+        return isSetEngineId();
     }
     throw new IllegalStateException();
   }
@@ -457,7 +460,7 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
     if (that == null)
       return false;
     if (that instanceof PartitionMetadata)
-      return this.equals((PartitionMetadata)that);
+      return this.equals((PartitionMetadata) that);
     return false;
   }
 
@@ -533,7 +536,7 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
     }
 
     int lastComparison = 0;
-    PartitionMetadata typedOther = (PartitionMetadata)other;
+    PartitionMetadata typedOther = (PartitionMetadata) other;
 
     lastComparison = Boolean.valueOf(isSetMinKey()).compareTo(typedOther.isSetMinKey());
     if (lastComparison != 0) {
@@ -605,24 +608,23 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
   public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
     org.apache.thrift.protocol.TField field;
     iprot.readStructBegin();
-    while (true)
-    {
+    while (true) {
       field = iprot.readFieldBegin();
-      if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+      if (field.type == org.apache.thrift.protocol.TType.STOP) {
         break;
       }
       switch (field.id) {
         case 1: // MIN_KEY
           if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.minKey = iprot.readString();
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 2: // MAX_KEY
           if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.maxKey = iprot.readString();
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
@@ -630,7 +632,7 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
           if (field.type == org.apache.thrift.protocol.TType.I32) {
             this.nReplicas = iprot.readI32();
             setNReplicasIsSet(true);
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
@@ -638,7 +640,7 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
           if (field.type == org.apache.thrift.protocol.TType.I64) {
             this.deploymentDate = iprot.readI64();
             setDeploymentDateIsSet(true);
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
@@ -647,22 +649,21 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
             {
               org.apache.thrift.protocol.TList _list0 = iprot.readListBegin();
               this.initStatements = new ArrayList<String>(_list0.size);
-              for (int _i1 = 0; _i1 < _list0.size; ++_i1)
-              {
+              for (int _i1 = 0; _i1 < _list0.size; ++_i1) {
                 String _elem2; // required
                 _elem2 = iprot.readString();
                 this.initStatements.add(_elem2);
               }
               iprot.readListEnd();
             }
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 6: // ENGINE_ID
           if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.engineId = iprot.readString();
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
@@ -702,8 +703,7 @@ public class PartitionMetadata implements org.apache.thrift.TBase<PartitionMetad
         oprot.writeFieldBegin(INIT_STATEMENTS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, this.initStatements.size()));
-          for (String _iter3 : this.initStatements)
-          {
+          for (String _iter3 : this.initStatements) {
             oprot.writeString(_iter3);
           }
           oprot.writeListEnd();

@@ -419,17 +419,16 @@ public class QNodeHandlerContext {
 
   /**
    * Get the Thrift client for this DNode.
-   *
+   * <p/>
    * Can throw a TTransportException in the rare case when
    * a new pool is initialized here. In this case, you shouldn't call
    * the method {@link #returnDNodeClientToPool(String, com.splout.db.thrift.DNodeService.Client, boolean)}
    * to return the connection.
-   *
+   * <p/>
    * This method never returns null.
    *
-   * @throws java.lang.InterruptedException if somebody interrupts the thread meanwhile the method is waiting in the pool
+   * @throws java.lang.InterruptedException            if somebody interrupts the thread meanwhile the method is waiting in the pool
    * @throws com.splout.db.qnode.PoolCreationException if there is failure when a new pool is created.
-   *
    */
   public DNodeService.Client getDNodeClientFromPool(String dnode) throws InterruptedException, PoolCreationException {
     BlockingQueue<DNodeService.Client> dnodeQueue = thriftClientCache.get(dnode);
@@ -455,7 +454,7 @@ public class QNodeHandlerContext {
    * Return a Thrift client to the pool. This method is a bit tricky since we may want to return a connection when a
    * DNode already disconnected. Also, if the QNode is closing, we don't want to leave opened sockets around. To do it
    * safely, we check whether 1) we are closing / cleaning the QNode or 2) the DNode has disconnected.
-   *
+   * <p/>
    * The given client never can be null.
    */
   public void returnDNodeClientToPool(String dnode, DNodeService.Client client, boolean renew) {

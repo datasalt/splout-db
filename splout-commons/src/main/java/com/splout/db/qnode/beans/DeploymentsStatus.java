@@ -20,9 +20,9 @@ package com.splout.db.qnode.beans;
  * #L%
  */
 
-import java.util.List;
-
 import com.splout.db.common.BaseBean;
+
+import java.util.List;
 
 /**
  * This bean is returned by the QNode on demand and indicates all the history of deployments: which ones failed,
@@ -30,26 +30,31 @@ import com.splout.db.common.BaseBean;
  */
 public class DeploymentsStatus extends BaseBean {
 
-	private List<DeploymentStatus> finishedDeployments;
-	private List<DeploymentStatus> ongoingDeployments;
-	private List<DeploymentStatus> failedDeployments;
-	
-	public List<DeploymentStatus> getFinishedDeployments() {
-  	return finishedDeployments;
+  private List<DeploymentStatus> finishedDeployments;
+  private List<DeploymentStatus> ongoingDeployments;
+  private List<DeploymentStatus> failedDeployments;
+
+  public List<DeploymentStatus> getFinishedDeployments() {
+    return finishedDeployments;
   }
-	public void setFinishedDeployments(List<DeploymentStatus> finishedDeployments) {
-  	this.finishedDeployments = finishedDeployments;
+
+  public void setFinishedDeployments(List<DeploymentStatus> finishedDeployments) {
+    this.finishedDeployments = finishedDeployments;
   }
-	public List<DeploymentStatus> getOngoingDeployments() {
-  	return ongoingDeployments;
+
+  public List<DeploymentStatus> getOngoingDeployments() {
+    return ongoingDeployments;
   }
-	public void setOngoingDeployments(List<DeploymentStatus> ongoingDeployments) {
-  	this.ongoingDeployments = ongoingDeployments;
+
+  public void setOngoingDeployments(List<DeploymentStatus> ongoingDeployments) {
+    this.ongoingDeployments = ongoingDeployments;
   }
-	public List<DeploymentStatus> getFailedDeployments() {
-  	return failedDeployments;
+
+  public List<DeploymentStatus> getFailedDeployments() {
+    return failedDeployments;
   }
-	public void setFailedDeployments(List<DeploymentStatus> failedDeployments) {
-  	this.failedDeployments = failedDeployments;
+
+  public void setFailedDeployments(List<DeploymentStatus> failedDeployments) {
+    this.failedDeployments = failedDeployments;
   }
 }

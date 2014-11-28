@@ -32,21 +32,21 @@ import com.splout.db.integration.HadoopIntegrationTest;
  */
 public class Driver extends PangoolDriver {
 
-	public Driver() throws Throwable {
-		super();
-		addClass("benchmarkstoretool", BenchmarkStoreTool.class, "A tool for creating a tablespace for benchmarking Splout.");
-		addClass("benchmarkdeploytool", DeployerCMD.class, "A tool for deploying a tablespace created with Benchmark store tool.");
-		addClass("generate", GeneratorCMD.class, "A tool for generating tablespaces from existing files (CSV).");
-		addClass("simple-generate", SimpleGeneratorCMD.class, "A tool for converting a CSV file into a tablespace with just one table. See <generate> tool for multiple table or multiple tablespace cases.");
-		addClass("deploy", DeployerCMD.class, "A tool for deploying tablespaces generated with tools like <generate> or <simple-generate> into an existing Splout cluster");
-		addClass("pagecounts", PageCountsExample.class, "The Wikipedia Page Counts Example");
-		addClass("integrationtest", HadoopIntegrationTest.class, "A Hadoop-compatibility integrationt test");
-		addClass("identityjob", IdentityJob.class, "The identity Job which can be used to do a comparative benchmark of Splout");
-	}
-	
-	public static void main(String[] args) throws Throwable {
-		Driver driver = new Driver();
-		driver.driver(args);
-		System.exit(0);
-	}
+  public Driver() throws Throwable {
+    super();
+    addClass("benchmarkstoretool", BenchmarkStoreTool.class, "A tool for creating a tablespace for benchmarking Splout.");
+    addClass("benchmarkdeploytool", DeployerCMD.class, "A tool for deploying a tablespace created with Benchmark store tool.");
+    addClass("generate", GeneratorCMD.class, "A tool for generating tablespaces from existing files (CSV).");
+    addClass("simple-generate", SimpleGeneratorCMD.class, "A tool for converting a CSV file into a tablespace with just one table. See <generate> tool for multiple table or multiple tablespace cases.");
+    addClass("deploy", DeployerCMD.class, "A tool for deploying tablespaces generated with tools like <generate> or <simple-generate> into an existing Splout cluster");
+    addClass("pagecounts", PageCountsExample.class, "The Wikipedia Page Counts Example");
+    addClass("integrationtest", HadoopIntegrationTest.class, "A Hadoop-compatibility integrationt test");
+    addClass("identityjob", IdentityJob.class, "The identity Job which can be used to do a comparative benchmark of Splout");
+  }
+
+  public static void main(String[] args) throws Throwable {
+    Driver driver = new Driver();
+    driver.driver(args);
+    System.exit(0);
+  }
 }

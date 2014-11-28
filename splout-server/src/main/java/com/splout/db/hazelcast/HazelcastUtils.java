@@ -21,28 +21,28 @@ package com.splout.db.hazelcast;
  * #L%
  */
 
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.Member;
 
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+
 public class HazelcastUtils {
 
-	/**
-	 * Return true if the given member is one of the oldest
-	 * oldestCount members in the cluster. 
-	 */
-	public static boolean isOneOfOldestMembers(HazelcastInstance hz, Member member, int oldestCount) {
-		ArrayList<Member> members = new ArrayList<Member>(hz.getCluster().getMembers());
-		int idx = members.indexOf(member); 
-		return idx != -1 && idx<oldestCount;
-	}
-	
-	/**
-	 * Return {@link InetSocketAddress#toString()} on the member
-	 */
-	public static String getHZAddress(Member member) {		
-		return member.getInetSocketAddress().toString();		
-	}
+  /**
+   * Return true if the given member is one of the oldest
+   * oldestCount members in the cluster.
+   */
+  public static boolean isOneOfOldestMembers(HazelcastInstance hz, Member member, int oldestCount) {
+    ArrayList<Member> members = new ArrayList<Member>(hz.getCluster().getMembers());
+    int idx = members.indexOf(member);
+    return idx != -1 && idx < oldestCount;
+  }
+
+  /**
+   * Return {@link InetSocketAddress#toString()} on the member
+   */
+  public static String getHZAddress(Member member) {
+    return member.getInetSocketAddress().toString();
+  }
 }

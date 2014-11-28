@@ -5,29 +5,16 @@
  */
 package com.splout.db.thrift;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.EnumMap;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.EnumSet;
-import java.util.Collections;
-import java.util.BitSet;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.*;
 
 public class DeployAction implements org.apache.thrift.TBase<DeployAction, DeployAction._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("DeployAction");
 
-  private static final org.apache.thrift.protocol.TField TABLESPACE_FIELD_DESC = new org.apache.thrift.protocol.TField("tablespace", org.apache.thrift.protocol.TType.STRING, (short)1);
-  private static final org.apache.thrift.protocol.TField VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("version", org.apache.thrift.protocol.TType.I64, (short)2);
-  private static final org.apache.thrift.protocol.TField DATA_URI_FIELD_DESC = new org.apache.thrift.protocol.TField("dataURI", org.apache.thrift.protocol.TType.STRING, (short)3);
-  private static final org.apache.thrift.protocol.TField PARTITION_FIELD_DESC = new org.apache.thrift.protocol.TField("partition", org.apache.thrift.protocol.TType.I32, (short)4);
-  private static final org.apache.thrift.protocol.TField METADATA_FIELD_DESC = new org.apache.thrift.protocol.TField("metadata", org.apache.thrift.protocol.TType.STRUCT, (short)5);
+  private static final org.apache.thrift.protocol.TField TABLESPACE_FIELD_DESC = new org.apache.thrift.protocol.TField("tablespace", org.apache.thrift.protocol.TType.STRING, (short) 1);
+  private static final org.apache.thrift.protocol.TField VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("version", org.apache.thrift.protocol.TType.I64, (short) 2);
+  private static final org.apache.thrift.protocol.TField DATA_URI_FIELD_DESC = new org.apache.thrift.protocol.TField("dataURI", org.apache.thrift.protocol.TType.STRING, (short) 3);
+  private static final org.apache.thrift.protocol.TField PARTITION_FIELD_DESC = new org.apache.thrift.protocol.TField("partition", org.apache.thrift.protocol.TType.I32, (short) 4);
+  private static final org.apache.thrift.protocol.TField METADATA_FIELD_DESC = new org.apache.thrift.protocol.TField("metadata", org.apache.thrift.protocol.TType.STRUCT, (short) 5);
 
   public String tablespace; // required
   public long version; // required
@@ -35,13 +22,15 @@ public class DeployAction implements org.apache.thrift.TBase<DeployAction, Deplo
   public int partition; // required
   public PartitionMetadata metadata; // required
 
-  /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+  /**
+   * The set of fields this struct contains, along with convenience methods for finding and manipulating them.
+   */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-    TABLESPACE((short)1, "tablespace"),
-    VERSION((short)2, "version"),
-    DATA_URI((short)3, "dataURI"),
-    PARTITION((short)4, "partition"),
-    METADATA((short)5, "metadata");
+    TABLESPACE((short) 1, "tablespace"),
+    VERSION((short) 2, "version"),
+    DATA_URI((short) 3, "dataURI"),
+    PARTITION((short) 4, "partition"),
+    METADATA((short) 5, "metadata");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -55,7 +44,7 @@ public class DeployAction implements org.apache.thrift.TBase<DeployAction, Deplo
      * Find the _Fields constant that matches fieldId, or null if its not found.
      */
     public static _Fields findByThriftId(int fieldId) {
-      switch(fieldId) {
+      switch (fieldId) {
         case 1: // TABLESPACE
           return TABLESPACE;
         case 2: // VERSION
@@ -111,17 +100,18 @@ public class DeployAction implements org.apache.thrift.TBase<DeployAction, Deplo
   private BitSet __isset_bit_vector = new BitSet(2);
 
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.TABLESPACE, new org.apache.thrift.meta_data.FieldMetaData("tablespace", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.TABLESPACE, new org.apache.thrift.meta_data.FieldMetaData("tablespace", org.apache.thrift.TFieldRequirementType.DEFAULT,
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.VERSION, new org.apache.thrift.meta_data.FieldMetaData("version", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.VERSION, new org.apache.thrift.meta_data.FieldMetaData("version", org.apache.thrift.TFieldRequirementType.DEFAULT,
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
-    tmpMap.put(_Fields.DATA_URI, new org.apache.thrift.meta_data.FieldMetaData("dataURI", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.DATA_URI, new org.apache.thrift.meta_data.FieldMetaData("dataURI", org.apache.thrift.TFieldRequirementType.DEFAULT,
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.PARTITION, new org.apache.thrift.meta_data.FieldMetaData("partition", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.PARTITION, new org.apache.thrift.meta_data.FieldMetaData("partition", org.apache.thrift.TFieldRequirementType.DEFAULT,
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
-    tmpMap.put(_Fields.METADATA, new org.apache.thrift.meta_data.FieldMetaData("metadata", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+    tmpMap.put(_Fields.METADATA, new org.apache.thrift.meta_data.FieldMetaData("metadata", org.apache.thrift.TFieldRequirementType.DEFAULT,
         new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, PartitionMetadata.class)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(DeployAction.class, metaDataMap);
@@ -131,12 +121,11 @@ public class DeployAction implements org.apache.thrift.TBase<DeployAction, Deplo
   }
 
   public DeployAction(
-    String tablespace,
-    long version,
-    String dataURI,
-    int partition,
-    PartitionMetadata metadata)
-  {
+      String tablespace,
+      long version,
+      String dataURI,
+      int partition,
+      PartitionMetadata metadata) {
     this();
     this.tablespace = tablespace;
     this.version = version;
@@ -194,7 +183,9 @@ public class DeployAction implements org.apache.thrift.TBase<DeployAction, Deplo
     this.tablespace = null;
   }
 
-  /** Returns true if field tablespace is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field tablespace is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetTablespace() {
     return this.tablespace != null;
   }
@@ -219,7 +210,9 @@ public class DeployAction implements org.apache.thrift.TBase<DeployAction, Deplo
     __isset_bit_vector.clear(__VERSION_ISSET_ID);
   }
 
-  /** Returns true if field version is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field version is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetVersion() {
     return __isset_bit_vector.get(__VERSION_ISSET_ID);
   }
@@ -241,7 +234,9 @@ public class DeployAction implements org.apache.thrift.TBase<DeployAction, Deplo
     this.dataURI = null;
   }
 
-  /** Returns true if field dataURI is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field dataURI is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetDataURI() {
     return this.dataURI != null;
   }
@@ -266,7 +261,9 @@ public class DeployAction implements org.apache.thrift.TBase<DeployAction, Deplo
     __isset_bit_vector.clear(__PARTITION_ISSET_ID);
   }
 
-  /** Returns true if field partition is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field partition is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetPartition() {
     return __isset_bit_vector.get(__PARTITION_ISSET_ID);
   }
@@ -288,7 +285,9 @@ public class DeployAction implements org.apache.thrift.TBase<DeployAction, Deplo
     this.metadata = null;
   }
 
-  /** Returns true if field metadata is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field metadata is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetMetadata() {
     return this.metadata != null;
   }
@@ -301,87 +300,89 @@ public class DeployAction implements org.apache.thrift.TBase<DeployAction, Deplo
 
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
-    case TABLESPACE:
-      if (value == null) {
-        unsetTablespace();
-      } else {
-        setTablespace((String)value);
-      }
-      break;
+      case TABLESPACE:
+        if (value == null) {
+          unsetTablespace();
+        } else {
+          setTablespace((String) value);
+        }
+        break;
 
-    case VERSION:
-      if (value == null) {
-        unsetVersion();
-      } else {
-        setVersion((Long)value);
-      }
-      break;
+      case VERSION:
+        if (value == null) {
+          unsetVersion();
+        } else {
+          setVersion((Long) value);
+        }
+        break;
 
-    case DATA_URI:
-      if (value == null) {
-        unsetDataURI();
-      } else {
-        setDataURI((String)value);
-      }
-      break;
+      case DATA_URI:
+        if (value == null) {
+          unsetDataURI();
+        } else {
+          setDataURI((String) value);
+        }
+        break;
 
-    case PARTITION:
-      if (value == null) {
-        unsetPartition();
-      } else {
-        setPartition((Integer)value);
-      }
-      break;
+      case PARTITION:
+        if (value == null) {
+          unsetPartition();
+        } else {
+          setPartition((Integer) value);
+        }
+        break;
 
-    case METADATA:
-      if (value == null) {
-        unsetMetadata();
-      } else {
-        setMetadata((PartitionMetadata)value);
-      }
-      break;
+      case METADATA:
+        if (value == null) {
+          unsetMetadata();
+        } else {
+          setMetadata((PartitionMetadata) value);
+        }
+        break;
 
     }
   }
 
   public Object getFieldValue(_Fields field) {
     switch (field) {
-    case TABLESPACE:
-      return getTablespace();
+      case TABLESPACE:
+        return getTablespace();
 
-    case VERSION:
-      return Long.valueOf(getVersion());
+      case VERSION:
+        return Long.valueOf(getVersion());
 
-    case DATA_URI:
-      return getDataURI();
+      case DATA_URI:
+        return getDataURI();
 
-    case PARTITION:
-      return Integer.valueOf(getPartition());
+      case PARTITION:
+        return Integer.valueOf(getPartition());
 
-    case METADATA:
-      return getMetadata();
+      case METADATA:
+        return getMetadata();
 
     }
     throw new IllegalStateException();
   }
 
-  /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+   */
   public boolean isSet(_Fields field) {
     if (field == null) {
       throw new IllegalArgumentException();
     }
 
     switch (field) {
-    case TABLESPACE:
-      return isSetTablespace();
-    case VERSION:
-      return isSetVersion();
-    case DATA_URI:
-      return isSetDataURI();
-    case PARTITION:
-      return isSetPartition();
-    case METADATA:
-      return isSetMetadata();
+      case TABLESPACE:
+        return isSetTablespace();
+      case VERSION:
+        return isSetVersion();
+      case DATA_URI:
+        return isSetDataURI();
+      case PARTITION:
+        return isSetPartition();
+      case METADATA:
+        return isSetMetadata();
     }
     throw new IllegalStateException();
   }
@@ -391,7 +392,7 @@ public class DeployAction implements org.apache.thrift.TBase<DeployAction, Deplo
     if (that == null)
       return false;
     if (that instanceof DeployAction)
-      return this.equals((DeployAction)that);
+      return this.equals((DeployAction) that);
     return false;
   }
 
@@ -458,7 +459,7 @@ public class DeployAction implements org.apache.thrift.TBase<DeployAction, Deplo
     }
 
     int lastComparison = 0;
-    DeployAction typedOther = (DeployAction)other;
+    DeployAction typedOther = (DeployAction) other;
 
     lastComparison = Boolean.valueOf(isSetTablespace()).compareTo(typedOther.isSetTablespace());
     if (lastComparison != 0) {
@@ -520,17 +521,16 @@ public class DeployAction implements org.apache.thrift.TBase<DeployAction, Deplo
   public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
     org.apache.thrift.protocol.TField field;
     iprot.readStructBegin();
-    while (true)
-    {
+    while (true) {
       field = iprot.readFieldBegin();
-      if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+      if (field.type == org.apache.thrift.protocol.TType.STOP) {
         break;
       }
       switch (field.id) {
         case 1: // TABLESPACE
           if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.tablespace = iprot.readString();
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
@@ -538,14 +538,14 @@ public class DeployAction implements org.apache.thrift.TBase<DeployAction, Deplo
           if (field.type == org.apache.thrift.protocol.TType.I64) {
             this.version = iprot.readI64();
             setVersionIsSet(true);
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
         case 3: // DATA_URI
           if (field.type == org.apache.thrift.protocol.TType.STRING) {
             this.dataURI = iprot.readString();
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
@@ -553,7 +553,7 @@ public class DeployAction implements org.apache.thrift.TBase<DeployAction, Deplo
           if (field.type == org.apache.thrift.protocol.TType.I32) {
             this.partition = iprot.readI32();
             setPartitionIsSet(true);
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
@@ -561,7 +561,7 @@ public class DeployAction implements org.apache.thrift.TBase<DeployAction, Deplo
           if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
             this.metadata = new PartitionMetadata();
             this.metadata.read(iprot);
-          } else { 
+          } else {
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;

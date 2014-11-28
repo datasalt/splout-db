@@ -28,35 +28,35 @@ import org.mozilla.javascript.Scriptable;
  * An engine for embedding JavaScript into Java using Rhino, etc.
  */
 public class JavascriptEngine {
-	
-	private Context cx;
-	private Scriptable scope;
-	
-	public JavascriptEngine(String javascript) throws Throwable {
-		try {
-			cx = Context.enter();
-			scope = cx.initStandardObjects();
-			cx.evaluateString(scope, javascript, "<cmd>", 1, null);
-		} catch(Throwable t) {
-			// https://developer.mozilla.org/en-US/docs/Rhino/Scopes_and_Contexts
-			Context.exit();
-			cx = null;
-			throw t;
-		}
-	}
 
-	public String execute(String methodName, Object... params) throws Throwable {
-		if(cx == null) {
-			throw new IllegalStateException("Can't execute a function, context is null!");
-		}
-		Object fObj = scope.get(methodName, scope);
-	  Function f = (Function)fObj;
-		return Context.toString(f.call(cx, scope, scope, params));
-	}
-	
-	public void close() {
-		if(cx != null) {
-			Context.exit();
-		}
-	}
+  private Context cx;
+  private Scriptable scope;
+
+  public JavascriptEngine(String javascript) throws Throwable {
+    try {
+      cx = Context.enter();
+      scope = cx.initStandardObjects();
+      cx.evaluateString(scope, javascript, "<cmd>", 1, null);
+    } catch (Throwable t) {
+      // https://developer.mozilla.org/en-US/docs/Rhino/Scopes_and_Contexts
+      Context.exit();
+      cx = null;
+      throw t;
+    }
+  }
+
+  public String execute(String methodName, Object... params) throws Throwable {
+    if (cx == null) {
+      throw new IllegalStateException("Can't execute a function, context is null!");
+    }
+    Object fObj = scope.get(methodName, scope);
+    Function f = (Function) fObj;
+    return Context.toString(f.call(cx, scope, scope, params));
+  }
+
+  public void close() {
+    if (cx != null) {
+      Context.exit();
+    }
+  }
 }

@@ -27,68 +27,68 @@ import java.util.List;
 
 /**
  * An entry in a {@link ReplicationMap}. It consists of a shard id and a list of nodes (addresses in the form host:port).
- * 
+ *
  * @see ReplicationMap
  */
 @SuppressWarnings("serial")
 public class ReplicationEntry extends BaseBean implements Serializable, Comparable<ReplicationEntry> {
 
-	public String toString() {
-		return "Shard:" + shard + ", nodes:" + nodes + ", expected rep.factor: " + expectedReplicationFactor;
-	}
-	
-	Integer shard;
-	List<String> nodes;
-	int expectedReplicationFactor;
-
-	public ReplicationEntry() {
-		
-	}
-
-	public ReplicationEntry(int shard, String... nodes) {
-		this.shard = shard;
-		this.nodes = new ArrayList<String>();
-		this.nodes.addAll(Arrays.asList(nodes));
-		this.expectedReplicationFactor = this.nodes.size();
-	}
-	
-	// ----------------- //
-	public Integer getShard() {
-		return shard;
-	}
-
-	public void setShard(Integer shard) {
-		this.shard = shard;
-	}
-
-	public List<String> getNodes() {
-		return nodes;
-	}
-
-	public void setNodes(List<String> nodes) {
-		this.nodes = nodes;
-	}
-	
-	public void setExpectedReplicationFactor(int expectedReplicationFactor) {
-  	this.expectedReplicationFactor = expectedReplicationFactor;
+  public String toString() {
+    return "Shard:" + shard + ", nodes:" + nodes + ", expected rep.factor: " + expectedReplicationFactor;
   }
 
-	public int getExpectedReplicationFactor() {
-  	return expectedReplicationFactor;
+  Integer shard;
+  List<String> nodes;
+  int expectedReplicationFactor;
+
+  public ReplicationEntry() {
+
   }
 
-	@Override
-	public boolean equals(Object obj) {
-		ReplicationEntry reEntry = (ReplicationEntry)obj;
-		return shard.equals(reEntry.shard);
-	}
-	
-	public int hashCode() {
-		return shard.hashCode();
-	}
+  public ReplicationEntry(int shard, String... nodes) {
+    this.shard = shard;
+    this.nodes = new ArrayList<String>();
+    this.nodes.addAll(Arrays.asList(nodes));
+    this.expectedReplicationFactor = this.nodes.size();
+  }
 
-	@Override
+  // ----------------- //
+  public Integer getShard() {
+    return shard;
+  }
+
+  public void setShard(Integer shard) {
+    this.shard = shard;
+  }
+
+  public List<String> getNodes() {
+    return nodes;
+  }
+
+  public void setNodes(List<String> nodes) {
+    this.nodes = nodes;
+  }
+
+  public void setExpectedReplicationFactor(int expectedReplicationFactor) {
+    this.expectedReplicationFactor = expectedReplicationFactor;
+  }
+
+  public int getExpectedReplicationFactor() {
+    return expectedReplicationFactor;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    ReplicationEntry reEntry = (ReplicationEntry) obj;
+    return shard.equals(reEntry.shard);
+  }
+
+  public int hashCode() {
+    return shard.hashCode();
+  }
+
+  @Override
   public int compareTo(ReplicationEntry o) {
-		return shard.compareTo(o.shard);
-	}
+    return shard.compareTo(o.shard);
+  }
 }

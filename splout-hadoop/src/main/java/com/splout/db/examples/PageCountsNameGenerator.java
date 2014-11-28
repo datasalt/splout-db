@@ -27,40 +27,40 @@ import java.net.URISyntaxException;
 
 public class PageCountsNameGenerator {
 
-	public static void main(String[] args) throws URISyntaxException, IOException {
-		long nNames = Long.parseLong(args[0]);
+  public static void main(String[] args) throws URISyntaxException, IOException {
+    long nNames = Long.parseLong(args[0]);
 
-		BufferedWriter writer = new BufferedWriter(new FileWriter("names.txt"));
+    BufferedWriter writer = new BufferedWriter(new FileWriter("names.txt"));
 
-		long namesWritten = 0;
+    long namesWritten = 0;
 
-		char firstChar = 'A';
-		while(firstChar < 'Z') {
-			char secondChar = 'a';
-			while(secondChar < 'z') {
-				char thirdChar = 'a';
-				while(thirdChar < 'z') {
-					char fourthChar = 'a';
-					while(fourthChar < 'z') {
+    char firstChar = 'A';
+    while (firstChar < 'Z') {
+      char secondChar = 'a';
+      while (secondChar < 'z') {
+        char thirdChar = 'a';
+        while (thirdChar < 'z') {
+          char fourthChar = 'a';
+          while (fourthChar < 'z') {
 //						char fifthChar = 'a';
 //						while(fifthChar < 'z') {
-							String name = "" + firstChar + secondChar + thirdChar + fourthChar;
-							writer.write(name + "\n");
-							namesWritten++;
-							if(namesWritten == nNames) {
-								writer.close();
-								System.exit(0);
+            String name = "" + firstChar + secondChar + thirdChar + fourthChar;
+            writer.write(name + "\n");
+            namesWritten++;
+            if (namesWritten == nNames) {
+              writer.close();
+              System.exit(0);
 //							}
 //							fifthChar++;
-						}
-						fourthChar++;
-					}
-					thirdChar++;
-				}
-				secondChar++;
-			}
-			firstChar++;
-		}
-	}
+            }
+            fourthChar++;
+          }
+          thirdChar++;
+        }
+        secondChar++;
+      }
+      firstChar++;
+    }
+  }
 
 }

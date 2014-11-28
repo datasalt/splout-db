@@ -20,39 +20,44 @@ package com.splout.db.qnode.beans;
  * #L%
  */
 
-import java.util.Map;
-
 import com.splout.db.common.Tablespace;
 import com.splout.db.dnode.beans.DNodeSystemStatus;
+
+import java.util.Map;
 
 /**
  * All the information available to the QNode including the alive DNodes, the partition map info, etc.
  */
 public class QNodeStatus {
 
-	private Map<String, DNodeSystemStatus> dNodes;
-	private Map<String, Tablespace> tablespaceMap;
-	private int clusterSize;
-	
-	public QNodeStatus() {
-	}
+  private Map<String, DNodeSystemStatus> dNodes;
+  private Map<String, Tablespace> tablespaceMap;
+  private int clusterSize;
 
-	public Map<String, DNodeSystemStatus> getdNodes() {
-  	return dNodes;
+  public QNodeStatus() {
   }
-	public void setdNodes(Map<String, DNodeSystemStatus> dNodes) {
-  	this.dNodes = dNodes;
+
+  public Map<String, DNodeSystemStatus> getdNodes() {
+    return dNodes;
   }
-	public Map<String, Tablespace> getTablespaceMap() {
-  	return tablespaceMap;
+
+  public void setdNodes(Map<String, DNodeSystemStatus> dNodes) {
+    this.dNodes = dNodes;
   }
-	public void setTablespaceMap(Map<String, Tablespace> tablespaceMap) {
-  	this.tablespaceMap = tablespaceMap;
+
+  public Map<String, Tablespace> getTablespaceMap() {
+    return tablespaceMap;
   }
-	public int getClusterSize() {
-  	return clusterSize;
+
+  public void setTablespaceMap(Map<String, Tablespace> tablespaceMap) {
+    this.tablespaceMap = tablespaceMap;
   }
-	public void setClusterSize(int clusterSize) {
-  	this.clusterSize = clusterSize;
+
+  public int getClusterSize() {
+    return clusterSize;
+  }
+
+  public void setClusterSize(int clusterSize) {
+    this.clusterSize = clusterSize;
   }
 }
