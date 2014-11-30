@@ -62,19 +62,26 @@ public class TimeoutThread extends Thread {
 
   @Override
   public void run() {
-    log.info("Starting Timeout Thread...");
+    log.info("Starting Timeout Thread with timeout[" + this.timeout + "]...");
     try {
       while (true) {
         long now = System.currentTimeMillis();
         Iterator<SQLiteConnection> it = connections.iterator();
         while (it.hasNext()) {
           SQLiteConnection conn = it.next();
-          QueryAndTime queryAndTime = currentQueries.get(conn);
-          long time = queryAndTime.time;
-          if (time < 0) { // means this connection is not active
+
+          if (conn == null) {
+            log.error("Connection is null. It should have never happend! It is a software BUG.");
             continue;
           }
+
           synchronized (conn) {
+            QueryAndTime queryAndTime = currentQueries.get(conn);
+            long time = queryAndTime.time;
+            if (time < 0) { // means this connection is not active
+              continue;
+            }
+
             if ((now - time) > timeout) {
               // Timeout: we should interrupt this connection!
 
