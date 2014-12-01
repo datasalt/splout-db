@@ -422,9 +422,13 @@ public class DNodeHandler implements IDNodeHandler {
   public String sqlQuery(String tablespace, long version, int partition, String query)
       throws DNodeException {
 
+    String msg = "query served tablespace[" + tablespace + "]" + " version[" + version + "] partition[" + partition + "] sql[" + query
+        + "]";
+    String status = "ERROR";
+    String errMsg = "";
+    performanceTool.startQuery();
     try {
       try {
-        performanceTool.startQuery();
         // Look for the EHCache database pool cache
         String dbKey = tablespace + "_" + version + "_" + partition;
         Element dbPoolInCache = null;
@@ -433,9 +437,9 @@ public class DNodeHandler implements IDNodeHandler {
           if (dbPoolInCache == null) {
             File dbFolder = getLocalStorageFolder(tablespace, partition, version);
             if (!dbFolder.exists()) {
-              log.warn("Asked for " + dbFolder + " but it doesn't exist!");
-              throw new DNodeException(EXCEPTION_ORDINARY, "Requested tablespace (" + tablespace
-                  + ") + version (" + version + ") is not available.");
+              errMsg = "Requested tablespace (" + tablespace
+                  + ") + version (" + version + ") and partition (" + partition + ") is not available at this DNode.";
+              throw new DNodeException(EXCEPTION_ORDINARY, errMsg);
             }
             File metadata = getLocalMetadataFile(tablespace, partition, version);
             ThriftReader reader = new ThriftReader(metadata);
@@ -448,31 +452,30 @@ public class DNodeHandler implements IDNodeHandler {
         // Query the {@link SQLite4JavaManager} and return
         String result = ((EngineManager) dbPoolInCache.getObjectValue())
             .query(query, maxResultsPerQuery);
-        long time = performanceTool.endQuery();
-        log.info("serving query [" + tablespace + "]" + " [" + version + "] [" + partition + "] ["
-            + query + "] time [" + time + "] OK.");
-        // double prob = performanceTool.getHistogram().getLeftAccumulatedProbability(time);
-        // if(prob > 0.95) {
-        // // slow query!
-        // log.warn("[SLOW QUERY] Query time over 95 percentil: [" + query + "] time [" + time + "]");
-        // slowQueries++;
-        // }
-        if (time > absoluteSlowQueryLimit) {
-          // slow query!
-          log.warn("[SLOW QUERY] Query time over absolute slow query time (" + absoluteSlowQueryLimit
-              + ") : [" + query + "] time [" + time + "]");
-          slowQueries++;
-        }
+        status = "OK";
         return result;
       } catch (Throwable e) {
         unexpectedException(e);
+        errMsg = e.getMessage();
         throw new DNodeException(EXCEPTION_UNEXPECTED, e.getMessage());
       }
     } catch (DNodeException e) {
-      log.info("serving query [" + tablespace + "]" + " [" + version + "] [" + partition + "] [" + query
-          + "] FAILED [" + e.getMsg() + "]");
+      errMsg = e.getMsg();
       failedQueries.incrementAndGet();
       throw e;
+    } finally {
+      long time = performanceTool.endQuery();
+      msg += " time[" + time + "] status[" + status + "]";
+      if ("ERROR".equals(status)) {
+        msg += " errorMessage[" + errMsg + "]";
+      }
+      log.info(msg);
+      if (time > absoluteSlowQueryLimit) {
+        // slow query!
+        log.warn("[SLOW QUERY] Query time over absolute slow query time (" + absoluteSlowQueryLimit
+            + ") : sql[" + query + "] time[" + time + "]");
+        slowQueries++;
+      }
     }
   }
 
