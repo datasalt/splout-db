@@ -74,13 +74,13 @@ public class QNodeHandlerContext {
   private ReentrantLock thriftClientCacheLock = new ReentrantLock();
 
   private final int thriftClientPoolSize;
-  private final int dnodePoolTimeoutMillis;
+  private final long dnodePoolTimeoutMillis;
 
   public QNodeHandlerContext(SploutConfiguration config, CoordinationStructures coordinationStructures) {
     this.config = config;
     this.coordinationStructures = coordinationStructures;
     this.thriftClientPoolSize = config.getInt(QNodeProperties.DNODE_POOL_SIZE);
-    this.dnodePoolTimeoutMillis = config.getInt(QNodeProperties.QNODE_DNODE_POOL_TAKE_TIMEOUT);
+    this.dnodePoolTimeoutMillis = config.getLong(QNodeProperties.QNODE_DNODE_POOL_TAKE_TIMEOUT);
     this.replicaBalancer = new ReplicaBalancer(this);
     initMetrics();
   }

@@ -335,18 +335,6 @@ public class DNodeHandler implements IDNodeHandler {
     hz = Hazelcast.newHazelcastInstance(HazelcastConfigBuilder.build(config));
     coord = new CoordinationStructures(hz);
     coord.getDNodeReplicaBalanceActionsSet().addEntryListener(new BalanceActionItemListener(), false);
-    // Add shutdown hook
-    Runtime.getRuntime().addShutdownHook(new Thread() {
-      @Override
-      public void run() {
-        try {
-          log.info("Shutdown hook called - trying to gently stop DNodeHandler " + whoAmI() + " ...");
-          DNodeHandler.this.stop();
-        } catch (Throwable e) {
-          log.error("Error in ShutdownHook", e);
-        }
-      }
-    });
     upSince = System.currentTimeMillis();
   }
 

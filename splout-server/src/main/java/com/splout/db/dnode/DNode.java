@@ -138,8 +138,8 @@ public class DNode implements DNodeService.Iface {
   }
 
   public void stop() throws Exception {
-    handler.stop();
     server.stop();
+    handler.stop();
     servingThread.join();
   }
 
@@ -151,7 +151,19 @@ public class DNode implements DNodeService.Iface {
     } else {
       config = SploutConfiguration.get();
     }
-    DNode dnode = new DNode(config, new DNodeHandler());
+    final DNode dnode = new DNode(config, new DNodeHandler());
+    // Add shutdown hook
+    Runtime.getRuntime().addShutdownHook(new Thread() {
+      @Override
+      public void run() {
+        try {
+          log.info("Shutdown hook called - trying to gently stop DNode ...");
+          dnode.stop();
+        } catch (Throwable e) {
+          log.error("Error in ShutdownHook", e);
+        }
+      }
+    });
     dnode.init();
   }
 
