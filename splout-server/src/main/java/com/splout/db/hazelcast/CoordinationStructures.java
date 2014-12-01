@@ -82,7 +82,7 @@ public class CoordinationStructures {
   // at once.
   public static final AtomicInteger DEPLOY_IN_PROGRESS = new AtomicInteger(0);
 
-  private final static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss SSS");
+  private final static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss SSS");
 
   public CoordinationStructures(HazelcastInstance hz) {
     this.hz = hz;
