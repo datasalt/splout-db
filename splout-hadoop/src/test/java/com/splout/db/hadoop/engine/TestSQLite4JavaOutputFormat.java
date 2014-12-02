@@ -25,7 +25,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Test;
@@ -33,7 +32,6 @@ import org.junit.Test;
 import com.datasalt.pangool.io.Fields;
 import com.datasalt.pangool.io.Schema;
 import com.datasalt.pangool.io.Schema.Field;
-import com.splout.db.common.JSONSerDe;
 import com.splout.db.engine.DefaultEngine;
 import com.splout.db.engine.SQLite4JavaClient;
 import com.splout.db.hadoop.TableSpec;
@@ -59,9 +57,9 @@ public class TestSQLite4JavaOutputFormat extends SploutSQLOutputFormatTester imp
 		// Assert that the DB has been created successfully
 		
 		assertTrue(new File(OUTPUT + "/0.db").exists());
-		SQLite4JavaClient manager = new SQLite4JavaClient(OUTPUT + "/0.db", null);
+		SQLite4JavaClient manager = new SQLite4JavaClient(OUTPUT + "/0.db", null, false, 0);
 		@SuppressWarnings("rawtypes")
-    List list = JSONSerDe.deSer(manager.query("SELECT * FROM schema1;", 100), ArrayList.class);
+    List list = manager.query("SELECT * FROM schema1;", 100).mapify();
 		assertEquals(6, list.size());
 		
 		manager.close();

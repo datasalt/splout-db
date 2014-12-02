@@ -21,6 +21,7 @@ package com.splout.db.dnode;
  * #L%
  */
 
+import java.nio.ByteBuffer;
 import java.util.List;
 
 import com.splout.db.common.SploutConfiguration;
@@ -30,33 +31,36 @@ import com.splout.db.thrift.RollbackAction;
 import com.splout.db.thrift.TablespaceVersion;
 
 /**
- * Use this interface for implementing the business logic of the {@link DNode} service. One may want to do this for
- * implementing unit tests and validating that the DNode receives requests.
+ * Use this interface for implementing the business logic of the {@link DNode}
+ * service. One may want to do this for implementing unit tests and validating
+ * that the DNode receives requests.
  */
 public interface IDNodeHandler {
 
-	public void init(SploutConfiguration config) throws Exception;
+  public void init(SploutConfiguration config) throws Exception;
 
-	/**
-	 * Method called when {@link #init(SploutConfiguration)} has been performed and the service is ready to accept
-	 * request. Typically, this method will register the service as ready in the cluster.
-	 */
-	public void giveGreenLigth();
+  /**
+   * Method called when {@link #init(SploutConfiguration)} has been performed
+   * and the service is ready to accept request. Typically, this method will
+   * register the service as ready in the cluster.
+   */
+  public void giveGreenLigth();
 
-	public String sqlQuery(String tablespace, long version, int partition, String query)
-	    throws DNodeException;
+  public ByteBuffer binarySqlQuery(String tablespace, long version, int partition, String query, int cursorId) throws DNodeException;
 
-	public String deploy(final List<DeployAction> deployActions, final long version) throws DNodeException;
+  public String sqlQuery(String tablespace, long version, int partition, String query) throws DNodeException;
 
-	public String rollback(List<RollbackAction> rollbackActions, String ignoreMe) throws DNodeException;
+  public String deploy(final List<DeployAction> deployActions, final long version) throws DNodeException;
 
-	public String status() throws DNodeException;
+  public String rollback(List<RollbackAction> rollbackActions, String ignoreMe) throws DNodeException;
 
-	public String abortDeploy(long version) throws DNodeException;
+  public String status() throws DNodeException;
 
-	public String deleteOldVersions(List<TablespaceVersion> versions) throws DNodeException;
+  public String abortDeploy(long version) throws DNodeException;
 
-	public String testCommand(String command) throws DNodeException;
+  public String deleteOldVersions(List<TablespaceVersion> versions) throws DNodeException;
 
-	public void stop() throws Exception;
+  public String testCommand(String command) throws DNodeException;
+
+  public void stop() throws Exception;
 }

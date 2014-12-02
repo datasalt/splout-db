@@ -21,6 +21,7 @@ package com.splout.db.dnode;
  * #L%
  */
 
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.Executors;
 
@@ -171,5 +172,11 @@ public class DNode implements DNodeService.Iface {
 	@Override
   public String testCommand(String command) throws DNodeException, TException {
 	  return handler.testCommand(command);
+  }
+
+  @Override
+  public ByteBuffer binarySqlQuery(String tablespace, long version, int partition, String query, int cursorId) throws DNodeException,
+      TException {
+    return handler.binarySqlQuery(tablespace, version, partition, query, cursorId);
   }
 }

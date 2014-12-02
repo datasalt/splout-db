@@ -49,7 +49,6 @@ import com.splout.db.dnode.DNode;
 import com.splout.db.dnode.DNodeHandler;
 import com.splout.db.dnode.DNodeMockHandler;
 import com.splout.db.dnode.DNodeProperties;
-import com.splout.db.dnode.IDNodeHandler;
 import com.splout.db.hazelcast.CoordinationStructures;
 import com.splout.db.hazelcast.DNodeInfo;
 import com.splout.db.hazelcast.HazelcastConfigBuilder;
@@ -216,7 +215,7 @@ public class TestQNodeHandler {
 			handler.getContext().getCurrentVersionsMap().put("tablespace1", 0l);
 
 			// Query key 2 (> 1 < 10)
-			QueryStatus qStatus = handler.query("tablespace1", "2", "SELECT 1;", null);
+			QueryStatus qStatus = handler.query("tablespace1", "2", "SELECT 1;", null, null);
 			Assert.assertEquals(new Integer(0), qStatus.getShard());
 			Assert.assertEquals("[1]", qStatus.getResult().toString());
 		} finally {
@@ -243,12 +242,12 @@ public class TestQNodeHandler {
 			handler.getContext().getCurrentVersionsMap().put("tablespace1", 0l);
 
 			// Query shard 0
-			QueryStatus qStatus = handler.query("tablespace1", null, "SELECT 1;", "0");
+			QueryStatus qStatus = handler.query("tablespace1", null, "SELECT 1;", "0", null);
 			Assert.assertEquals(new Integer(0), qStatus.getShard());
 			Assert.assertEquals("[1]", qStatus.getResult().toString());
 
 			// Query random partition
-			qStatus = handler.query("tablespace1", null, "SELECT 1;", Querier.PARTITION_RANDOM);
+			qStatus = handler.query("tablespace1", null, "SELECT 1;", Querier.PARTITION_RANDOM, null);
 			Assert.assertEquals(new Integer(0), qStatus.getShard());
 			Assert.assertEquals("[1]", qStatus.getResult().toString());
 
@@ -264,16 +263,7 @@ public class TestQNodeHandler {
 		// Same as test deploy firing, but with more than one DNode and different deploy actions
 		SploutConfiguration config1 = SploutConfiguration.getTestConfig();
 
-		DNode dnode1 = TestUtils.getTestDNode(config1, new IDNodeHandler() {
-			@Override
-			public void init(SploutConfiguration config) throws Exception {
-			}
-
-			@Override
-			public String sqlQuery(String tablespace, long version, int partition, String query)
-			    throws DNodeException {
-				return null;
-			}
+		DNode dnode1 = TestUtils.getTestDNode(config1, new DNodeMockHandler() {
 
 			@Override
 			public String deploy(List<DeployAction> deployActions, long distributedBarrier)
@@ -288,55 +278,10 @@ public class TestQNodeHandler {
 				Assert.assertEquals("partition2", deployActions.get(1).getTablespace());
 				return "FOO";
 			}
-
-			@Override
-			public String rollback(List<RollbackAction> rollbackActions, String ignoreMe)
-			    throws DNodeException {
-				return null;
-			}
-
-			@Override
-			public String status() throws DNodeException {
-				return null;
-			}
-
-			@Override
-			public void stop() throws Exception {
-			}
-
-			@Override
-			public void giveGreenLigth() {
-			}
-
-			@Override
-			public String abortDeploy(long version) throws DNodeException {
-				return null;
-			}
-
-			@Override
-			public String deleteOldVersions(List<com.splout.db.thrift.TablespaceVersion> versions)
-			    throws DNodeException {
-				return null;
-			}
-
-			@Override
-			public String testCommand(String command) throws DNodeException {
-				// TODO Auto-generated method stub
-				return null;
-			}
 		}, "dnode-" + this.getClass().getName() + "-3");
 
 		SploutConfiguration config2 = SploutConfiguration.getTestConfig();
-		DNode dnode2 = TestUtils.getTestDNode(config2, new IDNodeHandler() {
-			@Override
-			public void init(SploutConfiguration config) throws Exception {
-			}
-
-			@Override
-			public String sqlQuery(String tablespace, long version, int partition, String query)
-			    throws DNodeException {
-				return null;
-			}
+		DNode dnode2 = TestUtils.getTestDNode(config2, new DNodeMockHandler() {
 
 			@Override
 			public String deploy(List<DeployAction> deployActions, long distributedBarrier)
@@ -353,36 +298,6 @@ public class TestQNodeHandler {
 			@Override
 			public String rollback(List<RollbackAction> rollbackActions, String ignoreMe)
 			    throws DNodeException {
-				return null;
-			}
-
-			@Override
-			public String status() throws DNodeException {
-				return null;
-			}
-
-			@Override
-			public void stop() throws Exception {
-			}
-
-			@Override
-			public void giveGreenLigth() {
-			}
-
-			@Override
-			public String abortDeploy(long version) throws DNodeException {
-				return null;
-			}
-
-			@Override
-			public String deleteOldVersions(List<com.splout.db.thrift.TablespaceVersion> versions)
-			    throws DNodeException {
-				return null;
-			}
-
-			@Override
-			public String testCommand(String command) throws DNodeException {
-				// TODO Auto-generated method stub
 				return null;
 			}
 		}, "dnode-" + this.getClass().getName() + "-4");
@@ -425,16 +340,7 @@ public class TestQNodeHandler {
 		QNodeHandler handler = new QNodeHandler();
 		SploutConfiguration config = SploutConfiguration.getTestConfig();
 
-		DNode dnode = TestUtils.getTestDNode(config, new IDNodeHandler() {
-			@Override
-			public void init(SploutConfiguration config) throws Exception {
-			}
-
-			@Override
-			public String sqlQuery(String tablespace, long version, int partition, String query)
-			    throws DNodeException {
-				return null;
-			}
+		DNode dnode = TestUtils.getTestDNode(config, new DNodeMockHandler() {
 
 			@Override
 			public String deploy(List<DeployAction> deployActions, long version) throws DNodeException {
@@ -443,42 +349,6 @@ public class TestQNodeHandler {
 				Assert.assertEquals("partition1", deployActions.get(0).getTablespace());
 				Assert.assertTrue(version >= 0); // TODO Is this the right checking here?
 				return "FOO";
-			}
-
-			@Override
-			public String rollback(List<RollbackAction> rollbackActions, String ignoreMe)
-			    throws DNodeException {
-				return null;
-			}
-
-			@Override
-			public String status() throws DNodeException {
-				return null;
-			}
-
-			@Override
-			public void stop() throws Exception {
-			}
-
-			@Override
-			public void giveGreenLigth() {
-			}
-
-			@Override
-			public String abortDeploy(long version) throws DNodeException {
-				return null;
-			}
-
-			@Override
-			public String deleteOldVersions(List<com.splout.db.thrift.TablespaceVersion> versions)
-			    throws DNodeException {
-				return null;
-			}
-
-			@Override
-			public String testCommand(String command) throws DNodeException {
-				// TODO Auto-generated method stub
-				return null;
 			}
 		}, "dnode-" + this.getClass().getName() + "-5");
 

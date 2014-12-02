@@ -207,7 +207,7 @@ public class TestMultiThreadedQueryAndDeploy extends BaseIntegrationTest {
 
 		for(int i = 0; i < N_DNODES; i++) {
 			File dbData = new File(deployData, i + ".db");
-			SQLite4JavaClient manager = new SQLite4JavaClient(dbData + "", null);
+			SQLite4JavaClient manager = new SQLite4JavaClient(dbData + "", null, false, 0);
 			// We create a foo database with one integer and one text
 			manager.query("CREATE TABLE " + TABLE + " (iteration INT, dnode INT);", 100);
 			// We insert as many values as the ones we defined in the partition map

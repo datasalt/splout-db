@@ -48,7 +48,11 @@ public class QueryServlet extends BaseServlet {
 	    IOException {
 
 		String tablespace = req.getParameter("tablespace");
-
+		Integer cursorId = null;
+		if(req.getParameter("cursorId") != null) {
+		  cursorId = Integer.parseInt(req.getParameter("cursorId"));
+		}
+		
 		StringBuffer postBody = new StringBuffer();
 		String line = null;
 
@@ -65,7 +69,7 @@ public class QueryServlet extends BaseServlet {
 			String callback = (String) params.get("callback");
 			String partition = (String) params.get("partition");
 			
-			handle(req, resp, keys, tablespace, sql, callback, partition);
+			handle(req, resp, keys, tablespace, sql, callback, partition, cursorId);
     } catch(JSONSerDeException e) {
 	    throw new IOException(e);
     }
@@ -80,11 +84,15 @@ public class QueryServlet extends BaseServlet {
 		String sql = req.getParameter("sql");
 		String callback = req.getParameter("callback");
 		String partition = req.getParameter("partition");
-		
-		handle(req, resp, keys, tablespace, sql, callback, partition);
+    Integer cursorId = null;
+    if(req.getParameter("cursorId") != null) {
+      cursorId = Integer.parseInt(req.getParameter("cursorId"));
+    }
+    
+		handle(req, resp, keys, tablespace, sql, callback, partition, cursorId);
 	}
 
-	private void handle(HttpServletRequest req, HttpServletResponse resp, String[] keys, String tablespace, String sql, String callback, String partition) throws ServletException,
+	private void handle(HttpServletRequest req, HttpServletResponse resp, String[] keys, String tablespace, String sql, String callback, String partition, Integer cursorId) throws ServletException,
 	    IOException {
 
 		resp.setHeader("content-type", "application/json;charset=UTF-8");
@@ -99,7 +107,7 @@ public class QueryServlet extends BaseServlet {
 		}
 
 		try {
-			QueryStatus st = qNodeHandler.query(tablespace, key, sql, partition);
+			QueryStatus st = qNodeHandler.query(tablespace, key, sql, partition, cursorId);
       String status = "status[OK]";
       if (st instanceof ErrorQueryStatus) {
         String errMsg = st.getError();

@@ -20,19 +20,19 @@ package com.splout.db.hadoop;
  * #L%
  */
 
-import com.splout.db.common.PartitionEntry;
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.Writable;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.Writable;
+import org.junit.Test;
 
-@SuppressWarnings({"rawtypes", "serial"})
+import com.splout.db.common.PartitionEntry;
+
 public class TestTablespaceGeneratorGeneratePartitions {
 
   public static class ReaderMockup implements TablespaceGenerator.Nextable {

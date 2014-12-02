@@ -21,9 +21,47 @@ package com.splout.db.dnode;
  * #L%
  */
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+
+import net.sf.ehcache.Cache;
+import net.sf.ehcache.Element;
+
+import org.apache.commons.io.FileSystemUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.TrueFileFilter;
+import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
-import com.hazelcast.core.*;
+import com.hazelcast.core.EntryEvent;
+import com.hazelcast.core.EntryListener;
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.ICountDownLatch;
+import com.hazelcast.core.MapEvent;
 import com.splout.db.benchmark.PerformanceTool;
 import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
@@ -35,31 +73,20 @@ import com.splout.db.dnode.beans.DNodeStatusResponse;
 import com.splout.db.dnode.beans.DNodeSystemStatus;
 import com.splout.db.engine.EngineManager;
 import com.splout.db.engine.ManagerFactory;
-import com.splout.db.hazelcast.*;
+import com.splout.db.engine.ResultAndCursorId;
+import com.splout.db.engine.ResultSerializer;
+import com.splout.db.hazelcast.CoordinationStructures;
+import com.splout.db.hazelcast.DNodeInfo;
+import com.splout.db.hazelcast.DistributedRegistry;
+import com.splout.db.hazelcast.HazelcastConfigBuilder;
 import com.splout.db.hazelcast.HazelcastConfigBuilder.HazelcastConfigBuilderException;
+import com.splout.db.hazelcast.HazelcastProperties;
 import com.splout.db.qnode.ReplicaBalancer;
 import com.splout.db.qnode.ReplicaBalancer.BalanceAction;
 import com.splout.db.thrift.DNodeException;
 import com.splout.db.thrift.DeployAction;
 import com.splout.db.thrift.PartitionMetadata;
 import com.splout.db.thrift.RollbackAction;
-import net.sf.ehcache.Cache;
-import net.sf.ehcache.Element;
-import org.apache.commons.io.FileSystemUtils;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.TrueFileFilter;
-import org.apache.commons.lang.exception.ExceptionUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * The business logic for the DNode: responding to queries, downloading new deployments, handling ZooKeeper events and
@@ -416,65 +443,87 @@ public class DNodeHandler implements IDNodeHandler {
 	}
 	
 	/**
+	 * Called by both binary and JSON version RPC methods.
+	 */
+	private Object sqlQueryHelperMethod(String tablespace, long version, int partition, int cursorId, boolean binary, String query)
+  throws DNodeException {
+
+    try {
+      try {
+        performanceTool.startQuery();
+        // Look for the EHCache database pool cache
+        String dbKey = tablespace + "_" + version + "_" + partition;
+        Element dbPoolInCache = null;
+        synchronized(dbCache) {
+          dbPoolInCache = dbCache.get(dbKey);
+          if(dbPoolInCache == null) {
+            File dbFolder = getLocalStorageFolder(tablespace, partition, version);
+            if(!dbFolder.exists()) {
+              log.warn("Asked for " + dbFolder + " but it doesn't exist!");
+              throw new DNodeException(EXCEPTION_ORDINARY, "Requested tablespace (" + tablespace
+                  + ") + version (" + version + ") is not available.");
+            }
+            File metadata = getLocalMetadataFile(tablespace, partition, version);
+            ThriftReader reader = new ThriftReader(metadata);
+            PartitionMetadata partitionMetadata = (PartitionMetadata) reader
+                .read(new PartitionMetadata());
+            reader.close();
+            dbPoolInCache = loadManagerInEHCache(tablespace, version, partition, dbFolder, partitionMetadata);
+          }
+        }
+        Object result = null;
+        // Query the {@link SQLite4JavaManager} and return
+        if(binary) {
+          ResultAndCursorId queryResult = ((EngineManager) dbPoolInCache.getObjectValue()).query(query, cursorId, maxResultsPerQuery);
+          result = ResultSerializer.serialize(queryResult);
+        } else {
+          result = ((EngineManager) dbPoolInCache.getObjectValue()).query(query, maxResultsPerQuery).jsonize();
+        }
+        long time = performanceTool.endQuery();
+        log.info("serving query [" + tablespace + "]" + " [" + version + "] [" + partition + "] ["
+            + query + "] time [" + time + "] OK.");
+        // double prob = performanceTool.getHistogram().getLeftAccumulatedProbability(time);
+        // if(prob > 0.95) {
+        // // slow query!
+        // log.warn("[SLOW QUERY] Query time over 95 percentil: [" + query + "] time [" + time + "]");
+        // slowQueries++;
+        // }
+        if(time > absoluteSlowQueryLimit) {
+          // slow query!
+          log.warn("[SLOW QUERY] Query time over absolute slow query time (" + absoluteSlowQueryLimit
+              + ") : [" + query + "] time [" + time + "]");
+          slowQueries++;
+        }
+        return result;
+      } catch(Throwable e) {
+        unexpectedException(e);
+        throw new DNodeException(EXCEPTION_UNEXPECTED, e.getMessage());
+      }
+    } catch(DNodeException e) {
+      log.info("serving query [" + tablespace + "]" + " [" + version + "] [" + partition + "] [" + query
+          + "] FAILED [" + e.getMsg() + "]");
+      failedQueries.incrementAndGet();
+      throw e;
+    }
+	}
+	
+	/**
 	 * Thrift RPC method -> Given a tablespace and a version, execute the SQL query
 	 */
 	@Override
 	public String sqlQuery(String tablespace, long version, int partition, String query)
 	    throws DNodeException {
-
-		try {
-			try {
-				performanceTool.startQuery();
-				// Look for the EHCache database pool cache
-				String dbKey = tablespace + "_" + version + "_" + partition;
-				Element dbPoolInCache = null;
-				synchronized(dbCache) {
-					dbPoolInCache = dbCache.get(dbKey);
-					if(dbPoolInCache == null) {
-						File dbFolder = getLocalStorageFolder(tablespace, partition, version);
-						if(!dbFolder.exists()) {
-							log.warn("Asked for " + dbFolder + " but it doesn't exist!");
-							throw new DNodeException(EXCEPTION_ORDINARY, "Requested tablespace (" + tablespace
-							    + ") + version (" + version + ") is not available.");
-						}
-						File metadata = getLocalMetadataFile(tablespace, partition, version);
-						ThriftReader reader = new ThriftReader(metadata);
-						PartitionMetadata partitionMetadata = (PartitionMetadata) reader
-						    .read(new PartitionMetadata());
-						reader.close();
-						dbPoolInCache = loadManagerInEHCache(tablespace, version, partition, dbFolder, partitionMetadata);
-					}
-				}
-				// Query the {@link SQLite4JavaManager} and return
-				String result = ((EngineManager) dbPoolInCache.getObjectValue())
-				    .query(query, maxResultsPerQuery);
-				long time = performanceTool.endQuery();
-				log.info("serving query [" + tablespace + "]" + " [" + version + "] [" + partition + "] ["
-				    + query + "] time [" + time + "] OK.");
-				// double prob = performanceTool.getHistogram().getLeftAccumulatedProbability(time);
-				// if(prob > 0.95) {
-				// // slow query!
-				// log.warn("[SLOW QUERY] Query time over 95 percentil: [" + query + "] time [" + time + "]");
-				// slowQueries++;
-				// }
-				if(time > absoluteSlowQueryLimit) {
-					// slow query!
-					log.warn("[SLOW QUERY] Query time over absolute slow query time (" + absoluteSlowQueryLimit
-					    + ") : [" + query + "] time [" + time + "]");
-					slowQueries++;
-				}
-				return result;
-			} catch(Throwable e) {
-				unexpectedException(e);
-				throw new DNodeException(EXCEPTION_UNEXPECTED, e.getMessage());
-			}
-		} catch(DNodeException e) {
-			log.info("serving query [" + tablespace + "]" + " [" + version + "] [" + partition + "] [" + query
-			    + "] FAILED [" + e.getMsg() + "]");
-			failedQueries.incrementAndGet();
-			throw e;
-		}
+	  return (String) sqlQueryHelperMethod(tablespace, version, partition, ResultAndCursorId.NO_CURSOR, false, query);
 	}
+
+	/**
+   * Thrift RPC method -> Given a tablespace and a version, execute the SQL query.
+   * Supports efficient serialization and paging through cursors.
+   */
+  @Override
+  public ByteBuffer binarySqlQuery(String tablespace, long version, int partition, String query, int cursorId) throws DNodeException {
+    return (ByteBuffer) sqlQueryHelperMethod(tablespace, version, partition, cursorId, true, query);
+  }
 
 	private void abortDeploy(long version, String errorMessage) {
 		ConcurrentMap<String, String> panel = coord.getDeployErrorPanel(version);

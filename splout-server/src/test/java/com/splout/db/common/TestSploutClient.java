@@ -42,7 +42,7 @@ public class TestSploutClient {
 	public static IQNodeHandler QNODE_HANDLER = new QNodeMockHandler() {
 
 		@Override
-	  public QueryStatus query(String tablespace, String key, String sql, String partition) throws Exception {
+	  public QueryStatus query(String tablespace, String key, String sql, String partition, Integer cursorId) throws Exception {
 		  QueryStatus queryStatus = new QueryStatus();
 		  queryStatus.setError(tablespace + " " + key + " " + sql);
 		  return queryStatus;

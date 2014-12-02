@@ -43,6 +43,6 @@ public class HazelcastUtils {
 	 * Return {@link InetSocketAddress#toString()} on the member
 	 */
 	public static String getHZAddress(Member member) {		
-		return member.getInetSocketAddress().toString();		
+		return member.getSocketAddress().toString();		
 	}
 }

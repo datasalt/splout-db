@@ -26,10 +26,12 @@ import java.sql.SQLException;
 import java.util.List;
 
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.NotImplementedException;
 
 import com.splout.db.common.CompressorUtil;
 import com.splout.db.common.PortUtils;
 import com.splout.db.common.PortUtils.PortLock;
+import com.splout.db.common.QueryResult;
 import com.splout.db.engine.EmbeddedMySQL.EmbeddedMySQLConfig;
 
 public class MySQLManager implements EngineManager {
@@ -58,12 +60,12 @@ public class MySQLManager implements EngineManager {
   }
 	
 	@Override
-	public String exec(String query) throws EngineException {
+	public QueryResult exec(String query) throws EngineException {
 		return jdbcManager.exec(query);
 	}
 
 	@Override
-	public String query(String query, int maxResults) throws EngineException {
+	public QueryResult query(String query, int maxResults) throws EngineException {
 		return jdbcManager.query(query, maxResults);
 	}
 
@@ -107,4 +109,9 @@ public class MySQLManager implements EngineManager {
 			portLock.release();
 		}
 	}
+
+  @Override
+  public ResultAndCursorId query(String query, int previousCursorId, int maxResults) throws EngineException {
+    throw new NotImplementedException();
+  }
 }

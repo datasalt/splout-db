@@ -22,7 +22,6 @@ package com.splout.db.qnode;
  */
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 
 import org.junit.Assert;
@@ -50,7 +49,6 @@ public class TestReplicaBalancer {
 			this.dNodeInfo = dNodeInfo;
 		}
 
-		@SuppressWarnings("unchecked")
     @Override
 		public IMap<String, DNodeInfo> getDNodes() {
  			return new FixedDNodeList(dNodes, dNodeInfo);

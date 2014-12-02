@@ -76,7 +76,6 @@ public class TestDistributedRegistry {
 	/**
 	 * When split-brain, after merge, joining nodes must re-register themselves. Checking.
 	 */
-	@SuppressWarnings("deprecation")
   @Test(timeout = 180000)
 	public void testReregisterAfterMerge() throws Exception {
 

@@ -79,6 +79,9 @@ public class SploutConfiguration extends CompositeConfiguration implements Seria
 		
 		// Disable HZ state storage
 		properties.clearProperty(HazelcastProperties.HZ_PERSISTENCE_FOLDER);
+		
+		// We maintain compatibility with legacy tests by using JSON serialization between QNode and DNode
+		properties.setProperty(QNodeProperties.DISABLE_BINARY_PROTOCOL, true);
 		return properties;
 	}
 

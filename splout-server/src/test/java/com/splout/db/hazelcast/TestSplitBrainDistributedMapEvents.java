@@ -62,7 +62,6 @@ public class TestSplitBrainDistributedMapEvents {
 	    /**
 	     * Unfinished.
 	     */
-	    @SuppressWarnings("deprecation")
       @Test(timeout = 180000)
 	    @Ignore
 	    public void testSplitBrainLostKeyEvents() throws Exception {
@@ -161,7 +160,6 @@ public class TestSplitBrainDistributedMapEvents {
 	    	return i;
 	    }
 	    
-	    @SuppressWarnings("deprecation")
       @Test(timeout = 180000)
 	    @Ignore
 	    public void testTcpIpSplitBrainJoinsCorrectCluster() throws Exception {
@@ -236,7 +234,6 @@ public class TestSplitBrainDistributedMapEvents {
 	        assertEquals(4, h4.getCluster().getMembers().size());
 	    }
 	
-	    @SuppressWarnings("deprecation")
       @Test(timeout = 180000)
 	    @Ignore
 	    public void testTcpIpSplitBrainStillWorksWhenTargetDisappears() throws Exception {
@@ -291,7 +288,6 @@ public class TestSplitBrainDistributedMapEvents {
 	        assertEquals(2, h3.getCluster().getMembers().size());
 	    }
 	
-	    @SuppressWarnings("deprecation")
       private static Config buildConfig(boolean multicastEnabled) {
 	        Config c = new Config();
 	        c.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(multicastEnabled);

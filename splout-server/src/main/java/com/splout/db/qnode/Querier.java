@@ -21,21 +21,29 @@ package com.splout.db.qnode;
  * #L%
  */
 
-import com.splout.db.common.*;
-import com.splout.db.common.JSONSerDe.JSONSerDeException;
-import com.splout.db.hazelcast.TablespaceVersion;
-import com.splout.db.qnode.beans.ErrorQueryStatus;
-import com.splout.db.qnode.beans.QueryStatus;
-import com.splout.db.thrift.DNodeException;
-import com.splout.db.thrift.DNodeService;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import com.splout.db.common.JSONSerDe;
+import com.splout.db.common.JSONSerDe.JSONSerDeException;
+import com.splout.db.common.PartitionMap;
+import com.splout.db.common.ReplicationEntry;
+import com.splout.db.common.ReplicationMap;
+import com.splout.db.common.Tablespace;
+import com.splout.db.engine.ResultAndCursorId;
+import com.splout.db.engine.ResultSerializer;
+import com.splout.db.engine.ResultSerializer.SerializationException;
+import com.splout.db.hazelcast.TablespaceVersion;
+import com.splout.db.qnode.beans.ErrorQueryStatus;
+import com.splout.db.qnode.beans.QueryStatus;
+import com.splout.db.thrift.DNodeException;
+import com.splout.db.thrift.DNodeService;
 
 /**
  * The Querier is a specialized module ({@link com.splout.db.qnode.QNodeHandlerModule}) of the
@@ -47,6 +55,7 @@ public class Querier extends QNodeHandlerModule {
 	public final static String PARTITION_RANDOM = "random";
 	
 	private final static Log log = LogFactory.getLog(Querier.class);
+	private boolean useBinaryProtocol = true;
 	
 	@SuppressWarnings("serial")
   public static final class QuerierException extends Exception {
@@ -62,6 +71,9 @@ public class Querier extends QNodeHandlerModule {
 
 	public Querier(QNodeHandlerContext context) {
 		super(context);
+    if(context.getConfig().getBoolean(QNodeProperties.DISABLE_BINARY_PROTOCOL)) {
+      useBinaryProtocol = false;
+    }
 	}
 
 	/**
@@ -69,8 +81,9 @@ public class Querier extends QNodeHandlerModule {
 	 * 
 	 * @throws JSONSerDeException
 	 * @throws QuerierException 
+	 * @throws SerializationException 
 	 */
-	public QueryStatus query(String tablespaceName, String key, String sql, String partition) throws JSONSerDeException, QuerierException {
+	public QueryStatus query(String tablespaceName, String key, String sql, String partition, Integer cursorId) throws QuerierException, SerializationException, JSONSerDeException {
 		Long version = context.getCurrentVersionsMap().get(tablespaceName);
 		if(version == null) {
 			return new ErrorQueryStatus("Unknown tablespace or no version ready to be served! (" + tablespaceName + ")");
@@ -103,7 +116,7 @@ public class Querier extends QNodeHandlerModule {
 				}
 			}
 		}
-		return query(tablespaceName, sql, partitionId);
+		return query(tablespaceName, sql, partitionId, cursorId);
 	}
 
 	private ThreadLocal<Map<Integer, Integer>> partitionRoundRobin = new ThreadLocal<Map<Integer, Integer>>() {
@@ -120,7 +133,7 @@ public class Querier extends QNodeHandlerModule {
 	/**
 	 * API method for querying a tablespace when you already know the partition Id. Can be used for multi-querying.
 	 */
-	public QueryStatus query(String tablespaceName, String sql, int partitionId) throws JSONSerDeException {
+	public QueryStatus query(String tablespaceName, String sql, int partitionId, Integer cursorId) throws ResultSerializer.SerializationException, JSONSerDeException {
     String msg = "tablespace[" + tablespaceName + "] partition[" + partitionId + "] sql[" + sql + "]";
 
     Long version = context.getCurrentVersionsMap().get(tablespaceName);
@@ -173,9 +186,14 @@ public class Querier extends QNodeHandlerModule {
 			try {
 				client = context.getDNodeClientFromPool(electedNode);
 
-				String r = client.sqlQuery(tablespaceName, version, partitionId, sql);
-
-				qStatus.setResult(JSONSerDe.deSer(r, ArrayList.class));
+				if(useBinaryProtocol) {
+				  ResultAndCursorId r = ResultSerializer.deserialize(client.binarySqlQuery(tablespaceName, version, partitionId, sql, cursorId != null ? cursorId : ResultAndCursorId.NO_CURSOR));
+	        qStatus.setResult((ArrayList) r.getResult().mapify());
+	        qStatus.setCursorId(r.getCursorId());
+				} else {
+				  qStatus.setResult(JSONSerDe.deSer(client.sqlQuery(tablespaceName, version, partitionId, sql), ArrayList.class));
+				}
+				
 				long end = System.currentTimeMillis();
 				// Report the time of the query
 				qStatus.setMillis((end - start));

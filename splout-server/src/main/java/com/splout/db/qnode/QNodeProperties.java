@@ -80,4 +80,10 @@ public class QNodeProperties {
 	 * As a downside, replica balancing might use more disk space than desired. 
 	 */
 	public final static String REPLICA_BALANCE_ENABLE = "qnode.enable.replica.balance";
+	
+	/**
+	 * Hidden property to be used only for legacy testing. Binary protocol between QNode and DNode should be
+	 * the default and used always.
+	 */
+	public final static String DISABLE_BINARY_PROTOCOL = "qnode.disable.binary.protocol";
 }

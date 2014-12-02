@@ -26,7 +26,6 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -34,8 +33,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.jolbox.bonecp.BoneCP;
 import com.jolbox.bonecp.BoneCPConfig;
-import com.splout.db.common.JSONSerDe;
-import com.splout.db.common.JSONSerDe.JSONSerDeException;
+import com.splout.db.common.QueryResult;
 import com.splout.db.engine.EngineManager.EngineException;
 
 /**
@@ -62,11 +60,7 @@ public class JDBCManager {
 		connectionPool = new BoneCP(config); // setup the connection pool
 	}
 	
-	/**
-	 * The contract of this function is to return a JSON-ized ArrayList of JSON Objects which in Java are represented as
-	 * Map<String, Object>. So, for a query with no results, an empty ArrayList is returned.
-	 */
-	public String query(String query, int maxResults) throws EngineException {
+	public QueryResult query(String query, int maxResults) throws EngineException {
 		long start = System.currentTimeMillis();
 		Connection connection = null;
 		ResultSet rs = null;
@@ -74,20 +68,18 @@ public class JDBCManager {
 		try {
 			connection = connectionPool.getConnection(); // fetch a connection
 			stmt = connection.createStatement();
-			String result = null;
+			QueryResult result = null;
 			if(stmt.execute(query)) {
 				rs = stmt.getResultSet();
-				result = JSONSerDe.ser(convertResultSetToList(rs, maxResults));
+				result = convertResultSetToQueryResult(rs, maxResults);
 			} else {
-				result = JSONSerDe.ser(new ArrayList<HashMap<String, Object>>());
+				result = QueryResult.emptyQueryResult();
 			}
 			long end = System.currentTimeMillis();
 			log.info(Thread.currentThread().getName() + ": Query [" + query + "] handled in [" + (end - start)
 			    + "] ms.");
 			return result;
 		} catch(SQLException e) {
-			throw new EngineException(e);
-		} catch(JSONSerDeException e) {
 			throw new EngineException(e);
 		} finally {
 			try {
@@ -106,30 +98,38 @@ public class JDBCManager {
 
 	// -------- //
 
-	public static List<HashMap<String, Object>> convertResultSetToList(ResultSet rs, int maxResults)
+	public static QueryResult convertResultSetToQueryResult(ResultSet rs, int maxResults)
 	    throws SQLException {
-		ResultSetMetaData md = rs.getMetaData();
+		
+	  ResultSetMetaData md = rs.getMetaData();
 		int columns = md.getColumnCount();
-		List<HashMap<String, Object>> list = new ArrayList<HashMap<String, Object>>();
+    String[] columnNames = new String[columns];
+		for(int i = 0; i < columns; i++) {
+		  columnNames[i] = md.getColumnName(i);
+		}
+		
+		List<Object[]> list = new ArrayList<Object[]>();
 		while(rs.next() && list.size() < maxResults) {
-			HashMap<String, Object> row = new HashMap<String, Object>(columns);
+			Object[] row = new Object[columns];
 			for(int i = 1; i <= columns; ++i) {
-				row.put(md.getColumnName(i), rs.getObject(i));
+				row[i] = rs.getObject(i);
 			}
 			list.add(row);
 		}
+		
 		if(list.size() == maxResults) {
 			throw new SQLException("Hard limit on number of results reached (" + maxResults
 			    + "), please use a LIMIT for this query.");
 		}
-		return list;
+		
+		return new QueryResult(columnNames, list);
 	}
 
 	public void close() {
 		connectionPool.shutdown();
 	}
 
-	public String exec(String query) throws EngineException {
+	public QueryResult exec(String query) throws EngineException {
 		return query(query, 1);
 	}
 	

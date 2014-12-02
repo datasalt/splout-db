@@ -23,12 +23,10 @@ package com.splout.db.engine;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Test;
 
-import com.splout.db.common.JSONSerDe;
 import com.splout.db.hadoop.engine.SploutSQLOutputFormatTester;
 
 @SuppressWarnings("serial")
@@ -48,7 +46,7 @@ public class TestMySQLOutputFormat extends SploutSQLOutputFormatTester {
 		MySQLManager manager = new MySQLManager();
 		try {
 			manager.init(dbFile, null, null);
-			List list = JSONSerDe.deSer(manager.query("SELECT * FROM schema1;", 100), ArrayList.class);
+			List list = manager.query("SELECT * FROM schema1;", 100).mapify();
 			assertEquals(6, list.size());
 		} finally {
 			manager.close();

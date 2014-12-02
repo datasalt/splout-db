@@ -28,6 +28,8 @@ import com.splout.db.common.JSONSerDe.JSONSerDeException;
 import com.splout.db.common.SploutConfiguration;
 import com.splout.db.common.Tablespace;
 import com.splout.db.dnode.beans.DNodeSystemStatus;
+import com.splout.db.engine.ResultAndCursorId;
+import com.splout.db.engine.ResultSerializer.SerializationException;
 import com.splout.db.hazelcast.*;
 import com.splout.db.qnode.Deployer.UnexistingVersion;
 import com.splout.db.qnode.QNodeHandlerContext.DNodeEvent;
@@ -369,9 +371,10 @@ public class QNodeHandler implements IQNodeHandler {
    * Returns a {@link QueryStatus}.
    *
    * @throws QuerierException
+   * @throws SerializationException 
    */
-  public QueryStatus query(String tablespace, String key, String sql, String partition)
-      throws JSONSerDeException, QuerierException {
+  public QueryStatus query(String tablespace, String key, String sql, String partition, Integer cursorId)
+      throws JSONSerDeException, QuerierException, SerializationException {
     if (sql == null) {
       return new ErrorQueryStatus("Null sql provided, can't query.");
     }
@@ -391,7 +394,7 @@ public class QNodeHandler implements IQNodeHandler {
     /*
      * The queries are handled by the specialized module {@link Querier}
 		 */
-    QueryStatus result = querier.query(tablespace, key, sql, partition);
+    QueryStatus result = querier.query(tablespace, key, sql, partition, cursorId);
     if (result.getResult() != null) {
       meterResultSize.update(result.getResult().size());
     }
@@ -402,9 +405,10 @@ public class QNodeHandler implements IQNodeHandler {
    * Multi-query: use {@link Querier} for as many shards as needed and return a list of {@link QueryStatus}
    * <p/>
    * Returns a list of {@link QueryStatus}.
+   * @throws SerializationException 
    */
   public ArrayList<QueryStatus> multiQuery(String tablespaceName, List<String> keyMins,
-                                           List<String> keyMaxs, String sql) throws JSONSerDeException, QuerierException {
+                                           List<String> keyMaxs, String sql) throws JSONSerDeException, QuerierException, SerializationException {
 
     if (sql == null) {
       return new ArrayList<QueryStatus>(Arrays.asList(new QueryStatus[]{new ErrorQueryStatus(
@@ -428,7 +432,6 @@ public class QNodeHandler implements IQNodeHandler {
       return new ArrayList<QueryStatus>(Arrays.asList(new QueryStatus[]{new ErrorQueryStatus(
           "No available version for tablespace " + tablespaceName)}));
     }
-    // TODO Object creation (new TablespaceVersion), not very efficient for performance
     Tablespace tablespace = context.getTablespaceVersionsMap().get(
         new TablespaceVersion(tablespaceName, version));
     if (tablespace == null) { // This can happen if, at startup, we only received the version and not the DNodeInfo
@@ -443,7 +446,7 @@ public class QNodeHandler implements IQNodeHandler {
     }
     ArrayList<QueryStatus> toReturn = new ArrayList<QueryStatus>();
     for (Integer shardKey : impactedKeys) {
-      toReturn.add(querier.query(tablespaceName, sql, shardKey));
+      toReturn.add(querier.query(tablespaceName, sql, shardKey, ResultAndCursorId.NO_CURSOR));
     }
     meterQueriesServed.inc();
     meterRequestsPerSecond.mark();

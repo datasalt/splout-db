@@ -45,7 +45,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * A proxy for Hazelcast's maps for mocking calls to {@link CoordinationStructures.#getDNodes()}
  */
-@SuppressWarnings("serial")
+@SuppressWarnings({ "serial", "rawtypes" })
 public class FixedDNodeList extends ConcurrentHashMap<String, DNodeInfo> implements IMap<String, DNodeInfo> {
 
 	public FixedDNodeList(List<String> dNodes, List<DNodeInfo> values) {

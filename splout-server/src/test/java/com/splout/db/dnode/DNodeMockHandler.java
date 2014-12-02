@@ -21,6 +21,7 @@ package com.splout.db.dnode;
  * #L%
  */
 
+import java.nio.ByteBuffer;
 import java.util.List;
 
 import com.splout.db.common.SploutConfiguration;
@@ -72,5 +73,9 @@ public class DNodeMockHandler implements IDNodeHandler {
   }
 	@Override
   public void stop() throws Exception {
+  }
+  @Override
+  public ByteBuffer binarySqlQuery(String tablespace, long version, int partition, String query, int cursorId) throws DNodeException {
+    return null;
   }
 }

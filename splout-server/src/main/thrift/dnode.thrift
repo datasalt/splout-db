@@ -34,6 +34,7 @@ struct TablespaceVersion {
 
 service DNodeService {
 
+	binary binarySqlQuery(1:string tablespace, 2:i64 version, 3:i32 partition, 4:string query, 5:i32 cursorId) throws (1:DNodeException excep)
 	string sqlQuery(1:string tablespace, 2:i64 version, 3:i32 partition, 4:string query) throws (1:DNodeException excep)
 	string deleteOldVersions(1:list<TablespaceVersion> versions) throws (1:DNodeException excep)
 	string deploy(1:list<DeployAction> deployActions, 2:i64 version) throws (1:DNodeException excep)

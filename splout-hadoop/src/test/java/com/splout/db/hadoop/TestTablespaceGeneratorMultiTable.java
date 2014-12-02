@@ -108,16 +108,16 @@ public class TestTablespaceGeneratorMultiTable {
 		List<String> jsonGeoData = new ArrayList<String>();
 		
 		for(int i = 0; i < 3; i++) {
-			SQLite4JavaClient manager = new SQLite4JavaClient(TEST_OUTPUT + "/store/" + i + ".db", null);
+			SQLite4JavaClient manager = new SQLite4JavaClient(TEST_OUTPUT + "/store/" + i + ".db", null, false, 0);
 			List list;
-			list = JSONSerDe.deSer(manager.query("SELECT * FROM payments;", 100), ArrayList.class);
+			list = manager.query("SELECT * FROM payments;", 100).mapify();
 			totalPayments.addAll(list);
 			System.out.println(list);
 			assertEquals(1, list.size()); // There is one payment per each person
-			list = JSONSerDe.deSer(manager.query("SELECT * FROM logs;", 100), ArrayList.class);
+			list = manager.query("SELECT * FROM logs;", 100).mapify();
 			totalLogs.addAll(list);
 			assertEquals(2, list.size()); // There are two log events per each person
-			String geoDataStr = manager.query("SELECT * FROM geodata;", 100);
+			String geoDataStr = manager.query("SELECT * FROM geodata;", 100).jsonize();
 			jsonGeoData.add(geoDataStr);
 			list = JSONSerDe.deSer(geoDataStr, ArrayList.class);
 			assertEquals(3, list.size()); // There are 3 countries in the replicated geo data file

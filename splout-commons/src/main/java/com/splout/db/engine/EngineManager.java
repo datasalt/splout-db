@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.apache.commons.configuration.Configuration;
 
+import com.splout.db.common.QueryResult;
+
 /*
  * #%L
  * Splout SQL commons
@@ -30,30 +32,38 @@ import org.apache.commons.configuration.Configuration;
  */
 public interface EngineManager {
 
-	@SuppressWarnings("serial")
-	public static class EngineException extends Exception {
+  @SuppressWarnings("serial")
+  public static class EngineException extends Exception {
 
-		public EngineException(Throwable underlying) {
-			super(underlying);
-		}
+    public EngineException(Throwable underlying) {
+      super(underlying);
+    }
 
-		public EngineException(String message, Throwable underlying) {
-			super(message, underlying);
-		}
-	}
+    public EngineException(String message, Throwable underlying) {
+      super(message, underlying);
+    }
+  }
 
-	public void init(File dbFile, Configuration config, List<String> initStatements) throws EngineException;
-	
-	/**
-	 * SQL command, returning JSON object status result. This is implementation-dependent with no particular constraints.
-	 */
-	public String exec(String query) throws EngineException;
+  public void init(File dbFile, Configuration config, List<String> initStatements) throws EngineException;
 
-	/**
-	 * SQL query, returning JSON result (see {@link JDBCManager.#convertResultSetToList(java.sql.ResultSet, int)}) as an
-	 * example. This should be implementation-independent. It should return a JSONized List<Map<String, Object>>.
-	 */
-	public String query(String query, int maxResults) throws EngineException;
+  /**
+   * Executes a SQL command.
+   */
+  public QueryResult exec(String query) throws EngineException;
 
-	public void close();
+  /**
+   * Given a query returns an object of type {@link QueryRults}, up to
+   * maxResults. Usually the engine should throw an exception if maxResults is
+   * reached.
+   */
+  public QueryResult query(String query, int maxResults) throws EngineException;
+
+  /**
+   * Server-side cursors implementation of query method. Should behave like
+   * {@link #query(String, int)} optionally receive a cursorId, and return a
+   * cursorId to continue iterating through pending query results.
+   */
+  public ResultAndCursorId query(String query, int previousCursorId, int maxResults) throws EngineException;
+
+  public void close();
 }

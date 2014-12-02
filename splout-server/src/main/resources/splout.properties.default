@@ -52,6 +52,10 @@ qnode.enable.replica.balance	false
 
 qnode.balance.actions.ttl	36000
 
+# (Should only be turned on for testing)
+
+qnode.disable.binary.protocol	false
+
 #
 # DNode properties
 #
@@ -221,7 +225,7 @@ hz.disable.wait.when.joining=false
 # Number of the oldest members leading operations in the cluster. 
 # Sometimes only these members answer to events, in order to reduce
 # coordination traffic.
- 
+
 hz.oldest.members.leading.count=3
 
 # Max time, in minutes, to check if the member is registered. This check is used
@@ -229,3 +233,14 @@ hz.oldest.members.leading.count=3
 # was not enough to ensure that no data is lost.
    
 hz.registry.max.time.to.check.registration=5
+
+#
+# Common properties
+#
+
+# If enabled, instead of throwing an exception when maxResults is reached, 
+# a cursorId is returned to continue iterating.
+common.cursors.enable	false
+
+# TTL for server-side cursors to expire, in seconds.
+common.cursors.timeout	60
