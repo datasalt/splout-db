@@ -32,16 +32,16 @@ import com.splout.db.qnode.QNodeHandler;
  */
 public class OneShardEnsemble {
 
-	public void runForever() throws Exception {
-		SploutConfiguration config = SploutConfiguration.getTestConfig();
-		DNode dnode = new DNode(config, new DNodeHandler());
-		dnode.init();
-		QNode qnode = new QNode();
-		qnode.start(config, new QNodeHandler());
-	}
-	
-	public static void main(String[] args) throws Exception {
-		OneShardEnsemble ensemble = new OneShardEnsemble();
-		ensemble.runForever();
-	}
+  public void runForever() throws Exception {
+    SploutConfiguration config = SploutConfiguration.getTestConfig();
+    DNode dnode = new DNode(config, new DNodeHandler());
+    dnode.init();
+    QNode qnode = new QNode();
+    qnode.start(config, new QNodeHandler());
+  }
+
+  public static void main(String[] args) throws Exception {
+    OneShardEnsemble ensemble = new OneShardEnsemble();
+    ensemble.runForever();
+  }
 }

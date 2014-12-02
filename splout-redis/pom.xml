@@ -1,24 +1,25 @@
 <?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-	<modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>com.splout.db</groupId>
-		<artifactId>splout-top-level</artifactId>
-		<version>0.2.6-SNAPSHOT</version>
-		<relativePath>../pom.xml</relativePath>
-	</parent>
+    <parent>
+        <groupId>com.splout.db</groupId>
+        <artifactId>splout-top-level</artifactId>
+        <version>0.2.6-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
 
-	<groupId>com.splout.db</groupId>
-	<artifactId>splout-redis</artifactId>
+    <groupId>com.splout.db</groupId>
+    <artifactId>splout-redis</artifactId>
 
-	<repositories>
-		<repository>
-  			<id>clojars.org</id>
-  			<url>http://clojars.org/repo</url>
-		</repository>
-	</repositories>
+    <repositories>
+        <repository>
+            <id>clojars.org</id>
+            <url>http://clojars.org/repo</url>
+        </repository>
+    </repositories>
 
     <licenses>
         <license>
@@ -28,14 +29,14 @@
         </license>
     </licenses>
 
-	<name>Splout Redis</name>
-	<description>Specific Redis-based engine for Splout.</description>
+    <name>Splout Redis</name>
+    <description>Specific Redis-based engine for Splout.</description>
 
-	<properties>
-	        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-	</properties>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
 
-	<build>
+    <build>
         <sourceDirectory>src/main/java</sourceDirectory>
         <testSourceDirectory>src/test/java</testSourceDirectory>
         <resources>
@@ -154,24 +155,24 @@
                 </executions>
             </plugin>
 
-		<plugin>
-            <artifactId>maven-assembly-plugin</artifactId>
-            <configuration>
-                <descriptorRefs>
-                    <descriptorRef>jar-with-dependencies</descriptorRef>
-                </descriptorRefs>
-            </configuration>
-            <executions>
-               <execution>
-                  <id>make-my-jar-with-dependencies</id>
-                  <phase>package</phase>
-                  <goals>
-                     <goal>single</goal>
-                  </goals>
-               </execution>
-            </executions>
-        </plugin>
-        
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-my-jar-with-dependencies</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
         </plugins>
     </build>
 
@@ -188,7 +189,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        
+
         <dependency>
             <groupId>com.splout.db</groupId>
             <artifactId>splout-hadoop</artifactId>
@@ -201,29 +202,29 @@
             <artifactId>hadoop-core</artifactId>
             <version>0.20.2</version>
             <scope>provided</scope>
-		</dependency>
-		            
+        </dependency>
+
         <!-- Redis -->
-        
+
         <dependency>
-			<groupId>com.ning</groupId>
-			<artifactId>compress-lzf</artifactId>
-			<version>0.9.9</version>
-		</dependency>
-            
+            <groupId>com.ning</groupId>
+            <artifactId>compress-lzf</artifactId>
+            <version>0.9.9</version>
+        </dependency>
+
         <dependency>
-			<groupId>redis.clients</groupId>
-			<artifactId>jedis</artifactId>
-			<version>2.2.1</version>
-		</dependency>
-            
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>2.2.1</version>
+        </dependency>
+
         <dependency>
-  			<groupId>redis.embedded</groupId>
-  			<artifactId>embedded-redis</artifactId>
-  			<version>0.1</version>
-		</dependency>
-		        
+            <groupId>redis.embedded</groupId>
+            <artifactId>embedded-redis</artifactId>
+            <version>0.1</version>
+        </dependency>
+
     </dependencies>
-    
+
 </project>
 

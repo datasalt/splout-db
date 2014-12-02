@@ -36,27 +36,27 @@ import com.splout.db.engine.EmbeddedMySQL.EmbeddedMySQLConfig;
 
 public class MySQLManager implements EngineManager {
 
-	private EmbeddedMySQL mySQL;
-	private JDBCManager jdbcManager;
+  private EmbeddedMySQL mySQL;
+  private JDBCManager jdbcManager;
 
-	public MySQLManager() throws SQLException, ClassNotFoundException {
+  public MySQLManager() throws SQLException, ClassNotFoundException {
 
-	}
+  }
 
-	// Only to be used from unit testing
-	MySQLManager(EmbeddedMySQL mySQL) throws SQLException, ClassNotFoundException {
-		initializeMySQL(mySQL.getConfig());
-	}
-	
-	@Override
-	public void close() {
-		jdbcManager.close();
-		if(mySQL != null)
-			mySQL.stop();
-	}
+  // Only to be used from unit testing
+  MySQLManager(EmbeddedMySQL mySQL) throws SQLException, ClassNotFoundException {
+    initializeMySQL(mySQL.getConfig());
+  }
 
-	JDBCManager getJdbcManager() {
-	  return jdbcManager;
+  @Override
+  public void close() {
+    jdbcManager.close();
+    if (mySQL != null)
+      mySQL.stop();
+  }
+
+  JDBCManager getJdbcManager() {
+    return jdbcManager;
   }
 	
 	@Override

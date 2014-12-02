@@ -38,63 +38,63 @@ import com.splout.db.thrift.PartitionMetadata;
 
 public class TestReplicaBalancer {
 
-	public static class CoordinationStructuresMock extends CoordinationStructures {
+  public static class CoordinationStructuresMock extends CoordinationStructures {
 
-		List<String> dNodes;
-		List<DNodeInfo> dNodeInfo;
+    List<String> dNodes;
+    List<DNodeInfo> dNodeInfo;
 
-		public CoordinationStructuresMock(List<String> dNodes, List<DNodeInfo> dNodeInfo) {
-			super(null);
-			this.dNodes = dNodes;
-			this.dNodeInfo = dNodeInfo;
-		}
+    public CoordinationStructuresMock(List<String> dNodes, List<DNodeInfo> dNodeInfo) {
+      super(null);
+      this.dNodes = dNodes;
+      this.dNodeInfo = dNodeInfo;
+    }
 
     @Override
-		public IMap<String, DNodeInfo> getDNodes() {
- 			return new FixedDNodeList(dNodes, dNodeInfo);
-		}
-	}
+    public IMap<String, DNodeInfo> getDNodes() {
+      return new FixedDNodeList(dNodes, dNodeInfo);
+    }
+  }
 
-	@Test
-	public void test() throws TablespaceVersionInfoException {
+  @Test
+  public void test() throws TablespaceVersionInfoException {
 
-		SploutConfiguration config = SploutConfiguration.getTestConfig();
+    SploutConfiguration config = SploutConfiguration.getTestConfig();
 
-		PartitionMetadata metadata3Replicas = new PartitionMetadata();
-		metadata3Replicas.setNReplicas(3);
-		PartitionMetadata metadata1Replicas = new PartitionMetadata();
-		metadata1Replicas.setNReplicas(1);
+    PartitionMetadata metadata3Replicas = new PartitionMetadata();
+    metadata3Replicas.setNReplicas(3);
+    PartitionMetadata metadata1Replicas = new PartitionMetadata();
+    metadata1Replicas.setNReplicas(1);
 
-		// t1, version 1, partition 0 -> 3 replicas, only 2 dnodes: dnode1, dnode2
-		DNodeInfoFacade facade1 = new DNodeInfoFacade("dnode1");
-		facade1.addTablespaceVersionPartition("t1", 1l, 0, metadata3Replicas);
-		DNodeInfoFacade facade2 = new DNodeInfoFacade("dnode2");
-		// t2, version 1, partition 0 -> 1 replica, 1 dnode: dnode3
-		facade2.addTablespaceVersionPartition("t1", 1l, 0, metadata3Replicas);
-		DNodeInfoFacade facade3 = new DNodeInfoFacade("dnode3");
+    // t1, version 1, partition 0 -> 3 replicas, only 2 dnodes: dnode1, dnode2
+    DNodeInfoFacade facade1 = new DNodeInfoFacade("dnode1");
+    facade1.addTablespaceVersionPartition("t1", 1l, 0, metadata3Replicas);
+    DNodeInfoFacade facade2 = new DNodeInfoFacade("dnode2");
+    // t2, version 1, partition 0 -> 1 replica, 1 dnode: dnode3
+    facade2.addTablespaceVersionPartition("t1", 1l, 0, metadata3Replicas);
+    DNodeInfoFacade facade3 = new DNodeInfoFacade("dnode3");
 
-		facade3.addTablespaceVersionPartition("t2", 1l, 0, metadata1Replicas);
+    facade3.addTablespaceVersionPartition("t2", 1l, 0, metadata1Replicas);
 
-		List<String> dnodes = Arrays.asList(new String[] { "dnode1", "dnode2", "dnode3" });
-		List<DNodeInfo> dNodeInfo = Arrays.asList(new DNodeInfo[] { facade1.getDNodeInfo(),
-		    facade2.getDNodeInfo(), facade3.getDNodeInfo() });
+    List<String> dnodes = Arrays.asList(new String[]{"dnode1", "dnode2", "dnode3"});
+    List<DNodeInfo> dNodeInfo = Arrays.asList(new DNodeInfo[]{facade1.getDNodeInfo(),
+        facade2.getDNodeInfo(), facade3.getDNodeInfo()});
 
-		QNodeHandlerContext ctx = new QNodeHandlerContext(config, new CoordinationStructuresMock(dnodes,
-		    dNodeInfo));
-		ctx.updateTablespaceVersions(dNodeInfo.get(0), DNodeEvent.ENTRY);
-		ctx.updateTablespaceVersions(dNodeInfo.get(1), DNodeEvent.ENTRY);
-		ctx.updateTablespaceVersions(dNodeInfo.get(2), DNodeEvent.ENTRY);
+    QNodeHandlerContext ctx = new QNodeHandlerContext(config, new CoordinationStructuresMock(dnodes,
+        dNodeInfo));
+    ctx.updateTablespaceVersions(dNodeInfo.get(0), DNodeEvent.ENTRY);
+    ctx.updateTablespaceVersions(dNodeInfo.get(1), DNodeEvent.ENTRY);
+    ctx.updateTablespaceVersions(dNodeInfo.get(2), DNodeEvent.ENTRY);
 
-		ReplicaBalancer balancer = new ReplicaBalancer(ctx);
-		List<ReplicaBalancer.BalanceAction> balanceActions = balancer.scanPartitions();
+    ReplicaBalancer balancer = new ReplicaBalancer(ctx);
+    List<ReplicaBalancer.BalanceAction> balanceActions = balancer.scanPartitions();
 
-		Assert.assertEquals(1, balanceActions.size());
-		Assert.assertEquals("dnode3", balanceActions.get(0).getFinalNode());
-		Assert.assertEquals("t1", balanceActions.get(0).getTablespace());
-		Assert.assertEquals(0, balanceActions.get(0).getPartition());
-		Assert.assertEquals(1l, balanceActions.get(0).getVersion());
+    Assert.assertEquals(1, balanceActions.size());
+    Assert.assertEquals("dnode3", balanceActions.get(0).getFinalNode());
+    Assert.assertEquals("t1", balanceActions.get(0).getTablespace());
+    Assert.assertEquals(0, balanceActions.get(0).getPartition());
+    Assert.assertEquals(1l, balanceActions.get(0).getVersion());
 
-		Assert.assertTrue("dnode1".equals(balanceActions.get(0).getOriginNode())
-		    || "dnode2".equals(balanceActions.get(0).getOriginNode()));
-	}
+    Assert.assertTrue("dnode1".equals(balanceActions.get(0).getOriginNode())
+        || "dnode2".equals(balanceActions.get(0).getOriginNode()));
+  }
 }

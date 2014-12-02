@@ -21,12 +21,12 @@ package com.splout.db.engine;
  * #L%
  */
 
-import java.io.File;
-
 import com.splout.db.common.SploutConfiguration;
 import com.splout.db.common.TimeoutThread;
 import com.splout.db.dnode.DNodeProperties;
 import com.splout.db.thrift.PartitionMetadata;
+
+import java.io.File;
 
 /**
  * Stateful factory where engine-specific business logic for instantiating a {@link EngineManager} for each
@@ -35,51 +35,51 @@ import com.splout.db.thrift.PartitionMetadata;
  */
 public class ManagerFactory {
 
-	// private final static Log log = LogFactory.getLog(ManagerFactory.class);
-	private SploutConfiguration config;
-	private TimeoutThread timeoutThread;
+  // private final static Log log = LogFactory.getLog(ManagerFactory.class);
+  private SploutConfiguration config;
+  private TimeoutThread timeoutThread;
 
-	public void init(SploutConfiguration config) {
-		this.config = config;
-		timeoutThread = new TimeoutThread(config.getLong(DNodeProperties.MAX_QUERY_TIME));
-		timeoutThread.start();
-	}
+  public void init(SploutConfiguration config) {
+    this.config = config;
+    timeoutThread = new TimeoutThread(config.getLong(DNodeProperties.MAX_QUERY_TIME));
+    timeoutThread.start();
+  }
 
-	public void close() {
-		timeoutThread.interrupt();
-	}
+  public void close() {
+    timeoutThread.interrupt();
+  }
 
-	public EngineManager getManagerIn(File dbFolder, PartitionMetadata partitionMetadata) throws Exception {
-		EngineManager manager = null;
+  public EngineManager getManagerIn(File dbFolder, PartitionMetadata partitionMetadata) throws Exception {
+    EngineManager manager = null;
 
-		SploutEngine engine = SploutEngine.getDefault();
-		// Assume default engine in case of no engine (to preserve backwards compatibility)
-		if(partitionMetadata.getEngineId() != null) {
-			engine = Class.forName(partitionMetadata.getEngineId()).asSubclass(SploutEngine.class)
-			    .newInstance();
-		}
-		manager = Class.forName(engine.getEngineManagerClass()).asSubclass(EngineManager.class)
-		    .newInstance();
+    SploutEngine engine = SploutEngine.getDefault();
+    // Assume default engine in case of no engine (to preserve backwards compatibility)
+    if (partitionMetadata.getEngineId() != null) {
+      engine = Class.forName(partitionMetadata.getEngineId()).asSubclass(SploutEngine.class)
+          .newInstance();
+    }
+    manager = Class.forName(engine.getEngineManagerClass()).asSubclass(EngineManager.class)
+        .newInstance();
 
-		// Currently using first ".db" file found (there should be only one!)
-		String dbFile = null;
-		for(String file : dbFolder.list()) {
-			if(file.endsWith(".db")) {
-				dbFile = file;
-				break;
-			}
-		}
-		if(dbFile == null) {
-			throw new RuntimeException("Can't find .db file in directory: " + dbFolder);
-		}
+    // Currently using first ".db" file found (there should be only one!)
+    String dbFile = null;
+    for (String file : dbFolder.list()) {
+      if (file.endsWith(".db")) {
+        dbFile = file;
+        break;
+      }
+    }
+    if (dbFile == null) {
+      throw new RuntimeException("Can't find .db file in directory: " + dbFolder);
+    }
 
-		File absoluteDbFile = new File(dbFolder + "/" + dbFile);
-		manager.init(absoluteDbFile, config, partitionMetadata.getInitStatements());
+    File absoluteDbFile = new File(dbFolder + "/" + dbFile);
+    manager.init(absoluteDbFile, config, partitionMetadata.getInitStatements());
 
-		if(manager instanceof SQLite4JavaManager) {
-			((SQLite4JavaManager) manager).setTimeoutThread(timeoutThread);
-		}
+    if (manager instanceof SQLite4JavaManager) {
+      ((SQLite4JavaManager) manager).setTimeoutThread(timeoutThread);
+    }
 
-		return manager;
-	}
+    return manager;
+  }
 }

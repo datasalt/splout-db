@@ -1,15 +1,19 @@
 {
-	"name": "meteo",
-	"nPartitions": 16,
-	"partitionedTables": [{
-		"name": "meteo",
-		"schema": "station:string,date:string,metric:string,measure:int,ignore1:string,ignore2:string,ignore3:string,ignore4:string",
-		"partitionFields": "station",
-		"tableInputs": [{
-			"inputSpecs": {
-				"separatorChar": ","
-			},
-			"paths": [ "/home/pere/2011.small.csv" ]
-		}]	
-	}]
+    "name": "meteo",
+    "nPartitions": 16,
+    "partitionedTables": [
+        {
+            "name": "meteo",
+            "schema": "station:string,date:string,metric:string,measure:int,ignore1:string,ignore2:string,ignore3:string,ignore4:string",
+            "partitionFields": "station",
+            "tableInputs": [
+                {
+                    "inputSpecs": {
+                        "separatorChar": ","
+                    },
+                    "paths": [ "/home/pere/2011.small.csv" ]
+                }
+            ]
+        }
+    ]
 }

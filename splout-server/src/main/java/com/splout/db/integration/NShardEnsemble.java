@@ -34,23 +34,23 @@ import com.splout.db.qnode.QNodeHandler;
  */
 public class NShardEnsemble {
 
-	public void runForever(int nDNodes) throws Exception {
-		SploutConfiguration config = SploutConfiguration.get();
-		for(int i = 0; i < nDNodes; i++) {
-			config = SploutConfiguration.get();
-			// we need to change some props for avoiding conflicts, ports, etc
-			config.setProperty(DNodeProperties.PORT, config.getInt(DNodeProperties.PORT) + i);
-			config.setProperty(DNodeProperties.DATA_FOLDER, config.getString(DNodeProperties.DATA_FOLDER) + "-" + i);
-			config.setProperty(FetcherProperties.TEMP_DIR, config.getString(FetcherProperties.TEMP_DIR) + "-" + i);
-			DNode dnode = new DNode(config, new DNodeHandler());
-			dnode.init();
-		}
-		QNode qnode = new QNode();
-		qnode.start(config, new QNodeHandler());
-	}
+  public void runForever(int nDNodes) throws Exception {
+    SploutConfiguration config = SploutConfiguration.get();
+    for (int i = 0; i < nDNodes; i++) {
+      config = SploutConfiguration.get();
+      // we need to change some props for avoiding conflicts, ports, etc
+      config.setProperty(DNodeProperties.PORT, config.getInt(DNodeProperties.PORT) + i);
+      config.setProperty(DNodeProperties.DATA_FOLDER, config.getString(DNodeProperties.DATA_FOLDER) + "-" + i);
+      config.setProperty(FetcherProperties.TEMP_DIR, config.getString(FetcherProperties.TEMP_DIR) + "-" + i);
+      DNode dnode = new DNode(config, new DNodeHandler());
+      dnode.init();
+    }
+    QNode qnode = new QNode();
+    qnode.start(config, new QNodeHandler());
+  }
 
-	public static void main(String[] args) throws Exception {
-		NShardEnsemble ensemble = new NShardEnsemble();
-		ensemble.runForever(Integer.parseInt(args[0]));
-	}
+  public static void main(String[] args) throws Exception {
+    NShardEnsemble ensemble = new NShardEnsemble();
+    ensemble.runForever(Integer.parseInt(args[0]));
+  }
 }

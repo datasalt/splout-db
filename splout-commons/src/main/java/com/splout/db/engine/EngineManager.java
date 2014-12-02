@@ -1,9 +1,9 @@
 package com.splout.db.engine;
 
+import org.apache.commons.configuration.Configuration;
+
 import java.io.File;
 import java.util.List;
-
-import org.apache.commons.configuration.Configuration;
 
 import com.splout.db.common.QueryResult;
 

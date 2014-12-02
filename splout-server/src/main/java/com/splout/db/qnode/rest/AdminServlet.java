@@ -21,68 +21,67 @@ package com.splout.db.qnode.rest;
  * #L%
  */
 
-import java.io.IOException;
+import com.splout.db.common.JSONSerDe;
+import com.splout.db.qnode.IQNodeHandler;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import com.splout.db.common.JSONSerDe;
-import com.splout.db.qnode.IQNodeHandler;
+import java.io.IOException;
 
 @SuppressWarnings("serial")
 public class AdminServlet extends BaseServlet {
 
-	public final static String ACTION_DNODE_STATUS = "dnodestatus";
-	public final static String ACTION_ALL_TABLESPACE_VERSIONS = "alltablespaceversions";
-	public final static String ACTION_TABLESPACE_INFO = "tablespaceinfo";
-	public final static String ACTION_TABLESPACES = "tablespaces";
-	public final static String ACTION_DNODE_LIST = "dnodelist";
-	public final static String ACTION_OVERVIEW = "overview";
-	public final static String ACTION_DEPLOYMENTS_STATUS = "deploymentsstatus"; 
-	public final static String ACTION_CLEAN_OLD_VERSIONS = "cleanoldversions";
-	
-	public AdminServlet(IQNodeHandler qNodeHandler) {
-	  super(qNodeHandler);
+  public final static String ACTION_DNODE_STATUS = "dnodestatus";
+  public final static String ACTION_ALL_TABLESPACE_VERSIONS = "alltablespaceversions";
+  public final static String ACTION_TABLESPACE_INFO = "tablespaceinfo";
+  public final static String ACTION_TABLESPACES = "tablespaces";
+  public final static String ACTION_DNODE_LIST = "dnodelist";
+  public final static String ACTION_OVERVIEW = "overview";
+  public final static String ACTION_DEPLOYMENTS_STATUS = "deploymentsstatus";
+  public final static String ACTION_CLEAN_OLD_VERSIONS = "cleanoldversions";
+
+  public AdminServlet(IQNodeHandler qNodeHandler) {
+    super(qNodeHandler);
   }
 
-	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
-	    IOException {
+  @Override
+  protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
+      IOException {
 
-		String action = req.getParameter("action");
-		
-		resp.setHeader("content-type", "application/json;charset=UTF-8");
-		resp.setCharacterEncoding("UTF-8");
-		
-		String response = null;
-		try {
-			if(action.equals(ACTION_DNODE_STATUS)) {
-				String dnode = req.getParameter("dnode");
-				response = JSONSerDe.ser(qNodeHandler.dnodeStatus(dnode));
-			} else if(action.equals(ACTION_ALL_TABLESPACE_VERSIONS)) {
-				String tablespace = req.getParameter("tablespace");
-				response = JSONSerDe.ser(qNodeHandler.allTablespaceVersions(tablespace));
-			} else if(action.equals(ACTION_TABLESPACE_INFO)) {
-				String tablespace = req.getParameter("tablespace");
-				response = JSONSerDe.ser(qNodeHandler.tablespace(tablespace));
-			} else if(action.equals(ACTION_TABLESPACES)) {
-				response = JSONSerDe.ser(qNodeHandler.tablespaces());				
-			} else if(action.equals(ACTION_DNODE_LIST)) {
-				response = JSONSerDe.ser(qNodeHandler.getDNodeList());								
-			} else if(action.equals(ACTION_OVERVIEW)) {
-				response = JSONSerDe.ser(qNodeHandler.overview());	
-			} else if(action.equals(ACTION_DEPLOYMENTS_STATUS)) {
-				response = JSONSerDe.ser(qNodeHandler.deploymentsStatus());
-			} else if(action.equals(ACTION_CLEAN_OLD_VERSIONS)) {
-				response = JSONSerDe.ser(qNodeHandler.cleanOldVersions());
-			} else {
-				throw new ServletException("Unknown action: " + action);
-			}
-			resp.getWriter().append(response);
-		} catch(Exception e) {
-			log.error(e);
-			throw new ServletException(e);
-		}
-	}
+    String action = req.getParameter("action");
+
+    resp.setHeader("content-type", "application/json;charset=UTF-8");
+    resp.setCharacterEncoding("UTF-8");
+
+    String response = null;
+    try {
+      if (action.equals(ACTION_DNODE_STATUS)) {
+        String dnode = req.getParameter("dnode");
+        response = JSONSerDe.ser(qNodeHandler.dnodeStatus(dnode));
+      } else if (action.equals(ACTION_ALL_TABLESPACE_VERSIONS)) {
+        String tablespace = req.getParameter("tablespace");
+        response = JSONSerDe.ser(qNodeHandler.allTablespaceVersions(tablespace));
+      } else if (action.equals(ACTION_TABLESPACE_INFO)) {
+        String tablespace = req.getParameter("tablespace");
+        response = JSONSerDe.ser(qNodeHandler.tablespace(tablespace));
+      } else if (action.equals(ACTION_TABLESPACES)) {
+        response = JSONSerDe.ser(qNodeHandler.tablespaces());
+      } else if (action.equals(ACTION_DNODE_LIST)) {
+        response = JSONSerDe.ser(qNodeHandler.getDNodeList());
+      } else if (action.equals(ACTION_OVERVIEW)) {
+        response = JSONSerDe.ser(qNodeHandler.overview());
+      } else if (action.equals(ACTION_DEPLOYMENTS_STATUS)) {
+        response = JSONSerDe.ser(qNodeHandler.deploymentsStatus());
+      } else if (action.equals(ACTION_CLEAN_OLD_VERSIONS)) {
+        response = JSONSerDe.ser(qNodeHandler.cleanOldVersions());
+      } else {
+        throw new ServletException("Unknown action: " + action);
+      }
+      resp.getWriter().append(response);
+    } catch (Exception e) {
+      log.error(e);
+      throw new ServletException(e);
+    }
+  }
 }

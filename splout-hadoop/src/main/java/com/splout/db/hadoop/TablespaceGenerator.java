@@ -37,7 +37,6 @@ import com.splout.db.hadoop.TupleSampler.TupleSamplerException;
 import com.splout.db.hadoop.engine.SQLite4JavaOutputFormat;
 import com.splout.db.hadoop.engine.SploutSQLOutputFormat;
 import com.splout.db.hadoop.engine.SploutSQLOutputFormat.SploutSQLOutputFormatException;
-import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -302,17 +301,17 @@ public class TablespaceGenerator implements Serializable {
             currentKey = key.toString();
           }
         }
-      // Keep iterating until we have advanced enough and we have find a different key.
+        // Keep iterating until we have advanced enough and we have find a different key.
       } while (wereMore && (rowPointer < keyIndex || !foundDistinctKey));
 
       // If we are sure there are at least one partition more
       // we store the possible candidate to last partition min.
-      if (wereMore && i<nPartitions) {
+      if (wereMore && i < nPartitions) {
         candidateToLastPartitionMin = previousKey;
       }
       entry.setMax(key.toString());
       min = key.toString();
-      entry.setShard(i-1); // Shard are 0-indexed
+      entry.setShard(i - 1); // Shard are 0-indexed
       partitionEntries.add(entry);
 
       // No more rows to consume. No more partitions to build.
@@ -322,7 +321,7 @@ public class TablespaceGenerator implements Serializable {
     }
     int generatedPartitions = partitionEntries.size();
     // Last range must be opened
-    partitionEntries.get(generatedPartitions-1).setMax(null);
+    partitionEntries.get(generatedPartitions - 1).setMax(null);
 
     // Especial case. We want to ensure that every partition contains at least
     // one entry. Given than ranges are (,] that is ensured for every partition

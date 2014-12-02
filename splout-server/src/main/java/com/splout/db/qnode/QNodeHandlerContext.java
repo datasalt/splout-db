@@ -30,14 +30,12 @@ import com.splout.db.hazelcast.CoordinationStructures;
 import com.splout.db.hazelcast.DNodeInfo;
 import com.splout.db.hazelcast.TablespaceVersion;
 import com.splout.db.qnode.ReplicaBalancer.BalanceAction;
-import com.splout.db.thrift.DNodeException;
 import com.splout.db.thrift.DNodeService;
 import com.splout.db.thrift.PartitionMetadata;
 import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.Gauge;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 
 import java.util.*;
@@ -76,11 +74,13 @@ public class QNodeHandlerContext {
   private ReentrantLock thriftClientCacheLock = new ReentrantLock();
 
   private final int thriftClientPoolSize;
+  private final long dnodePoolTimeoutMillis;
 
   public QNodeHandlerContext(SploutConfiguration config, CoordinationStructures coordinationStructures) {
     this.config = config;
     this.coordinationStructures = coordinationStructures;
     this.thriftClientPoolSize = config.getInt(QNodeProperties.DNODE_POOL_SIZE);
+    this.dnodePoolTimeoutMillis = config.getLong(QNodeProperties.QNODE_DNODE_POOL_TAKE_TIMEOUT);
     this.replicaBalancer = new ReplicaBalancer(this);
     initMetrics();
   }
@@ -419,32 +419,51 @@ public class QNodeHandlerContext {
 
   /**
    * Get the Thrift client for this DNode.
+   * <p/>
+   * Can throw a TTransportException in the rare case when
+   * a new pool is initialized here. In this case, you shouldn't call
+   * the method {@link #returnDNodeClientToPool(String, com.splout.db.thrift.DNodeService.Client, boolean)}
+   * to return the connection.
+   * <p/>
+   * This method never returns null.
+   *
+   * @throws java.lang.InterruptedException             if somebody interrupts the thread meanwhile the method is waiting in the pool
+   * @throws com.splout.db.qnode.PoolCreationException  if there is failure when a new pool is created.
+   * @throws com.splout.db.qnode.DNodePoolFullException if the pool for the given dnode is empty and the timeout
+   *                                                    for waiting for a connection is reached.
    */
-  public DNodeService.Client getDNodeClientFromPool(String dnode) throws TTransportException {
-    try {
-      BlockingQueue<DNodeService.Client> dnodeQueue = thriftClientCache.get(dnode);
-      if (dnodeQueue == null) {
-        // This shouldn't happen in real life because it is initialized by the QNode, but it is useful for unit
-        // testing.
-        // Under some rare race conditions the pool may be required before the QNode creates it, but this method
-        // assures that the queue will only be created once and, if it's not possible to create it, an exception
-        // will be thrown and nothing bad will happen.
+  public DNodeService.Client getDNodeClientFromPool(String dnode) throws InterruptedException, PoolCreationException,
+      DNodePoolFullException {
+    BlockingQueue<DNodeService.Client> dnodeQueue = thriftClientCache.get(dnode);
+    if (dnodeQueue == null) {
+      // This shouldn't happen in real life because it is initialized by the QNode, but it is useful for unit
+      // testing.
+      // Under some rare race conditions the pool may be required before the QNode creates it, but this method
+      // assures that the queue will only be created once and, if it's not possible to create it, an exception
+      // will be thrown and nothing bad will happen.
+      try {
         initializeThriftClientCacheFor(dnode);
         dnodeQueue = thriftClientCache.get(dnode);
+      } catch (TTransportException e) {
+        throw new PoolCreationException(e);
       }
-
-      DNodeService.Client client = dnodeQueue.take();
-      return client;
-    } catch (InterruptedException e) {
-      log.error("Interrupted", e);
-      return null;
     }
+
+    DNodeService.Client client = dnodeQueue.poll(dnodePoolTimeoutMillis, TimeUnit.MILLISECONDS);
+    // Timeout waiting for poll
+    if (client == null) {
+      throw new DNodePoolFullException("Pool for dnode[" + dnode + "] is full and timeout of [" + dnodePoolTimeoutMillis
+          + "] reached when waiting for a connection.");
+    }
+    return client;
   }
 
   /**
    * Return a Thrift client to the pool. This method is a bit tricky since we may want to return a connection when a
    * DNode already disconnected. Also, if the QNode is closing, we don't want to leave opened sockets around. To do it
    * safely, we check whether 1) we are closing / cleaning the QNode or 2) the DNode has disconnected.
+   * <p/>
+   * The given client never can be null.
    */
   public void returnDNodeClientToPool(String dnode, DNodeService.Client client, boolean renew) {
     if (closing.get()) { // don't return to the pool if the system is already closing! we must close everything!
@@ -590,10 +609,7 @@ public class QNodeHandlerContext {
             renew = true;
             log.warn("Failed sending delete TablespaceVersions order to (" + dnode
                 + "). Not critical as they will be removed after other deployments.", e);
-          } catch (DNodeException e) {
-            log.warn("Failed sending delete TablespaceVersions order to (" + dnode
-                + "). Not critical as they will be removed after other deployments.", e);
-          } catch (TException e) {
+          } catch (Exception e) {
             log.warn("Failed sending delete TablespaceVersions order to (" + dnode
                 + "). Not critical as they will be removed after other deployments.", e);
           } finally {

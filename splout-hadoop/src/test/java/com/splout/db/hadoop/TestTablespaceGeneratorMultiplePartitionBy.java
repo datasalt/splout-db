@@ -47,35 +47,35 @@ import com.splout.db.engine.SQLite4JavaClient;
 import com.splout.db.hadoop.TupleSampler.SamplingType;
 
 public class TestTablespaceGeneratorMultiplePartitionBy {
-	public static String TEST_INPUT  = "in-" + TestTablespaceGeneratorMultiplePartitionBy.class.getName();
-	public static String TEST_OUTPUT = "out-" + TestTablespaceGeneratorMultiplePartitionBy.class.getName();
-	public static Character TAB = '\t';
-	
-	// ---- //
-	public static Schema PAYMENTS_SCHEMA = new Schema("payments", Fields.parse("name:string, commerce:int, amount:int, currency:string"));
-	public static Schema LOGS_SCHEMA = new Schema("logs", Fields.parse("name:string, commerce:int, date:string, action:string, loc:string"));
-	
-	// ---- //
-	public static File PAYMENTS_FILE = new File(TEST_INPUT, "payments.txt");
-	public static File LOGS_FILE = new File(TEST_INPUT, "logs.txt");
+  public static String TEST_INPUT = "in-" + TestTablespaceGeneratorMultiplePartitionBy.class.getName();
+  public static String TEST_OUTPUT = "out-" + TestTablespaceGeneratorMultiplePartitionBy.class.getName();
+  public static Character TAB = '\t';
 
-	@Before
-	public void jLibraryPath() {
+  // ---- //
+  public static Schema PAYMENTS_SCHEMA = new Schema("payments", Fields.parse("name:string, commerce:int, amount:int, currency:string"));
+  public static Schema LOGS_SCHEMA = new Schema("logs", Fields.parse("name:string, commerce:int, date:string, action:string, loc:string"));
+
+  // ---- //
+  public static File PAYMENTS_FILE = new File(TEST_INPUT, "payments.txt");
+  public static File LOGS_FILE = new File(TEST_INPUT, "logs.txt");
+
+  @Before
+  public void jLibraryPath() {
 //		SploutConfiguration.setDevelopmentJavaLibraryPath();
-	}
-	
-	@Before
-	@After
-	public void cleanUp() throws IOException {
-		for(String cleanUpFolder: new String[] { TEST_INPUT, TEST_OUTPUT }) {
-			File outFolder = new File(cleanUpFolder);
-			if(outFolder.exists()) {
-				FileUtils.deleteDirectory(outFolder);
-			}
-		}
-	}
-	
-	@SuppressWarnings({ "rawtypes", "unchecked" })
+  }
+
+  @Before
+  @After
+  public void cleanUp() throws IOException {
+    for (String cleanUpFolder : new String[]{TEST_INPUT, TEST_OUTPUT}) {
+      File outFolder = new File(cleanUpFolder);
+      if (outFolder.exists()) {
+        FileUtils.deleteDirectory(outFolder);
+      }
+    }
+  }
+
+  @SuppressWarnings({"rawtypes", "unchecked"})
   @Test
 	public void test() throws Exception {
 		generateInput();
@@ -123,44 +123,44 @@ public class TestTablespaceGeneratorMultiplePartitionBy {
 
     String keys = StringUtils.join(distinctKeys.toArray(), ", ");
 
-		assertEquals(4, distinctKeys.size());
-		assertTrue(keys, distinctKeys.contains("Tanos1"));
-		assertTrue(keys, distinctKeys.contains("Iván1"));
-		assertTrue(keys, distinctKeys.contains("Iván2"));
-		assertTrue(keys, distinctKeys.contains("Pere3"));
-		assertEquals(5, totalLogs.size());
-		assertEquals(7, totalPayments.size());
-	}
-	
-	private void generateInput() throws IOException {
-		File folder = new File(TEST_INPUT);
-		folder.mkdir();
-		
-		generateInputPayments();
-		generateInputLogs();
-	}
-	
-	private void generateInputPayments() throws IOException {
-		String paymentData = "";
-		paymentData += "Tanos" + TAB + "1" + TAB + "350" + TAB + "EUR" + "\n";
-		paymentData += "Tanos" + TAB + "1" + TAB + "370" + TAB + "EUR" + "\n";
-		paymentData += "Iván" + TAB + "1" + TAB + "250" + TAB + "EUR" + "\n";
-		paymentData += "Iván" + TAB + "1" + TAB + "150" + TAB + "EUR" + "\n";
-		paymentData += "Iván" + TAB + "2" + TAB + "250" + TAB + "EUR" + "\n";
-		paymentData += "Iván" + TAB + "2" + TAB + "150" + TAB + "EUR" + "\n";
-		paymentData += "Pere" + TAB + "3" + TAB + "550" + TAB + "EUR" + "\n";
-		
-		Files.write(paymentData, PAYMENTS_FILE, Charset.defaultCharset());
-	}
-	
-	private void generateInputLogs() throws IOException {
-		String logData = "";
-		logData += "Tanos" + TAB + "1" + TAB +"10:30pm" + TAB + "UP" + TAB + "Greece" + "\n"; 
-		logData += "Tanos" + TAB + "1" + TAB + "10:32pm" + TAB + "DOWN" + TAB + "Spain" + "\n";
-		logData += "Iván" + TAB + "1" + TAB + "08:30pm" + TAB + "UP" + TAB + "Greece" + "\n"; 
-		logData += "Iván" + TAB + "2" + TAB + "08:32pm" + TAB + "UP" + TAB + "Germany" + "\n";
-		logData += "Pere" + TAB + "3" + TAB + "06:30pm" + TAB + "DOWN" + TAB + "Spain" + "\n"; 
-		
-		Files.write(logData, LOGS_FILE, Charset.defaultCharset());
-	}	
+    assertEquals(4, distinctKeys.size());
+    assertTrue(keys, distinctKeys.contains("Tanos1"));
+    assertTrue(keys, distinctKeys.contains("Iván1"));
+    assertTrue(keys, distinctKeys.contains("Iván2"));
+    assertTrue(keys, distinctKeys.contains("Pere3"));
+    assertEquals(5, totalLogs.size());
+    assertEquals(7, totalPayments.size());
+  }
+
+  private void generateInput() throws IOException {
+    File folder = new File(TEST_INPUT);
+    folder.mkdir();
+
+    generateInputPayments();
+    generateInputLogs();
+  }
+
+  private void generateInputPayments() throws IOException {
+    String paymentData = "";
+    paymentData += "Tanos" + TAB + "1" + TAB + "350" + TAB + "EUR" + "\n";
+    paymentData += "Tanos" + TAB + "1" + TAB + "370" + TAB + "EUR" + "\n";
+    paymentData += "Iván" + TAB + "1" + TAB + "250" + TAB + "EUR" + "\n";
+    paymentData += "Iván" + TAB + "1" + TAB + "150" + TAB + "EUR" + "\n";
+    paymentData += "Iván" + TAB + "2" + TAB + "250" + TAB + "EUR" + "\n";
+    paymentData += "Iván" + TAB + "2" + TAB + "150" + TAB + "EUR" + "\n";
+    paymentData += "Pere" + TAB + "3" + TAB + "550" + TAB + "EUR" + "\n";
+
+    Files.write(paymentData, PAYMENTS_FILE, Charset.defaultCharset());
+  }
+
+  private void generateInputLogs() throws IOException {
+    String logData = "";
+    logData += "Tanos" + TAB + "1" + TAB + "10:30pm" + TAB + "UP" + TAB + "Greece" + "\n";
+    logData += "Tanos" + TAB + "1" + TAB + "10:32pm" + TAB + "DOWN" + TAB + "Spain" + "\n";
+    logData += "Iván" + TAB + "1" + TAB + "08:30pm" + TAB + "UP" + TAB + "Greece" + "\n";
+    logData += "Iván" + TAB + "2" + TAB + "08:32pm" + TAB + "UP" + TAB + "Germany" + "\n";
+    logData += "Pere" + TAB + "3" + TAB + "06:30pm" + TAB + "DOWN" + TAB + "Spain" + "\n";
+
+    Files.write(logData, LOGS_FILE, Charset.defaultCharset());
+  }
 }

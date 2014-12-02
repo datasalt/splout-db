@@ -33,43 +33,43 @@ public class TestDNodeTestAPI {
 
   public static final int WAIT_AT_MOST = 25000;
 
-	@Test
-	public void test() throws Exception {
-		SploutConfiguration testConfig = SploutConfiguration.getTestConfig();
-		testConfig.setProperty(DNodeProperties.HANDLE_TEST_COMMANDS, true);
-		final DNode dnode = new DNode(testConfig, new DNodeHandler());
-		dnode.init();
-		
-		final QNode qnode = new QNode();
-		qnode.start(testConfig, new QNodeHandler());
+  @Test
+  public void test() throws Exception {
+    SploutConfiguration testConfig = SploutConfiguration.getTestConfig();
+    testConfig.setProperty(DNodeProperties.HANDLE_TEST_COMMANDS, true);
+    final DNode dnode = new DNode(testConfig, new DNodeHandler());
+    dnode.init();
 
-		// Wait until the QNode has 1 Dnode in the list
-		waitUntilThereAreThatManyDNodes(qnode, 1);
-		
-		dnode.testCommand(TestCommands.SHUTDOWN.toString());
-		
-		// Wait until the QNode has 0 DNodes in the list
-		waitUntilThereAreThatManyDNodes(qnode, 0);
+    final QNode qnode = new QNode();
+    qnode.start(testConfig, new QNodeHandler());
 
-		dnode.testCommand(TestCommands.RESTART.toString());
-		
-		// Wait until the QNode has 1 Dnode in the list
-		waitUntilThereAreThatManyDNodes(qnode, 1);
-	}
-	
-	private void waitUntilThereAreThatManyDNodes(final QNode qnode, final int nDnodes) throws Exception {
-		// Wait until the QNode has 1 Dnode in the list
-		new TestUtils.NotWaitingForeverCondition() {
-			
-			@Override
-			public boolean endCondition() {
-				try {
-	        List<String> l = qnode.getHandler().getDNodeList();
-	        return l.size() == nDnodes;
-        } catch(Exception e) {
-	        throw new RuntimeException(e);
+    // Wait until the QNode has 1 Dnode in the list
+    waitUntilThereAreThatManyDNodes(qnode, 1);
+
+    dnode.testCommand(TestCommands.SHUTDOWN.toString());
+
+    // Wait until the QNode has 0 DNodes in the list
+    waitUntilThereAreThatManyDNodes(qnode, 0);
+
+    dnode.testCommand(TestCommands.RESTART.toString());
+
+    // Wait until the QNode has 1 Dnode in the list
+    waitUntilThereAreThatManyDNodes(qnode, 1);
+  }
+
+  private void waitUntilThereAreThatManyDNodes(final QNode qnode, final int nDnodes) throws Exception {
+    // Wait until the QNode has 1 Dnode in the list
+    new TestUtils.NotWaitingForeverCondition() {
+
+      @Override
+      public boolean endCondition() {
+        try {
+          List<String> l = qnode.getHandler().getDNodeList();
+          return l.size() == nDnodes;
+        } catch (Exception e) {
+          throw new RuntimeException(e);
         }
-			}
-		}.waitAtMost(WAIT_AT_MOST);
-	}
+      }
+    }.waitAtMost(WAIT_AT_MOST);
+  }
 }

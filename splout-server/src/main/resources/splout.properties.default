@@ -56,6 +56,11 @@ qnode.balance.actions.ttl	36000
 
 qnode.disable.binary.protocol	false
 
+# The time to wait in millis for a dnode connection in pool. It is used when pool is
+# empty because all connections are being used.
+
+qnode.dnode.pool.take.timeout 2000
+
 #
 # DNode properties
 #

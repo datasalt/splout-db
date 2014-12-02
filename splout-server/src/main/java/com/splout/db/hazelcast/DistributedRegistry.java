@@ -47,173 +47,173 @@ import static com.splout.db.hazelcast.HazelcastUtils.getHZAddress;
  */
 public class DistributedRegistry {
 
-	private final static Log log = LogFactory.getLog(DistributedRegistry.class);
+  private final static Log log = LogFactory.getLog(DistributedRegistry.class);
 
-	private final String registryName;
-	private Object nodeInfo;
-	private final HazelcastInstance hzInstance;
+  private final String registryName;
+  private Object nodeInfo;
+  private final HazelcastInstance hzInstance;
 
-	private final int minutesToCheckRegister;
-	private final int oldestMembersLeading;
+  private final int minutesToCheckRegister;
+  private final int oldestMembersLeading;
 
-	private final AtomicBoolean amIRegistered = new AtomicBoolean(false);
-	private final AtomicBoolean disableChecking = new AtomicBoolean(false);
+  private final AtomicBoolean amIRegistered = new AtomicBoolean(false);
+  private final AtomicBoolean disableChecking = new AtomicBoolean(false);
 
-	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-	private final AtomicReference<ScheduledFuture<?>> checker = new AtomicReference<ScheduledFuture<?>>();
-	private final Random random = new Random();
+  private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+  private final AtomicReference<ScheduledFuture<?>> checker = new AtomicReference<ScheduledFuture<?>>();
+  private final Random random = new Random();
 
-	public class MyListener implements MembershipListener {
+  public class MyListener implements MembershipListener {
 
-		@Override
-		public void memberAdded(MembershipEvent membershipEvent) {
-			// Nothing to do. I should be registered. Just in case...
-			scheduleCheck();
-		}
+    @Override
+    public void memberAdded(MembershipEvent membershipEvent) {
+      // Nothing to do. I should be registered. Just in case...
+      scheduleCheck();
+    }
 
-		@Override
-		public void memberRemoved(MembershipEvent membershipEvent) {
-			synchronized(DistributedRegistry.this) {
-				/*
-				 * When a node leaves, somebody in the cluster must remove its info from the distributed map. We
+    @Override
+    public void memberRemoved(MembershipEvent membershipEvent) {
+      synchronized (DistributedRegistry.this) {
+        /*
+         * When a node leaves, somebody in the cluster must remove its info from the distributed map. We
 				 * restrict this removal to some of the oldest members, in order to reduce coordination traffic
 				 * while keeping replication
 				 */
-				if(HazelcastUtils.isOneOfOldestMembers(hzInstance, hzInstance.getCluster().getLocalMember(),
-				    oldestMembersLeading)) {
-					String member = getHZAddress(membershipEvent.getMember());
-					log.info("Member " + member + " leaves. Unregistering it from registry [" + registryName + "]");
-					ConcurrentMap<String, DNodeInfo> members = hzInstance.getMap(registryName);
-					members.remove(member);
-				}
-			}
-			// Just in case...
-			scheduleCheck();
-		}
-
-		/**
-		 * In the case of a network partition where some data is lost (unprovable, as replication should
-		 * mitigate that), we could have some members that believe they are registered but they are not. We
-		 * set a periodical check to test that. We schedule a test each time a new member arrives or leaves
-		 * to the cluster. But in order to avoid to much checking, only one check can be performed in a
-		 * period of time. Also, to reduce the herd behavior, we schedule the check randomly in this period.
-		 */
-		private void scheduleCheck() {
-			if(disableChecking.get()) {
-				return;
-			}
-
-			ScheduledFuture<?> checkerFuture = checker.get();
-
-			if(checkerFuture == null || checkerFuture.isDone()) {
-				int seconds = random.nextInt(Math.max(1, minutesToCheckRegister * 60));
-
-				checker.set(scheduler.schedule(new Runnable() {
-
-					@Override
-					public void run() {
-						synchronized(DistributedRegistry.this) {
-							if(amIRegistered.get()) {
-								String member = localMember();
-								log.info("Checking if registered [" + member + "] ...");
-								ConcurrentMap<String, Object> members = hzInstance.getMap(registryName);
-								if(members.get(member) == null) {
-									log.warn("Detected wrongly unregistered ["
-									    + member
-									    + "]. Could be due a network partition problem or due to a software bug. Reregistering.");
-									register();
-								}
-							}
-						}
-					}
-				}, seconds, TimeUnit.SECONDS));
-			}
-		}
-
-		@Override
-    public void memberAttributeChanged(MemberAttributeEvent memberAttributeEvent) {
-	    // TODO Since HZ 3.2
+        if (HazelcastUtils.isOneOfOldestMembers(hzInstance, hzInstance.getCluster().getLocalMember(),
+            oldestMembersLeading)) {
+          String member = getHZAddress(membershipEvent.getMember());
+          log.info("Member " + member + " leaves. Unregistering it from registry [" + registryName + "]");
+          ConcurrentMap<String, DNodeInfo> members = hzInstance.getMap(registryName);
+          members.remove(member);
+        }
+      }
+      // Just in case...
+      scheduleCheck();
     }
-	}
 
-	/**
-	 * When a split-brain happens, and two clusters will merge, the member of the smallest cluster are
-	 * restarted. When we detect that, we reregister the clusters in order to assure that their info is
-	 * present in the registry distributed map. <br>
-	 * This alone does not assure complete coherence in the case of a network partition merge, as members
-	 * of the bigger cluster could have an incomplete registry of themselves as well.
-	 */
-	public class RestartListener implements LifecycleListener {
+    /**
+     * In the case of a network partition where some data is lost (unprovable, as replication should
+     * mitigate that), we could have some members that believe they are registered but they are not. We
+     * set a periodical check to test that. We schedule a test each time a new member arrives or leaves
+     * to the cluster. But in order to avoid to much checking, only one check can be performed in a
+     * period of time. Also, to reduce the herd behavior, we schedule the check randomly in this period.
+     */
+    private void scheduleCheck() {
+      if (disableChecking.get()) {
+        return;
+      }
 
-		@Override
-		public void stateChanged(LifecycleEvent event) {
-			if(event.getState() == LifecycleState.MERGED) {
-				synchronized(DistributedRegistry.this) {
-					if(amIRegistered.get()) {
-						log.info("Hazelcast RESTARTED event received. Reregistering myself to ensure I'm properly registered");
-						register();
-					}
-				}
-			}
-		}
-	}
+      ScheduledFuture<?> checkerFuture = checker.get();
 
-	public DistributedRegistry(String registryName, Object nodeInfo, HazelcastInstance hzInstance,
-	    int minutesToCheckRegister, int oldestMembersLeading) {
-		this.registryName = registryName;
-		this.nodeInfo = nodeInfo;
-		this.hzInstance = hzInstance;
-		hzInstance.getCluster().addMembershipListener(new MyListener());
-		hzInstance.getLifecycleService().addLifecycleListener(new RestartListener());
+      if (checkerFuture == null || checkerFuture.isDone()) {
+        int seconds = random.nextInt(Math.max(1, minutesToCheckRegister * 60));
 
-		this.minutesToCheckRegister = minutesToCheckRegister;
-		this.oldestMembersLeading = oldestMembersLeading;
-	}
+        checker.set(scheduler.schedule(new Runnable() {
 
-	public synchronized void register() {
-		String myself = localMember();
-		log.info("Registering myself [" + myself + "] on registry [" + registryName + "]");
-		ConcurrentMap<String, Object> members = hzInstance.getMap(registryName);
-		members.put(myself, nodeInfo);
-		amIRegistered.set(true);
-	}
+          @Override
+          public void run() {
+            synchronized (DistributedRegistry.this) {
+              if (amIRegistered.get()) {
+                String member = localMember();
+                log.info("Checking if registered [" + member + "] ...");
+                ConcurrentMap<String, Object> members = hzInstance.getMap(registryName);
+                if (members.get(member) == null) {
+                  log.warn("Detected wrongly unregistered ["
+                      + member
+                      + "]. Could be due a network partition problem or due to a software bug. Reregistering.");
+                  register();
+                }
+              }
+            }
+          }
+        }, seconds, TimeUnit.SECONDS));
+      }
+    }
 
-	public synchronized void unregister() {
-		String myself = localMember();
-		log.info("Unregistering myself [" + myself + " -> " + nodeInfo + "] on registry [" + registryName
-		    + "]");
-		ConcurrentMap<String, Object> members = hzInstance.getMap(registryName);
-		members.remove(myself);
-		amIRegistered.set(false);
-	}
+    @Override
+    public void memberAttributeChanged(MemberAttributeEvent memberAttributeEvent) {
+      // TODO Since HZ 3.2
+    }
+  }
 
-	public synchronized void changeInfo(Object nodeInfo) {
-		// Changing memory information. Needed for future reregistration
-		this.nodeInfo = nodeInfo; 		
-		String myself = localMember();
-		log.info("Changing my info [" + myself + "] on registry [" + registryName + "]");
-		ConcurrentMap<String, Object> members = hzInstance.getMap(registryName);
-		members.put(myself, nodeInfo);
-		amIRegistered.set(true);
-	}
+  /**
+   * When a split-brain happens, and two clusters will merge, the member of the smallest cluster are
+   * restarted. When we detect that, we reregister the clusters in order to assure that their info is
+   * present in the registry distributed map. <br>
+   * This alone does not assure complete coherence in the case of a network partition merge, as members
+   * of the bigger cluster could have an incomplete registry of themselves as well.
+   */
+  public class RestartListener implements LifecycleListener {
 
-	/**
-	 * Enables or disable preventive registration checking.
-	 */
-	protected void disableChecking(boolean disable) {
-		disableChecking.set(disable);
-	}
+    @Override
+    public void stateChanged(LifecycleEvent event) {
+      if (event.getState() == LifecycleState.MERGED) {
+        synchronized (DistributedRegistry.this) {
+          if (amIRegistered.get()) {
+            log.info("Hazelcast RESTARTED event received. Reregistering myself to ensure I'm properly registered");
+            register();
+          }
+        }
+      }
+    }
+  }
 
-	private String localMember() {
-		return getHZAddress(hzInstance.getCluster().getLocalMember());
-	}
+  public DistributedRegistry(String registryName, Object nodeInfo, HazelcastInstance hzInstance,
+                             int minutesToCheckRegister, int oldestMembersLeading) {
+    this.registryName = registryName;
+    this.nodeInfo = nodeInfo;
+    this.hzInstance = hzInstance;
+    hzInstance.getCluster().addMembershipListener(new MyListener());
+    hzInstance.getLifecycleService().addLifecycleListener(new RestartListener());
 
-	public void dumpRegistry() {
-		ConcurrentMap<String, Object> members = hzInstance.getMap(registryName);
-		System.out.println("Registry [" + registryName + "] {");
-		for(Entry<String, Object> entry : members.entrySet()) {
-			System.out.println("\t" + entry.getKey() + " -> " + entry.getValue());
-		}
-		System.out.println("}");
-	}
+    this.minutesToCheckRegister = minutesToCheckRegister;
+    this.oldestMembersLeading = oldestMembersLeading;
+  }
+
+  public synchronized void register() {
+    String myself = localMember();
+    log.info("Registering myself [" + myself + "] on registry [" + registryName + "]");
+    ConcurrentMap<String, Object> members = hzInstance.getMap(registryName);
+    members.put(myself, nodeInfo);
+    amIRegistered.set(true);
+  }
+
+  public synchronized void unregister() {
+    String myself = localMember();
+    log.info("Unregistering myself [" + myself + " -> " + nodeInfo + "] on registry [" + registryName
+        + "]");
+    ConcurrentMap<String, Object> members = hzInstance.getMap(registryName);
+    members.remove(myself);
+    amIRegistered.set(false);
+  }
+
+  public synchronized void changeInfo(Object nodeInfo) {
+    // Changing memory information. Needed for future reregistration
+    this.nodeInfo = nodeInfo;
+    String myself = localMember();
+    log.info("Changing my info [" + myself + "] on registry [" + registryName + "]");
+    ConcurrentMap<String, Object> members = hzInstance.getMap(registryName);
+    members.put(myself, nodeInfo);
+    amIRegistered.set(true);
+  }
+
+  /**
+   * Enables or disable preventive registration checking.
+   */
+  protected void disableChecking(boolean disable) {
+    disableChecking.set(disable);
+  }
+
+  private String localMember() {
+    return getHZAddress(hzInstance.getCluster().getLocalMember());
+  }
+
+  public void dumpRegistry() {
+    ConcurrentMap<String, Object> members = hzInstance.getMap(registryName);
+    System.out.println("Registry [" + registryName + "] {");
+    for (Entry<String, Object> entry : members.entrySet()) {
+      System.out.println("\t" + entry.getKey() + " -> " + entry.getValue());
+    }
+    System.out.println("}");
+  }
 }

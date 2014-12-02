@@ -20,71 +20,71 @@ package com.splout.db.qnode.beans;
  * #L%
  */
 
-import java.util.List;
-
 import com.splout.db.common.BaseBean;
 import com.splout.db.common.PartitionEntry;
 import com.splout.db.common.ReplicationEntry;
 import com.splout.db.engine.DefaultEngine;
+
+import java.util.List;
 
 /**
  * Bean that is serialized as JSON and sent to the QNodes for requesting a deploy. The deploy method accepts a list of such beans. Each bean refers to the deplooyment of one tablespace.
  */
 public class DeployRequest extends BaseBean {
 
-	String engine = DefaultEngine.class.getName();
-	String tablespace;
-	String data_uri;
-	List<String> initStatements;
-	List<PartitionEntry> partitionMap;
-	List<ReplicationEntry> replicationMap;
+  String engine = DefaultEngine.class.getName();
+  String tablespace;
+  String data_uri;
+  List<String> initStatements;
+  List<PartitionEntry> partitionMap;
+  List<ReplicationEntry> replicationMap;
 
-	// ----------------- //
-	public String getTablespace() {
-		return tablespace;
-	}
-
-	public void setTablespace(String table_partition) {
-		this.tablespace = table_partition;
-	}
-
-	public String getData_uri() {
-		return data_uri;
-	}
-
-	public void setData_uri(String data_uri) {
-		this.data_uri = data_uri;
-	}
-
-	public List<PartitionEntry> getPartitionMap() {
-		return partitionMap;
-	}
-
-	public void setPartitionMap(List<PartitionEntry> partitionMap) {
-		this.partitionMap = partitionMap;
-	}
-
-	public List<ReplicationEntry> getReplicationMap() {
-		return replicationMap;
-	}
-
-	public void setReplicationMap(List<ReplicationEntry> replicationMap) {
-		this.replicationMap = replicationMap;
-	}
-
-	public List<String> getInitStatements() {
-  	return initStatements;
+  // ----------------- //
+  public String getTablespace() {
+    return tablespace;
   }
 
-	public void setInitStatements(List<String> initStatements) {
-  	this.initStatements = initStatements;
+  public void setTablespace(String table_partition) {
+    this.tablespace = table_partition;
   }
-	
-	public void setEngine(String engine) {
-	  this.engine = engine;
+
+  public String getData_uri() {
+    return data_uri;
   }
-	
-	public String getEngine() {
-	  return engine;
+
+  public void setData_uri(String data_uri) {
+    this.data_uri = data_uri;
+  }
+
+  public List<PartitionEntry> getPartitionMap() {
+    return partitionMap;
+  }
+
+  public void setPartitionMap(List<PartitionEntry> partitionMap) {
+    this.partitionMap = partitionMap;
+  }
+
+  public List<ReplicationEntry> getReplicationMap() {
+    return replicationMap;
+  }
+
+  public void setReplicationMap(List<ReplicationEntry> replicationMap) {
+    this.replicationMap = replicationMap;
+  }
+
+  public List<String> getInitStatements() {
+    return initStatements;
+  }
+
+  public void setInitStatements(List<String> initStatements) {
+    this.initStatements = initStatements;
+  }
+
+  public void setEngine(String engine) {
+    this.engine = engine;
+  }
+
+  public String getEngine() {
+    return engine;
   }
 }

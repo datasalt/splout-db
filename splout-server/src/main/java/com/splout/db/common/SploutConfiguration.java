@@ -21,6 +21,15 @@ package com.splout.db.common;
  * #L%
  */
 
+import com.splout.db.dnode.DNodeProperties;
+import com.splout.db.hazelcast.HazelcastProperties;
+import com.splout.db.qnode.QNodeProperties;
+import org.apache.commons.configuration.CompositeConfiguration;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -28,16 +37,6 @@ import java.net.InetAddress;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Iterator;
-
-import org.apache.commons.configuration.CompositeConfiguration;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import com.splout.db.dnode.DNodeProperties;
-import com.splout.db.hazelcast.HazelcastProperties;
-import com.splout.db.qnode.QNodeProperties;
 
 /**
  * An Apache Commons Configuration object holding the configuration for DNode and QNode. The properties that are used

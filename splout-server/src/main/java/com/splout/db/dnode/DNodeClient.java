@@ -21,6 +21,7 @@ package com.splout.db.dnode;
  * #L%
  */
 
+import com.splout.db.thrift.DNodeService;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFramedTransport;
@@ -28,38 +29,36 @@ import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
-import com.splout.db.thrift.DNodeService;
-
 /**
  * A Thrift client interface for the {@link DNode} service.
  */
 public class DNodeClient {
-	
-	/**
-	 * Get a Thrift client given an address (host:port) 
-	 */
-	public static DNodeService.Client get(String hostPort) throws TTransportException {
-		int separator = hostPort.lastIndexOf(":");
-		String host = hostPort.substring(0, separator);
-		int port = Integer.parseInt(hostPort.substring(separator + 1, hostPort.length()));
-		return get(host, port);
-	}
 
-	/**
-	 * Get a Thrift client given a host and a port
-	 */
-	public static DNodeService.Client get(String host, int port) throws TTransportException {
-		TTransport transport = new TFramedTransport(new TSocket(host, port));
-		TProtocol protocol = new TBinaryProtocol(transport);
-		DNodeService.Client client = new DNodeService.Client(protocol);
-		transport.open();
-		return client;		
-	}
-	
-	/**
-	 * It is not trivial to properly close a Thrift client. This method encapsulates this.
-	 */
-	public static void close(DNodeService.Client client) {
-		client.getOutputProtocol().getTransport().close();
-	}
+  /**
+   * Get a Thrift client given an address (host:port)
+   */
+  public static DNodeService.Client get(String hostPort) throws TTransportException {
+    int separator = hostPort.lastIndexOf(":");
+    String host = hostPort.substring(0, separator);
+    int port = Integer.parseInt(hostPort.substring(separator + 1, hostPort.length()));
+    return get(host, port);
+  }
+
+  /**
+   * Get a Thrift client given a host and a port
+   */
+  public static DNodeService.Client get(String host, int port) throws TTransportException {
+    TTransport transport = new TFramedTransport(new TSocket(host, port));
+    TProtocol protocol = new TBinaryProtocol(transport);
+    DNodeService.Client client = new DNodeService.Client(protocol);
+    transport.open();
+    return client;
+  }
+
+  /**
+   * It is not trivial to properly close a Thrift client. This method encapsulates this.
+   */
+  public static void close(DNodeService.Client client) {
+    client.getOutputProtocol().getTransport().close();
+  }
 }

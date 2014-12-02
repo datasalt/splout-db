@@ -48,7 +48,8 @@ public interface IDNodeHandler {
 
   public ByteBuffer binarySqlQuery(String tablespace, long version, int partition, String query, int cursorId) throws DNodeException;
 
-  public String sqlQuery(String tablespace, long version, int partition, String query) throws DNodeException;
+  public String sqlQuery(String tablespace, long version, int partition, String query)
+      throws DNodeException;
 
   public String deploy(final List<DeployAction> deployActions, final long version) throws DNodeException;
 

@@ -28,40 +28,40 @@ import java.net.URISyntaxException;
 
 public class PageCountsUrlGenerator {
 
-	public static void main(String[] args) throws URISyntaxException, IOException {
-		
+  public static void main(String[] args) throws URISyntaxException, IOException {
+
 //		final String[] hosts = { "10.244.43.226:4412", "10.194.247.126:4412" };
 
-		final String[] hosts = { "localhost:4412" };
-		
-		BufferedWriter writer = new BufferedWriter(new FileWriter("urls.txt"));
-		
-		char firstChar = 'A';
-		while(firstChar < 'Z') {
-			char secondChar = 'a';
-			while(secondChar < 'z') {
-				char thirdChar = 'a';
-				while(thirdChar < 'z') {
-					char fourthChar = 'a';
-					while(fourthChar < 'd') {
-						for(String host: hosts) {
-							String key = "" + firstChar + secondChar + thirdChar + fourthChar;
-							String query = "SELECT * FROM pagecounts WHERE pagename LIKE '" + key + "%' LIMIT 10";
-							String url = new URI("http", host, "/api/query/pagecounts", "key=" + key + "&sql=" + query, null).toASCIIString();
-							writer.write(url + "\n");
-							query = "SELECT hour, SUM(pageviews), AVG(pageviews) FROM (SELECT * FROM pagecounts WHERE pagename LIKE '" + key + "%' LIMIT 100) GROUP BY hour;";
-							url = new URI("http", host, "/api/query/pagecounts", "key=" + key + "&sql=" + query, null).toASCIIString();
-							writer.write(url + "\n");
-						}
-						fourthChar++;
-					}
-					thirdChar++;
-				}
-				secondChar++;
-			}
-			firstChar++;
-		}
-		
-		writer.close();
-	}
+    final String[] hosts = {"localhost:4412"};
+
+    BufferedWriter writer = new BufferedWriter(new FileWriter("urls.txt"));
+
+    char firstChar = 'A';
+    while (firstChar < 'Z') {
+      char secondChar = 'a';
+      while (secondChar < 'z') {
+        char thirdChar = 'a';
+        while (thirdChar < 'z') {
+          char fourthChar = 'a';
+          while (fourthChar < 'd') {
+            for (String host : hosts) {
+              String key = "" + firstChar + secondChar + thirdChar + fourthChar;
+              String query = "SELECT * FROM pagecounts WHERE pagename LIKE '" + key + "%' LIMIT 10";
+              String url = new URI("http", host, "/api/query/pagecounts", "key=" + key + "&sql=" + query, null).toASCIIString();
+              writer.write(url + "\n");
+              query = "SELECT hour, SUM(pageviews), AVG(pageviews) FROM (SELECT * FROM pagecounts WHERE pagename LIKE '" + key + "%' LIMIT 100) GROUP BY hour;";
+              url = new URI("http", host, "/api/query/pagecounts", "key=" + key + "&sql=" + query, null).toASCIIString();
+              writer.write(url + "\n");
+            }
+            fourthChar++;
+          }
+          thirdChar++;
+        }
+        secondChar++;
+      }
+      firstChar++;
+    }
+
+    writer.close();
+  }
 }

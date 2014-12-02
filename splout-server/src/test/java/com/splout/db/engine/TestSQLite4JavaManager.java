@@ -21,7 +21,8 @@ package com.splout.db.engine;
  * #L%
  */
 
-import static org.junit.Assert.*;
+
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.sql.SQLException;
@@ -29,10 +30,8 @@ import java.sql.SQLException;
 import org.junit.Test;
 
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
-import com.splout.db.engine.ResultSerializer.SerializationException;
-import com.splout.db.engine.SQLManagerTester;
-import com.splout.db.engine.SQLite4JavaManager;
 import com.splout.db.engine.EngineManager.EngineException;
+import com.splout.db.engine.ResultSerializer.SerializationException;
 
 public class TestSQLite4JavaManager extends SQLManagerTester {
 

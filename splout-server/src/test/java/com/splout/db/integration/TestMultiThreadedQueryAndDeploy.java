@@ -21,26 +21,6 @@ package com.splout.db.integration;
  * #L%
  */
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.apache.commons.io.FileUtils;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.splout.db.common.SploutClient;
 import com.splout.db.common.SploutConfiguration;
 import com.splout.db.common.Tablespace;
@@ -52,6 +32,23 @@ import com.splout.db.qnode.QNode;
 import com.splout.db.qnode.QNodeHandler;
 import com.splout.db.qnode.QNodeProperties;
 import com.splout.db.qnode.beans.QueryStatus;
+import org.apache.commons.io.FileUtils;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.junit.Assert.*;
 
 /**
  * This integration test is similar to "MultiQNodeTest" but it uses threads for querying the QNodes meanwhile deploys
@@ -59,7 +56,7 @@ import com.splout.db.qnode.beans.QueryStatus;
  * parallel. We will also assert that after a lot of deployments there are only {@link
  * com.splout.db.qnode.QNodeProperties.#VERSIONS_PER_TABLESPACE} versions left and therefore the cleaning of versions
  * works well on-the-fly.
- * <p>
+ * <p/>
  * TIP: Use "BaseIntegrationTest" for creating new integration tests.
  */
 @SuppressWarnings("unchecked")

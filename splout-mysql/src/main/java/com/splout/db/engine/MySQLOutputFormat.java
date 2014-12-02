@@ -50,13 +50,13 @@ import java.util.Map;
 @SuppressWarnings("serial")
 public class MySQLOutputFormat extends SploutSQLOutputFormat implements Serializable {
 
-	public static Log LOG = LogFactory.getLog(MySQLOutputFormat.class);
+  public static Log LOG = LogFactory.getLog(MySQLOutputFormat.class);
 
-	public static String STRING_FIELD_SIZE_PANGOOL_FIELD_PROP = "com.splout.db.engine.MySQLOutputFormat.string.field.size";
-	public static String AUTO_TRIM_STRING_PANGOOL_FIELD_PROP = "com.splout.db.engine.MySQLOutputFormat.auto.trim.string";
-	
-	public static String GLOBAL_ENGINE_CONF_PROP = "com.splout.db.engine.MySQLOutputFormat.engine";
-	public static String GLOBAL_CHARSET_CONF_PROP = "com.splout.db.engine.MySQLOutputFormat.charset";
+  public static String STRING_FIELD_SIZE_PANGOOL_FIELD_PROP = "com.splout.db.engine.MySQLOutputFormat.string.field.size";
+  public static String AUTO_TRIM_STRING_PANGOOL_FIELD_PROP = "com.splout.db.engine.MySQLOutputFormat.auto.trim.string";
+
+  public static String GLOBAL_ENGINE_CONF_PROP = "com.splout.db.engine.MySQLOutputFormat.engine";
+  public static String GLOBAL_CHARSET_CONF_PROP = "com.splout.db.engine.MySQLOutputFormat.charset";
   public static String GLOBAL_MEMORY_AVAILABLE_FOR_INDEXING = "com.splout.db.engine.MySQLOutputFormat.memory.indexing";
 
   public static String GLOBAL_STRING_FIELD_SIZE = "com.splout.db.engine.MySQLOutputFormat.string.field.size";
@@ -64,77 +64,77 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat implements Serializ
 
   public static String GENERATED_DB_NAME = "splout";
 
-	// Keep track of all opened Mysqlds so we can kill them in any case
-	private Map<Integer, EmbeddedMySQL> mySQLs = new HashMap<Integer, EmbeddedMySQL>();
+  // Keep track of all opened Mysqlds so we can kill them in any case
+  private Map<Integer, EmbeddedMySQL> mySQLs = new HashMap<Integer, EmbeddedMySQL>();
 
   protected Integer globalStringFieldSize;
   protected Boolean globalAutoTrim = null;
 
-	public MySQLOutputFormat(Integer batchSize, TableSpec... dbSpec) throws SploutSQLOutputFormatException {
-		super(batchSize, dbSpec);
-	}
+  public MySQLOutputFormat(Integer batchSize, TableSpec... dbSpec) throws SploutSQLOutputFormatException {
+    super(batchSize, dbSpec);
+  }
 
-	@Override
-	public String getCreateTable(TableSpec tableSpec) throws SploutSQLOutputFormatException {
+  @Override
+  public String getCreateTable(TableSpec tableSpec) throws SploutSQLOutputFormatException {
     loadGlobalConf();
-		String engine = getConf().get(GLOBAL_ENGINE_CONF_PROP, "MyIsam");
-		String charset = getConf().get(GLOBAL_CHARSET_CONF_PROP, "UTF8");
+    String engine = getConf().get(GLOBAL_ENGINE_CONF_PROP, "MyIsam");
+    String charset = getConf().get(GLOBAL_CHARSET_CONF_PROP, "UTF8");
 
-		String createTable = "CREATE TABLE " + tableSpec.getSchema().getName() + " (";
-		for(Field field : tableSpec.getSchema().getFields()) {
-			int fieldSize = fixedSizeStringField(field);
-			if(field.getName().equals(PARTITION_TUPLE_FIELD)) {
-				continue;
-			}
-			createTable += "`" + field.getName() + "` ";
-			switch(field.getType()) {
-			case INT:
-				createTable += "INTEGER, ";
-				break;
-			case LONG:
-				createTable += "LONG, ";
-				break;
-			case DOUBLE:
-				createTable += "DOUBLE, ";
-				break;
-			case FLOAT:
-				createTable += "FLOAT, ";
-				break;
-			case STRING:
-				if(fieldSize > -1) {
-					createTable += "VARCHAR(" + fieldSize + "), ";
-				} else {
-					createTable += "TEXT, ";
-				}
-				break;
-			case BOOLEAN:
-				createTable += "BOOLEAN, ";
-				break;
-			default:
-				throw new SploutSQLOutputFormatException("Unsupported field type: " + field.getType());
-			}
-		}
-		createTable = createTable.substring(0, createTable.length() - 2);
-		return createTable += ") ENGINE=" + engine + " DEFAULT CHARSET=" + charset;
-	}
+    String createTable = "CREATE TABLE " + tableSpec.getSchema().getName() + " (";
+    for (Field field : tableSpec.getSchema().getFields()) {
+      int fieldSize = fixedSizeStringField(field);
+      if (field.getName().equals(PARTITION_TUPLE_FIELD)) {
+        continue;
+      }
+      createTable += "`" + field.getName() + "` ";
+      switch (field.getType()) {
+        case INT:
+          createTable += "INTEGER, ";
+          break;
+        case LONG:
+          createTable += "LONG, ";
+          break;
+        case DOUBLE:
+          createTable += "DOUBLE, ";
+          break;
+        case FLOAT:
+          createTable += "FLOAT, ";
+          break;
+        case STRING:
+          if (fieldSize > -1) {
+            createTable += "VARCHAR(" + fieldSize + "), ";
+          } else {
+            createTable += "TEXT, ";
+          }
+          break;
+        case BOOLEAN:
+          createTable += "BOOLEAN, ";
+          break;
+        default:
+          throw new SploutSQLOutputFormatException("Unsupported field type: " + field.getType());
+      }
+    }
+    createTable = createTable.substring(0, createTable.length() - 2);
+    return createTable += ") ENGINE=" + engine + " DEFAULT CHARSET=" + charset;
+  }
 
-	// Map of prepared statements per Schema and per Partition
-	private Map<Integer, Map<String, PreparedStatement>> stCache = new HashMap<Integer, Map<String, PreparedStatement>>();
-	private Map<Integer, Connection> connCache = new HashMap<Integer, Connection>();
+  // Map of prepared statements per Schema and per Partition
+  private Map<Integer, Map<String, PreparedStatement>> stCache = new HashMap<Integer, Map<String, PreparedStatement>>();
+  private Map<Integer, Connection> connCache = new HashMap<Integer, Connection>();
 
-	private long records = 0;
+  private long records = 0;
 
-	// This method is called one time per each partition
-	public void initPartition(int partition, Path local) throws IOException {
+  // This method is called one time per each partition
+  public void initPartition(int partition, Path local) throws IOException {
 
-		Path mysqlDb = new Path(local.getParent(), partition + "");
+    Path mysqlDb = new Path(local.getParent(), partition + "");
 
-		LOG.info("Initializing SQL connection [" + partition + "]");
-		try {
-			PortLock portLock = PortUtils.getNextAvailablePort(EmbeddedMySQLConfig.DEFAULT_PORT);
+    LOG.info("Initializing SQL connection [" + partition + "]");
+    try {
+      PortLock portLock = PortUtils.getNextAvailablePort(EmbeddedMySQLConfig.DEFAULT_PORT);
 
-			EmbeddedMySQL mySQL = null;
-			EmbeddedMySQLConfig config = null;
+      EmbeddedMySQL mySQL = null;
+      EmbeddedMySQLConfig config = null;
       HashMap<String, Object> customConfig = new HashMap<String, Object>();
 
       // Fixing memory for indexation. Main important parameters is myisam_sort_buffer_size
@@ -146,45 +146,45 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat implements Serializ
       customConfig.put("myisam_max_sort_file_size", 9223372036854775807l);
 
       try {
-				File mysqlDir = new File(mysqlDb.toString());
-				LOG.info("Going to instantiate a MySQLD in: " + mysqlDir + ", port [" + portLock.getPort()
-				    + "] (partition: " + partition + ")");
+        File mysqlDir = new File(mysqlDb.toString());
+        LOG.info("Going to instantiate a MySQLD in: " + mysqlDir + ", port [" + portLock.getPort()
+            + "] (partition: " + partition + ")");
 
-				config = new EmbeddedMySQLConfig(portLock.getPort(), EmbeddedMySQLConfig.DEFAULT_USER,
-				    EmbeddedMySQLConfig.DEFAULT_PASS, mysqlDir, customConfig);
+        config = new EmbeddedMySQLConfig(portLock.getPort(), EmbeddedMySQLConfig.DEFAULT_USER,
+            EmbeddedMySQLConfig.DEFAULT_PASS, mysqlDir, customConfig);
 
-				mySQL = new EmbeddedMySQL(config);
-				mySQL.start(true);
-			} catch(Exception e) {
-				throw e;
-			} finally {
-				portLock.release();
-			}
+        mySQL = new EmbeddedMySQL(config);
+        mySQL.start(true);
+      } catch (Exception e) {
+        throw e;
+      } finally {
+        portLock.release();
+      }
 
-			mySQLs.put(partition, mySQL);
+      mySQLs.put(partition, mySQL);
 
-			// MySQL is successfully started at this point, or an Exception would have been thrown.
-			Class.forName(EmbeddedMySQL.DRIVER);
-			Connection conn = DriverManager.getConnection(config.getLocalJDBCConnection(GENERATED_DB_NAME),
-			    config.getUser(), config.getPass());
-			conn.setAutoCommit(false);
-			connCache.put(partition, conn);
-			Statement st = conn.createStatement();
+      // MySQL is successfully started at this point, or an Exception would have been thrown.
+      Class.forName(EmbeddedMySQL.DRIVER);
+      Connection conn = DriverManager.getConnection(config.getLocalJDBCConnection(GENERATED_DB_NAME),
+          config.getUser(), config.getPass());
+      conn.setAutoCommit(false);
+      connCache.put(partition, conn);
+      Statement st = conn.createStatement();
 
-			// Init transaction
-			for(String sql : getPreSQL()) {
-				LOG.info("Executing: " + sql);
-				st.execute(sql);
-			}
-			st.execute("BEGIN");
-			st.close();
+      // Init transaction
+      for (String sql : getPreSQL()) {
+        LOG.info("Executing: " + sql);
+        st.execute(sql);
+      }
+      st.execute("BEGIN");
+      st.close();
 
-			Map<String, PreparedStatement> stMap = new HashMap<String, PreparedStatement>();
-			stCache.put(partition, stMap);
-		} catch(Exception e) {
-			throw new IOException(e);
-		}
-	}
+      Map<String, PreparedStatement> stMap = new HashMap<String, PreparedStatement>();
+      stCache.put(partition, stMap);
+    } catch (Exception e) {
+      throw new IOException(e);
+    }
+  }
 
   /**
    * Loads global variable configuration
@@ -225,110 +225,110 @@ public class MySQLOutputFormat extends SploutSQLOutputFormat implements Serializ
     return false;
   }
 
-	@Override
-	public void write(ITuple tuple) throws IOException, InterruptedException {
-		int partition = (Integer) tuple.get(PARTITION_TUPLE_FIELD);
+  @Override
+  public void write(ITuple tuple) throws IOException, InterruptedException {
+    int partition = (Integer) tuple.get(PARTITION_TUPLE_FIELD);
 
-		try {
-			/*
-			 * Key performance trick: Cache PreparedStatements when possible. We will have one PreparedStatement per each
+    try {
+      /*
+       * Key performance trick: Cache PreparedStatements when possible. We will have one PreparedStatement per each
 			 * different Tuple Schema (table).
 			 */
-			Map<String, PreparedStatement> stMap = stCache.get(partition);
+      Map<String, PreparedStatement> stMap = stCache.get(partition);
 
-			PreparedStatement pS = stMap.get(tuple.getSchema().getName());
-			if(pS == null) {
-				Connection conn = connCache.get(partition);
-				// Create a PreparedStatement according to the received Tuple
-				String preparedStatement = "INSERT INTO " + tuple.getSchema().getName() + " VALUES (";
-				// NOTE: tuple.getSchema().getFields().size() - 1 : quick way of skipping "_partition" fields here
-				for(int i = 0; i < tuple.getSchema().getFields().size() - 1; i++) {
-					preparedStatement += "?, ";
-				}
-				preparedStatement = preparedStatement.substring(0, preparedStatement.length() - 2) + ");";
-				pS = conn.prepareStatement(preparedStatement);
-				stMap.put(tuple.getSchema().getName(), pS);
-			}
+      PreparedStatement pS = stMap.get(tuple.getSchema().getName());
+      if (pS == null) {
+        Connection conn = connCache.get(partition);
+        // Create a PreparedStatement according to the received Tuple
+        String preparedStatement = "INSERT INTO " + tuple.getSchema().getName() + " VALUES (";
+        // NOTE: tuple.getSchema().getFields().size() - 1 : quick way of skipping "_partition" fields here
+        for (int i = 0; i < tuple.getSchema().getFields().size() - 1; i++) {
+          preparedStatement += "?, ";
+        }
+        preparedStatement = preparedStatement.substring(0, preparedStatement.length() - 2) + ");";
+        pS = conn.prepareStatement(preparedStatement);
+        stMap.put(tuple.getSchema().getName(), pS);
+      }
 
-			int count = 1, tupleCount = 0;
-			for(Field field : tuple.getSchema().getFields()) {
-				if(field.getName().equals(PARTITION_TUPLE_FIELD)) {
-					tupleCount++;
-					continue;
-				}
-				if(field.getType().equals(Type.STRING)) {
-					boolean autoTrim = autoTrim(field);
-					int fieldSize = fixedSizeStringField(field);
-					String str = tuple.getString(tupleCount);
-					if(fieldSize > -1 && autoTrim && str != null && str.length() > fieldSize) {
-						str = str.substring(0, fieldSize);
-					}
-					pS.setObject(count, str);
-				} else {
-					pS.setObject(count, tuple.get(tupleCount));
-				}
-				count++;
-				tupleCount++;
-			}
-			pS.execute();
+      int count = 1, tupleCount = 0;
+      for (Field field : tuple.getSchema().getFields()) {
+        if (field.getName().equals(PARTITION_TUPLE_FIELD)) {
+          tupleCount++;
+          continue;
+        }
+        if (field.getType().equals(Type.STRING)) {
+          boolean autoTrim = autoTrim(field);
+          int fieldSize = fixedSizeStringField(field);
+          String str = tuple.getString(tupleCount);
+          if (fieldSize > -1 && autoTrim && str != null && str.length() > fieldSize) {
+            str = str.substring(0, fieldSize);
+          }
+          pS.setObject(count, str);
+        } else {
+          pS.setObject(count, tuple.get(tupleCount));
+        }
+        count++;
+        tupleCount++;
+      }
+      pS.execute();
 
-			records++;
-			if(records == getBatchSize()) {
-				Connection conn = connCache.get(partition);
-				Statement st = conn.createStatement();
-				st.execute("COMMIT");
-				st.execute("BEGIN");
-				st.close();
-				records = 0;
-			}
-		} catch(Exception e) {
-			throw new IOException(e);
-		}
-	}
+      records++;
+      if (records == getBatchSize()) {
+        Connection conn = connCache.get(partition);
+        Statement st = conn.createStatement();
+        st.execute("COMMIT");
+        st.execute("BEGIN");
+        st.close();
+        records = 0;
+      }
+    } catch (Exception e) {
+      throw new IOException(e);
+    }
+  }
 
-	@Override
-	public void close() throws IOException, InterruptedException {
-		try {
-			for(Map.Entry<Integer, Connection> entry : connCache.entrySet()) {
-				LOG.info("Closing SQL connection [" + entry.getKey() + "]");
-				//
-				Connection conn = entry.getValue();
-				Statement st = conn.createStatement();
-				st.execute("COMMIT");
-				if(getPostSQL() != null) {
-					LOG.info("Executing end SQL statements.");
-					for(String sql : getPostSQL()) {
-						LOG.info("Executing: " + sql);
-						st.execute(sql);
-					}
-				}
-				st.close();
-				conn.close();
-				// close MySQL before copying files (so mysql.sock disappears!)
-				EmbeddedMySQL msql = mySQLs.get(entry.getKey());
+  @Override
+  public void close() throws IOException, InterruptedException {
+    try {
+      for (Map.Entry<Integer, Connection> entry : connCache.entrySet()) {
+        LOG.info("Closing SQL connection [" + entry.getKey() + "]");
+        //
+        Connection conn = entry.getValue();
+        Statement st = conn.createStatement();
+        st.execute("COMMIT");
+        if (getPostSQL() != null) {
+          LOG.info("Executing end SQL statements.");
+          for (String sql : getPostSQL()) {
+            LOG.info("Executing: " + sql);
+            st.execute(sql);
+          }
+        }
+        st.close();
+        conn.close();
+        // close MySQL before copying files (so mysql.sock disappears!)
+        EmbeddedMySQL msql = mySQLs.get(entry.getKey());
 
-				msql.stop();
-				File resident = msql.getConfig().getResidentFolder();
-				File zipDest = new File(resident.getParentFile(), entry.getKey() + ".db");
+        msql.stop();
+        File resident = msql.getConfig().getResidentFolder();
+        File zipDest = new File(resident.getParentFile(), entry.getKey() + ".db");
 
-				// Create a "partition.db" zip with the needed files.
-				CompressorUtil.createZip(
-				    resident,
-				    zipDest,
-				    new WildcardFileFilter(new String[] { "ib*", "*.frm", "*.MYD", "*.MYI", "db.opt", "*.ibd" }),
-				    FileFilterUtils.or(FileFilterUtils.nameFileFilter("data"),
-				        FileFilterUtils.nameFileFilter("splout")));
-				// Delete all files except the generated zip "partition.db"
-				FileUtils.deleteDirectory(new File(resident, "bin"));
-				FileUtils.deleteDirectory(new File(resident, "data"));
-				FileUtils.deleteDirectory(new File(resident, "share"));
-			}
-		} catch(Exception e) {
-			throw new IOException(e);
-		} finally { // in any case, destroy the HeartBeater
-			for(Map.Entry<Integer, EmbeddedMySQL> entry : mySQLs.entrySet()) {
-				entry.getValue().stop();
-			}
-		}
-	}
+        // Create a "partition.db" zip with the needed files.
+        CompressorUtil.createZip(
+            resident,
+            zipDest,
+            new WildcardFileFilter(new String[]{"ib*", "*.frm", "*.MYD", "*.MYI", "db.opt", "*.ibd"}),
+            FileFilterUtils.or(FileFilterUtils.nameFileFilter("data"),
+                FileFilterUtils.nameFileFilter("splout")));
+        // Delete all files except the generated zip "partition.db"
+        FileUtils.deleteDirectory(new File(resident, "bin"));
+        FileUtils.deleteDirectory(new File(resident, "data"));
+        FileUtils.deleteDirectory(new File(resident, "share"));
+      }
+    } catch (Exception e) {
+      throw new IOException(e);
+    } finally { // in any case, destroy the HeartBeater
+      for (Map.Entry<Integer, EmbeddedMySQL> entry : mySQLs.entrySet()) {
+        entry.getValue().stop();
+      }
+    }
+  }
 }

@@ -22,18 +22,18 @@ package com.splout.db.engine;
 
 public class MySQLEngine extends SploutEngine {
 
-	@Override
+  @Override
   public String getId() {
-	  return "MYSQL";
+    return "MYSQL";
   }
 
-	@Override
+  @Override
   public String getOutputFormatClass() {
-	  return MySQLOutputFormat.class.getName();
+    return MySQLOutputFormat.class.getName();
   }
 
-	@Override
+  @Override
   public String getEngineManagerClass() {
-	  return MySQLManager.class.getName();
+    return MySQLManager.class.getName();
   }
 }

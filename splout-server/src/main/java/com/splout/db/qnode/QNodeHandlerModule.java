@@ -22,15 +22,15 @@ package com.splout.db.qnode;
  */
 
 /**
- * Base class for specialized modules needed by the {@link QNodeHandler}. 
- * 
+ * Base class for specialized modules needed by the {@link QNodeHandler}.
+ *
  * @see Deployer
  */
 public abstract class QNodeHandlerModule {
 
-	protected QNodeHandlerContext context;
-	
-	public QNodeHandlerModule(QNodeHandlerContext context) {
-		this.context = context;
-	}
+  protected QNodeHandlerContext context;
+
+  public QNodeHandlerModule(QNodeHandlerContext context) {
+    this.context = context;
+  }
 }

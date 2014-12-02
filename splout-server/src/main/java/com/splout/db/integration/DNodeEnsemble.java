@@ -32,21 +32,21 @@ import com.splout.db.dnode.FetcherProperties;
  */
 public class DNodeEnsemble {
 
-	public void runForever(int nDNodes) throws Exception {
-		SploutConfiguration config = SploutConfiguration.getTestConfig();
-		for(int i = 0; i < nDNodes; i++) {
-			config = SploutConfiguration.getTestConfig();
-			// we need to change some props for avoiding conflicts, ports, etc
-			config.setProperty(DNodeProperties.PORT, config.getInt(DNodeProperties.PORT) + i);
-			config.setProperty(DNodeProperties.DATA_FOLDER, config.getString(DNodeProperties.DATA_FOLDER) + "-" + i);
-			config.setProperty(FetcherProperties.TEMP_DIR, config.getString(FetcherProperties.TEMP_DIR) + "-" + i);
-			DNode dnode = new DNode(config, new DNodeHandler());
-			dnode.init();
-		}
-	}
+  public void runForever(int nDNodes) throws Exception {
+    SploutConfiguration config = SploutConfiguration.getTestConfig();
+    for (int i = 0; i < nDNodes; i++) {
+      config = SploutConfiguration.getTestConfig();
+      // we need to change some props for avoiding conflicts, ports, etc
+      config.setProperty(DNodeProperties.PORT, config.getInt(DNodeProperties.PORT) + i);
+      config.setProperty(DNodeProperties.DATA_FOLDER, config.getString(DNodeProperties.DATA_FOLDER) + "-" + i);
+      config.setProperty(FetcherProperties.TEMP_DIR, config.getString(FetcherProperties.TEMP_DIR) + "-" + i);
+      DNode dnode = new DNode(config, new DNodeHandler());
+      dnode.init();
+    }
+  }
 
-	public static void main(String[] args) throws Exception {
-		DNodeEnsemble ensemble = new DNodeEnsemble();
-		ensemble.runForever(Integer.parseInt(args[0]));
-	}
+  public static void main(String[] args) throws Exception {
+    DNodeEnsemble ensemble = new DNodeEnsemble();
+    ensemble.runForever(Integer.parseInt(args[0]));
+  }
 }

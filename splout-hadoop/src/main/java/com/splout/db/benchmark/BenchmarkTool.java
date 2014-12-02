@@ -20,14 +20,14 @@ package com.splout.db.benchmark;
  * #L%
  */
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.splout.db.benchmark.SploutBenchmark.StressThreadImpl;
 import com.splout.db.common.SploutClient;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This tool can be used for benchmarking a Splout server. It will perform a series of queries using an int key range. It can use threads.
@@ -35,107 +35,107 @@ import com.splout.db.common.SploutClient;
  */
 public class BenchmarkTool {
 
-	public final static String KEY_SELECTION_RANDOM = "RANDOM";
-	public final static String KEY_SELECTION_ZIPFIAN = "ZIPFIAN";
-	
-	@Parameter(required = true, names = { "-nq", "--nqueries" }, description = "The number of queries to perform for the benchmark.")
+  public final static String KEY_SELECTION_RANDOM = "RANDOM";
+  public final static String KEY_SELECTION_ZIPFIAN = "ZIPFIAN";
+
+  @Parameter(required = true, names = {"-nq", "--nqueries"}, description = "The number of queries to perform for the benchmark.")
   private Integer nQueries;
 
-	@Parameter(names = { "-t", "--tablespace" }, description = "Name of the tablespace that will be used for querying and / or inserting data.")
+  @Parameter(names = {"-t", "--tablespace"}, description = "Name of the tablespace that will be used for querying and / or inserting data.")
   private String tablespace = "splout_benchmark";
 
-	@Parameter(required = true, names = { "-q", "--qnodes" }, description = "Comma-separated list QNode addresses.")
+  @Parameter(required = true, names = {"-q", "--qnodes"}, description = "Comma-separated list QNode addresses.")
   private String qNodes;
 
-	@Parameter(required = true, names = { "-k", "--keyspace" }, description = "A representation of a key space used for querying. Format is minKey:maxKey where both are considered integers. A spec of 0:10 means keys range from 0 (minimum value) to 10 (maximum value).")
+  @Parameter(required = true, names = {"-k", "--keyspace"}, description = "A representation of a key space used for querying. Format is minKey:maxKey where both are considered integers. A spec of 0:10 means keys range from 0 (minimum value) to 10 (maximum value).")
   private String keySpace;
 
-	@Parameter(names = { "-n", "--niterations" }, description = "The number of iterations for running the benchmark more than once.")
+  @Parameter(names = {"-n", "--niterations"}, description = "The number of iterations for running the benchmark more than once.")
   private Integer nIterations = 1;
 
-	@Parameter(names = { "-nth", "--nthreads" }, description = "The number of threads to use for the test.")
+  @Parameter(names = {"-nth", "--nthreads"}, description = "The number of threads to use for the test.")
   private Integer nThreads = 1;
-	
-	@Parameter(names = { "-pad", "--padding" }, description = "The padding size to use for normalizing the integer keys to strings. With padding 3, 1 gets 001. This is needed for benchmark keys. By default, padding is autoadjusted to the size of the maxKey of the key range.")
-	private Long padding;
 
-	public void start() throws InterruptedException {
-		Integer minKey;
-		Integer maxKey;
-		int maxKeyDigits;
-		try {
-			String[] keySpaceSpec = keySpace.split(":");
-			minKey = Integer.parseInt(keySpaceSpec[0]);
-			maxKey = Integer.parseInt(keySpaceSpec[1]);
-			maxKeyDigits = maxKey.toString().length();
-		} catch(Throwable t) {
-			throw new IllegalArgumentException(
-			    "Key space spec not understood. Format must be minKey:maxKey where minKey, maxKey are integers.");
-		}
-		String paddingExp = "%0" + (padding != null ? padding : maxKeyDigits) + "d";
-		
-		Map<String, Object> context = new HashMap<String, Object>();
-		context.put("qnodes", qNodes);
-		context.put("minKey", minKey);
-		context.put("maxKey", maxKey);
-		context.put("tablespace", tablespace);
-		context.put("paddingExp", paddingExp);
+  @Parameter(names = {"-pad", "--padding"}, description = "The padding size to use for normalizing the integer keys to strings. With padding 3, 1 gets 001. This is needed for benchmark keys. By default, padding is autoadjusted to the size of the maxKey of the key range.")
+  private Long padding;
 
-		SploutBenchmark benchmark = new SploutBenchmark();
-		for(int i = 0; i < nIterations; i++) {
-			benchmark.stressTest(nThreads, nQueries, BenchmarkToolStressThreadImpl.class, context);
-			benchmark.printStats(System.out);
-		}
-	}
-	
-	/**
-	 * Performs queries like "SELECT * FROM splout_benchmark WHERE key = X;"
-	 */
-	public static class BenchmarkToolStressThreadImpl extends StressThreadImpl {
+  public void start() throws InterruptedException {
+    Integer minKey;
+    Integer maxKey;
+    int maxKeyDigits;
+    try {
+      String[] keySpaceSpec = keySpace.split(":");
+      minKey = Integer.parseInt(keySpaceSpec[0]);
+      maxKey = Integer.parseInt(keySpaceSpec[1]);
+      maxKeyDigits = maxKey.toString().length();
+    } catch (Throwable t) {
+      throw new IllegalArgumentException(
+          "Key space spec not understood. Format must be minKey:maxKey where minKey, maxKey are integers.");
+    }
+    String paddingExp = "%0" + (padding != null ? padding : maxKeyDigits) + "d";
 
-		String tablespace;
-		SploutClient client;
-		int minKey, maxKey;
-		String paddingExp;
-		
-		@Override
-		public void init(Map<String, Object> context) throws Exception {
-			client = new SploutClient(((String)context.get("qnodes")).split(","));
-			minKey = (Integer) context.get("minKey");
-			maxKey = (Integer) context.get("maxKey");
-			paddingExp = (String) context.get("paddingExp");
-			tablespace = (String) context.get("tablespace");
-		}
+    Map<String, Object> context = new HashMap<String, Object>();
+    context.put("qnodes", qNodes);
+    context.put("minKey", minKey);
+    context.put("maxKey", maxKey);
+    context.put("tablespace", tablespace);
+    context.put("paddingExp", paddingExp);
 
-		@Override
-		public int nextQuery() throws Exception {
-			int key = ((int) (Math.random() * (maxKey - minKey))) + minKey;
-			String strKey = String.format(paddingExp, key);
-			return client
-				.query(tablespace, strKey + "", "SELECT * FROM " + tablespace + " WHERE key = " + key + ";", null)
-			  .getResult().size();
-		}
-	}
-	
-	public static void main(String[] args) throws InterruptedException {
-		BenchmarkTool benchmarkTool = new BenchmarkTool();
-		
-		JCommander jComm = new JCommander(benchmarkTool);
-		jComm.setProgramName("Benchmark Tool");
-		try {
-			jComm.parse(args);
-		} catch (ParameterException e){
-			System.out.println(e.getMessage());
-			System.out.println();
-			jComm.usage();
-			System.exit(-1);
-		} catch(Throwable t) {
-			t.printStackTrace();
-			jComm.usage();
-			System.exit(-1);
-		}
-		
-		benchmarkTool.start();
-		System.exit(0);
-	}
+    SploutBenchmark benchmark = new SploutBenchmark();
+    for (int i = 0; i < nIterations; i++) {
+      benchmark.stressTest(nThreads, nQueries, BenchmarkToolStressThreadImpl.class, context);
+      benchmark.printStats(System.out);
+    }
+  }
+
+  /**
+   * Performs queries like "SELECT * FROM splout_benchmark WHERE key = X;"
+   */
+  public static class BenchmarkToolStressThreadImpl extends StressThreadImpl {
+
+    String tablespace;
+    SploutClient client;
+    int minKey, maxKey;
+    String paddingExp;
+
+    @Override
+    public void init(Map<String, Object> context) throws Exception {
+      client = new SploutClient(((String) context.get("qnodes")).split(","));
+      minKey = (Integer) context.get("minKey");
+      maxKey = (Integer) context.get("maxKey");
+      paddingExp = (String) context.get("paddingExp");
+      tablespace = (String) context.get("tablespace");
+    }
+
+    @Override
+    public int nextQuery() throws Exception {
+      int key = ((int) (Math.random() * (maxKey - minKey))) + minKey;
+      String strKey = String.format(paddingExp, key);
+      return client
+          .query(tablespace, strKey + "", "SELECT * FROM " + tablespace + " WHERE key = " + key + ";", null)
+          .getResult().size();
+    }
+  }
+
+  public static void main(String[] args) throws InterruptedException {
+    BenchmarkTool benchmarkTool = new BenchmarkTool();
+
+    JCommander jComm = new JCommander(benchmarkTool);
+    jComm.setProgramName("Benchmark Tool");
+    try {
+      jComm.parse(args);
+    } catch (ParameterException e) {
+      System.out.println(e.getMessage());
+      System.out.println();
+      jComm.usage();
+      System.exit(-1);
+    } catch (Throwable t) {
+      t.printStackTrace();
+      jComm.usage();
+      System.exit(-1);
+    }
+
+    benchmarkTool.start();
+    System.exit(0);
+  }
 }

@@ -30,95 +30,113 @@ import java.io.File;
  */
 public class BalanceFileReceivingProgress {
 
-	private boolean receivedMetaFile;
-	private boolean receivedBinaryFile;
-	private String metaFile;
-	private String binaryFile;
-	private long binaryFileSize;
-	private long receivedSizeSoFar;
+  private boolean receivedMetaFile;
+  private boolean receivedBinaryFile;
+  private String metaFile;
+  private String binaryFile;
+  private long binaryFileSize;
+  private long receivedSizeSoFar;
 
-	private String tablespace;
-	private int partition;
-	private long version;
+  private String tablespace;
+  private int partition;
+  private long version;
 
-	public BalanceFileReceivingProgress() {
-		
-	}
-	
-	public BalanceFileReceivingProgress(String tablespace, int partition, long version) {
-		this.tablespace = tablespace;
-		this.partition = partition;
-		this.version = version;
-	}
+  public BalanceFileReceivingProgress() {
 
-	// --- Modifiers --- //
-	public void metaFileReceived(File metaFile) {
-		this.receivedMetaFile = true;
-		this.metaFile = metaFile.getAbsolutePath();
-	}
+  }
 
-	public void binaryFileReceived(File binaryFile) {
-		this.receivedBinaryFile = true;
-		this.binaryFile = binaryFile.getAbsolutePath();
-	}
-	public void progressBinaryFile(long finalSize, long sizeSoFar) {
-		this.binaryFileSize = finalSize;
-		this.receivedSizeSoFar = sizeSoFar;
-	}
-	
-	// --- Getters & setters --- //
-	public void setReceivedMetaFile(boolean receivedMetaFile) {
-  	this.receivedMetaFile = receivedMetaFile;
+  public BalanceFileReceivingProgress(String tablespace, int partition, long version) {
+    this.tablespace = tablespace;
+    this.partition = partition;
+    this.version = version;
   }
-	public void setReceivedBinaryFile(boolean receivedBinaryFile) {
-  	this.receivedBinaryFile = receivedBinaryFile;
+
+  // --- Modifiers --- //
+  public void metaFileReceived(File metaFile) {
+    this.receivedMetaFile = true;
+    this.metaFile = metaFile.getAbsolutePath();
   }
-	public void setMetaFile(String metaFile) {
-  	this.metaFile = metaFile;
+
+  public void binaryFileReceived(File binaryFile) {
+    this.receivedBinaryFile = true;
+    this.binaryFile = binaryFile.getAbsolutePath();
   }
-	public void setBinaryFile(String binaryFile) {
-  	this.binaryFile = binaryFile;
+
+  public void progressBinaryFile(long finalSize, long sizeSoFar) {
+    this.binaryFileSize = finalSize;
+    this.receivedSizeSoFar = sizeSoFar;
   }
-	public void setBinaryFileSize(long binaryFileSize) {
-  	this.binaryFileSize = binaryFileSize;
+
+  // --- Getters & setters --- //
+  public void setReceivedMetaFile(boolean receivedMetaFile) {
+    this.receivedMetaFile = receivedMetaFile;
   }
-	public void setReceivedSizeSoFar(long receivedSizeSoFar) {
-  	this.receivedSizeSoFar = receivedSizeSoFar;
+
+  public void setReceivedBinaryFile(boolean receivedBinaryFile) {
+    this.receivedBinaryFile = receivedBinaryFile;
   }
-	public void setTablespace(String tablespace) {
-  	this.tablespace = tablespace;
+
+  public void setMetaFile(String metaFile) {
+    this.metaFile = metaFile;
   }
-	public void setPartition(int partition) {
-  	this.partition = partition;
+
+  public void setBinaryFile(String binaryFile) {
+    this.binaryFile = binaryFile;
   }
-	public void setVersion(long version) {
-  	this.version = version;
+
+  public void setBinaryFileSize(long binaryFileSize) {
+    this.binaryFileSize = binaryFileSize;
   }
-	public boolean isReceivedMetaFile() {
-		return receivedMetaFile;
-	}
-	public boolean isReceivedBinaryFile() {
-		return receivedBinaryFile;
-	}
-	public long getBinaryFileSize() {
-		return binaryFileSize;
-	}
-	public long getReceivedSizeSoFar() {
-		return receivedSizeSoFar;
-	}
-	public String getTablespace() {
-		return tablespace;
-	}
-	public int getPartition() {
-		return partition;
-	}
-	public long getVersion() {
-		return version;
-	}
-	public String getMetaFile() {
-		return metaFile;
-	}
-	public String getBinaryFile() {
-		return binaryFile;
-	}
+
+  public void setReceivedSizeSoFar(long receivedSizeSoFar) {
+    this.receivedSizeSoFar = receivedSizeSoFar;
+  }
+
+  public void setTablespace(String tablespace) {
+    this.tablespace = tablespace;
+  }
+
+  public void setPartition(int partition) {
+    this.partition = partition;
+  }
+
+  public void setVersion(long version) {
+    this.version = version;
+  }
+
+  public boolean isReceivedMetaFile() {
+    return receivedMetaFile;
+  }
+
+  public boolean isReceivedBinaryFile() {
+    return receivedBinaryFile;
+  }
+
+  public long getBinaryFileSize() {
+    return binaryFileSize;
+  }
+
+  public long getReceivedSizeSoFar() {
+    return receivedSizeSoFar;
+  }
+
+  public String getTablespace() {
+    return tablespace;
+  }
+
+  public int getPartition() {
+    return partition;
+  }
+
+  public long getVersion() {
+    return version;
+  }
+
+  public String getMetaFile() {
+    return metaFile;
+  }
+
+  public String getBinaryFile() {
+    return binaryFile;
+  }
 }

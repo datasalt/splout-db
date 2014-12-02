@@ -20,39 +20,38 @@ package com.splout.db.hadoop;
  * #L%
  */
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.Charset;
-
-import org.apache.hadoop.conf.Configuration;
-import org.junit.Test;
-
 import com.google.common.io.Files;
 import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
 import com.splout.db.hadoop.TableBuilder.TableBuilderException;
 import com.splout.db.hadoop.TablespaceBuilder.TablespaceBuilderException;
+import org.apache.hadoop.conf.Configuration;
+import org.junit.Test;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
 
 public class TestJSONTablespaceDefinition {
 
-	@Test
-	public void test() throws IOException, JSONSerDeException, TablespaceBuilderException, TableBuilderException {
-		String JSON_TO_TEST = Files.toString(new File(this.getClass().getClassLoader().getResource("tablespace.json").getFile()), Charset.forName("UTF-8"));
-		JSONTablespaceDefinition def = JSONSerDe.deSer(JSON_TO_TEST, JSONTablespaceDefinition.class);
-		def.build(new Configuration());
-	}
-	
-	@Test(expected=IllegalArgumentException.class)
-	public void testInvalidTablespace() throws IOException, JSONSerDeException, TablespaceBuilderException, TableBuilderException {
-		String JSON_TO_TEST = Files.toString(new File(this.getClass().getClassLoader().getResource("invalidtablespace.json").getFile()), Charset.forName("UTF-8"));
-		JSONTablespaceDefinition def = JSONSerDe.deSer(JSON_TO_TEST, JSONTablespaceDefinition.class);
-		def.build(new Configuration());
-	}
-	
-	@Test(expected=IllegalArgumentException.class)
-	public void testInvalidTable() throws IOException, JSONSerDeException, TablespaceBuilderException, TableBuilderException {
-		String JSON_TO_TEST = Files.toString(new File(this.getClass().getClassLoader().getResource("invalidtable.json").getFile()), Charset.forName("UTF-8"));
-		JSONTablespaceDefinition def = JSONSerDe.deSer(JSON_TO_TEST, JSONTablespaceDefinition.class);
-		def.build(new Configuration());
-	}
+  @Test
+  public void test() throws IOException, JSONSerDeException, TablespaceBuilderException, TableBuilderException {
+    String JSON_TO_TEST = Files.toString(new File(this.getClass().getClassLoader().getResource("tablespace.json").getFile()), Charset.forName("UTF-8"));
+    JSONTablespaceDefinition def = JSONSerDe.deSer(JSON_TO_TEST, JSONTablespaceDefinition.class);
+    def.build(new Configuration());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testInvalidTablespace() throws IOException, JSONSerDeException, TablespaceBuilderException, TableBuilderException {
+    String JSON_TO_TEST = Files.toString(new File(this.getClass().getClassLoader().getResource("invalidtablespace.json").getFile()), Charset.forName("UTF-8"));
+    JSONTablespaceDefinition def = JSONSerDe.deSer(JSON_TO_TEST, JSONTablespaceDefinition.class);
+    def.build(new Configuration());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testInvalidTable() throws IOException, JSONSerDeException, TablespaceBuilderException, TableBuilderException {
+    String JSON_TO_TEST = Files.toString(new File(this.getClass().getClassLoader().getResource("invalidtable.json").getFile()), Charset.forName("UTF-8"));
+    JSONTablespaceDefinition def = JSONSerDe.deSer(JSON_TO_TEST, JSONTablespaceDefinition.class);
+    def.build(new Configuration());
+  }
 }

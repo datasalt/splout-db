@@ -24,17 +24,18 @@ package com.splout.db.dnode.beans;
  * JSON bean that is returned as response to asynchronous commands like deploy.
  */
 public class DNodeStatusResponse {
-	
-	private String status;
 
-	public DNodeStatusResponse(String status) {
-		this.status = status;
-	}
+  private String status;
 
-	public String getStatus() {
-		return status;
-	}
-	public void setStatus(String status) {
-		this.status = status;
-	}
+  public DNodeStatusResponse(String status) {
+    this.status = status;
+  }
+
+  public String getStatus() {
+    return status;
+  }
+
+  public void setStatus(String status) {
+    this.status = status;
+  }
 }

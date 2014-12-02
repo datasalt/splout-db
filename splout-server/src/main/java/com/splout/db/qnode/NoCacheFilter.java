@@ -21,45 +21,39 @@ package com.splout.db.qnode;
  * #L%
  */
 
+import javax.servlet.*;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletResponse;
-
 /**
- * A HttpServletFilter to set the header "Cache-Control" to "No-cache". 
+ * A HttpServletFilter to set the header "Cache-Control" to "No-cache".
  * That is important for Splout, as we don't want performed requests
- * to database to be cached by browsers. 
+ * to database to be cached by browsers.
  */
 public class NoCacheFilter implements Filter {
 
-	public NoCacheFilter() {
-	}
+  public NoCacheFilter() {
+  }
 
-	@Override
+  @Override
   public void init(FilterConfig filterConfig) throws ServletException {
   }
 
-	@Override
+  @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException {
-		HttpServletResponse httpResponse = (HttpServletResponse) response;
+    HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-		if(httpResponse != null) {
-			httpResponse.setHeader("Cache-Control", "No-cache");
-		}
-		//httpResponse.setDateHeader(“Expires”, 0);
-		//httpResponse.setHeader(“Pragma”, “No-cache”);
-		
-		chain.doFilter(request, response);
+    if (httpResponse != null) {
+      httpResponse.setHeader("Cache-Control", "No-cache");
+    }
+    //httpResponse.setDateHeader(“Expires”, 0);
+    //httpResponse.setHeader(“Pragma”, “No-cache”);
+
+    chain.doFilter(request, response);
   }
 
-	@Override
+  @Override
   public void destroy() {
   }
 

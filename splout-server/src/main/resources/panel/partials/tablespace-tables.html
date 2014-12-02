@@ -11,52 +11,63 @@
         <input ng-model="search.tbl_name" type="text" class="input-medium search-query">
     </form>
 
-    <p>{{(tables|array|filter:search).length}} of {{(tables|array).length}} tables in {{tablespace}} tablespace.</p>
+    <p>{{(tables|array|filter:search).length}} of {{(tables|array).length}} tables in {{tablespace}}
+        tablespace.</p>
 
     <div ng-repeat="table in tables | array | filter:search" class="row-fluid">
         <div class="span12" class="table-responsive">
-            <table style="width: auto;" class="table table-striped table-condensed table-bordered table-hover">
+            <table style="width: auto;"
+                   class="table table-striped table-condensed table-bordered table-hover">
                 <thead>
-                    <tr>
-                        <th style="text-align: center" colspan="{{table.tableInfo.length}}">Table {{table.tbl_name}}</th>
-                    </tr>
+                <tr>
+                    <th style="text-align: center" colspan="{{table.tableInfo.length}}">Table
+                        {{table.tbl_name}}
+                    </th>
+                </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td ng-repeat="column in table.tableInfo">{{column.name}}</td>
-                    </tr>
-                    <tr>
-                        <td ng-repeat="column in table.tableInfo">
-                            <i ng-if="column.pk != 0" class="icon-circle-arrow-right"></i>
-                            {{column.type}}
-                            <i ng-if="column.notnull != 0" class="icon-remove-sign"></i></td>
-                    </tr>
+                <tr>
+                    <td ng-repeat="column in table.tableInfo">{{column.name}}</td>
+                </tr>
+                <tr>
+                    <td ng-repeat="column in table.tableInfo">
+                        <i ng-if="column.pk != 0" class="icon-circle-arrow-right"></i>
+                        {{column.type}}
+                        <i ng-if="column.notnull != 0" class="icon-remove-sign"></i></td>
+                </tr>
                 </tbody>
             </table>
 
-            <table style="width: auto; margin-bottom: 0px" class="table table-striped table-condensed table-bordered table-hover">
+            <table style="width: auto; margin-bottom: 0px"
+                   class="table table-striped table-condensed table-bordered table-hover">
                 <thead>
-                    <tr>
-                        <td style="text-align: center">Indexes</td>
-                    </tr>
+                <tr>
+                    <td style="text-align: center">Indexes</td>
+                </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>
-                            <dl class="dl-horizontal">
-                                <dt ng-repeat-start="(indexName, indexColumns) in table.indexes" data-toggle="tooltip" data-placement="bottom" title="{{indexName}}">{{indexName}}</dt>
-                                <dd ng-repeat-end>
-                                    <table style="width: auto; margin-bottom: 0px" class="table table-striped table-condensed table-bordered table-hover">
-                                        <tbody>
-                                        <tr>
-                                            <td ng-repeat="column in indexColumns | orderBy:column.seqno">{{column.name}}</td>
-                                        </tr>
-                                        </tbody>
-                                    </table>
-                                </dd>
-                            </dl>
-                        </td>
-                    </tr>
+                <tr>
+                    <td>
+                        <dl class="dl-horizontal">
+                            <dt ng-repeat-start="(indexName, indexColumns) in table.indexes"
+                                data-toggle="tooltip" data-placement="bottom" title="{{indexName}}">
+                                {{indexName}}
+                            </dt>
+                            <dd ng-repeat-end>
+                                <table style="width: auto; margin-bottom: 0px"
+                                       class="table table-striped table-condensed table-bordered table-hover">
+                                    <tbody>
+                                    <tr>
+                                        <td ng-repeat="column in indexColumns | orderBy:column.seqno">
+                                            {{column.name}}
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </dd>
+                        </dl>
+                    </td>
+                </tr>
                 </tbody>
             </table>
             <hr>

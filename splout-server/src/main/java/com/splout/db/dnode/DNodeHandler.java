@@ -94,110 +94,110 @@ import com.splout.db.thrift.RollbackAction;
  */
 public class DNodeHandler implements IDNodeHandler {
 
-	private final static Log log = LogFactory.getLog(DNodeHandler.class);
+  private final static Log log = LogFactory.getLog(DNodeHandler.class);
 
-	protected SploutConfiguration config;
-	private HazelcastInstance hz;
-	private DistributedRegistry dnodesRegistry;
-	private CoordinationStructures coord;
-	private HttpFileExchanger httpExchanger;
+  protected SploutConfiguration config;
+  private HazelcastInstance hz;
+  private DistributedRegistry dnodesRegistry;
+  private CoordinationStructures coord;
+  private HttpFileExchanger httpExchanger;
 
-	// The {@link Fetcher} is the responsible for downloading new deployment data.
-	Cache dbCache;
+  // The {@link Fetcher} is the responsible for downloading new deployment data.
+  Cache dbCache;
 
-	protected ExecutorService deployThread;
-	protected Object deployLock = new Object();
+  protected ExecutorService deployThread;
+  protected Object deployLock = new Object();
 
-	// This flag is needed for unit testing.
-	protected AtomicInteger deployInProgress = new AtomicInteger(0);
-	// Indicates that the last deploy failed because of timeout. This info can then be answered via a status() request.
-	AtomicBoolean lastDeployTimedout = new AtomicBoolean(false);
+  // This flag is needed for unit testing.
+  protected AtomicInteger deployInProgress = new AtomicInteger(0);
+  // Indicates that the last deploy failed because of timeout. This info can then be answered via a status() request.
+  AtomicBoolean lastDeployTimedout = new AtomicBoolean(false);
 
-	// Thrift exception code used in DNodeException
-	public final static int EXCEPTION_ORDINARY = 0;
-	public final static int EXCEPTION_UNEXPECTED = 1;
+  // Thrift exception code used in DNodeException
+  public final static int EXCEPTION_ORDINARY = 0;
+  public final static int EXCEPTION_UNEXPECTED = 1;
 
-	// A hard limit on the number of results that this DNode can return per SQL query
-	private int maxResultsPerQuery;
+  // A hard limit on the number of results that this DNode can return per SQL query
+  private int maxResultsPerQuery;
 
-	// The following variables are used for monitoring and providing statistics:
-	private PerformanceTool performanceTool = new PerformanceTool();
-	private String lastException = null;
-	private long lastExceptionTime;
-	private AtomicInteger failedQueries = new AtomicInteger(0);
-	private long upSince;
+  // The following variables are used for monitoring and providing statistics:
+  private PerformanceTool performanceTool = new PerformanceTool();
+  private String lastException = null;
+  private long lastExceptionTime;
+  private AtomicInteger failedQueries = new AtomicInteger(0);
+  private long upSince;
 
-	// The {@link Fetcher} is the responsible for downloading new deployment data.
-	private Fetcher fetcher;
+  // The {@link Fetcher} is the responsible for downloading new deployment data.
+  private Fetcher fetcher;
 
-	// Above this query time the query will be logged as slow query
-	private long absoluteSlowQueryLimit;
-	private long slowQueries = 0;
+  // Above this query time the query will be logged as slow query
+  private long absoluteSlowQueryLimit;
+  private long slowQueries = 0;
 
   // Deploy parallelism
   private int deployParallelism;
 
-	// This map will hold all the current balance file transactions being done
-	private ConcurrentHashMap<String, BalanceFileReceivingProgress> balanceActionsStateMap = new ConcurrentHashMap<String, BalanceFileReceivingProgress>();
+  // This map will hold all the current balance file transactions being done
+  private ConcurrentHashMap<String, BalanceFileReceivingProgress> balanceActionsStateMap = new ConcurrentHashMap<String, BalanceFileReceivingProgress>();
 
-	// The factory we will use to instantiate managers for each partition associated with an {@link SploutEngine}
-	private ManagerFactory factory;
+  // The factory we will use to instantiate managers for each partition associated with an {@link SploutEngine}
+  private ManagerFactory factory;
 
-	public DNodeHandler(Fetcher fetcher) {
-		this.fetcher = fetcher;
-	}
+  public DNodeHandler(Fetcher fetcher) {
+    this.fetcher = fetcher;
+  }
 
-	public DNodeHandler() {
-	}
+  public DNodeHandler() {
+  }
 
-	/**
-	 * Returns the address (host:port) of this DNode.
-	 */
-	public String whoAmI() {
-		return config.getString(DNodeProperties.HOST) + ":" + config.getInt(DNodeProperties.PORT);
-	}
+  /**
+   * Returns the address (host:port) of this DNode.
+   */
+  public String whoAmI() {
+    return config.getString(DNodeProperties.HOST) + ":" + config.getInt(DNodeProperties.PORT);
+  }
 
-	public String httpExchangerAddress() {
-		return "http://" + config.getString(DNodeProperties.HOST) + ":"
-		    + config.getInt(HttpFileExchangerProperties.HTTP_PORT);
-	}
+  public String httpExchangerAddress() {
+    return "http://" + config.getString(DNodeProperties.HOST) + ":"
+        + config.getInt(HttpFileExchangerProperties.HTTP_PORT);
+  }
 
-	/**
-	 * This inner class will listen for additions to the balance actions map, so that if a balance action has to be taken
-	 * and this DNode is the one who has the send the file, it will start doing so.
-	 */
-	private class BalanceActionItemListener implements
-	    EntryListener<ReplicaBalancer.BalanceAction, String> {
+  /**
+   * This inner class will listen for additions to the balance actions map, so that if a balance action has to be taken
+   * and this DNode is the one who has the send the file, it will start doing so.
+   */
+  private class BalanceActionItemListener implements
+      EntryListener<ReplicaBalancer.BalanceAction, String> {
 
-		@Override
-		public void entryAdded(EntryEvent<BalanceAction, String> event) {
-			BalanceAction action = event.getKey();
-			if(action.getOriginNode().equals(whoAmI())) {
-				// I must do a balance action!
-				File toSend = new File(getLocalStorageFolder(action.getTablespace(), action.getPartition(),
-				    action.getVersion()), action.getPartition() + ".db");
-				File metadataFile = getLocalMetadataFile(action.getTablespace(), action.getPartition(),
-				    action.getVersion());
-				// send both the .db and the .meta file -> when the other part has both files it will move them atomically...
-				httpExchanger.send(action.getTablespace(), action.getPartition(), action.getVersion(), toSend,
-				    action.getFinalNode(), false);
-				httpExchanger.send(action.getTablespace(), action.getPartition(), action.getVersion(),
-				    metadataFile, action.getFinalNode(), false);
-			}
-		}
+    @Override
+    public void entryAdded(EntryEvent<BalanceAction, String> event) {
+      BalanceAction action = event.getKey();
+      if (action.getOriginNode().equals(whoAmI())) {
+        // I must do a balance action!
+        File toSend = new File(getLocalStorageFolder(action.getTablespace(), action.getPartition(),
+            action.getVersion()), action.getPartition() + ".db");
+        File metadataFile = getLocalMetadataFile(action.getTablespace(), action.getPartition(),
+            action.getVersion());
+        // send both the .db and the .meta file -> when the other part has both files it will move them atomically...
+        httpExchanger.send(action.getTablespace(), action.getPartition(), action.getVersion(), toSend,
+            action.getFinalNode(), false);
+        httpExchanger.send(action.getTablespace(), action.getPartition(), action.getVersion(),
+            metadataFile, action.getFinalNode(), false);
+      }
+    }
 
-		@Override
-		public void entryRemoved(EntryEvent<BalanceAction, String> event) {
-			// usually we won't care - but the final DNode might have pro-actively removed this action
-		}
+    @Override
+    public void entryRemoved(EntryEvent<BalanceAction, String> event) {
+      // usually we won't care - but the final DNode might have pro-actively removed this action
+    }
 
-		@Override
-		public void entryUpdated(EntryEvent<BalanceAction, String> event) {
-		}
+    @Override
+    public void entryUpdated(EntryEvent<BalanceAction, String> event) {
+    }
 
-		@Override
-		public void entryEvicted(EntryEvent<BalanceAction, String> event) {
-		}
+    @Override
+    public void entryEvicted(EntryEvent<BalanceAction, String> event) {
+    }
 
     @Override
     public void mapEvicted(MapEvent mapEvent) {
@@ -210,135 +210,135 @@ public class DNodeHandler implements IDNodeHandler {
     }
   }
 
-	/**
-	 * This inner class will perform the business logic associated with receiving files: what to do on failures, bad CRC,
-	 * file received OK...
-	 */
-	private class FileReceiverCallback implements HttpFileExchanger.ReceiveFileCallback {
+  /**
+   * This inner class will perform the business logic associated with receiving files: what to do on failures, bad CRC,
+   * file received OK...
+   */
+  private class FileReceiverCallback implements HttpFileExchanger.ReceiveFileCallback {
 
-		@Override
-		public void onProgress(String tablespace, Integer partition, Long version, File file,
-		    long totalSize, long sizeDownloaded) {
+    @Override
+    public void onProgress(String tablespace, Integer partition, Long version, File file,
+                           long totalSize, long sizeDownloaded) {
 
-			if(file.getName().endsWith(".db")) {
-				getProgressFromLocalPanel(tablespace, partition, version).progressBinaryFile(totalSize,
-				    sizeDownloaded);
-			}
-		}
+      if (file.getName().endsWith(".db")) {
+        getProgressFromLocalPanel(tablespace, partition, version).progressBinaryFile(totalSize,
+            sizeDownloaded);
+      }
+    }
 
-		@Override
-		public void onFileReceived(String tablespace, Integer partition, Long version, File file) {
-			BalanceFileReceivingProgress progress = getProgressFromLocalPanel(tablespace, partition, version);
-			if(file.getName().endsWith(".meta")) {
-				progress.metaFileReceived(file);
-			} else if(file.getName().endsWith(".db")) {
-				progress.binaryFileReceived(file);
-			}
+    @Override
+    public void onFileReceived(String tablespace, Integer partition, Long version, File file) {
+      BalanceFileReceivingProgress progress = getProgressFromLocalPanel(tablespace, partition, version);
+      if (file.getName().endsWith(".meta")) {
+        progress.metaFileReceived(file);
+      } else if (file.getName().endsWith(".db")) {
+        progress.binaryFileReceived(file);
+      }
 
-			// this can be reached simultaneously by 2 different threads so we must synchronized it
-			// (thread that downloaded the .meta file and thread that downloaded the .db file)
-			synchronized(FileReceiverCallback.this) {
-				if(progress.isReceivedMetaFile() && progress.isReceivedBinaryFile()) {
-					// This assures that the move will only be done once
-					if(new File(progress.getMetaFile()).exists() && new File(progress.getBinaryFile()).exists()) {
-						// check if we already have the binary & meta -> then move partition
-						// and then remove this action from the panel so that it's completed.
-						try {
-							// we need to remove existing files if they exist
-							// they might be stalled from old deployments
-							File meta = getLocalMetadataFile(tablespace, partition, version);
-							if(meta.exists()) {
-								meta.delete();
-							}
-							FileUtils.moveFile(new File(progress.getMetaFile()), meta);
-							File binaryToMove = new File(progress.getBinaryFile());
-							File binary = new File(getLocalStorageFolder(tablespace, partition, version),
-							    binaryToMove.getName());
-							if(binary.exists()) {
-								binary.delete();
-							}
-							FileUtils.moveToDirectory(binaryToMove,
-							    getLocalStorageFolder(tablespace, partition, version), true);
-							log.info("Balance action successfully completed, received both .db and .meta files ("
-							    + tablespace + ", " + partition + ", " + version + ")");
-							// Publish new changes to HZ
-							dnodesRegistry.changeInfo(new DNodeInfo(config));
-						} catch(IOException e) {
-							log.error(e);
-						} finally {
-							removeBalanceActionFromHZPanel(tablespace, partition, version);
-						}
-					}
-				}
-			}
-		}
+      // this can be reached simultaneously by 2 different threads so we must synchronized it
+      // (thread that downloaded the .meta file and thread that downloaded the .db file)
+      synchronized (FileReceiverCallback.this) {
+        if (progress.isReceivedMetaFile() && progress.isReceivedBinaryFile()) {
+          // This assures that the move will only be done once
+          if (new File(progress.getMetaFile()).exists() && new File(progress.getBinaryFile()).exists()) {
+            // check if we already have the binary & meta -> then move partition
+            // and then remove this action from the panel so that it's completed.
+            try {
+              // we need to remove existing files if they exist
+              // they might be stalled from old deployments
+              File meta = getLocalMetadataFile(tablespace, partition, version);
+              if (meta.exists()) {
+                meta.delete();
+              }
+              FileUtils.moveFile(new File(progress.getMetaFile()), meta);
+              File binaryToMove = new File(progress.getBinaryFile());
+              File binary = new File(getLocalStorageFolder(tablespace, partition, version),
+                  binaryToMove.getName());
+              if (binary.exists()) {
+                binary.delete();
+              }
+              FileUtils.moveToDirectory(binaryToMove,
+                  getLocalStorageFolder(tablespace, partition, version), true);
+              log.info("Balance action successfully completed, received both .db and .meta files ("
+                  + tablespace + ", " + partition + ", " + version + ")");
+              // Publish new changes to HZ
+              dnodesRegistry.changeInfo(new DNodeInfo(config));
+            } catch (IOException e) {
+              log.error(e);
+            } finally {
+              removeBalanceActionFromHZPanel(tablespace, partition, version);
+            }
+          }
+        }
+      }
+    }
 
-		@Override
-		public void onBadCRC(String tablespace, Integer partition, Long version, File file) {
-			removeBalanceActionFromHZPanel(tablespace, partition, version);
-		}
+    @Override
+    public void onBadCRC(String tablespace, Integer partition, Long version, File file) {
+      removeBalanceActionFromHZPanel(tablespace, partition, version);
+    }
 
-		@Override
-		public void onError(Throwable t, String tablespace, Integer partition, Long version, File file) {
-			removeBalanceActionFromHZPanel(tablespace, partition, version);
-		}
+    @Override
+    public void onError(Throwable t, String tablespace, Integer partition, Long version, File file) {
+      removeBalanceActionFromHZPanel(tablespace, partition, version);
+    }
 
-		// --- Helper methods --- //
+    // --- Helper methods --- //
 
-		/**
-		 * Will remove the BalanceAction associated with this file receiving from HZ data structure.
-		 */
-		private synchronized void removeBalanceActionFromHZPanel(String tablespace, Integer partition,
-		    Long version) {
-			// first remove the local tracking of this action
-			String lookupKey = tablespace + "_" + partition + "_" + version;
-			if(balanceActionsStateMap.containsKey(lookupKey)) {
-				balanceActionsStateMap.remove(lookupKey);
-				// then remove from HZ
-				BalanceAction actionToRemove = null;
-				for(Map.Entry<BalanceAction, String> actionEntry : coord.getDNodeReplicaBalanceActionsSet()
-				    .entrySet()) {
-					BalanceAction action = actionEntry.getKey();
-					if(action.getTablespace().equals(tablespace) && action.getPartition() == partition
-					    && action.getVersion() == version && action.getFinalNode().equals(httpExchanger.address())) {
-						actionToRemove = action;
-					}
-				}
-				if(actionToRemove == null) {
-					// no need to worry - another thread might have gone into this code already almost simultaneously
-				} else {
-					coord.getDNodeReplicaBalanceActionsSet().remove(actionToRemove);
-					log.info("Removed balance action [" + actionToRemove + "] from HZ panel.");
-				}
-			}
-		}
+    /**
+     * Will remove the BalanceAction associated with this file receiving from HZ data structure.
+     */
+    private synchronized void removeBalanceActionFromHZPanel(String tablespace, Integer partition,
+                                                             Long version) {
+      // first remove the local tracking of this action
+      String lookupKey = tablespace + "_" + partition + "_" + version;
+      if (balanceActionsStateMap.containsKey(lookupKey)) {
+        balanceActionsStateMap.remove(lookupKey);
+        // then remove from HZ
+        BalanceAction actionToRemove = null;
+        for (Map.Entry<BalanceAction, String> actionEntry : coord.getDNodeReplicaBalanceActionsSet()
+            .entrySet()) {
+          BalanceAction action = actionEntry.getKey();
+          if (action.getTablespace().equals(tablespace) && action.getPartition() == partition
+              && action.getVersion() == version && action.getFinalNode().equals(httpExchanger.address())) {
+            actionToRemove = action;
+          }
+        }
+        if (actionToRemove == null) {
+          // no need to worry - another thread might have gone into this code already almost simultaneously
+        } else {
+          coord.getDNodeReplicaBalanceActionsSet().remove(actionToRemove);
+          log.info("Removed balance action [" + actionToRemove + "] from HZ panel.");
+        }
+      }
+    }
 
-		/**
-		 * Will obtain a bean to fill some progress in a local hashmap or create it and put it otherwise.
-		 */
-		private synchronized BalanceFileReceivingProgress getProgressFromLocalPanel(String tablespace,
-		    Integer partition, Long version) {
-			String lookupKey = tablespace + "_" + partition + "_" + version;
-			BalanceFileReceivingProgress progress = balanceActionsStateMap.get(lookupKey);
-			if(progress == null) {
-				progress = new BalanceFileReceivingProgress(tablespace, partition, version);
-				balanceActionsStateMap.put(lookupKey, progress);
-			}
-			return progress;
-		}
-	}
+    /**
+     * Will obtain a bean to fill some progress in a local hashmap or create it and put it otherwise.
+     */
+    private synchronized BalanceFileReceivingProgress getProgressFromLocalPanel(String tablespace,
+                                                                                Integer partition, Long version) {
+      String lookupKey = tablespace + "_" + partition + "_" + version;
+      BalanceFileReceivingProgress progress = balanceActionsStateMap.get(lookupKey);
+      if (progress == null) {
+        progress = new BalanceFileReceivingProgress(tablespace, partition, version);
+        balanceActionsStateMap.put(lookupKey, progress);
+      }
+      return progress;
+    }
+  }
 
-	/**
-	 * Initialization logic: initialize things, connect to ZooKeeper, create Thrift server, etc.
-	 * 
-	 * @see com.splout.db.dnode.IDNodeHandler#init(com.splout.db.common.SploutConfiguration)
-	 */
-	public void init(SploutConfiguration config) throws Exception {
-		this.config = config;
-		long evictionSeconds = config.getLong(DNodeProperties.EH_CACHE_SECONDS);
-		maxResultsPerQuery = config.getInt(DNodeProperties.MAX_RESULTS_PER_QUERY);
-		int maxCachePools = config.getInt(DNodeProperties.EH_CACHE_N_ELEMENTS);
-		absoluteSlowQueryLimit = config.getLong(DNodeProperties.SLOW_QUERY_ABSOLUTE_LIMIT);
+  /**
+   * Initialization logic: initialize things, connect to ZooKeeper, create Thrift server, etc.
+   *
+   * @see com.splout.db.dnode.IDNodeHandler#init(com.splout.db.common.SploutConfiguration)
+   */
+  public void init(SploutConfiguration config) throws Exception {
+    this.config = config;
+    long evictionSeconds = config.getLong(DNodeProperties.EH_CACHE_SECONDS);
+    maxResultsPerQuery = config.getInt(DNodeProperties.MAX_RESULTS_PER_QUERY);
+    int maxCachePools = config.getInt(DNodeProperties.EH_CACHE_N_ELEMENTS);
+    absoluteSlowQueryLimit = config.getLong(DNodeProperties.SLOW_QUERY_ABSOLUTE_LIMIT);
     deployParallelism = config.getInt(DNodeProperties.DEPLOY_PARALLELISM);
 		factory = new ManagerFactory();
 		factory.init(config);
@@ -543,86 +543,86 @@ public class DNodeHandler implements IDNodeHandler {
 				 * Here we instantiate a Thread for waiting for the deploy so that we are able to implement deploy timeout... If
 				 * the deploy takes too much then we cancel it. We achieve this by using Java asynchronous Future objects.
 				 */
-				Thread deployWait = new Thread() {
-					public void run() {
-						Future<?> future = deployThread.submit(new Runnable() {
-							// This code is executed by the solely deploy thread, not the one who waits
-							@Override
-							public void run() {
-								try {
-									deployInProgress.incrementAndGet();
-									lastDeployTimedout.set(false);
-									log.info("Starting [" + deployActions.size()  + "] deploy actions.");
-									long start = System.currentTimeMillis();
-									long totalSize = 0;
+        Thread deployWait = new Thread() {
+          public void run() {
+            Future<?> future = deployThread.submit(new Runnable() {
+              // This code is executed by the solely deploy thread, not the one who waits
+              @Override
+              public void run() {
+                try {
+                  deployInProgress.incrementAndGet();
+                  lastDeployTimedout.set(false);
+                  log.info("Starting [" + deployActions.size() + "] deploy actions.");
+                  long start = System.currentTimeMillis();
+                  long totalSize = 0;
 
-									// Ask for the total size of the deployment first.
-									for(DeployAction action : deployActions) {
-										long plusSize = fetcher.sizeOf(action.getDataURI());
-										if(plusSize == Fetcher.SIZE_UNKNOWN) {
-											totalSize = Fetcher.SIZE_UNKNOWN;
-											break;
-										}
-										totalSize += plusSize;
-									}
+                  // Ask for the total size of the deployment first.
+                  for (DeployAction action : deployActions) {
+                    long plusSize = fetcher.sizeOf(action.getDataURI());
+                    if (plusSize == Fetcher.SIZE_UNKNOWN) {
+                      totalSize = Fetcher.SIZE_UNKNOWN;
+                      break;
+                    }
+                    totalSize += plusSize;
+                  }
 
-									final double totalKnownSize = totalSize / (1024d * 1024d);
-									final long startTime = System.currentTimeMillis();
-									final AtomicLong bytesSoFar = new AtomicLong(0l);
+                  final double totalKnownSize = totalSize / (1024d * 1024d);
+                  final long startTime = System.currentTimeMillis();
+                  final AtomicLong bytesSoFar = new AtomicLong(0l);
 
-									final Fetcher.Reporter reporter = new Fetcher.Reporter() {
-										@Override
-										public void progress(long consumed) {
-											long now = System.currentTimeMillis();
-											double totalSoFar = bytesSoFar.addAndGet(consumed) / (1024d * 1024d);
-											double secondsSoFar = (now - startTime) / 1000d;
-											double mBytesPerSec = totalSoFar / secondsSoFar;
+                  final Fetcher.Reporter reporter = new Fetcher.Reporter() {
+                    @Override
+                    public void progress(long consumed) {
+                      long now = System.currentTimeMillis();
+                      double totalSoFar = bytesSoFar.addAndGet(consumed) / (1024d * 1024d);
+                      double secondsSoFar = (now - startTime) / 1000d;
+                      double mBytesPerSec = totalSoFar / secondsSoFar;
 
-											String msg = "[" + whoAmI() + " progress/speed report]: Fetched [";
-											if(totalSoFar > 999) {
-												msg += String.format("%.3f", (totalSoFar / 1024d)) + "] GBs so far ";
-											} else {
-												msg += String.format("%.3f", totalSoFar) + "] MBs so far ";
-											}
+                      String msg = "[" + whoAmI() + " progress/speed report]: Fetched [";
+                      if (totalSoFar > 999) {
+                        msg += String.format("%.3f", (totalSoFar / 1024d)) + "] GBs so far ";
+                      } else {
+                        msg += String.format("%.3f", totalSoFar) + "] MBs so far ";
+                      }
 
-											if(totalKnownSize != Fetcher.SIZE_UNKNOWN) {
-												msg += "(out of [";
-												if(totalKnownSize > 999) {
-													msg += String.format("%.3f", (totalKnownSize / 1024d)) + "] GBs) ";
-												} else {
-													msg += String.format("%.3f", totalKnownSize) + "] MBs) ";
-												}
-											}
-											msg += "- Current deployment speed is [" + String.format("%.3f", mBytesPerSec)
-											    + "] MB/s.";
-											// Add a report of the estimated remaining time if we can
-											if(totalKnownSize != Fetcher.SIZE_UNKNOWN) {
-												double missingSize = (totalKnownSize - totalSoFar);
-												long remainingSecs = (long) (missingSize / mBytesPerSec);
-												String timeRemaining = "";
-												if(remainingSecs > 3600) { // hours, minutes and secs
-													int hours = (int) (remainingSecs / 3600);
-													int restOfSeconds = (int) (remainingSecs % 3600);
-													timeRemaining = hours + " hours and " + (int) (restOfSeconds / 60)
-													    + " minutes and " + (restOfSeconds % 60) + " seconds";
-												} else if(remainingSecs > 60) { // minutes and secs
-													timeRemaining = (int) (remainingSecs / 60) + " minutes and "
-													    + (remainingSecs % 60) + " seconds";
-												} else { // secs
-													timeRemaining = remainingSecs + " seconds";
-												}
-												msg += " Estimated remaining time is [" + timeRemaining + "].";
-											}
-											coord.logDeploySpeed(version, whoAmI(), msg);
-										}
-									};
+                      if (totalKnownSize != Fetcher.SIZE_UNKNOWN) {
+                        msg += "(out of [";
+                        if (totalKnownSize > 999) {
+                          msg += String.format("%.3f", (totalKnownSize / 1024d)) + "] GBs) ";
+                        } else {
+                          msg += String.format("%.3f", totalKnownSize) + "] MBs) ";
+                        }
+                      }
+                      msg += "- Current deployment speed is [" + String.format("%.3f", mBytesPerSec)
+                          + "] MB/s.";
+                      // Add a report of the estimated remaining time if we can
+                      if (totalKnownSize != Fetcher.SIZE_UNKNOWN) {
+                        double missingSize = (totalKnownSize - totalSoFar);
+                        long remainingSecs = (long) (missingSize / mBytesPerSec);
+                        String timeRemaining = "";
+                        if (remainingSecs > 3600) { // hours, minutes and secs
+                          int hours = (int) (remainingSecs / 3600);
+                          int restOfSeconds = (int) (remainingSecs % 3600);
+                          timeRemaining = hours + " hours and " + (int) (restOfSeconds / 60)
+                              + " minutes and " + (restOfSeconds % 60) + " seconds";
+                        } else if (remainingSecs > 60) { // minutes and secs
+                          timeRemaining = (int) (remainingSecs / 60) + " minutes and "
+                              + (remainingSecs % 60) + " seconds";
+                        } else { // secs
+                          timeRemaining = remainingSecs + " seconds";
+                        }
+                        msg += " Estimated remaining time is [" + timeRemaining + "].";
+                      }
+                      coord.logDeploySpeed(version, whoAmI(), msg);
+                    }
+                  };
 
                   // Parallel execution of deploy actions
                   ExecutorService executor = Executors.newFixedThreadPool(deployParallelism);
                   ExecutorCompletionService<Boolean> ecs = new ExecutorCompletionService<Boolean>(executor);
                   ArrayList<Future<Boolean>> deployFutures = new ArrayList<Future<Boolean>>();
 
-									for(final DeployAction action : deployActions) {
+                  for (final DeployAction action : deployActions) {
                     deployFutures.add(ecs.submit(new Callable<Boolean>() {
                       @Override
                       public Boolean call() throws Exception {
@@ -659,57 +659,57 @@ public class DNodeHandler implements IDNodeHandler {
                   executor.shutdown();
 
                   // Publish new DNodeInfo in distributed registry.
-									// This makes QNodes notice that a new version is available...
-									// PartitionMap and ReplicationMap will be built incrementally as DNodes finish.
-									dnodesRegistry.changeInfo(new DNodeInfo(config));
+                  // This makes QNodes notice that a new version is available...
+                  // PartitionMap and ReplicationMap will be built incrementally as DNodes finish.
+                  dnodesRegistry.changeInfo(new DNodeInfo(config));
 
-									long end = System.currentTimeMillis();
-									log.info("Local [" + deployActions.size() + "] deploy actions successfully finished in "
-									    + (end - start) + " ms.");
-									deployInProgress.decrementAndGet();
-								} catch(Throwable t) {
-									// In order to avoid stale deployments, we flag this deploy to be aborted
-									log.warn("Error deploying [" + deployActions + "] barrier + [" + version + "]", t);
-									abortDeploy(version, ExceptionUtils.getStackTrace(t));
-								} finally {
-									// Decrement the countdown latch. On 0, deployer knows that the deploy
-									// finished.
-									ICountDownLatch countdown = coord.getCountDownLatchForDeploy(version);
-									countdown.countDown();
-								}
-							}
-						});
-						try {
-							// This line makes the wait thread wait for the deploy as long as the configuration tells
-							// If the timeout passes a TimeoutException is thrown
-							future.get(config.getInt(DNodeProperties.DEPLOY_TIMEOUT_SECONDS), TimeUnit.SECONDS);
-						} catch(InterruptedException e) {
-							log.warn("Interrupted exception waiting for local deploy to finish - killing deployment",
-							    e);
-							abortDeploy(version, ExceptionUtils.getStackTrace(e));
-							future.cancel(true);
-						} catch(ExecutionException e) {
-							log.warn("Execution exception waiting for local deploy to finish - killing deployment.", e);
-							abortDeploy(version, ExceptionUtils.getStackTrace(e));
-						} catch(TimeoutException e) {
-							log.warn("Timeout waiting for local deploy to finish - killing deployment.", e);
-							abortDeploy(version,
-							    "Timeout reached - " + config.getInt(DNodeProperties.DEPLOY_TIMEOUT_SECONDS)
-							        + " seconds");
-							future.cancel(true);
-							lastDeployTimedout.set(true);
-						}
-					}
-				};
-				deployWait.start();
-			}
-			// Everything is asynchronous so this is quickly reached - it just means the process has started
-			return JSONSerDe.ser(new DNodeStatusResponse("Ok. Deploy initiated"));
-		} catch(Throwable t) {
-			unexpectedException(t);
-			throw new DNodeException(EXCEPTION_UNEXPECTED, t.getMessage());
-		}
-	}
+                  long end = System.currentTimeMillis();
+                  log.info("Local [" + deployActions.size() + "] deploy actions successfully finished in "
+                      + (end - start) + " ms.");
+                  deployInProgress.decrementAndGet();
+                } catch (Throwable t) {
+                  // In order to avoid stale deployments, we flag this deploy to be aborted
+                  log.warn("Error deploying [" + deployActions + "] barrier + [" + version + "]", t);
+                  abortDeploy(version, ExceptionUtils.getStackTrace(t));
+                } finally {
+                  // Decrement the countdown latch. On 0, deployer knows that the deploy
+                  // finished.
+                  ICountDownLatch countdown = coord.getCountDownLatchForDeploy(version);
+                  countdown.countDown();
+                }
+              }
+            });
+            try {
+              // This line makes the wait thread wait for the deploy as long as the configuration tells
+              // If the timeout passes a TimeoutException is thrown
+              future.get(config.getInt(DNodeProperties.DEPLOY_TIMEOUT_SECONDS), TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+              log.warn("Interrupted exception waiting for local deploy to finish - killing deployment",
+                  e);
+              abortDeploy(version, ExceptionUtils.getStackTrace(e));
+              future.cancel(true);
+            } catch (ExecutionException e) {
+              log.warn("Execution exception waiting for local deploy to finish - killing deployment.", e);
+              abortDeploy(version, ExceptionUtils.getStackTrace(e));
+            } catch (TimeoutException e) {
+              log.warn("Timeout waiting for local deploy to finish - killing deployment.", e);
+              abortDeploy(version,
+                  "Timeout reached - " + config.getInt(DNodeProperties.DEPLOY_TIMEOUT_SECONDS)
+                      + " seconds");
+              future.cancel(true);
+              lastDeployTimedout.set(true);
+            }
+          }
+        };
+        deployWait.start();
+      }
+      // Everything is asynchronous so this is quickly reached - it just means the process has started
+      return JSONSerDe.ser(new DNodeStatusResponse("Ok. Deploy initiated"));
+    } catch (Throwable t) {
+      unexpectedException(t);
+      throw new DNodeException(EXCEPTION_UNEXPECTED, t.getMessage());
+    }
+  }
 
   /**
    * Runs a deploy action. Downloads file and warm up the data.
@@ -719,7 +719,7 @@ public class DNodeHandler implements IDNodeHandler {
     // 1- Store metadata
     File metadataFile = getLocalMetadataFile(action.getTablespace(),
         action.getPartition(), version);
-    if(!metadataFile.getParentFile().exists()) {
+    if (!metadataFile.getParentFile().exists()) {
       metadataFile.getParentFile().mkdirs();
     }
     ThriftWriter writer = new ThriftWriter(metadataFile);
@@ -730,9 +730,9 @@ public class DNodeHandler implements IDNodeHandler {
     // If we reach this point then the fetch has been OK
     File dbFolder = getLocalStorageFolder(action.getTablespace(), action.getPartition(),
         version);
-    if(dbFolder.exists()) { // If the new folder where we want to deploy already exists means it is
-                            // somehow
-                            // stalled from a previous failed deploy - it is ok to delete it
+    if (dbFolder.exists()) { // If the new folder where we want to deploy already exists means it is
+      // somehow
+      // stalled from a previous failed deploy - it is ok to delete it
       FileUtils.deleteDirectory(dbFolder);
     }
     // 4- Perform a "mv" for finally making the data available
@@ -744,240 +744,240 @@ public class DNodeHandler implements IDNodeHandler {
   }
 
   /**
-	 * Thrift RPC method -> Given a list of {@link RollbackAction}s, perform a synchronous rollback
-	 */
-	@Override
-	public String rollback(List<RollbackAction> rollbackActions, String ignoreMe) throws DNodeException {
-		// The DNode doesn't need to do anything special for rolling back a version.
-		// It can serve any version that is stored locally.
-		try {
-			return JSONSerDe.ser(new DNodeStatusResponse("Ok. Rollback order received."));
-		} catch(JSONSerDeException e) {
-			unexpectedException(e);
-			throw new DNodeException(EXCEPTION_UNEXPECTED, e.getMessage());
-		}
-	}
+   * Thrift RPC method -> Given a list of {@link RollbackAction}s, perform a synchronous rollback
+   */
+  @Override
+  public String rollback(List<RollbackAction> rollbackActions, String ignoreMe) throws DNodeException {
+    // The DNode doesn't need to do anything special for rolling back a version.
+    // It can serve any version that is stored locally.
+    try {
+      return JSONSerDe.ser(new DNodeStatusResponse("Ok. Rollback order received."));
+    } catch (JSONSerDeException e) {
+      unexpectedException(e);
+      throw new DNodeException(EXCEPTION_UNEXPECTED, e.getMessage());
+    }
+  }
 
-	/*
-	 * Any unexpected exception must be redirected to this method. In this way we can monitor it using state variables.
-	 * The state variables will then be passed onto the appropriated bean in the status() RPC call.
-	 */
-	private void unexpectedException(Throwable t) {
-		t.printStackTrace();
-		log.error("Unexpected Exception", t);
-		lastException = t.getMessage();
-		lastExceptionTime = System.currentTimeMillis();
-	}
+  /*
+   * Any unexpected exception must be redirected to this method. In this way we can monitor it using state variables.
+   * The state variables will then be passed onto the appropriated bean in the status() RPC call.
+   */
+  private void unexpectedException(Throwable t) {
+    t.printStackTrace();
+    log.error("Unexpected Exception", t);
+    lastException = t.getMessage();
+    lastExceptionTime = System.currentTimeMillis();
+  }
 
-	/**
-	 * Returns an {@link com.splout.db.dnode.beans.DNodeSystemStatus} filled with the appropriated data.
-	 */
-	@Override
-	public String status() throws DNodeException {
-		try {
-			DNodeSystemStatus status = new DNodeSystemStatus();
-			if(lastException == null) {
-				status.setSystemStatus("UP");
-				status.setLastExceptionTime(-1);
-			} else {
-				status.setSystemStatus("Last exception: " + lastException);
-				status.setLastExceptionTime(lastExceptionTime);
-			}
-			status.setUpSince(upSince);
-			status.setFailedQueries(failedQueries.get());
-			status.setnQueries(performanceTool.getNQueries());
-			status.setAverage(performanceTool.getAverage());
-			status.setSlowQueries(slowQueries);
-			status.setDeployInProgress(deployInProgress.get() > 0);
-			status.setHttpExchangerAddress(httpExchangerAddress());
-			status.setBalanceActionsStateMap(balanceActionsStateMap);
-			File folder = new File(config.getString(DNodeProperties.DATA_FOLDER));
-			if(folder.exists()) {
-				status.setFreeSpaceInDisk(FileSystemUtils.freeSpaceKb(folder.toString()));
-				status.setOccupiedSpaceInDisk(FileUtils.sizeOfDirectory(folder));
-				Collection<File> files = FileUtils.listFilesAndDirs(folder, TrueFileFilter.INSTANCE,
-				    TrueFileFilter.INSTANCE);
-				status.setFiles(new ArrayList<String>(Lists.transform(Lists.newArrayList(files),
-				    new Function<File, String>() {
-					    @Override
-					    public String apply(File file) {
-						    return file.getAbsolutePath() + " (" + FileUtils.sizeOf(file) + " bytes)";
-					    }
-				    })));
-				Collections.sort(status.getFiles());
-			} else {
-				status.setOccupiedSpaceInDisk(0);
-				status.setFreeSpaceInDisk(FileSystemUtils.freeSpaceKb("."));
-				status.setFiles(new ArrayList<String>());
-			}
-			return JSONSerDe.ser(status);
-		} catch(Throwable t) {
-			unexpectedException(t);
-			throw new DNodeException(EXCEPTION_UNEXPECTED, t.getMessage());
-		}
-	}
+  /**
+   * Returns an {@link com.splout.db.dnode.beans.DNodeSystemStatus} filled with the appropriated data.
+   */
+  @Override
+  public String status() throws DNodeException {
+    try {
+      DNodeSystemStatus status = new DNodeSystemStatus();
+      if (lastException == null) {
+        status.setSystemStatus("UP");
+        status.setLastExceptionTime(-1);
+      } else {
+        status.setSystemStatus("Last exception: " + lastException);
+        status.setLastExceptionTime(lastExceptionTime);
+      }
+      status.setUpSince(upSince);
+      status.setFailedQueries(failedQueries.get());
+      status.setnQueries(performanceTool.getNQueries());
+      status.setAverage(performanceTool.getAverage());
+      status.setSlowQueries(slowQueries);
+      status.setDeployInProgress(deployInProgress.get() > 0);
+      status.setHttpExchangerAddress(httpExchangerAddress());
+      status.setBalanceActionsStateMap(balanceActionsStateMap);
+      File folder = new File(config.getString(DNodeProperties.DATA_FOLDER));
+      if (folder.exists()) {
+        status.setFreeSpaceInDisk(FileSystemUtils.freeSpaceKb(folder.toString()));
+        status.setOccupiedSpaceInDisk(FileUtils.sizeOfDirectory(folder));
+        Collection<File> files = FileUtils.listFilesAndDirs(folder, TrueFileFilter.INSTANCE,
+            TrueFileFilter.INSTANCE);
+        status.setFiles(new ArrayList<String>(Lists.transform(Lists.newArrayList(files),
+            new Function<File, String>() {
+              @Override
+              public String apply(File file) {
+                return file.getAbsolutePath() + " (" + FileUtils.sizeOf(file) + " bytes)";
+              }
+            })));
+        Collections.sort(status.getFiles());
+      } else {
+        status.setOccupiedSpaceInDisk(0);
+        status.setFreeSpaceInDisk(FileSystemUtils.freeSpaceKb("."));
+        status.setFiles(new ArrayList<String>());
+      }
+      return JSONSerDe.ser(status);
+    } catch (Throwable t) {
+      unexpectedException(t);
+      throw new DNodeException(EXCEPTION_UNEXPECTED, t.getMessage());
+    }
+  }
 
-	protected File getLocalStorageFolder(String tablespace, int partition, long version) {
-		return getLocalStorageFolder(config, tablespace, partition, version);
-	}
+  protected File getLocalStorageFolder(String tablespace, int partition, long version) {
+    return getLocalStorageFolder(config, tablespace, partition, version);
+  }
 
-	/**
-	 * Returns the folder where the DNode that uses the provided Configuration will store the binary data for this
-	 * tablespace, version and partition.
-	 */
-	public static File getLocalStorageFolder(SploutConfiguration config, String tablespace, int partition,
-	    long version) {
-		String dataFolder = config.getString(DNodeProperties.DATA_FOLDER);
-		return new File(dataFolder + "/"
-		    + getLocalStoragePartitionRelativePath(tablespace, partition, version));
-	}
+  /**
+   * Returns the folder where the DNode that uses the provided Configuration will store the binary data for this
+   * tablespace, version and partition.
+   */
+  public static File getLocalStorageFolder(SploutConfiguration config, String tablespace, int partition,
+                                           long version) {
+    String dataFolder = config.getString(DNodeProperties.DATA_FOLDER);
+    return new File(dataFolder + "/"
+        + getLocalStoragePartitionRelativePath(tablespace, partition, version));
+  }
 
-	public static String getLocalStoragePartitionRelativePath(String tablespace, int partition,
-	    long version) {
-		return tablespace + "/" + version + "/" + partition;
-	}
+  public static String getLocalStoragePartitionRelativePath(String tablespace, int partition,
+                                                            long version) {
+    return tablespace + "/" + version + "/" + partition;
+  }
 
-	protected File getLocalMetadataFile(String tablespace, int partition, long version) {
-		return getLocalMetadataFile(config, tablespace, partition, version);
-	}
+  protected File getLocalMetadataFile(String tablespace, int partition, long version) {
+    return getLocalMetadataFile(config, tablespace, partition, version);
+  }
 
-	/**
-	 * Returns the file where the DNode that uses the provided Configuration will store the metadata for this tablespace,
-	 * version and partition.
-	 */
-	public static File getLocalMetadataFile(SploutConfiguration config, String tablespace, int partition,
-	    long version) {
-		String dataFolder = config.getString(DNodeProperties.DATA_FOLDER);
-		return new File(dataFolder + "/" + getLocalMetadataFileRelativePath(tablespace, partition, version));
-	}
+  /**
+   * Returns the file where the DNode that uses the provided Configuration will store the metadata for this tablespace,
+   * version and partition.
+   */
+  public static File getLocalMetadataFile(SploutConfiguration config, String tablespace, int partition,
+                                          long version) {
+    String dataFolder = config.getString(DNodeProperties.DATA_FOLDER);
+    return new File(dataFolder + "/" + getLocalMetadataFileRelativePath(tablespace, partition, version));
+  }
 
-	public static String getLocalMetadataFileRelativePath(String tablespace, int partition, long version) {
-		return tablespace + "/" + version + "/" + partition + ".meta";
-	}
+  public static String getLocalMetadataFileRelativePath(String tablespace, int partition, long version) {
+    return tablespace + "/" + version + "/" + partition + ".meta";
+  }
 
-	public boolean isDeployInProgress() {
-		return deployInProgress.get() > 0;
-	}
+  public boolean isDeployInProgress() {
+    return deployInProgress.get() > 0;
+  }
 
-	/**
-	 * Properly dispose this DNode.
-	 */
-	public void stop() throws Exception {
-		dbCache.dispose();
-		deployThread.shutdownNow();
-		factory.close();
-		httpExchanger.close();
-		hz.getLifecycleService().shutdown();
-	}
+  /**
+   * Properly dispose this DNode.
+   */
+  public void stop() throws Exception {
+    dbCache.dispose();
+    deployThread.shutdownNow();
+    factory.close();
+    httpExchanger.close();
+    hz.getLifecycleService().shutdown();
+  }
 
-	@Override
-	public String abortDeploy(long version) throws DNodeException {
-		// For simplicity, current implementation cancels all queued deploys.
-		// There can only be one deploy being handled at a time, but multiple may have been queued.
-		try {
-			if(isDeployInProgress()) {
-				synchronized(deployLock) { // No new deploys to be handled until we cancel the current one
-					// Note that it is not always guaranteed that threads will be properly shutdown...
-					deployThread.shutdownNow();
-					while(!deployThread.isTerminated()) {
-						try {
-							Thread.sleep(100);
-						} catch(InterruptedException e) {
-							log.error("Deploy Thread interrupted - continuing anyway.", e);
-						}
-					}
-					deployThread = Executors.newFixedThreadPool(1);
-				}
-				return JSONSerDe.ser(new DNodeStatusResponse("Ok. Deploy cancelled."));
-			} else {
-				return JSONSerDe.ser(new DNodeStatusResponse("No deploy in progress."));
-			}
-		} catch(JSONSerDeException e) {
-			unexpectedException(e);
-			throw new DNodeException(EXCEPTION_UNEXPECTED, e.getMessage());
-		}
-	}
+  @Override
+  public String abortDeploy(long version) throws DNodeException {
+    // For simplicity, current implementation cancels all queued deploys.
+    // There can only be one deploy being handled at a time, but multiple may have been queued.
+    try {
+      if (isDeployInProgress()) {
+        synchronized (deployLock) { // No new deploys to be handled until we cancel the current one
+          // Note that it is not always guaranteed that threads will be properly shutdown...
+          deployThread.shutdownNow();
+          while (!deployThread.isTerminated()) {
+            try {
+              Thread.sleep(100);
+            } catch (InterruptedException e) {
+              log.error("Deploy Thread interrupted - continuing anyway.", e);
+            }
+          }
+          deployThread = Executors.newFixedThreadPool(1);
+        }
+        return JSONSerDe.ser(new DNodeStatusResponse("Ok. Deploy cancelled."));
+      } else {
+        return JSONSerDe.ser(new DNodeStatusResponse("No deploy in progress."));
+      }
+    } catch (JSONSerDeException e) {
+      unexpectedException(e);
+      throw new DNodeException(EXCEPTION_UNEXPECTED, e.getMessage());
+    }
+  }
 
-	@Override
-	public String deleteOldVersions(List<com.splout.db.thrift.TablespaceVersion> versions)
-	    throws DNodeException {
-		for(com.splout.db.thrift.TablespaceVersion version : versions) {
-			log.info("Going to remove " + version + " as I have been told to do so.");
-			try {
-				deleteLocalVersion(version);
-			} catch(Throwable e) {
-				unexpectedException(e);
-				throw new DNodeException(EXCEPTION_UNEXPECTED, e.getMessage());
-			}
-		}
-		try {
-			// Publish new DNodeInfo in distributed registry.
-			// This makes QNodes notice that a new version is available...
-			// PartitionMap and ReplicationMap will be built incrementally as DNodes finish.
-			dnodesRegistry.changeInfo(new DNodeInfo(config));
-			return JSONSerDe.ser(new DNodeStatusResponse("Ok. Delete old versions executed."));
-		} catch(JSONSerDeException e) {
-			unexpectedException(e);
-			throw new DNodeException(EXCEPTION_UNEXPECTED, e.getMessage());
-		}
-	}
+  @Override
+  public String deleteOldVersions(List<com.splout.db.thrift.TablespaceVersion> versions)
+      throws DNodeException {
+    for (com.splout.db.thrift.TablespaceVersion version : versions) {
+      log.info("Going to remove " + version + " as I have been told to do so.");
+      try {
+        deleteLocalVersion(version);
+      } catch (Throwable e) {
+        unexpectedException(e);
+        throw new DNodeException(EXCEPTION_UNEXPECTED, e.getMessage());
+      }
+    }
+    try {
+      // Publish new DNodeInfo in distributed registry.
+      // This makes QNodes notice that a new version is available...
+      // PartitionMap and ReplicationMap will be built incrementally as DNodes finish.
+      dnodesRegistry.changeInfo(new DNodeInfo(config));
+      return JSONSerDe.ser(new DNodeStatusResponse("Ok. Delete old versions executed."));
+    } catch (JSONSerDeException e) {
+      unexpectedException(e);
+      throw new DNodeException(EXCEPTION_UNEXPECTED, e.getMessage());
+    }
+  }
 
-	// ----------------- TEST API ----------------- //
+  // ----------------- TEST API ----------------- //
 
-	private AtomicBoolean shutDownByTestAPI = new AtomicBoolean(false);
+  private AtomicBoolean shutDownByTestAPI = new AtomicBoolean(false);
 
-	/*
-	 * This method is called by unit / integration tests in order to simulate failures and recoveries in DNodes and such.
-	 */
-	@Override
-	public String testCommand(String commandStr) throws DNodeException {
-		if(!config.getBoolean(DNodeProperties.HANDLE_TEST_COMMANDS)) {
-			throw new DNodeException(EXCEPTION_ORDINARY, "Can't handle test commands as "
-			    + DNodeProperties.HANDLE_TEST_COMMANDS + " is not set to true.");
-		}
-		TestCommands command = TestCommands.valueOf(commandStr);
-		if(command == null) {
-			throw new DNodeException(EXCEPTION_ORDINARY, "Unknown test command: " + commandStr);
-		}
-		if(command.equals(TestCommands.SHUTDOWN)) {
-			// on-demand shutdown
-			// This is a "soft-shutdown" so we can recover from it.
-			// It is designed for unit and integration testing.
-			shutDownByTestAPI.set(true);
-			dnodesRegistry.unregister();
-			log.info("Received a shutdown by test API.");
-			hz.getLifecycleService().shutdown();
-		} else if(command.equals(TestCommands.RESTART)) {
-			// on-demand restart
-			// This is a "soft-restart" after a "soft-shutdown".
-			// It is designed for unit and integration testing.
-			shutDownByTestAPI.set(false);
-			try {
-				hz = Hazelcast.newHazelcastInstance(HazelcastConfigBuilder.build(config));
-				coord = new CoordinationStructures(hz);
-				log.info("Received a restart by test API.");
-				giveGreenLigth();
-			} catch(HazelcastConfigBuilderException e) {
-				log.error("Error while trying to connect to Hazelcast", e);
-				throw new DNodeException(EXCEPTION_UNEXPECTED, e.getMessage());
-			}
-		}
-		try {
-			return JSONSerDe.ser(new DNodeStatusResponse("Ok. Test command " + commandStr
-			    + " received properly."));
-		} catch(JSONSerDeException e) {
-			unexpectedException(e);
-			throw new DNodeException(EXCEPTION_UNEXPECTED, e.getMessage());
-		}
-	}
+  /*
+   * This method is called by unit / integration tests in order to simulate failures and recoveries in DNodes and such.
+   */
+  @Override
+  public String testCommand(String commandStr) throws DNodeException {
+    if (!config.getBoolean(DNodeProperties.HANDLE_TEST_COMMANDS)) {
+      throw new DNodeException(EXCEPTION_ORDINARY, "Can't handle test commands as "
+          + DNodeProperties.HANDLE_TEST_COMMANDS + " is not set to true.");
+    }
+    TestCommands command = TestCommands.valueOf(commandStr);
+    if (command == null) {
+      throw new DNodeException(EXCEPTION_ORDINARY, "Unknown test command: " + commandStr);
+    }
+    if (command.equals(TestCommands.SHUTDOWN)) {
+      // on-demand shutdown
+      // This is a "soft-shutdown" so we can recover from it.
+      // It is designed for unit and integration testing.
+      shutDownByTestAPI.set(true);
+      dnodesRegistry.unregister();
+      log.info("Received a shutdown by test API.");
+      hz.getLifecycleService().shutdown();
+    } else if (command.equals(TestCommands.RESTART)) {
+      // on-demand restart
+      // This is a "soft-restart" after a "soft-shutdown".
+      // It is designed for unit and integration testing.
+      shutDownByTestAPI.set(false);
+      try {
+        hz = Hazelcast.newHazelcastInstance(HazelcastConfigBuilder.build(config));
+        coord = new CoordinationStructures(hz);
+        log.info("Received a restart by test API.");
+        giveGreenLigth();
+      } catch (HazelcastConfigBuilderException e) {
+        log.error("Error while trying to connect to Hazelcast", e);
+        throw new DNodeException(EXCEPTION_UNEXPECTED, e.getMessage());
+      }
+    }
+    try {
+      return JSONSerDe.ser(new DNodeStatusResponse("Ok. Test command " + commandStr
+          + " received properly."));
+    } catch (JSONSerDeException e) {
+      unexpectedException(e);
+      throw new DNodeException(EXCEPTION_UNEXPECTED, e.getMessage());
+    }
+  }
 
-	// --- Getters mainly for testing --- /
+  // --- Getters mainly for testing --- /
 
-	public CoordinationStructures getCoord() {
-		return coord;
-	}
+  public CoordinationStructures getCoord() {
+    return coord;
+  }
 
-	public DistributedRegistry getDnodesRegistry() {
-		return dnodesRegistry;
-	}
+  public DistributedRegistry getDnodesRegistry() {
+    return dnodesRegistry;
+  }
 }

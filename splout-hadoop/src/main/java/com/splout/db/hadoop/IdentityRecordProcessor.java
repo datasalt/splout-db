@@ -31,6 +31,6 @@ public class IdentityRecordProcessor implements RecordProcessor {
 
   @Override
   public ITuple process(ITuple record, CounterInterface context) throws Throwable {
-	  return record;
+    return record;
   }
 }

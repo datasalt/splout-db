@@ -31,13 +31,14 @@ public class NullableSchema {
   /**
    * Returns a copy of the given schema, but with all
    * fields configured as nullable.
+   *
    * @param anSchema An schema
    * @return A copy of the schema, but all fields nullable.
-   **/
+   */
   public static Schema nullableSchema(Schema anSchema) {
     ArrayList<Schema.Field> newFields = new ArrayList<Schema.Field>();
     List<Field> oldFields = anSchema.getFields();
-    for (Field f: oldFields) {
+    for (Field f : oldFields) {
       newFields.add(Field.cloneField(f, f.getName(), true));
     }
     return new Schema(anSchema.getName(), newFields);

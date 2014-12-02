@@ -21,21 +21,20 @@ package com.splout.db.common;
  * #L%
  */
 
-import static org.junit.Assert.assertEquals;
-
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import org.junit.Test;
-
 import com.splout.db.qnode.IQNodeHandler;
 import com.splout.db.qnode.QNode;
 import com.splout.db.qnode.QNodeMockHandler;
 import com.splout.db.qnode.beans.DeployInfo;
 import com.splout.db.qnode.beans.DeployRequest;
 import com.splout.db.qnode.beans.QueryStatus;
+import org.junit.Test;
+
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 
 public class TestSploutClient {
 
@@ -81,4 +80,5 @@ public class TestSploutClient {
 			qnode.close();
 		}
 	}
+
 }

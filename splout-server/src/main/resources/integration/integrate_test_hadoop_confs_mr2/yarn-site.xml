@@ -1,12 +1,12 @@
 <?xml version="1.0"?>
 <configuration>
 
-<!-- Site specific YARN configuration properties -->
+    <!-- Site specific YARN configuration properties -->
 
-  <property>
-    <name>yarn.nodemanager.aux-services</name>
-    <value>mapreduce_shuffle</value>
-  </property>
+    <property>
+        <name>yarn.nodemanager.aux-services</name>
+        <value>mapreduce_shuffle</value>
+    </property>
 
 
 </configuration>

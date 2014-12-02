@@ -286,6 +286,6 @@ public class SQLite4JavaClient {
         }
       }
     }
-    // timeoutThread.interrupt();
+//		timeoutThread.interrupt();
   }
 }

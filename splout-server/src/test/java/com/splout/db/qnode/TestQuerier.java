@@ -84,28 +84,27 @@ public class TestQuerier {
 		SploutConfiguration testConfig = SploutConfiguration.getTestConfig();
 		// A handler that returns OK to any query
 		IDNodeHandler okQueryHandler = new DNodeMockHandler() {
-
-			@Override
+      @Override
       public String sqlQuery(String tablespace, long version, int partition, String query) throws DNodeException {
-	      return "[{ \"msg\": \"OK\" }]";
+        return "[{ \"msg\": \"OK\" }]";
       }
 		};
 		DNode dnode1 = TestUtils.getTestDNode(testConfig, okQueryHandler, "dnode-" + this.getClass().getName() + "-1");
 		DNode dnode2 = TestUtils.getTestDNode(testConfig, okQueryHandler, "dnode-" + this.getClass().getName() + "-2");
 		
-		List<ReplicationEntry> rEntries = new ArrayList<ReplicationEntry>();
-		rEntries.add(new ReplicationEntry(0, dnode1.getAddress(), dnode2.getAddress()));
+    List<ReplicationEntry> rEntries = new ArrayList<ReplicationEntry>();
+    rEntries.add(new ReplicationEntry(0, dnode1.getAddress(), dnode2.getAddress()));
 
-		QNodeHandlerContext context = new QNodeHandlerContext(testConfig, null);
-		
-		Tablespace tablespace = new Tablespace(PartitionMap.oneShardOpenedMap(), new ReplicationMap(rEntries), 0, 0);
-		context.getTablespaceVersionsMap().put(new TablespaceVersion("t1", 0l), tablespace);
-		context.getCurrentVersionsMap().put("t1", 0l);
+    QNodeHandlerContext context = new QNodeHandlerContext(testConfig, null);
 
-		Querier querier = new Querier(context);
-		
+    Tablespace tablespace = new Tablespace(PartitionMap.oneShardOpenedMap(), new ReplicationMap(rEntries), 0, 0);
+    context.getTablespaceVersionsMap().put(new TablespaceVersion("t1", 0l), tablespace);
+    context.getCurrentVersionsMap().put("t1", 0l);
+
+    Querier querier = new Querier(context);
+
 		/*
-		 * Here we are testing basic round robin: we have 2 nodes serving one shard and we do 5 queries
+     * Here we are testing basic round robin: we have 2 nodes serving one shard and we do 5 queries
 		 * so we want to assert that the node whom we are querying at step "i" is exactly "i % 2".
 		 */
 		for(int i = 0; i < 5; i++) {
@@ -124,7 +123,7 @@ public class TestQuerier {
 
 			@Override
       public String sqlQuery(String tablespace, long version, int partition, String query) throws DNodeException {
-	      return "[{ \"msg\": \"OK\" }]";
+        return "[{ \"msg\": \"OK\" }]";
       }
 		};
 		DNode dnode1 = TestUtils.getTestDNode(testConfig, okQueryHandler, "dnode-" + this.getClass().getName() + "-1");
@@ -133,13 +132,13 @@ public class TestQuerier {
 		List<ReplicationEntry> rEntries = new ArrayList<ReplicationEntry>();
 		rEntries.add(new ReplicationEntry(0, dnode1.getAddress(), "fakeaddress:1111", dnode2.getAddress(), "fakeaddress:2222"));
 
-		QNodeHandlerContext context = new QNodeHandlerContext(testConfig, null);
-		
-		Tablespace tablespace = new Tablespace(PartitionMap.oneShardOpenedMap(), new ReplicationMap(rEntries), 0, 0);
-		context.getTablespaceVersionsMap().put(new TablespaceVersion("t1", 0l), tablespace);
-		context.getCurrentVersionsMap().put("t1", 0l);
+    QNodeHandlerContext context = new QNodeHandlerContext(testConfig, null);
 
-		Querier querier = new Querier(context);
+    Tablespace tablespace = new Tablespace(PartitionMap.oneShardOpenedMap(), new ReplicationMap(rEntries), 0, 0);
+    context.getTablespaceVersionsMap().put(new TablespaceVersion("t1", 0l), tablespace);
+    context.getCurrentVersionsMap().put("t1", 0l);
+
+    Querier querier = new Querier(context);
 		
 		/*
 		 * Here we are testing round robin when there are some dead nodes in a shard. We have 2 alive nodes and 2 dead nodes.
@@ -160,9 +159,9 @@ public class TestQuerier {
 		// A handler that returns OK to any query
 		IDNodeHandler okQueryHandler = new DNodeMockHandler() {
 
-			@Override
+      @Override
       public String sqlQuery(String tablespace, long version, int partition, String query) throws DNodeException {
-	      return "[{ \"msg\": \"OK\" }]";
+        return "[{ \"msg\": \"OK\" }]";
       }
 		};
 		DNode dnode1 = TestUtils.getTestDNode(testConfig, okQueryHandler, "dnode-" + this.getClass().getName() + "-1");
@@ -171,13 +170,13 @@ public class TestQuerier {
 		List<ReplicationEntry> rEntries = new ArrayList<ReplicationEntry>();
 		rEntries.add(new ReplicationEntry(0, dnode1.getAddress(), "failingaddress:1111", dnode2.getAddress(), "failingaddress:2222"));
 
-		QNodeHandlerContext context = new QNodeHandlerContext(testConfig, null);
-		
-		Tablespace tablespace = new Tablespace(PartitionMap.oneShardOpenedMap(), new ReplicationMap(rEntries), 0, 0);
-		context.getTablespaceVersionsMap().put(new TablespaceVersion("t1", 0l), tablespace);
-		context.getCurrentVersionsMap().put("t1", 0l);
+    QNodeHandlerContext context = new QNodeHandlerContext(testConfig, null);
 
-		Querier querier = new Querier(context);
+    Tablespace tablespace = new Tablespace(PartitionMap.oneShardOpenedMap(), new ReplicationMap(rEntries), 0, 0);
+    context.getTablespaceVersionsMap().put(new TablespaceVersion("t1", 0l), tablespace);
+    context.getCurrentVersionsMap().put("t1", 0l);
+
+    Querier querier = new Querier(context);
 		
 		/*
 		 * Here we are testing round robin when there are failing nodes in a shard. We have 4 alive nodes with 2 failing nodes.

@@ -24,19 +24,19 @@ package com.splout.db.qnode;
 @SuppressWarnings("serial")
 public class SploutException extends Exception {
 
-	public SploutException() {
-	}
+  public SploutException() {
+  }
 
-	public SploutException(String message) {
-		super(message);
-	}
+  public SploutException(String message) {
+    super(message);
+  }
 
-	public SploutException(Throwable cause) {
-		super(cause);
-	}
+  public SploutException(Throwable cause) {
+    super(cause);
+  }
 
-	public SploutException(String message, Throwable cause) {
-		super(message, cause);
-	}
+  public SploutException(String message, Throwable cause) {
+    super(message, cause);
+  }
 
 }

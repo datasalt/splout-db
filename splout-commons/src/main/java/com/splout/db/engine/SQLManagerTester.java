@@ -121,8 +121,8 @@ public class SQLManagerTester {
     assertEquals(ResultAndCursorId.NO_CURSOR, r.getCursorId());
   }
 
-  public void querySizeLimitingTest(final EngineManager manager) throws SQLException, ClassNotFoundException, JSONSerDeException,
-      EngineException, SerializationException {
+  public void querySizeLimitingTest(final EngineManager manager) throws SQLException,
+      ClassNotFoundException, JSONSerDeException, EngineException {
     manager.query("DROP TABLE IF EXISTS t;", 100);
     manager.query("CREATE TABLE t (a INT, b TEXT);", 100);
 

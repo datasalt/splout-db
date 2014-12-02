@@ -31,13 +31,13 @@ import com.splout.db.hadoop.DeployerCMD;
  */
 public class ToolsDriver extends PangoolDriver {
 
-	public ToolsDriver() throws Throwable {
-		addClass("benchmark-store", BenchmarkStoreTool.class, "Creates a dataset to be used for benchmarking");
-		addClass("benchmark-deploy", DeployerCMD.class, "Deploys a dataset created with the benchmar-store tool into a Splout cluster");
-		addClass("benchmark", BenchmarkTool.class, "Runs a benchmark. benchmark-store and benchmark-deploy tool should have been run before.");
-	}
-	
-	public static void main(String args[]) throws Throwable {
-		new ToolsDriver().driver(args);
-	}
+  public ToolsDriver() throws Throwable {
+    addClass("benchmark-store", BenchmarkStoreTool.class, "Creates a dataset to be used for benchmarking");
+    addClass("benchmark-deploy", DeployerCMD.class, "Deploys a dataset created with the benchmar-store tool into a Splout cluster");
+    addClass("benchmark", BenchmarkTool.class, "Runs a benchmark. benchmark-store and benchmark-deploy tool should have been run before.");
+  }
+
+  public static void main(String args[]) throws Throwable {
+    new ToolsDriver().driver(args);
+  }
 }

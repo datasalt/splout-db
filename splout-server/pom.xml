@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -266,11 +267,11 @@
                         <configuration>
                             <tasks>
                                 <exec executable="/usr/local/bin/thrift">
-                                    <arg value="--gen" />
-                                    <arg value="java" />
-                                    <arg value="-o" />
-                                    <arg value="src/main" />
-                                    <arg value="src/main/thrift/dnode.thrift" />
+                                    <arg value="--gen"/>
+                                    <arg value="java"/>
+                                    <arg value="-o"/>
+                                    <arg value="src/main"/>
+                                    <arg value="src/main/thrift/dnode.thrift"/>
                                 </exec>
                             </tasks>
                         </configuration>
@@ -305,7 +306,8 @@
                 <version>2.12</version>
                 <configuration>
                     <argLine>
-                        -Djava.library.path=${project.build.directory}/maven-shared-archive-resources -Dfile.encoding=UTF-8
+                        -Djava.library.path=${project.build.directory}/maven-shared-archive-resources
+                        -Dfile.encoding=UTF-8
                     </argLine>
                     <includes>
                         <include>**/Test**</include>

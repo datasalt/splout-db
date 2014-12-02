@@ -21,11 +21,11 @@ package com.splout.db.hazelcast;
  * #L%
  */
 
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.Member;
+
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
 
 public class HazelcastUtils {
 

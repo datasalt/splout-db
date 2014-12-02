@@ -1,32 +1,33 @@
 <?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-	<modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>com.splout.db</groupId>
-		<artifactId>splout-top-level</artifactId>
-		<version>0.3.1-SNAPSHOT</version>
-		<relativePath>../pom.xml</relativePath>
-	</parent>
+    <parent>
+        <groupId>com.splout.db</groupId>
+        <artifactId>splout-top-level</artifactId>
+        <version>0.3.1-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
 
-	<groupId>com.splout.db</groupId>
-	<artifactId>splout-distribution</artifactId>
-	<version>0.3.1-SNAPSHOT</version>
+    <groupId>com.splout.db</groupId>
+    <artifactId>splout-distribution</artifactId>
+    <version>0.3.1-SNAPSHOT</version>
 
-	<packaging>pom</packaging>
-	
-	<licenses>
-		<license>
-			<name>Apache License version 2.0</name>
-			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-			<distribution>repo</distribution>
-		</license>
-	</licenses>
+    <packaging>pom</packaging>
+
+    <licenses>
+        <license>
+            <name>Apache License version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
 
-	<name>Splout SQL Assembly</name>
-	<description>Splout module just to build the distribution assembly</description>
+    <name>Splout SQL Assembly</name>
+    <description>Splout module just to build the distribution assembly</description>
 
 
     <profiles>
@@ -106,30 +107,30 @@
         </profile>
     </profiles>
 
-	<build>
-		<plugins>
-			<plugin>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<version>2.2.1</version>
-				<configuration>
-					<descriptors>
-						<descriptor>src/main/assembly/distro.xml</descriptor>
-					</descriptors>
-					<appendAssemblyId>true</appendAssemblyId>
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.2.1</version>
+                <configuration>
+                    <descriptors>
+                        <descriptor>src/main/assembly/distro.xml</descriptor>
+                    </descriptors>
+                    <appendAssemblyId>true</appendAssemblyId>
                     <classifier>${postfix.mapreduce.version}</classifier>
-				</configuration>
-				<executions>
-					<execution>
-						<id>make-assembly</id>
-						<phase>package</phase>
-						<goals>
-							<goal>single</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
-	</build>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>
 

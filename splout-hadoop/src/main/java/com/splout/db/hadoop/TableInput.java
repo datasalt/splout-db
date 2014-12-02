@@ -20,14 +20,13 @@ package com.splout.db.hadoop;
  * #L%
  */
 
-import java.util.Map;
-
+import com.datasalt.pangool.io.ITuple;
+import com.datasalt.pangool.io.Schema;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.InputFormat;
 
-import com.datasalt.pangool.io.ITuple;
-import com.datasalt.pangool.io.Schema;
+import java.util.Map;
 
 /**
  * A file (represented by a Hadoop Path) associated with an Pangool's InputFormat. TableFiles are used by {@link Table} instances
@@ -35,45 +34,49 @@ import com.datasalt.pangool.io.Schema;
  */
 public class TableInput {
 
-	private final InputFormat<ITuple, NullWritable> format;
-	private final Path[] paths;
-	private final Schema fileSchema;
-	private final RecordProcessor recordProcessor;
-	private final Map<String, String> specificHadoopInputFormatContext;
-	
-	TableInput(InputFormat<ITuple, NullWritable> format, Map<String, String> specificHadoopInputFormatContext, Schema fileSchema, RecordProcessor recordProcessor, Path... paths) {
-		if(format == null) {
-			throw new IllegalArgumentException("Input format can't be null");
-		}
-		if(fileSchema == null) {
-			throw new IllegalArgumentException("File schema can't be null");
-		}
-		if(recordProcessor == null) {
-			throw new IllegalArgumentException("Record processor can't be null. Use new IdentityRecordProcessor() for using the default one.");
-		}
-		if(paths == null) {
-			throw new IllegalArgumentException("Input paths can't be null");
-		}
-		this.format = format;
-		this.fileSchema = fileSchema;
-		this.recordProcessor = recordProcessor;
-		this.paths = paths;
-		this.specificHadoopInputFormatContext = specificHadoopInputFormatContext;
-	}
+  private final InputFormat<ITuple, NullWritable> format;
+  private final Path[] paths;
+  private final Schema fileSchema;
+  private final RecordProcessor recordProcessor;
+  private final Map<String, String> specificHadoopInputFormatContext;
 
-	public InputFormat<ITuple, NullWritable> getFormat() {
-  	return format;
+  TableInput(InputFormat<ITuple, NullWritable> format, Map<String, String> specificHadoopInputFormatContext, Schema fileSchema, RecordProcessor recordProcessor, Path... paths) {
+    if (format == null) {
+      throw new IllegalArgumentException("Input format can't be null");
+    }
+    if (fileSchema == null) {
+      throw new IllegalArgumentException("File schema can't be null");
+    }
+    if (recordProcessor == null) {
+      throw new IllegalArgumentException("Record processor can't be null. Use new IdentityRecordProcessor() for using the default one.");
+    }
+    if (paths == null) {
+      throw new IllegalArgumentException("Input paths can't be null");
+    }
+    this.format = format;
+    this.fileSchema = fileSchema;
+    this.recordProcessor = recordProcessor;
+    this.paths = paths;
+    this.specificHadoopInputFormatContext = specificHadoopInputFormatContext;
   }
-	public Path[] getPaths() {
-  	return paths;
+
+  public InputFormat<ITuple, NullWritable> getFormat() {
+    return format;
   }
-	public Schema getFileSchema() {
-  	return fileSchema;
+
+  public Path[] getPaths() {
+    return paths;
   }
-	public RecordProcessor getRecordProcessor() {
-  	return recordProcessor;
+
+  public Schema getFileSchema() {
+    return fileSchema;
   }
-	public Map<String, String> getSpecificHadoopInputFormatContext() {
-  	return specificHadoopInputFormatContext;
+
+  public RecordProcessor getRecordProcessor() {
+    return recordProcessor;
+  }
+
+  public Map<String, String> getSpecificHadoopInputFormatContext() {
+    return specificHadoopInputFormatContext;
   }
 }

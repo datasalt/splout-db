@@ -24,79 +24,79 @@ package com.splout.db.benchmark;
  * A {@link PositiveHistogram} but that also keeps average, stdev, min and max values.
  */
 public class HistogramWithStats extends PositiveHistogram {
-	
-	private double squares = 0;
-	private double accum = 0;
-	private double min = Double.MAX_VALUE;
-	private double max = Double.MIN_VALUE;
 
-	public HistogramWithStats(int bits, double initialUpperLimit) {
-	  super(bits, initialUpperLimit);
+  private double squares = 0;
+  private double accum = 0;
+  private double min = Double.MAX_VALUE;
+  private double max = Double.MIN_VALUE;
+
+  public HistogramWithStats(int bits, double initialUpperLimit) {
+    super(bits, initialUpperLimit);
   }
-	
-	public HistogramWithStats(int bits) {
-		// Histogram upper limit is enforced by the number of bits.
-		// This way, ranges in the histogram will always be integers.
-		this(bits, (int)Math.pow(2, bits - 1));
-	}
-	
-	public HistogramWithStats() {
-		super(8, 1);
-	}
-	
-	/*
-	 * Deep copy constructor
-	 */
-	public HistogramWithStats(HistogramWithStats copy) {
-		super(1, copy.upperLimit);
-		buckets = new int[copy.buckets.length];
-		for(int i = 0; i < copy.buckets.length; i++) {
-			this.buckets[i] = copy.buckets[i];
-		}
-		count = copy.count;
-		squares = copy.squares;
-		accum = copy.accum;
-		min = copy.min;
-		max = copy.max;
-	}
 
-	@Override
+  public HistogramWithStats(int bits) {
+    // Histogram upper limit is enforced by the number of bits.
+    // This way, ranges in the histogram will always be integers.
+    this(bits, (int) Math.pow(2, bits - 1));
+  }
+
+  public HistogramWithStats() {
+    super(8, 1);
+  }
+
+  /*
+   * Deep copy constructor
+   */
+  public HistogramWithStats(HistogramWithStats copy) {
+    super(1, copy.upperLimit);
+    buckets = new int[copy.buckets.length];
+    for (int i = 0; i < copy.buckets.length; i++) {
+      this.buckets[i] = copy.buckets[i];
+    }
+    count = copy.count;
+    squares = copy.squares;
+    accum = copy.accum;
+    min = copy.min;
+    max = copy.max;
+  }
+
+  @Override
   public synchronized void add(double value) {
-	  super.add(value);
-	  
-	  accum += value;
-	  squares += (value * value);
-	  
-	  min = Math.min(min, value);
-	  max = Math.max(max, value);
-  }
-	
-	public synchronized double getAverage() {
-		return accum / getCount();
-	}
-	
-	public synchronized double getAccum() {
-		return accum;
-	}
-	
-	/**
-	 * Returns the stdev. 
-	 */
-	public synchronized double getStdev() {
-		return Math.sqrt((squares / getCount()) - Math.pow(getAverage(), 2));
-	}
+    super.add(value);
 
-	/**
-	 * Return the maximun value
-	 */
-	public synchronized double getMax() {
-		return max;
-	}
-	
-	/**
-	 * Return the minimun value
-	 */
-	public synchronized double getMin() {
-		return min;
-	}
+    accum += value;
+    squares += (value * value);
+
+    min = Math.min(min, value);
+    max = Math.max(max, value);
+  }
+
+  public synchronized double getAverage() {
+    return accum / getCount();
+  }
+
+  public synchronized double getAccum() {
+    return accum;
+  }
+
+  /**
+   * Returns the stdev.
+   */
+  public synchronized double getStdev() {
+    return Math.sqrt((squares / getCount()) - Math.pow(getAverage(), 2));
+  }
+
+  /**
+   * Return the maximun value
+   */
+  public synchronized double getMax() {
+    return max;
+  }
+
+  /**
+   * Return the minimun value
+   */
+  public synchronized double getMin() {
+    return min;
+  }
 }

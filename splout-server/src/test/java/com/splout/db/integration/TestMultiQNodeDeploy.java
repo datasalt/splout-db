@@ -21,27 +21,26 @@ package com.splout.db.integration;
  * #L%
  */
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.File;
-import java.util.Map;
-import java.util.Random;
-
-import org.apache.commons.io.FileUtils;
-import org.junit.Test;
-
 import com.splout.db.common.SploutClient;
 import com.splout.db.common.SploutConfiguration;
 import com.splout.db.common.Tablespace;
 import com.splout.db.engine.SQLite4JavaClient;
 import com.splout.db.qnode.beans.QueryStatus;
+import org.apache.commons.io.FileUtils;
+import org.junit.Test;
+
+import java.io.File;
+import java.util.Map;
+import java.util.Random;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * This is a kind of integration test that tries to find bugs that will only appear when there are more than one QNode
  * handling deploys, queries, etc. The test instantiates M Qnodes, N Dnodes and deploys several versions of the same
  * tablespace. After each deployment we query for checking that the expected version is there. We use a Random object
  * with a deterministic SEED.
- * <p>
+ * <p/>
  * TIP: Use "BaseIntegrationTest" for creating new integration tests.
  */
 public class TestMultiQNodeDeploy extends BaseIntegrationTest {

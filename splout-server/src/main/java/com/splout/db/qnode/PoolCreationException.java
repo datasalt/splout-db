@@ -1,4 +1,4 @@
-package com.splout.db.qnode.rest;
+package com.splout.db.qnode;
 
 /*
  * #%L
@@ -21,20 +21,22 @@ package com.splout.db.qnode.rest;
  * #L%
  */
 
-import com.splout.db.qnode.IQNodeHandler;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import javax.servlet.http.HttpServlet;
-
 @SuppressWarnings("serial")
-public class BaseServlet extends HttpServlet {
+public class PoolCreationException extends Exception {
 
-  protected final static Log log = LogFactory.getLog(BaseServlet.class);
-  protected final transient IQNodeHandler qNodeHandler;
+  public PoolCreationException() {
+  }
 
-  public BaseServlet(IQNodeHandler qNodeHandler) {
-    this.qNodeHandler = qNodeHandler;
+  public PoolCreationException(String message) {
+    super(message);
+  }
+
+  public PoolCreationException(Throwable cause) {
+    super(cause);
+  }
+
+  public PoolCreationException(String message, Throwable cause) {
+    super(message, cause);
   }
 
 }

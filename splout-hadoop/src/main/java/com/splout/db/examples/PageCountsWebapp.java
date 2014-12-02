@@ -20,6 +20,10 @@ package com.splout.db.examples;
  * #L%
  */
 
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParameterException;
+import com.splout.db.common.SploutClient;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.servlet.DefaultServlet;
 import org.mortbay.jetty.servlet.ServletHolder;
@@ -27,64 +31,59 @@ import org.mortbay.jetty.webapp.WebAppContext;
 import org.mortbay.resource.Resource;
 import org.mortbay.resource.ResourceCollection;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.ParameterException;
-import com.splout.db.common.SploutClient;
-
 /**
  * Front-end for the Wikipedia pagecounts example.
  */
 public class PageCountsWebapp {
 
-	@Parameter(names = { "-p", "--port" }, description = "The port the webapp will run on.")
-	Integer port = 8080;
+  @Parameter(names = {"-p", "--port"}, description = "The port the webapp will run on.")
+  Integer port = 8080;
 
-	@Parameter(names = { "-q", "--qnodes" }, description = "The QNodes this demo will use, comma-separated.")
-	String qNodes = "http://localhost:4412";
-	
-	public void run() throws Exception {
-		Server server = new Server(port);
+  @Parameter(names = {"-q", "--qnodes"}, description = "The QNodes this demo will use, comma-separated.")
+  String qNodes = "http://localhost:4412";
 
-		WebAppContext context = new WebAppContext();
-		context.setContextPath("/");
-		context.addServlet(new ServletHolder(new DefaultServlet()), "/pagecounts/*");
-		context.addServlet(new ServletHolder(new PageCountsServlet(new SploutClient(qNodes.split(",")))), "/api");
-		context.addServlet(new ServletHolder(new PageCountsTrendingServlet()), "/trends");
+  public void run() throws Exception {
+    Server server = new Server(port);
 
-		ResourceCollection resources = new ResourceCollection(new String[] { Resource.newClassPathResource(
-		    "pagecounts").toString() });
+    WebAppContext context = new WebAppContext();
+    context.setContextPath("/");
+    context.addServlet(new ServletHolder(new DefaultServlet()), "/pagecounts/*");
+    context.addServlet(new ServletHolder(new PageCountsServlet(new SploutClient(qNodes.split(",")))), "/api");
+    context.addServlet(new ServletHolder(new PageCountsTrendingServlet()), "/trends");
 
-		context.setBaseResource(resources);
+    ResourceCollection resources = new ResourceCollection(new String[]{Resource.newClassPathResource(
+        "pagecounts").toString()});
 
-		server.setHandler(context);
-		server.start();
+    context.setBaseResource(resources);
 
-		try {
-			while(true) {
-				Thread.sleep(5000);
-			}
-		} catch(InterruptedException e) {
-			e.printStackTrace();
-			server.stop();
-		}
-	}
+    server.setHandler(context);
+    server.start();
 
-	public static void main(String[] args) {
-		PageCountsWebapp webapp = new PageCountsWebapp();
-		JCommander jComm = new JCommander(webapp);
-		jComm.setProgramName("Page Counts Splout Example Webapp");
-		try {
-			jComm.parse(args);
-			webapp.run();
-		} catch(ParameterException e) {
-			System.err.println(e.getMessage());
-			jComm.usage();
-			System.exit(-1);
-		} catch(Throwable t) {
-			t.printStackTrace();
-			jComm.usage();
-			System.exit(-1);
-		}
-	}
+    try {
+      while (true) {
+        Thread.sleep(5000);
+      }
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+      server.stop();
+    }
+  }
+
+  public static void main(String[] args) {
+    PageCountsWebapp webapp = new PageCountsWebapp();
+    JCommander jComm = new JCommander(webapp);
+    jComm.setProgramName("Page Counts Splout Example Webapp");
+    try {
+      jComm.parse(args);
+      webapp.run();
+    } catch (ParameterException e) {
+      System.err.println(e.getMessage());
+      jComm.usage();
+      System.exit(-1);
+    } catch (Throwable t) {
+      t.printStackTrace();
+      jComm.usage();
+      System.exit(-1);
+    }
+  }
 }

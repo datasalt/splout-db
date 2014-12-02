@@ -20,17 +20,12 @@ package com.splout.db.hadoop;
  * #L%
  */
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import com.datasalt.pangool.io.Fields;
+import com.datasalt.pangool.io.Schema;
+import com.google.common.io.Files;
+import com.splout.db.common.JSONSerDe;
+import com.splout.db.engine.SQLite4JavaClient;
+import com.splout.db.hadoop.TupleSampler.SamplingType;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -38,41 +33,41 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.datasalt.pangool.io.Fields;
-import com.datasalt.pangool.io.Schema;
-import com.google.common.io.Files;
-import com.splout.db.common.JSONSerDe;
-import com.splout.db.engine.SQLite4JavaClient;
-import com.splout.db.hadoop.TupleSampler.SamplingType;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.*;
+
+import static org.junit.Assert.assertEquals;
 
 public class TestTablespaceGeneratorMultiTable {
 
-	public static String TEST_INPUT  = "in-" + TestTablespaceGeneratorMultiTable.class.getName();
-	public static String TEST_OUTPUT = "out-" + TestTablespaceGeneratorMultiTable.class.getName();
-	public static Character TAB = '\t';
-	
-	// ---- //
-	public static Schema PAYMENTS_SCHEMA = new Schema("payments", Fields.parse("name:string, amount:int, currency:string"));
-	public static Schema LOGS_SCHEMA = new Schema("logs", Fields.parse("name:string, date:string, action:string, loc:string"));
-	public static Schema GEODATA_SCHEMA = new Schema("geodata", Fields.parse("loc:string, lat:double, lng: double"));
-	
-	// ---- //
-	public static File PAYMENTS_FILE = new File(TEST_INPUT, "payments.txt");
-	public static File LOGS_FILE = new File(TEST_INPUT, "logs.txt");
-	public static File GEODATA_FILE = new File(TEST_INPUT, "geodata.txt");
+  public static String TEST_INPUT = "in-" + TestTablespaceGeneratorMultiTable.class.getName();
+  public static String TEST_OUTPUT = "out-" + TestTablespaceGeneratorMultiTable.class.getName();
+  public static Character TAB = '\t';
 
-	@Before
-	@After
-	public void cleanUp() throws IOException {
-		for(String cleanUpFolder: new String[] { TEST_INPUT, TEST_OUTPUT }) {
-			File outFolder = new File(cleanUpFolder);
-			if(outFolder.exists()) {
-				FileUtils.deleteDirectory(outFolder);
-			}
-		}
-	}
-	
-	@SuppressWarnings({ "rawtypes", "unchecked" })
+  // ---- //
+  public static Schema PAYMENTS_SCHEMA = new Schema("payments", Fields.parse("name:string, amount:int, currency:string"));
+  public static Schema LOGS_SCHEMA = new Schema("logs", Fields.parse("name:string, date:string, action:string, loc:string"));
+  public static Schema GEODATA_SCHEMA = new Schema("geodata", Fields.parse("loc:string, lat:double, lng: double"));
+
+  // ---- //
+  public static File PAYMENTS_FILE = new File(TEST_INPUT, "payments.txt");
+  public static File LOGS_FILE = new File(TEST_INPUT, "logs.txt");
+  public static File GEODATA_FILE = new File(TEST_INPUT, "geodata.txt");
+
+  @Before
+  @After
+  public void cleanUp() throws IOException {
+    for (String cleanUpFolder : new String[]{TEST_INPUT, TEST_OUTPUT}) {
+      File outFolder = new File(cleanUpFolder);
+      if (outFolder.exists()) {
+        FileUtils.deleteDirectory(outFolder);
+      }
+    }
+  }
+
+  @SuppressWarnings({"rawtypes", "unchecked"})
   @Test
 	public void test() throws Exception {
 		generateInput();

@@ -21,15 +21,13 @@ package com.splout.db.dnode;
  * #L%
  */
 
+import com.splout.db.engine.EngineManager;
 import net.sf.ehcache.CacheException;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.event.CacheEventListener;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import com.splout.db.engine.EngineManager;
 
 /**
  * An EHCache event listener that calls a finalization method in the value of the Cache which is a {@link EngineManager}
@@ -38,57 +36,57 @@ import com.splout.db.engine.EngineManager;
  */
 public class CacheListener implements CacheEventListener, Cloneable {
 
-	private final static Log log = LogFactory.getLog(CacheListener.class);
+  private final static Log log = LogFactory.getLog(CacheListener.class);
 
-	/*
-	 * Here is where we close the connection pool
-	 */
-	protected void closeManager(Element paramElement) {
-		log.info("Close manager: " + paramElement);
-		EngineManager manager = (EngineManager) paramElement.getObjectValue();
+  /*
+   * Here is where we close the connection pool
+   */
+  protected void closeManager(Element paramElement) {
+    log.info("Close manager: " + paramElement);
+    EngineManager manager = (EngineManager) paramElement.getObjectValue();
     manager.close();
-	}
+  }
 
-	@Override
-	public void notifyElementRemoved(Ehcache paramEhcache, Element paramElement) throws CacheException {
-		log.info("Element removed from DB cache: " + paramElement);
-		closeManager(paramElement);
-	}
+  @Override
+  public void notifyElementRemoved(Ehcache paramEhcache, Element paramElement) throws CacheException {
+    log.info("Element removed from DB cache: " + paramElement);
+    closeManager(paramElement);
+  }
 
-	@Override
-	public void notifyElementExpired(Ehcache paramEhcache, Element paramElement) {
-		log.info("Element expired from DB cache: " + paramElement);
-		closeManager(paramElement);
-	}
+  @Override
+  public void notifyElementExpired(Ehcache paramEhcache, Element paramElement) {
+    log.info("Element expired from DB cache: " + paramElement);
+    closeManager(paramElement);
+  }
 
-	@Override
-	public void notifyElementEvicted(Ehcache paramEhcache, Element paramElement) {
-		log.info("Element evicted from DB cache: " + paramElement);
-		closeManager(paramElement);
-	}
+  @Override
+  public void notifyElementEvicted(Ehcache paramEhcache, Element paramElement) {
+    log.info("Element evicted from DB cache: " + paramElement);
+    closeManager(paramElement);
+  }
 
-	@Override
-	public void notifyElementPut(Ehcache paramEhcache, Element paramElement) throws CacheException {
-		log.info("Element put: " + paramElement);
-	}
+  @Override
+  public void notifyElementPut(Ehcache paramEhcache, Element paramElement) throws CacheException {
+    log.info("Element put: " + paramElement);
+  }
 
-	@Override
-	public void notifyElementUpdated(Ehcache paramEhcache, Element paramElement) throws CacheException {
-		log.info("Element updated: " + paramElement);
-	}
+  @Override
+  public void notifyElementUpdated(Ehcache paramEhcache, Element paramElement) throws CacheException {
+    log.info("Element updated: " + paramElement);
+  }
 
-	@Override
-	public void notifyRemoveAll(Ehcache paramEhcache) {
-		log.info("Remove all!");
-	}
+  @Override
+  public void notifyRemoveAll(Ehcache paramEhcache) {
+    log.info("Remove all!");
+  }
 
-	@Override
-	public void dispose() {
-		log.info("Dispose!");
-	}
+  @Override
+  public void dispose() {
+    log.info("Dispose!");
+  }
 
-	@Override
-	public Object clone() throws CloneNotSupportedException {
-		return super.clone();
-	}
+  @Override
+  public Object clone() throws CloneNotSupportedException {
+    return super.clone();
+  }
 }

@@ -31,49 +31,59 @@ import com.splout.db.thrift.RollbackAction;
 import com.splout.db.thrift.TablespaceVersion;
 
 /**
- * A skeleton for DNode Mocks so that test cases only override the methods needed.
- * When changing IDNodeHandler, most of the cases it will be only neded to modify this class.
+ * A skeleton for DNode Mocks so that test cases only override the methods
+ * needed. When changing IDNodeHandler, most of the cases it will be only neded
+ * to modify this class.
  */
 public class DNodeMockHandler implements IDNodeHandler {
 
-	@Override
+  @Override
   public void init(SploutConfiguration config) throws Exception {
   }
-	@Override
+
+  @Override
   public void giveGreenLigth() {
   }
-	@Override
-  public String sqlQuery(String tablespace, long version, int partition, String query)
-      throws DNodeException {
-	  return null;
+
+  @Override
+  public String sqlQuery(String tablespace, long version, int partition, String query) throws DNodeException {
+    return null;
   }
-	@Override
+
+  @Override
   public String deploy(List<DeployAction> deployActions, long version) throws DNodeException {
-	  return null;
+    return null;
   }
-	@Override
+
+  @Override
   public String rollback(List<RollbackAction> rollbackActions, String ignoreMe) throws DNodeException {
-	  return null;
+    return null;
   }
-	@Override
+
+  @Override
   public String status() throws DNodeException {
-	  return null;
+    return null;
   }
-	@Override
+
+  @Override
   public String abortDeploy(long version) throws DNodeException {
-	  return null;
+    return null;
   }
-	@Override
+
+  @Override
   public String deleteOldVersions(List<TablespaceVersion> versions) throws DNodeException {
-	  return null;
+    return null;
   }
-	@Override
+
+  @Override
   public String testCommand(String command) throws DNodeException {
-	  return null;
+    return null;
   }
-	@Override
+
+  @Override
   public void stop() throws Exception {
   }
+
   @Override
   public ByteBuffer binarySqlQuery(String tablespace, long version, int partition, String query, int cursorId) throws DNodeException {
     return null;

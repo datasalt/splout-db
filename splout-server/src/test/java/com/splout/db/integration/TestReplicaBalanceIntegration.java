@@ -39,193 +39,193 @@ import static org.junit.Assert.assertTrue;
 
 public class TestReplicaBalanceIntegration extends BaseIntegrationTest {
 
-	public final static int N_QNODES = 3;
-	public final static int N_DNODES = 3;
+  public final static int N_QNODES = 3;
+  public final static int N_DNODES = 3;
 
-	public final static long SEED = 12345678;
-	public final static String TMP_FOLDER = "tmp-" + TestReplicaBalanceIntegration.class.getName();
+  public final static long SEED = 12345678;
+  public final static String TMP_FOLDER = "tmp-" + TestReplicaBalanceIntegration.class.getName();
 
-	@After
-	public void cleanTestBinaryFiles() throws IOException {
-		FileUtils.deleteDirectory(new File(TMP_FOLDER));
-	}
+  @After
+  public void cleanTestBinaryFiles() throws IOException {
+    FileUtils.deleteDirectory(new File(TMP_FOLDER));
+  }
 
-	@Test
-	public void test() throws Throwable {
-		FileUtils.deleteDirectory(new File(TMP_FOLDER));
-		new File(TMP_FOLDER).mkdirs();
+  @Test
+  public void test() throws Throwable {
+    FileUtils.deleteDirectory(new File(TMP_FOLDER));
+    new File(TMP_FOLDER).mkdirs();
 
-		createSploutEnsemble(N_QNODES, N_DNODES);
-		Random random = new Random(SEED);
+    createSploutEnsemble(N_QNODES, N_DNODES);
+    Random random = new Random(SEED);
 
-		Tablespace testTablespace = createTestTablespace(N_DNODES);
+    Tablespace testTablespace = createTestTablespace(N_DNODES);
 
-		File deployData = new File(TMP_FOLDER + "/" + "deploy-folder-" + random.nextInt());
-		deployData.mkdir();
+    File deployData = new File(TMP_FOLDER + "/" + "deploy-folder-" + random.nextInt());
+    deployData.mkdir();
 
-		for(int i = 0; i < N_DNODES; i++) {
-			File dbData = new File(deployData, i + ".db");
-			Files.write(new String("foo").getBytes(), dbData);
-		}
+    for (int i = 0; i < N_DNODES; i++) {
+      File dbData = new File(deployData, i + ".db");
+      Files.write(new String("foo").getBytes(), dbData);
+    }
 
-		final SploutClient[] clients = new SploutClient[N_QNODES];
+    final SploutClient[] clients = new SploutClient[N_QNODES];
 
-		for(int i = 0; i < N_QNODES; i++) {
-			clients[i] = new SploutClient(getqNodes().get(i).getAddress());
-		}
-		final SploutClient client1 = clients[0];
+    for (int i = 0; i < N_QNODES; i++) {
+      clients[i] = new SploutClient(getqNodes().get(i).getAddress());
+    }
+    final SploutClient client1 = clients[0];
 
-		// Check that all QNodes have the full list of DNodes
-		new TestUtils.NotWaitingForeverCondition() {
-			@Override
-			public boolean endCondition() {
-				try {
-					for(int i = 0; i < N_QNODES; i++) {
-						List<String> dNodeList = clients[i].dNodeList();
-						if(dNodeList.size() != 3) {
-							return false;
-						}
-						QNodeHandler handler = (QNodeHandler)getqNodes().get(i).getHandler();
-						for(String dnode: dNodeList) {
-							if(handler.getContext().getThriftClientCache().get(dnode) == null) {
-								return false;
-							}
-						}
-					}
-					return true;
-				} catch(IOException e) {
-					// test failed
-					e.printStackTrace();
-					return true;
-				}
-			}
-		}.waitAtMost(20000);
-		
-		// Deploy
-		client1.deploy("p1", testTablespace.getPartitionMap(), testTablespace.getReplicationMap(),
-		    deployData.getAbsoluteFile().toURI());
+    // Check that all QNodes have the full list of DNodes
+    new TestUtils.NotWaitingForeverCondition() {
+      @Override
+      public boolean endCondition() {
+        try {
+          for (int i = 0; i < N_QNODES; i++) {
+            List<String> dNodeList = clients[i].dNodeList();
+            if (dNodeList.size() != 3) {
+              return false;
+            }
+            QNodeHandler handler = (QNodeHandler) getqNodes().get(i).getHandler();
+            for (String dnode : dNodeList) {
+              if (handler.getContext().getThriftClientCache().get(dnode) == null) {
+                return false;
+              }
+            }
+          }
+          return true;
+        } catch (IOException e) {
+          // test failed
+          e.printStackTrace();
+          return true;
+        }
+      }
+    }.waitAtMost(20000);
 
-		// Check that all QNodes have the deployment data
-		new TestUtils.NotWaitingForeverCondition() {
+    // Deploy
+    client1.deploy("p1", testTablespace.getPartitionMap(), testTablespace.getReplicationMap(),
+        deployData.getAbsoluteFile().toURI());
 
-			@Override
-			public boolean endCondition() {
-				try {
-					for(int i = 0; i < N_QNODES; i++) {
-						Map<String, Tablespace> t = clients[i].overview().getTablespaceMap();
-						if(t.size() != 1) {
-							return false;
-						}
-						for(int k = 0; k < 3; k++) {
-							if(t.get("p1").getReplicationMap().getReplicationEntries().get(k).getNodes().size() != 2) {
-								return false;
-							}
-						}
-					}
-					return true;
-				} catch(IOException e) {
-					// test failed
-					e.printStackTrace();
-					return true;
-				}
-			}
-		}.waitAtMost(20000);
+    // Check that all QNodes have the deployment data
+    new TestUtils.NotWaitingForeverCondition() {
 
-		final DNode dnode1 = getdNodes().get(1);
+      @Override
+      public boolean endCondition() {
+        try {
+          for (int i = 0; i < N_QNODES; i++) {
+            Map<String, Tablespace> t = clients[i].overview().getTablespaceMap();
+            if (t.size() != 1) {
+              return false;
+            }
+            for (int k = 0; k < 3; k++) {
+              if (t.get("p1").getReplicationMap().getReplicationEntries().get(k).getNodes().size() != 2) {
+                return false;
+              }
+            }
+          }
+          return true;
+        } catch (IOException e) {
+          // test failed
+          e.printStackTrace();
+          return true;
+        }
+      }
+    }.waitAtMost(20000);
 
-		final Set<Integer> partitionsByNode1 = new HashSet<Integer>();
-		partitionsByNode1.add(0);
-		partitionsByNode1.add(1);
+    final DNode dnode1 = getdNodes().get(1);
 
-		// shutdown DNode1 and see what happens with auto-rebalancing
-		// the "partitionsByNode1" will become under-replicated and after a short period of time should be balanced
-		dnode1.testCommand(TestCommands.SHUTDOWN.toString());
+    final Set<Integer> partitionsByNode1 = new HashSet<Integer>();
+    partitionsByNode1.add(0);
+    partitionsByNode1.add(1);
 
-		// waiting until the system becomes under-replicated
-		new TestUtils.NotWaitingForeverCondition() {
+    // shutdown DNode1 and see what happens with auto-rebalancing
+    // the "partitionsByNode1" will become under-replicated and after a short period of time should be balanced
+    dnode1.testCommand(TestCommands.SHUTDOWN.toString());
 
-			@Override
-			public boolean endCondition() {
-				try {
-					boolean dnode1NotPresent = true;
-					for(int i = 0; i < N_QNODES; i++) {
-						Map.Entry<String, Tablespace> tEntry = clients[i].overview().getTablespaceMap().entrySet()
-						    .iterator().next();
-						ReplicationMap currentReplicationMap = tEntry.getValue().getReplicationMap();
-						for(ReplicationEntry entry : currentReplicationMap.getReplicationEntries()) {
-							if(entry.getNodes().contains(dnode1.getAddress())) {
-								dnode1NotPresent = false;
-							}
-						}
-					}
-					return dnode1NotPresent;
-				} catch(IOException e) {
-					// test failed
-					e.printStackTrace();
-					return true;
-				}
-			}
-		}.waitAtMost(60000);
+    // waiting until the system becomes under-replicated
+    new TestUtils.NotWaitingForeverCondition() {
 
-		// waiting now until the system recovers itself without dnode1
-		new TestUtils.NotWaitingForeverCondition() {
+      @Override
+      public boolean endCondition() {
+        try {
+          boolean dnode1NotPresent = true;
+          for (int i = 0; i < N_QNODES; i++) {
+            Map.Entry<String, Tablespace> tEntry = clients[i].overview().getTablespaceMap().entrySet()
+                .iterator().next();
+            ReplicationMap currentReplicationMap = tEntry.getValue().getReplicationMap();
+            for (ReplicationEntry entry : currentReplicationMap.getReplicationEntries()) {
+              if (entry.getNodes().contains(dnode1.getAddress())) {
+                dnode1NotPresent = false;
+              }
+            }
+          }
+          return dnode1NotPresent;
+        } catch (IOException e) {
+          // test failed
+          e.printStackTrace();
+          return true;
+        }
+      }
+    }.waitAtMost(60000);
 
-			@Override
-			public boolean endCondition() {
-				try {
-					boolean balanced = true;
-					for(int i = 0; i < N_QNODES; i++) {
-						Map.Entry<String, Tablespace> tEntry = clients[i].overview().getTablespaceMap().entrySet()
-						    .iterator().next();
-						ReplicationMap currentReplicationMap = tEntry.getValue().getReplicationMap();
-						for(ReplicationEntry entry : currentReplicationMap.getReplicationEntries()) {
-							if(entry.getNodes().size() < entry.getExpectedReplicationFactor()) {
-								balanced = false;
-							}
-						}
-					}
-					return balanced;
-				} catch(IOException e) {
-					// test failed
-					e.printStackTrace();
-					return true;
-				}
-			}
-		}.waitAtMost(20000);
+    // waiting now until the system recovers itself without dnode1
+    new TestUtils.NotWaitingForeverCondition() {
 
-		// now we bring back dnode1 to life
-		// what will happen now is that the partitions it seves will be over-replicated
-		dnode1.testCommand(TestCommands.RESTART.toString());
+      @Override
+      public boolean endCondition() {
+        try {
+          boolean balanced = true;
+          for (int i = 0; i < N_QNODES; i++) {
+            Map.Entry<String, Tablespace> tEntry = clients[i].overview().getTablespaceMap().entrySet()
+                .iterator().next();
+            ReplicationMap currentReplicationMap = tEntry.getValue().getReplicationMap();
+            for (ReplicationEntry entry : currentReplicationMap.getReplicationEntries()) {
+              if (entry.getNodes().size() < entry.getExpectedReplicationFactor()) {
+                balanced = false;
+              }
+            }
+          }
+          return balanced;
+        } catch (IOException e) {
+          // test failed
+          e.printStackTrace();
+          return true;
+        }
+      }
+    }.waitAtMost(20000);
 
-		// waiting now until the system is over-replicated
-		new TestUtils.NotWaitingForeverCondition() {
+    // now we bring back dnode1 to life
+    // what will happen now is that the partitions it seves will be over-replicated
+    dnode1.testCommand(TestCommands.RESTART.toString());
 
-			@Override
-			public boolean endCondition() {
-				try {
-					boolean overreplicated = true;
-					for(int i = 0; i < N_QNODES; i++) {
-						Map.Entry<String, Tablespace> tEntry = clients[i].overview().getTablespaceMap().entrySet()
-						    .iterator().next();
-						ReplicationMap currentReplicationMap = tEntry.getValue().getReplicationMap();
-						for(ReplicationEntry entry : currentReplicationMap.getReplicationEntries()) {
-							if(partitionsByNode1.contains(entry.getShard())
-							    && entry.getNodes().size() <= entry.getExpectedReplicationFactor()) {
-								overreplicated = false;
-							}
-						}
-					}
-					return overreplicated;
-				} catch(IOException e) {
-					// test failed
-					e.printStackTrace();
-					return true;
-				}
-			}
-		}.waitAtMost(20000);
+    // waiting now until the system is over-replicated
+    new TestUtils.NotWaitingForeverCondition() {
 
-		assertEquals(2, partitionsByNode1.size());
-		assertTrue(partitionsByNode1.contains(0));
-		assertTrue(partitionsByNode1.contains(1));
-	}
+      @Override
+      public boolean endCondition() {
+        try {
+          boolean overreplicated = true;
+          for (int i = 0; i < N_QNODES; i++) {
+            Map.Entry<String, Tablespace> tEntry = clients[i].overview().getTablespaceMap().entrySet()
+                .iterator().next();
+            ReplicationMap currentReplicationMap = tEntry.getValue().getReplicationMap();
+            for (ReplicationEntry entry : currentReplicationMap.getReplicationEntries()) {
+              if (partitionsByNode1.contains(entry.getShard())
+                  && entry.getNodes().size() <= entry.getExpectedReplicationFactor()) {
+                overreplicated = false;
+              }
+            }
+          }
+          return overreplicated;
+        } catch (IOException e) {
+          // test failed
+          e.printStackTrace();
+          return true;
+        }
+      }
+    }.waitAtMost(20000);
+
+    assertEquals(2, partitionsByNode1.size());
+    assertTrue(partitionsByNode1.contains(0));
+    assertTrue(partitionsByNode1.contains(1));
+  }
 }

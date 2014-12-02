@@ -23,5 +23,5 @@ package com.splout.db.dnode;
 
 public enum TestCommands {
 
-       SHUTDOWN, RESTART
+  SHUTDOWN, RESTART
 }

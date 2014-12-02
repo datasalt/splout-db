@@ -33,54 +33,61 @@ import java.io.Serializable;
  * The Tablespace entity is necessary for safely storing each tablespace's information in memory and atomically updating
  * it, for instance in {@link com.splout.db.qnode.QNodeHandler}.
  */
-@SuppressWarnings({ "serial" })
+@SuppressWarnings({"serial"})
 public class Tablespace implements Serializable {
 
-	@Override
-	public String toString() {
-		return "Tablespace [partitionMap=" + partitionMap + ", replicationMap=" + replicationMap + ", version=" + version
-		    + ", creationDate=" + creationDate + "]";
-	}
-
-	private PartitionMap partitionMap;
-	private ReplicationMap replicationMap;
-	private long version;
-	private long creationDate;
-
-	public Tablespace() {
-	}
-	
-	public Tablespace(PartitionMap partitionMap, ReplicationMap replicationMap, long version, long creationDate) {
-		this.partitionMap = partitionMap;
-		this.replicationMap = replicationMap;
-		this.version = version;
-		this.creationDate = creationDate;
-	}
-
-	// ---- Getters & Setters ---- //
-
-	public PartitionMap getPartitionMap() {
-		return partitionMap;
-	}
-	public ReplicationMap getReplicationMap() {
-		return replicationMap;
-	}
-	public long getVersion() {
-		return version;
-	}
-	public long getCreationDate() {
-		return creationDate;
-	}
-	public void setPartitionMap(PartitionMap partitionMap) {
-  	this.partitionMap = partitionMap;
+  @Override
+  public String toString() {
+    return "Tablespace [partitionMap=" + partitionMap + ", replicationMap=" + replicationMap + ", version=" + version
+        + ", creationDate=" + creationDate + "]";
   }
-	public void setReplicationMap(ReplicationMap replicationMap) {
-  	this.replicationMap = replicationMap;
+
+  private PartitionMap partitionMap;
+  private ReplicationMap replicationMap;
+  private long version;
+  private long creationDate;
+
+  public Tablespace() {
   }
-	public void setVersion(long version) {
-  	this.version = version;
+
+  public Tablespace(PartitionMap partitionMap, ReplicationMap replicationMap, long version, long creationDate) {
+    this.partitionMap = partitionMap;
+    this.replicationMap = replicationMap;
+    this.version = version;
+    this.creationDate = creationDate;
   }
-	public void setCreationDate(long creationDate) {
-  	this.creationDate = creationDate;
+
+  // ---- Getters & Setters ---- //
+
+  public PartitionMap getPartitionMap() {
+    return partitionMap;
+  }
+
+  public ReplicationMap getReplicationMap() {
+    return replicationMap;
+  }
+
+  public long getVersion() {
+    return version;
+  }
+
+  public long getCreationDate() {
+    return creationDate;
+  }
+
+  public void setPartitionMap(PartitionMap partitionMap) {
+    this.partitionMap = partitionMap;
+  }
+
+  public void setReplicationMap(ReplicationMap replicationMap) {
+    this.replicationMap = replicationMap;
+  }
+
+  public void setVersion(long version) {
+    this.version = version;
+  }
+
+  public void setCreationDate(long creationDate) {
+    this.creationDate = creationDate;
   }
 }

@@ -27,21 +27,21 @@ import com.splout.db.common.BaseBean;
  */
 public class StatusMessage extends BaseBean {
 
-	private String status;
+  private String status;
 
-	public StatusMessage() {
-		
-	}
-	
-	public StatusMessage(String status) {
-		this.status = status;
-	}
-	
-	public String getStatus() {
-  	return status;
+  public StatusMessage() {
+
   }
 
-	public void setStatus(String status) {
-  	this.status = status;
+  public StatusMessage(String status) {
+    this.status = status;
+  }
+
+  public String getStatus() {
+    return status;
+  }
+
+  public void setStatus(String status) {
+    this.status = status;
   }
 }

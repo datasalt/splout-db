@@ -42,136 +42,150 @@ import com.splout.db.thrift.TablespaceVersion;
 
 /**
  * The Thrift skeleton for the DNode service. This class only implements the Thrift logic.
- * <p>
+ * <p/>
  * The DNode's own business logic is packed into {@link DNodeHandler} which is an implementation of
  * {@link IDNodeHandler}. In this way, we can use the DNode in unit tests by using Mock implementations of
  * {@link IDNodeHandler}.
  */
 public class DNode implements DNodeService.Iface {
 
-	private final static Log log = LogFactory.getLog(DNode.class);
+  private final static Log log = LogFactory.getLog(DNode.class);
 
-	private IDNodeHandler handler;
-	private TServer server;
-	private Thread servingThread;
-	private SploutConfiguration config;
+  private IDNodeHandler handler;
+  private TServer server;
+  private Thread servingThread;
+  private SploutConfiguration config;
 
-	public DNode(SploutConfiguration config, IDNodeHandler handler) {
-		this.handler = handler;
-		this.config = config;
-	}
+  public DNode(SploutConfiguration config, IDNodeHandler handler) {
+    this.handler = handler;
+    this.config = config;
+  }
 
-	/**
-	 * Returns the address (host:port) of this DNode.
-	 */
-	public String getAddress() {
-		return config.getString(DNodeProperties.HOST) + ":" + config.getInt(DNodeProperties.PORT);
-	}
+  /**
+   * Returns the address (host:port) of this DNode.
+   */
+  public String getAddress() {
+    return config.getString(DNodeProperties.HOST) + ":" + config.getInt(DNodeProperties.PORT);
+  }
 
-	/**
-	 * Initialize the DNode service - the important thing here is to instantiate a multi-threaded Thrift server.
-	 * Everything is based on the given {@link SploutConfiguration} by constructor.
-	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public void init() throws Exception {
-		DNodeService.Processor processor = new DNodeService.Processor(this);
-		TNonblockingServerTransport serverTransport = null;
+  /**
+   * Initialize the DNode service - the important thing here is to instantiate a multi-threaded Thrift server.
+   * Everything is based on the given {@link SploutConfiguration} by constructor.
+   */
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  public void init() throws Exception {
+    DNodeService.Processor processor = new DNodeService.Processor(this);
+    TNonblockingServerTransport serverTransport = null;
 
-		boolean init = false;
-		int retries = 0;
-		int thriftPort;
-		
-		do {
-			thriftPort = config.getInt(DNodeProperties.PORT);
-			try {
-				serverTransport = new TNonblockingServerSocket(thriftPort);
-				init = true;
-			} catch(org.apache.thrift.transport.TTransportException e) {
-				if(!config.getBoolean(DNodeProperties.PORT_AUTOINCREMENT)) {
-					throw e;
-				}
-				config.setProperty(DNodeProperties.PORT, thriftPort + 1);
-				retries++;
-			}
-		} while(!init && retries < 100);
-		
-		handler.init(config);
+    boolean init = false;
+    int retries = 0;
+    int thriftPort;
 
-		THsHaServer.Args args = new THsHaServer.Args(serverTransport);
-		args.executorService(Executors.newFixedThreadPool(config.getInt(DNodeProperties.SERVING_THREADS)));
-		args.processor(processor);
-		
-		server = new THsHaServer(args);
-		// We instantiate a long-living serving thread that will use the Thrift server.
-		servingThread = new Thread("Serving Thread") {
-			public void run() {
-				try {
-					server.serve();
-				} catch(Throwable t) {
-					t.printStackTrace();
-				}
-			};
-		};
-		servingThread.start();
-		handler.giveGreenLigth();
-		log.info("Thrift server started on port: " + thriftPort);
-	}
+    do {
+      thriftPort = config.getInt(DNodeProperties.PORT);
+      try {
+        serverTransport = new TNonblockingServerSocket(thriftPort);
+        init = true;
+      } catch (org.apache.thrift.transport.TTransportException e) {
+        if (!config.getBoolean(DNodeProperties.PORT_AUTOINCREMENT)) {
+          throw e;
+        }
+        config.setProperty(DNodeProperties.PORT, thriftPort + 1);
+        retries++;
+      }
+    } while (!init && retries < 100);
 
-	// ---- The following methods are a facade for {@link IDNodeHandler} ---- //
+    handler.init(config);
 
-	@Override
-	public String sqlQuery(String tablespace, long version, int partition, String query)
-	    throws DNodeException, TException {
-		return handler.sqlQuery(tablespace, version, partition, query);
-	}
+    THsHaServer.Args args = new THsHaServer.Args(serverTransport);
+    args.executorService(Executors.newFixedThreadPool(config.getInt(DNodeProperties.SERVING_THREADS)));
+    args.processor(processor);
 
-	@Override
-	public String deploy(List<DeployAction> deployActions, long version) throws DNodeException, TException {
-		return handler.deploy(deployActions, version);
-	}
+    server = new THsHaServer(args);
+    // We instantiate a long-living serving thread that will use the Thrift server.
+    servingThread = new Thread("Serving Thread") {
+      public void run() {
+        try {
+          server.serve();
+        } catch (Throwable t) {
+          t.printStackTrace();
+        }
+      }
 
-	@Override
-	public String rollback(List<RollbackAction> rollbackActions, String distributedBarrier)
-	    throws DNodeException, TException {
-		return handler.rollback(rollbackActions, distributedBarrier);
-	}
+      ;
+    };
+    servingThread.start();
+    handler.giveGreenLigth();
+    log.info("Thrift server started on port: " + thriftPort);
+  }
 
-	@Override
-	public String status() throws DNodeException, TException {
-		return handler.status();
-	}
+  // ---- The following methods are a facade for {@link IDNodeHandler} ---- //
 
-	public void stop() throws Exception {
-		handler.stop();
-		server.stop();
-		servingThread.join();
-	}
+  @Override
+  public String sqlQuery(String tablespace, long version, int partition, String query)
+      throws DNodeException, TException {
+    return handler.sqlQuery(tablespace, version, partition, query);
+  }
 
-	public static void main(String[] args) throws Exception {
-		SploutConfiguration config;
-		if(args.length == 1) {
-			// config root
-			config = SploutConfiguration.get(args[0]);
-		} else {
-			config = SploutConfiguration.get();
-		}
-		DNode dnode = new DNode(config, new DNodeHandler());
-		dnode.init();
-	}
+  @Override
+  public String deploy(List<DeployAction> deployActions, long version) throws DNodeException, TException {
+    return handler.deploy(deployActions, version);
+  }
 
-	@Override
-	public String abortDeploy(long version) throws DNodeException, TException {
-		return handler.abortDeploy(version);
-	}
+  @Override
+  public String rollback(List<RollbackAction> rollbackActions, String distributedBarrier)
+      throws DNodeException, TException {
+    return handler.rollback(rollbackActions, distributedBarrier);
+  }
 
-	@Override
-	public String deleteOldVersions(List<TablespaceVersion> versions) throws DNodeException, TException {
-		return handler.deleteOldVersions(versions);
-	}
+  @Override
+  public String status() throws DNodeException, TException {
+    return handler.status();
+  }
 
-	@Override
+  public void stop() throws Exception {
+    server.stop();
+    handler.stop();
+    servingThread.join();
+  }
+
+  public static void main(String[] args) throws Exception {
+    SploutConfiguration config;
+    if (args.length == 1) {
+      // config root
+      config = SploutConfiguration.get(args[0]);
+    } else {
+      config = SploutConfiguration.get();
+    }
+    final DNode dnode = new DNode(config, new DNodeHandler());
+    // Add shutdown hook
+    Runtime.getRuntime().addShutdownHook(new Thread() {
+      @Override
+      public void run() {
+        try {
+          log.info("Shutdown hook called - trying to gently stop DNode ...");
+          dnode.stop();
+        } catch (Throwable e) {
+          log.error("Error in ShutdownHook", e);
+        }
+      }
+    });
+    dnode.init();
+  }
+
+  @Override
+  public String abortDeploy(long version) throws DNodeException, TException {
+    return handler.abortDeploy(version);
+  }
+
+  @Override
+  public String deleteOldVersions(List<TablespaceVersion> versions) throws DNodeException, TException {
+    return handler.deleteOldVersions(versions);
+  }
+
+  @Override
   public String testCommand(String command) throws DNodeException, TException {
-	  return handler.testCommand(command);
+    return handler.testCommand(command);
   }
 
   @Override

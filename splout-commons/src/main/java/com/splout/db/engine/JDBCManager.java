@@ -37,103 +37,99 @@ import com.splout.db.common.QueryResult;
 import com.splout.db.engine.EngineManager.EngineException;
 
 /**
- * Generic JDBC Manager which can be reused by any engine which is JDBC-compliant.
+ * Generic JDBC Manager which can be reused by any engine which is
+ * JDBC-compliant.
  */
 public class JDBCManager {
-	
-	private final static Log log = LogFactory.getLog(JDBCManager.class);
-	BoneCP connectionPool = null;
-	
-	public JDBCManager(String driver, String connectionUri, int nConnectionsPool, String userName, String password) throws SQLException, ClassNotFoundException {
-		
-		Class.forName(driver);
-		
-		BoneCPConfig config = new BoneCPConfig();
-		config.setJdbcUrl(connectionUri);
-		config.setMinConnectionsPerPartition(nConnectionsPool);
-		config.setMaxConnectionsPerPartition(nConnectionsPool);
-		config.setUsername(userName);
-		config.setPassword(password);
-		config.setPartitionCount(1);
-		config.setDefaultAutoCommit(false);
 
-		connectionPool = new BoneCP(config); // setup the connection pool
-	}
-	
-	public QueryResult query(String query, int maxResults) throws EngineException {
-		long start = System.currentTimeMillis();
-		Connection connection = null;
-		ResultSet rs = null;
-		Statement stmt = null;
-		try {
-			connection = connectionPool.getConnection(); // fetch a connection
-			stmt = connection.createStatement();
-			QueryResult result = null;
-			if(stmt.execute(query)) {
-				rs = stmt.getResultSet();
-				result = convertResultSetToQueryResult(rs, maxResults);
-			} else {
-				result = QueryResult.emptyQueryResult();
-			}
-			long end = System.currentTimeMillis();
-			log.info(Thread.currentThread().getName() + ": Query [" + query + "] handled in [" + (end - start)
-			    + "] ms.");
-			return result;
-		} catch(SQLException e) {
-			throw new EngineException(e);
-		} finally {
-			try {
-				if(rs != null) {
-					rs.close();
-				}
-				if(stmt != null) {
-					stmt.close();
-				}
-				connection.close();
-			} catch(SQLException e) {
-				throw new EngineException(e);
-			}
-		}
-	}
+  private final static Log log = LogFactory.getLog(JDBCManager.class);
+  BoneCP connectionPool = null;
 
-	// -------- //
+  public JDBCManager(String driver, String connectionUri, int nConnectionsPool, String userName, String password) throws SQLException,
+      ClassNotFoundException {
 
-	public static QueryResult convertResultSetToQueryResult(ResultSet rs, int maxResults)
-	    throws SQLException {
-		
-	  ResultSetMetaData md = rs.getMetaData();
-		int columns = md.getColumnCount();
+    Class.forName(driver);
+
+    BoneCPConfig config = new BoneCPConfig();
+    config.setJdbcUrl(connectionUri);
+    config.setMinConnectionsPerPartition(nConnectionsPool);
+    config.setMaxConnectionsPerPartition(nConnectionsPool);
+    config.setUsername(userName);
+    config.setPassword(password);
+    config.setPartitionCount(1);
+    config.setDefaultAutoCommit(false);
+
+    connectionPool = new BoneCP(config); // setup the connection pool
+  }
+
+  public QueryResult query(String query, int maxResults) throws EngineException {
+    long start = System.currentTimeMillis();
+    Connection connection = null;
+    ResultSet rs = null;
+    Statement stmt = null;
+    try {
+      connection = connectionPool.getConnection(); // fetch a connection
+      stmt = connection.createStatement();
+      QueryResult result = null;
+      if (stmt.execute(query)) {
+        rs = stmt.getResultSet();
+        result = convertResultSetToQueryResult(rs, maxResults);
+      } else {
+        result = QueryResult.emptyQueryResult();
+      }
+      long end = System.currentTimeMillis();
+      log.info(Thread.currentThread().getName() + ": Query [" + query + "] handled in [" + (end - start) + "] ms.");
+      return result;
+    } catch (SQLException e) {
+      throw new EngineException(e);
+    } finally {
+      try {
+        if (rs != null) {
+          rs.close();
+        }
+        if (stmt != null) {
+          stmt.close();
+        }
+        connection.close();
+      } catch (SQLException e) {
+        throw new EngineException(e);
+      }
+    }
+  }
+
+  public static QueryResult convertResultSetToQueryResult(ResultSet rs, int maxResults) throws SQLException {
+    ResultSetMetaData md = rs.getMetaData();
+    int columns = md.getColumnCount();
     String[] columnNames = new String[columns];
-		for(int i = 0; i < columns; i++) {
-		  columnNames[i] = md.getColumnName(i);
-		}
-		
-		List<Object[]> list = new ArrayList<Object[]>();
-		while(rs.next() && list.size() < maxResults) {
-			Object[] row = new Object[columns];
-			for(int i = 1; i <= columns; ++i) {
-				row[i] = rs.getObject(i);
-			}
-			list.add(row);
-		}
-		
-		if(list.size() == maxResults) {
-			throw new SQLException("Hard limit on number of results reached (" + maxResults
-			    + "), please use a LIMIT for this query.");
-		}
-		
-		return new QueryResult(columnNames, list);
-	}
+    for (int i = 0; i < columns; i++) {
+      columnNames[i] = md.getColumnName(i);
+    }
 
-	public void close() {
-		connectionPool.shutdown();
-	}
+    List<Object[]> list = new ArrayList<Object[]>();
+    while (rs.next() && list.size() < maxResults) {
+      Object[] row = new Object[columns];
+      for (int i = 1; i <= columns; ++i) {
+        row[i] = rs.getObject(i);
+      }
+      list.add(row);
+    }
 
-	public QueryResult exec(String query) throws EngineException {
-		return query(query, 1);
-	}
-	
-	public Connection getConnectionFromPool() throws SQLException {
-		return connectionPool.getConnection();
-	}
+    if (list.size() == maxResults) {
+      throw new SQLException("Hard limit on number of results reached (" + maxResults + "), please use a LIMIT for this query.");
+    }
+
+    return new QueryResult(columnNames, list);
+  }
+
+  public void close() {
+    connectionPool.shutdown();
+  }
+
+  public QueryResult exec(String query) throws EngineException {
+    return query(query, 1);
+  }
+
+  public Connection getConnectionFromPool() throws SQLException {
+    return connectionPool.getConnection();
+  }
 }

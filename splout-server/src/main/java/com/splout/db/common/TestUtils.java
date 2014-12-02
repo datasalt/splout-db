@@ -49,186 +49,190 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class TestUtils {
 
-	/**
-	 * Creates a simple database with two columns: one integer (a) and one string (b). It also insertes one default row
-	 * from parameters a, b.
-	 * @throws EngineException 
-	 */
-	public static void createFooDatabase(String where, int a, String b) throws SQLException, JSONSerDeException,
-	    ClassNotFoundException, EngineException {
-		File dbFolder = new File(where);
-		dbFolder.mkdir();
-		final SQLite4JavaManager manager = new SQLite4JavaManager();
-		manager.init(new File(where + "/" + "foo.db"), null, null);
-		manager.query("DROP TABLE IF EXISTS t;", 100);
-		manager.query("CREATE TABLE t (a INT, b TEXT);", 100);
-		manager.query("INSERT INTO t (a, b) VALUES (" + a + ", \"" + b + "\")", 100);
-		manager.close();
-	}
+  /**
+   * Creates a simple database with two columns: one integer (a) and one string (b). It also insertes one default row
+   * from parameters a, b.
+   *
+   * @throws EngineException
+   */
+  public static void createFooDatabase(String where, int a, String b) throws SQLException, JSONSerDeException,
+      ClassNotFoundException, EngineException {
+    File dbFolder = new File(where);
+    dbFolder.mkdir();
+    final SQLite4JavaManager manager = new SQLite4JavaManager();
+    SploutConfiguration testConfig = SploutConfiguration.getTestConfig();
+    manager.init(new File(where + "/" + "foo.db"), testConfig, null);
+    manager.query("DROP TABLE IF EXISTS t;", 100);
+    manager.query("CREATE TABLE t (a INT, b TEXT);", 100);
+    manager.query("INSERT INTO t (a, b) VALUES (" + a + ", \"" + b + "\")", 100);
+    manager.close();
+  }
 
-	/**
-	 * Use this method to get a high-level client for Hazelcast in unit tests.
-	 * @throws HazelcastConfigBuilderException 
-	 */
-	public static CoordinationStructures getCoordinationStructures(SploutConfiguration testConfig) throws HazelcastConfigBuilderException {
-		HazelcastInstance hz = Hazelcast.newHazelcastInstance(HazelcastConfigBuilder.build(testConfig));
-		CoordinationStructures coord = new CoordinationStructures(hz);
-		return coord;
-	}
-	
-	/**
-	 * Use this class for waiting on a certain condition up to some time.
-	 */
-	public static abstract class NotWaitingForeverCondition {
-		
-		public abstract boolean endCondition() throws Exception;
-		
-		public void waitAtMost(long patience) throws Exception {
-			long waitedSoFar = 0;
-			while(!endCondition()) {
-				Thread.sleep(200);
-				waitedSoFar += 200;
-				if(waitedSoFar > patience) {
-					throw new AssertionError("Waited more than " + patience + " on a test condition.");
-				}
-			}
-		}
-	}
-	
-	/**
-	 * Utility class that can be used for implementing things that can be retried up to a maximum number of times.
-	 */
-	public static abstract class CatchAndRetry {
+  /**
+   * Use this method to get a high-level client for Hazelcast in unit tests.
+   *
+   * @throws HazelcastConfigBuilderException
+   */
+  public static CoordinationStructures getCoordinationStructures(SploutConfiguration testConfig) throws HazelcastConfigBuilderException {
+    HazelcastInstance hz = Hazelcast.newHazelcastInstance(HazelcastConfigBuilder.build(testConfig));
+    CoordinationStructures coord = new CoordinationStructures(hz);
+    return coord;
+  }
 
-		private int maxRetrials;
-		private Class<? extends Throwable> exception;
+  /**
+   * Use this class for waiting on a certain condition up to some time.
+   */
+  public static abstract class NotWaitingForeverCondition {
 
-		public CatchAndRetry(Class<? extends Throwable> exception, int maxRetrials) {
-			this.exception = exception;
-			this.maxRetrials = maxRetrials;
-		}
+    public abstract boolean endCondition() throws Exception;
 
-		public abstract void businessLogic() throws Throwable;
-		public abstract void retryLogic();
-		
-		public void catchAndRetry() throws Throwable {
-			int trial = 0;
-			boolean succeeded = false;
-			do {
-				try {
-					businessLogic();
-					succeeded = true;
-				} catch(Throwable t) {
-					if(exception.isAssignableFrom(t.getClass())) {
-						trial++;
-						retryLogic();
-					} else {
-						throw t;
-					}
-				}
-			} while(!succeeded && trial < maxRetrials);
-		}
-	}
-	
-	/**
-	 * Returns a QNode instance if, after a maximum of X trials, we can find a port to bind it to.
-	 * The configuration passed by instance might have been modified accordingly.
-	 */
-	public static QNode getTestQNode(final SploutConfiguration testConfig, final IQNodeHandler handler) throws Throwable {
-		final AtomicReference<QNode> reference = new AtomicReference<QNode>();
-		CatchAndRetry qNodeInit = new CatchAndRetry(java.net.BindException.class, 50) {
+    public void waitAtMost(long patience) throws Exception {
+      long waitedSoFar = 0;
+      while (!endCondition()) {
+        Thread.sleep(200);
+        waitedSoFar += 200;
+        if (waitedSoFar > patience) {
+          throw new AssertionError("Waited more than " + patience + " on a test condition.");
+        }
+      }
+    }
+  }
 
-			@Override
+  /**
+   * Utility class that can be used for implementing things that can be retried up to a maximum number of times.
+   */
+  public static abstract class CatchAndRetry {
+
+    private int maxRetrials;
+    private Class<? extends Throwable> exception;
+
+    public CatchAndRetry(Class<? extends Throwable> exception, int maxRetrials) {
+      this.exception = exception;
+      this.maxRetrials = maxRetrials;
+    }
+
+    public abstract void businessLogic() throws Throwable;
+
+    public abstract void retryLogic();
+
+    public void catchAndRetry() throws Throwable {
+      int trial = 0;
+      boolean succeeded = false;
+      do {
+        try {
+          businessLogic();
+          succeeded = true;
+        } catch (Throwable t) {
+          if (exception.isAssignableFrom(t.getClass())) {
+            trial++;
+            retryLogic();
+          } else {
+            throw t;
+          }
+        }
+      } while (!succeeded && trial < maxRetrials);
+    }
+  }
+
+  /**
+   * Returns a QNode instance if, after a maximum of X trials, we can find a port to bind it to.
+   * The configuration passed by instance might have been modified accordingly.
+   */
+  public static QNode getTestQNode(final SploutConfiguration testConfig, final IQNodeHandler handler) throws Throwable {
+    final AtomicReference<QNode> reference = new AtomicReference<QNode>();
+    CatchAndRetry qNodeInit = new CatchAndRetry(java.net.BindException.class, 50) {
+
+      @Override
       public void businessLogic() throws Throwable {
-				QNode qNode = new QNode();
-				qNode.start(testConfig, handler);
-				reference.set(qNode);
-			}
+        QNode qNode = new QNode();
+        qNode.start(testConfig, handler);
+        reference.set(qNode);
+      }
 
-			@Override
+      @Override
       public void retryLogic() {
-				testConfig.setProperty(QNodeProperties.PORT, testConfig.getInt(QNodeProperties.PORT) + 1);
-			}
-		};
-		qNodeInit.catchAndRetry();
-		return reference.get();
-	}
-	
-	public static DNode getTestDNode(final SploutConfiguration testConfig, final IDNodeHandler handler, final String dataFolder) throws Throwable {
-		return getTestDNode(testConfig, handler, dataFolder, true);
-	}
-	
-	/**
-	 * Returns a DNode instance if, after a maximum of X trials, we can find a port to bind it to.
-	 * The configuration passed by instance might have been modified accordingly.
-	 */
-	public static DNode getTestDNode(final SploutConfiguration testConfig, final IDNodeHandler handler, final String dataFolder, boolean deleteDataFolder) throws Throwable {
-		final AtomicReference<DNode> reference = new AtomicReference<DNode>();
-		testConfig.setProperty(DNodeProperties.DATA_FOLDER, dataFolder);
-		if(deleteDataFolder) {
-			File file = new File(dataFolder);
-			if(file.exists()) {
-				FileUtils.deleteDirectory(file);
-			}
-			file.mkdir();
-		}
-		testConfig.setProperty(FetcherProperties.TEMP_DIR, "fetcher-" + dataFolder);
-		File fetcherTmp = new File("fetcher-" + dataFolder);
-		if(fetcherTmp.exists()) {
-			FileUtils.deleteDirectory(fetcherTmp);
-		}
-		fetcherTmp.mkdir();
-		CatchAndRetry dNodeInit = new CatchAndRetry(TTransportException.class, 50) {
+        testConfig.setProperty(QNodeProperties.PORT, testConfig.getInt(QNodeProperties.PORT) + 1);
+      }
+    };
+    qNodeInit.catchAndRetry();
+    return reference.get();
+  }
 
-			@Override
+  public static DNode getTestDNode(final SploutConfiguration testConfig, final IDNodeHandler handler, final String dataFolder) throws Throwable {
+    return getTestDNode(testConfig, handler, dataFolder, true);
+  }
+
+  /**
+   * Returns a DNode instance if, after a maximum of X trials, we can find a port to bind it to.
+   * The configuration passed by instance might have been modified accordingly.
+   */
+  public static DNode getTestDNode(final SploutConfiguration testConfig, final IDNodeHandler handler, final String dataFolder, boolean deleteDataFolder) throws Throwable {
+    final AtomicReference<DNode> reference = new AtomicReference<DNode>();
+    testConfig.setProperty(DNodeProperties.DATA_FOLDER, dataFolder);
+    if (deleteDataFolder) {
+      File file = new File(dataFolder);
+      if (file.exists()) {
+        FileUtils.deleteDirectory(file);
+      }
+      file.mkdir();
+    }
+    testConfig.setProperty(FetcherProperties.TEMP_DIR, "fetcher-" + dataFolder);
+    File fetcherTmp = new File("fetcher-" + dataFolder);
+    if (fetcherTmp.exists()) {
+      FileUtils.deleteDirectory(fetcherTmp);
+    }
+    fetcherTmp.mkdir();
+    CatchAndRetry dNodeInit = new CatchAndRetry(TTransportException.class, 50) {
+
+      @Override
       public void businessLogic() throws Throwable {
-				DNode dNode = new DNode(testConfig, handler);
-				dNode.init();
-				reference.set(dNode);
-			}
-			
-			@Override
-			public void retryLogic() {
-				testConfig.setProperty(DNodeProperties.PORT, testConfig.getInt(DNodeProperties.PORT) + 1);
-			}
-		};
-		dNodeInit.catchAndRetry();
-		return reference.get();
-	}
+        DNode dNode = new DNode(testConfig, handler);
+        dNode.init();
+        reference.set(dNode);
+      }
 
-	/**
-	 * Delete folders that *might* have been created by DNodes & ZooKeepers from a certain test class.
-	 * The number of instances is the number of different methods (and therefore unique namespaces) in the test class.
-	 * The convention is: dnode-ClassName-i for Dnode data folder of test class "className" and method "i".
-	 * Same follows for ZooKeeper data folders "zk-" and Fetcher TMP folders "fetcher-dnode-" .
-	 */
-	public static void cleanUpTmpFolders(String className, int nInstances) throws IOException {
-		File file = new File("dnode-" + className);
-		if(file.exists()) {
-			FileUtils.deleteDirectory(file);
-		}
-		file = new File("zk-" + className);
-		if(file.exists()) {
-			FileUtils.deleteDirectory(file);
-		}
-		file = new File("fetcher-dnode-" + className);
-		if(file.exists()) {
-			FileUtils.deleteDirectory(file);
-		}
-		for(int i = 0; i <= nInstances; i++) {
-			file = new File("dnode-" + className + "-" + i);
-			if(file.exists()) {
-				FileUtils.deleteDirectory(file);
-			}
-			file = new File("zk-" + className + "-" + i);
-			if(file.exists()) {
-				FileUtils.deleteDirectory(file);
-			}
-			file = new File("fetcher-dnode-" + className + "-" + i);
-			if(file.exists()) {
-				FileUtils.deleteDirectory(file);
-			}
-		}
-	}
+      @Override
+      public void retryLogic() {
+        testConfig.setProperty(DNodeProperties.PORT, testConfig.getInt(DNodeProperties.PORT) + 1);
+      }
+    };
+    dNodeInit.catchAndRetry();
+    return reference.get();
+  }
+
+  /**
+   * Delete folders that *might* have been created by DNodes & ZooKeepers from a certain test class.
+   * The number of instances is the number of different methods (and therefore unique namespaces) in the test class.
+   * The convention is: dnode-ClassName-i for Dnode data folder of test class "className" and method "i".
+   * Same follows for ZooKeeper data folders "zk-" and Fetcher TMP folders "fetcher-dnode-" .
+   */
+  public static void cleanUpTmpFolders(String className, int nInstances) throws IOException {
+    File file = new File("dnode-" + className);
+    if (file.exists()) {
+      FileUtils.deleteDirectory(file);
+    }
+    file = new File("zk-" + className);
+    if (file.exists()) {
+      FileUtils.deleteDirectory(file);
+    }
+    file = new File("fetcher-dnode-" + className);
+    if (file.exists()) {
+      FileUtils.deleteDirectory(file);
+    }
+    for (int i = 0; i <= nInstances; i++) {
+      file = new File("dnode-" + className + "-" + i);
+      if (file.exists()) {
+        FileUtils.deleteDirectory(file);
+      }
+      file = new File("zk-" + className + "-" + i);
+      if (file.exists()) {
+        FileUtils.deleteDirectory(file);
+      }
+      file = new File("fetcher-dnode-" + className + "-" + i);
+      if (file.exists()) {
+        FileUtils.deleteDirectory(file);
+      }
+    }
+  }
 
 }

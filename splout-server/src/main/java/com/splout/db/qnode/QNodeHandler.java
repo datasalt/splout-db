@@ -461,8 +461,8 @@ public class QNodeHandler implements IQNodeHandler {
    * Returns a {@link DeployInfo}.
    */
   public DeployInfo deploy(List<DeployRequest> deployRequest) throws Exception {
-		/*
-		 * The deployment is handled by the specialized module {@link Deployer}
+    /*
+     * The deployment is handled by the specialized module {@link Deployer}
 		 */
     return deployer.deploy(deployRequest);
   }
@@ -500,7 +500,9 @@ public class QNodeHandler implements IQNodeHandler {
         aliveDNodes.put(dnode.getAddress(), JSONSerDe.deSer(client.status(), DNodeSystemStatus.class));
       } catch (TTransportException e) {
         renew = true;
-        throw e;
+        DNodeSystemStatus dstatus = new DNodeSystemStatus();
+        dstatus.setSystemStatus("Unreachable");
+        aliveDNodes.put(dnode.getAddress(), dstatus);
       } finally {
         if (client != null) {
           context.returnDNodeClientToPool(dnode.getAddress(), client, renew);

@@ -5,12 +5,15 @@ Splout SQL Change Log
 
 IMPROVEMENTS
 
+ - 2014-11-28 - Timeout when pool of DNodes is full. Avoiding enqueue for always queries when Splout is full.
  - 2014-11-12 - QNode connections to DNode retrials are delayed in successive failures.
  - 2014-11-12 - All properties in Splout config starting by hazelcast. are passed through Hazelcast as is.
  - 2014-09-29 - Accepting responses compression with Gzip and deflate
 
  BUG FIXES
 
+ - 2014-12-01 - hz.tcp.cluster property only using the first given host
+ - 2014-11-28 - Solved a race condition in the TimeoutThread
  - 2014-11-28 - Thrift pools are not in infinite loop to renewal anymore.
  - 2014-11-12 - Upgrading to Hazelcast 3.3.2 that includes many bug fixes.
 

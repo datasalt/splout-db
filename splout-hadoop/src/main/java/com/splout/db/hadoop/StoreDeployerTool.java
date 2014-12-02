@@ -20,17 +20,6 @@ package com.splout.db.hadoop;
  * #L%
  */
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-
 import com.datasalt.pangool.utils.HadoopUtils;
 import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
@@ -40,6 +29,16 @@ import com.splout.db.common.SploutClient;
 import com.splout.db.engine.DefaultEngine;
 import com.splout.db.qnode.beans.DeployInfo;
 import com.splout.db.qnode.beans.DeployRequest;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * A generic class for deploying an already generated store by {@link TablespaceGenerator}.
@@ -68,10 +67,10 @@ public class StoreDeployerTool {
     log.info("Querying Splout QNode for list of DNodes...");
     SploutClient client = new SploutClient(qnode);
     List<String> dnodes = client.dNodeList();
-    if(dnodes == null || dnodes.size() == 0) {
-    	throw new IOException("No available DNodes in Splout cluster.");
+    if (dnodes == null || dnodes.size() == 0) {
+      throw new IOException("No available DNodes in Splout cluster.");
     }
-    
+
     int tIndex = 0;
     for (TablespaceDepSpec tablespace : deployments) {
       Path tablespaceOut = new Path(tablespace.getSourcePath());
@@ -105,19 +104,19 @@ public class StoreDeployerTool {
       if (tablespace.getInitStatements() != null) {
         initStatements.addAll(tablespace.getInitStatements());
       }
-      
+
       String engine = DefaultEngine.class.getName();
       // New : load the engine id used in the generation tool, if exists ( to maintain backwards compatibility )
       Path engineId = new Path(tablespaceOut, TablespaceGenerator.OUT_ENGINE);
-      if(sourceFs.exists(engineId)) {
-      	engine = HadoopUtils.fileToString(sourceFs, engineId);
-      	log.info("Using generated engine id: " + engine);
+      if (sourceFs.exists(engineId)) {
+        engine = HadoopUtils.fileToString(sourceFs, engineId);
+        log.info("Using generated engine id: " + engine);
       }
-      
+
       // Finally set
       deployRequests[tIndex].setInitStatements(initStatements);
       deployRequests[tIndex].setEngine(engine);
-      
+
       deployRequests[tIndex].setTablespace(tablespace.getTablespace());
       deployRequests[tIndex].setData_uri(new Path(absoluteOutPath, "store").toUri().toString());
       deployRequests[tIndex].setPartitionMap(partitionMap.getPartitionEntries());

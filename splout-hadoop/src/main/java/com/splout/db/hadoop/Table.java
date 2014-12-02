@@ -20,34 +20,35 @@ package com.splout.db.hadoop;
  * #L%
  */
 
+import com.google.common.collect.ImmutableList;
+
 import java.util.Arrays;
 import java.util.List;
-
-import com.google.common.collect.ImmutableList;
 
 /**
  * Immutable definition of a Splout Table whose view has to be generated. It can be obtained throuh {@link TableBuilder}.
  */
 public class Table {
 
-	private final ImmutableList<TableInput> files;
-	private final TableSpec tableSpec;
+  private final ImmutableList<TableInput> files;
+  private final TableSpec tableSpec;
 
-	Table(TableInput inputFile, TableSpec tableSpec) {
-		this(Arrays.asList(new TableInput[] { inputFile }), tableSpec);
-	}
-	
-	Table(List<TableInput> files, TableSpec tableSpec) {		
-		this.files = ImmutableList.copyOf(files);
-		this.tableSpec = tableSpec;
-	}
-	
-	// ---- Getters ---- //
-	
-	public List<TableInput> getFiles() {
-  	return files;
+  Table(TableInput inputFile, TableSpec tableSpec) {
+    this(Arrays.asList(new TableInput[]{inputFile}), tableSpec);
   }
-	public TableSpec getTableSpec() {
-  	return tableSpec;
+
+  Table(List<TableInput> files, TableSpec tableSpec) {
+    this.files = ImmutableList.copyOf(files);
+    this.tableSpec = tableSpec;
+  }
+
+  // ---- Getters ---- //
+
+  public List<TableInput> getFiles() {
+    return files;
+  }
+
+  public TableSpec getTableSpec() {
+    return tableSpec;
   }
 }

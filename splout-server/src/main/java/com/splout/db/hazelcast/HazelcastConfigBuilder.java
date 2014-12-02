@@ -21,11 +21,13 @@ package com.splout.db.hazelcast;
  * #L%
  */
 
+import com.google.common.base.Joiner;
 import com.hazelcast.config.*;
 import com.splout.db.common.SploutConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 
@@ -58,11 +60,11 @@ public class HazelcastConfigBuilder {
     // Or we can configure it through our facade
     Config hzConfig = new Config();
 
-    String strIFaces = buConf.getString(HazelcastProperties.INTERFACES);
-    if (strIFaces != null) {
-      log.info("-- Using Hazelcast network interfaces: " + strIFaces);
+    String[] iFacesArr = buConf.getStringArray(HazelcastProperties.INTERFACES);
+    if (iFacesArr.length != 0) {
+      log.info("-- Using Hazelcast network interfaces: " + Joiner.on(", ").join(iFacesArr));
       InterfacesConfig iFaces = new InterfacesConfig();
-      for (String strIFace : strIFaces.split(",")) {
+      for (String strIFace : iFacesArr) {
         iFaces.addInterface(strIFace.trim());
       }
       iFaces.setEnabled(true);
@@ -182,21 +184,21 @@ public class HazelcastConfigBuilder {
     join.getTcpIpConfig().setEnabled(true);
     join.getTcpIpConfig().setConnectionTimeoutSeconds(
         buConf.getInt(HazelcastProperties.TCP_CONNECTION_TIMEOUT_SECONDS, 20));
-    String tcpCluster = buConf.getString(HazelcastProperties.TCP_CLUSTER);
+    String[] tcpCluster = buConf.getStringArray(HazelcastProperties.TCP_CLUSTER);
 
-    if (tcpCluster == null) {
+    if (tcpCluster.length == 0) {
       throw new HazelcastConfigBuilderException("Enabled TCP join method but missing TCP Cluster key property ("
           + HazelcastProperties.TCP_CLUSTER + ")");
     }
 
-    String[] cluster = tcpCluster.split(",");
-    for (String host : cluster) {
-      try {
-        join.getTcpIpConfig().addMember(host);
-      } catch (Throwable e) {
-        log.error("Invalid host in TCP cluster", e);
-        throw new HazelcastConfigBuilderException("Invalid host in TCP cluster: " + host);
-      }
+    try {
+      // Comma separated hosts accepted.
+      ArrayList<String> members = new ArrayList<String>();
+      members.add(Joiner.on(",").join(tcpCluster));
+      join.getTcpIpConfig().setMembers(members);
+    } catch (Throwable e) {
+      log.error("Invalid host in TCP cluster", e);
+      throw new HazelcastConfigBuilderException("Invalid host in TCP cluster: " + tcpCluster);
     }
 
     String requiredMember = buConf.getString(HazelcastProperties.TCP_CLUSTER_REQUIRED_MEMBER);
@@ -221,7 +223,7 @@ public class HazelcastConfigBuilder {
     Iterator<String> hzKeys = buConf.getKeys("hazelcast");
     while (hzKeys.hasNext()) {
       String hzKey = hzKeys.next();
-      hzConfig.setProperty(hzKey, buConf.getString(hzKey));
+      hzConfig.setProperty(hzKey, Joiner.on(",").join(buConf.getStringArray(hzKey)));
     }
   }
 }

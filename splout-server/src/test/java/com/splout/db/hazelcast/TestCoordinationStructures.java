@@ -21,32 +21,31 @@ package com.splout.db.hazelcast;
  * #L%
  */
 
-import static org.junit.Assert.*;
-
-import org.junit.Test;
-
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.splout.db.common.SploutConfiguration;
 import com.splout.db.hazelcast.HazelcastConfigBuilder.HazelcastConfigBuilderException;
+import org.junit.Test;
+
+import static org.junit.Assert.assertTrue;
 
 public class TestCoordinationStructures {
 
-	@Test
-	public void testUniqueIdGenerator() throws HazelcastConfigBuilderException {
-		try {
-			SploutConfiguration config = SploutConfiguration.getTestConfig();
-			HazelcastInstance hz = Hazelcast.newHazelcastInstance(HazelcastConfigBuilder.build(config));
-			CoordinationStructures cS = new CoordinationStructures(hz);
-			
-			for(int i = 0; i < 1000; i++) {
-				long version1 = cS.uniqueVersionId();
-				long version2 = cS.uniqueVersionId();
-				assertTrue(version2 > version1);
-			}
-			
-		} finally {
-			Hazelcast.shutdownAll();
-		}
-	}
+  @Test
+  public void testUniqueIdGenerator() throws HazelcastConfigBuilderException {
+    try {
+      SploutConfiguration config = SploutConfiguration.getTestConfig();
+      HazelcastInstance hz = Hazelcast.newHazelcastInstance(HazelcastConfigBuilder.build(config));
+      CoordinationStructures cS = new CoordinationStructures(hz);
+
+      for (int i = 0; i < 1000; i++) {
+        long version1 = cS.uniqueVersionId();
+        long version2 = cS.uniqueVersionId();
+        assertTrue(version2 > version1);
+      }
+
+    } finally {
+      Hazelcast.shutdownAll();
+    }
+  }
 }

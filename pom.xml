@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <!-- POM Relationships -->
 
@@ -31,7 +32,7 @@
         <hadoop.cdh5.version>2.3.0-cdh5.0.0</hadoop.cdh5.version>
     </properties>
 
-    <dependencies />
+    <dependencies/>
 
     <profiles>
         <profile>
@@ -40,7 +41,7 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
-                <postfix.mapreduce.version />
+                <postfix.mapreduce.version/>
             </properties>
         </profile>
 
@@ -72,7 +73,7 @@
                 <version>2.9</version>
                 <configuration>
                     <projectNameTemplate>[artifactId]</projectNameTemplate>
-                    <manifest />
+                    <manifest/>
                     <downloadSources>true</downloadSources>
                     <downloadJavadocs>true</downloadJavadocs>
                 </configuration>
@@ -217,7 +218,7 @@
         </repository>
     </repositories>
 
-    <pluginRepositories />
+    <pluginRepositories/>
 
     <distributionManagement>
         <snapshotRepository>

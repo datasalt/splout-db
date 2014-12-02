@@ -27,28 +27,32 @@ import com.splout.db.common.BaseBean;
  */
 public class SwitchVersionRequest extends BaseBean {
 
-	String tablespace;
-	long version;
-	
-	public SwitchVersionRequest() {	}
-	
-	public SwitchVersionRequest(String tablespace, long version) {
-	  super();
-	  this.tablespace = tablespace;
-	  this.version = version;
+  String tablespace;
+  long version;
+
+  public SwitchVersionRequest() {
   }
-	
-	// ----------------- //
-	public String getTablespace() {
-  	return tablespace;
+
+  public SwitchVersionRequest(String tablespace, long version) {
+    super();
+    this.tablespace = tablespace;
+    this.version = version;
   }
-	public void setTablespace(String table_partition) {
-  	this.tablespace = table_partition;
+
+  // ----------------- //
+  public String getTablespace() {
+    return tablespace;
   }
-	public long getVersion() {
-  	return version;
+
+  public void setTablespace(String table_partition) {
+    this.tablespace = table_partition;
   }
-	public void setVersion(long version) {
-  	this.version = version;
+
+  public long getVersion() {
+    return version;
+  }
+
+  public void setVersion(long version) {
+    this.version = version;
   }
 }

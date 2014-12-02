@@ -61,7 +61,7 @@ import com.splout.db.thrift.RollbackAction;
 
 public class TestQNodeHandler {
 
-	public final static String FAKE_DEPLOY_FOLDER = "fake-deploy-db";
+  public final static String FAKE_DEPLOY_FOLDER = "fake-deploy-db";
 
 	@After
 	@Before
@@ -458,4 +458,5 @@ public class TestQNodeHandler {
 			Hazelcast.shutdownAll();
 		}
 	}
+
 }

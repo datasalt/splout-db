@@ -38,8 +38,8 @@ public class TablespaceDepSpec {
 
   public TablespaceDepSpec(String tablespace, String sourcePath, int replication, List<String> initStatements) {
     super();
-    if(replication < 1) {
-    	throw new IllegalArgumentException("Illegal replication factor " + replication + " must be >= 1");
+    if (replication < 1) {
+      throw new IllegalArgumentException("Illegal replication factor " + replication + " must be >= 1");
     }
     this.tablespace = tablespace;
     this.sourcePath = sourcePath;

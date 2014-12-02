@@ -38,14 +38,14 @@ import java.util.Map;
 @SuppressWarnings("serial")
 public class QueryServlet extends BaseServlet {
 
-	public QueryServlet(IQNodeHandler qNodeHandler) {
-		super(qNodeHandler);
-	}
+  public QueryServlet(IQNodeHandler qNodeHandler) {
+    super(qNodeHandler);
+  }
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+  @SuppressWarnings({"unchecked", "rawtypes"})
   @Override
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
-	    IOException {
+  protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
+      IOException {
 
 		String tablespace = req.getParameter("tablespace");
 		Integer cursorId = null;
@@ -56,10 +56,10 @@ public class QueryServlet extends BaseServlet {
 		StringBuffer postBody = new StringBuffer();
 		String line = null;
 
-		BufferedReader reader = req.getReader();
-		while((line = reader.readLine()) != null) {
-			postBody.append(line);
-		}
+    BufferedReader reader = req.getReader();
+    while ((line = reader.readLine()) != null) {
+      postBody.append(line);
+    }
 
     Map<String, Object> params;
     try {
@@ -114,17 +114,17 @@ public class QueryServlet extends BaseServlet {
         errMsg = errMsg != null ? errMsg.replace("[", "(").replace("]", ")") : null;
         status = "status[ERROR] errMessage[" + errMsg + "]";
       }
-			log.info("Query request received, tablespace[" + tablespace
-			    + "], key[" + key + "], sql[" + sql + "] time[" + st.getMillis() + "] " + status);
-			String response;
-			response = JSONSerDe.ser(st);
-			if(callback != null) {
-				response = callback + "(" + response + ")";
-			}
-			resp.getWriter().append(response);
-		} catch(Exception e) {
-			log.error(e);
-			throw new ServletException(e);
-		}
-	}
+      log.info("Query request received, tablespace[" + tablespace
+          + "], key[" + key + "], sql[" + sql + "] time[" + st.getMillis() + "] " + status);
+      String response;
+      response = JSONSerDe.ser(st);
+      if (callback != null) {
+        response = callback + "(" + response + ")";
+      }
+      resp.getWriter().append(response);
+    } catch (Exception e) {
+      log.error(e);
+      throw new ServletException(e);
+    }
+  }
 }

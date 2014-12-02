@@ -48,11 +48,11 @@ import java.util.concurrent.TimeUnit;
 @SuppressWarnings({ "serial", "rawtypes" })
 public class FixedDNodeList extends ConcurrentHashMap<String, DNodeInfo> implements IMap<String, DNodeInfo> {
 
-	public FixedDNodeList(List<String> dNodes, List<DNodeInfo> values) {
-    for(int i=0; i<dNodes.size(); i++) {
+  public FixedDNodeList(List<String> dNodes, List<DNodeInfo> values) {
+    for (int i = 0; i < dNodes.size(); i++) {
       put(dNodes.get(i), values.get(i));
     }
-	}
+  }
 
   @Override
   public void delete(Object key) {
