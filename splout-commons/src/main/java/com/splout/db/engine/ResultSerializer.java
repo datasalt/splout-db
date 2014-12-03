@@ -62,7 +62,8 @@ public class ResultSerializer {
     ByteArrayOutputStream stream = new ByteArrayOutputStream();
     Output output = new Output(stream);
     localKryo.get().writeObject(output, result);
-    return ByteBuffer.wrap(output.getBuffer(), 0, output.position());
+    output.flush();
+    return ByteBuffer.wrap(stream.toByteArray());
   }
 
   public static ResultAndCursorId deserialize(ByteBuffer serialized) throws SerializationException {
