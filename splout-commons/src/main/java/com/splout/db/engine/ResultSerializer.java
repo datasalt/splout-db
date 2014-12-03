@@ -35,7 +35,7 @@ import com.splout.db.common.QueryResult;
  */
 public class ResultSerializer {
 
-  public static ThreadLocal<Kryo> localKryo = new ThreadLocal<Kryo>() {
+  public final static ThreadLocal<Kryo> localKryo = new ThreadLocal<Kryo>() {
 
     protected Kryo initialValue() {
       return new Kryo();
@@ -58,12 +58,17 @@ public class ResultSerializer {
     }
   }
 
-  public static ByteBuffer serialize(ResultAndCursorId result) throws SerializationException {
+  public static ByteBuffer serialize(Object result) throws SerializationException {
     ByteArrayOutputStream stream = new ByteArrayOutputStream();
     Output output = new Output(stream);
     localKryo.get().writeObject(output, result);
     output.flush();
     return ByteBuffer.wrap(stream.toByteArray());
+  }
+  
+  public static <T> T deserialize(ByteBuffer serialized, Class<T> clzz) {
+    return ResultSerializer.localKryo.get().readObject(new Input(serialized.array(), serialized.position(), serialized.remaining()),
+        clzz);
   }
 
   public static ResultAndCursorId deserialize(ByteBuffer serialized) throws SerializationException {
