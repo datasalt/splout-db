@@ -99,6 +99,7 @@ public class QueryServlet extends BaseServlet {
     }
 
     try {
+      long startTime = System.currentTimeMillis();
       QueryStatus st = qNodeHandler.query(tablespace, key, sql, partition);
       String status = "status[OK]";
       if (st instanceof ErrorQueryStatus) {
@@ -107,7 +108,7 @@ public class QueryServlet extends BaseServlet {
         status = "status[ERROR] errMessage[" + errMsg + "]";
       }
       log.info("Query request received, tablespace[" + tablespace
-          + "], key[" + key + "], sql[" + sql + "] time[" + st.getMillis() + "] " + status);
+          + "], key[" + key + "], sql[" + sql + "] time[" + (System.currentTimeMillis() - startTime) + "] " + status);
       String response;
       response = JSONSerDe.ser(st);
       if (callback != null) {
