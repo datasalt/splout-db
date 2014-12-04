@@ -443,6 +443,7 @@ public class DNodeHandler implements IDNodeHandler {
         status = "OK";
         return result;
       } catch (Throwable e) {
+        // TODO: Look to the exception and determine if the exception is really UNEXPECTED or maybe is just a syntax error or something like that.
         unexpectedException(e);
         errMsg = e.getMessage();
         throw new DNodeException(EXCEPTION_UNEXPECTED, e.getMessage());

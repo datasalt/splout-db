@@ -23,6 +23,7 @@ package com.splout.db.qnode;
 
 import com.splout.db.common.*;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
+import com.splout.db.dnode.DNodeHandler;
 import com.splout.db.hazelcast.TablespaceVersion;
 import com.splout.db.qnode.beans.ErrorQueryStatus;
 import com.splout.db.qnode.beans.QueryStatus;
@@ -196,10 +197,15 @@ public class Querier extends QNodeHandlerModule {
         log.info("Interrupt received when retrieving connection from pool for dnode[" + electedNode + "] " + msg, e);
         // In this case we don't retry.
       } catch (DNodeException e) {
-        if (tried == repEntry.getNodes().size()) {
-          return new ErrorQueryStatus("DNode exception [" + e.getMsg() + "] from dnode[" + electedNode + "] for " + msg);
+        if (e.getCode() == DNodeHandler.EXCEPTION_ORDINARY) {
+          // In this case we shoulndn't rety. Just return exception. Typically this error are syntax errors or this kind of things
+          return new ErrorQueryStatus(e.getMsg() + " from dnode[" + electedNode + "] for " + msg);
         } else {
-          log.warn("Error resolving query with dnode[" + electedNode + "] at trial[" + tried + "] of[" + repEntry.getNodes().size() + "] DNodes. Will retry. Info: " + msg, e);
+          if (tried == repEntry.getNodes().size()) {
+            return new ErrorQueryStatus("DNode exception [" + e.getMsg() + "] from dnode[" + electedNode + "] for " + msg);
+          } else {
+            log.warn("Error resolving query with dnode[" + electedNode + "] at trial[" + tried + "] of[" + repEntry.getNodes().size() + "] DNodes. Will retry. Info: " + msg, e);
+          }
         }
       } catch (TException e) {
         if (tried == repEntry.getNodes().size()) {
