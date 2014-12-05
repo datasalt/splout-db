@@ -87,6 +87,13 @@ public class DNodeHandler implements IDNodeHandler {
   AtomicBoolean lastDeployTimedout = new AtomicBoolean(false);
 
   // Thrift exception code used in DNodeException
+  // ORDINARY: Exception that is expected when Splout is wrongly used. For example, with SQL syntax errors,
+  // or table not found, or this kind of things. In this case, this exceptions are just returned to the user
+  // without doing retrials at other DNodes because the expected result will be same. Also, this exeptions
+  // are not logged as they are Expected.
+  // UNEXPECTED: Exceptions that are not expected or that represents a real error: database corruption,
+  // imposibility to create a connection to the database, etc. This exceptions are logged and
+  // queries are retied at other DNodes.
   public final static int EXCEPTION_ORDINARY = 0;
   public final static int EXCEPTION_UNEXPECTED = 1;
 
@@ -398,7 +405,7 @@ public class DNodeHandler implements IDNodeHandler {
     } catch (Exception e) {
       log.error(e);
       e.printStackTrace();
-      throw new DNodeException(EXCEPTION_ORDINARY,
+      throw new DNodeException(EXCEPTION_UNEXPECTED,
           "Error (" + e.getMessage() + ") instantiating a manager for a data partition");
     }
   }
@@ -427,7 +434,7 @@ public class DNodeHandler implements IDNodeHandler {
             if (!dbFolder.exists()) {
               errMsg = "Requested tablespace (" + tablespace
                   + ") + version (" + version + ") and partition (" + partition + ") is not available at this DNode.";
-              throw new DNodeException(EXCEPTION_ORDINARY, errMsg);
+              throw new DNodeException(EXCEPTION_UNEXPECTED, errMsg);
             }
             File metadata = getLocalMetadataFile(tablespace, partition, version);
             ThriftReader reader = new ThriftReader(metadata);
