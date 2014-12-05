@@ -135,17 +135,20 @@ public class SQLite4JavaClient {
     }
 
     SQLiteStatement st = null;
+    SQLiteConnection conn = db.get();
+
+    if (conn == null) {
+      throw new SQLException("Imposible to create SQLite connection to " + dbFile );
+    }
+
     try {
-      SQLiteConnection conn = db.get();
       if (timeoutThread != null) {
         timeoutThread.startQuery(conn, query);
       }
+
       // We don't want to cache the statements here so we use "false"
       // Don't use the method without boolean because it will use cached = true!!!
       st = conn.prepare(query, false);
-      if (timeoutThread != null) {
-        timeoutThread.endQuery(conn);
-      }
       List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
       if (st.step()) {
         do {
@@ -168,6 +171,9 @@ public class SQLite4JavaClient {
     } catch (SQLException e) {
       throw new SQLException(e);
     } finally {
+      if (timeoutThread != null) {
+        timeoutThread.endQuery(conn);
+      }
       if (st != null) {
         st.dispose();
       }

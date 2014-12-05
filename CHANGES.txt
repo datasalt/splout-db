@@ -12,6 +12,7 @@ IMPROVEMENTS
 
  BUG FIXES
 
+ - 2014-12-05 - TimeoutThread not working properly due to only covering statement prepare.
  - 2014-12-01 - hz.tcp.cluster property only using the first given host
  - 2014-11-28 - Solved a race condition in the TimeoutThread
  - 2014-11-28 - Thrift pools are not in infinite loop to renewal anymore.
