@@ -56,7 +56,7 @@ public class TestSQLite4JavaOutputFormat extends SploutSQLOutputFormatTester imp
     // Assert that the DB has been created successfully
 
     assertTrue(new File(OUTPUT + "/0.db").exists());
-    SQLite4JavaClient manager = new SQLite4JavaClient(OUTPUT + "/0.db", null, false, 0);
+    SQLite4JavaClient manager = new SQLite4JavaClient(OUTPUT + "/0.db", null);
     @SuppressWarnings("rawtypes")
     List list = manager.query("SELECT * FROM schema1;", 100).mapify();
     assertEquals(6, list.size());

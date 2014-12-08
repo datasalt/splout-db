@@ -57,13 +57,17 @@ public class ResultSerializer {
       super(why, t);
     }
   }
-
-  public static ByteBuffer serialize(Object result) throws SerializationException {
+  
+  public static byte[] serializeToByteArray(Object result) throws SerializationException {
     ByteArrayOutputStream stream = new ByteArrayOutputStream();
     Output output = new Output(stream);
     localKryo.get().writeObject(output, result);
     output.flush();
-    return ByteBuffer.wrap(stream.toByteArray());
+    return stream.toByteArray();
+  }
+
+  public static ByteBuffer serialize(Object result) throws SerializationException {
+    return ByteBuffer.wrap(serializeToByteArray(result));
   }
   
   public static <T> T deserialize(ByteBuffer serialized, Class<T> clzz) {
@@ -71,8 +75,8 @@ public class ResultSerializer {
         clzz);
   }
 
-  public static ResultAndCursorId deserialize(ByteBuffer serialized) throws SerializationException {
+  public static QueryResult deserialize(ByteBuffer serialized) throws SerializationException {
     return ResultSerializer.localKryo.get().readObject(new Input(serialized.array(), serialized.position(), serialized.remaining()),
-        ResultAndCursorId.class);
+        QueryResult.class);
   }
 }

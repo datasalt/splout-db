@@ -111,7 +111,7 @@ public class MySQLManager implements EngineManager {
 	}
 
   @Override
-  public ResultAndCursorId query(String query, int previousCursorId, int maxResults) throws EngineException {
+  public void streamQuery(StreamingIterator visitor) throws EngineException {
     throw new NotImplementedException();
   }
 }

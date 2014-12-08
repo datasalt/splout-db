@@ -107,7 +107,7 @@ public class TestTablespaceGeneratorMultiplePartitionBy {
 		List distinctKeys = new ArrayList();
 		
 		for(int i = 0; i < 3; i++) {
-			SQLite4JavaClient manager = new SQLite4JavaClient(TEST_OUTPUT + "/store/" + i + ".db", null, false, 0);
+			SQLite4JavaClient manager = new SQLite4JavaClient(TEST_OUTPUT + "/store/" + i + ".db", null);
 			List list;
 			list = manager.query("SELECT * FROM payments;", 100).mapify();
 			totalPayments.addAll(list);

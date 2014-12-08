@@ -20,20 +20,34 @@ package com.splout.db.common;
  * #L%
  */
 
-import com.google.api.client.http.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.io.IOUtils;
+
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpContent;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestFactory;
+import com.google.api.client.http.HttpRequestInitializer;
+import com.google.api.client.http.HttpResponse;
+import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
-import com.splout.db.engine.ResultAndCursorId;
 import com.splout.db.qnode.beans.DeployInfo;
 import com.splout.db.qnode.beans.DeployRequest;
 import com.splout.db.qnode.beans.QNodeStatus;
 import com.splout.db.qnode.beans.QueryStatus;
-import org.apache.commons.io.IOUtils;
-
-import java.io.*;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.*;
 
 /**
  * Java HTTP Interface to Splout that uses Google Http Client (https://code.google.com/p/google-http-java-client/). We
@@ -163,24 +177,16 @@ public class SploutClient {
   }
 
   /*
-   * 
-   */
-  public QueryStatus query(String tablespace, String key, String query, String partition)
-  throws IOException {
-    return query(tablespace, key, query, partition, ResultAndCursorId.NO_CURSOR);
-  }
-  
-  /*
    *
    */
-  public QueryStatus query(String tablespace, String key, String query, String partition, Integer cursorId)
+  public QueryStatus query(String tablespace, String key, String query, String partition)
       throws IOException {
     URI uri;
     try {
       uri = new URI("http", qNodesNoProtocol[(int) (Math.random() * qNodes.length)], "/api/query/"
           + tablespace, "&sql=" + query + (key != null ? "&key=" + key : "")
           + (partition != null ? "&partition=" + partition : "")
-          + ((cursorId != null && cursorId != ResultAndCursorId.NO_CURSOR) ? "&cursorId=" + cursorId : ""), null);
+         , null);
 
       HttpRequest request = requestFactory.buildGetRequest(new GenericUrl(uri.toASCIIString()));
       HttpResponse resp = request.execute();

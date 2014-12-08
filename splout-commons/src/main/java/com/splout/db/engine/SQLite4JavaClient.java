@@ -29,13 +29,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import net.sf.ehcache.Cache;
-import net.sf.ehcache.CacheException;
-import net.sf.ehcache.Ehcache;
-import net.sf.ehcache.Element;
-import net.sf.ehcache.event.CacheEventListenerAdapter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -70,10 +63,6 @@ public class SQLite4JavaClient {
   // As SQLiteConnections can only be used and closed by the SAME THREAD that
   // created them, this is the only feasible solution I came up with.
   public static ConcurrentHashMap<String, Set<SQLiteConnection>> CLEAN_UP_AFTER_YOURSELF = new ConcurrentHashMap<String, Set<SQLiteConnection>>();
-
-  private AtomicInteger cursorIdGenerator = new AtomicInteger(0);
-  private Cache serverSideCursors;
-  private boolean enableCursors;
 
   ThreadLocal<SQLiteConnection> db = new ThreadLocal<SQLiteConnection>() {
 
@@ -112,30 +101,9 @@ public class SQLite4JavaClient {
     }
   };
 
-  public SQLite4JavaClient(String dbFile, List<String> initStatements, boolean enableCursors, int serverSideCursorsTimeout) {
+  public SQLite4JavaClient(String dbFile, List<String> initStatements) {
     this.dbFile = new File(dbFile);
     this.initStatements = initStatements;
-    this.enableCursors = enableCursors;
-    if (enableCursors) {
-      serverSideCursors = new Cache("serverSideCursors", 0, false, false, Integer.MAX_VALUE, serverSideCursorsTimeout);
-      serverSideCursors.initialise();
-      serverSideCursors.getCacheEventNotificationService().registerListener(new CacheEventListenerAdapter() {
-        @Override
-        public void notifyElementEvicted(Ehcache cache, Element element) {
-          ((SQLiteStatement) element.getObjectValue()).dispose();
-        }
-
-        @Override
-        public void notifyElementRemoved(Ehcache cache, Element element) throws CacheException {
-          ((SQLiteStatement) element.getObjectValue()).dispose();
-        }
-
-        @Override
-        public void notifyElementExpired(Ehcache cache, Element element) {
-          ((SQLiteStatement) element.getObjectValue()).dispose();
-        }
-      });
-    }
   }
 
   /**
@@ -160,25 +128,40 @@ public class SQLite4JavaClient {
     }
   }
 
-  /**
-   * Non-cursor-aware method
-   */
+  public void stream(StreamingIterator iterator) throws SQLiteException {
+    SQLiteStatement st = null;
+    SQLiteConnection conn = db.get();
+    st = conn.prepare(iterator.getQuery(), false);
+
+    String[] columnNames = null;
+    Object[] objectToRead = new Object[st.columnCount()];
+
+    try {
+      while (true) {
+        st.step();
+        if (!st.hasRow()) {
+          break;
+        }
+        if (columnNames == null) {
+          columnNames = new String[st.columnCount()];
+          for (int i = 0; i < st.columnCount(); i++) {
+            columnNames[i] = st.getColumnName(i);
+          }
+          iterator.columns(columnNames);
+        }
+        for (int i = 0; i < st.columnCount(); i++) {
+          objectToRead[i] = st.columnValue(i);
+        }
+        iterator.collect(objectToRead);
+      }
+
+      iterator.endStreaming();
+    } finally {
+      st.dispose();
+    }
+  }
+
   public QueryResult query(String query, int maxResults) throws SQLException {
-    return query(query, ResultAndCursorId.NO_CURSOR, maxResults, true).getResult();
-  }
-
-  /**
-   * For unit-testing
-   */
-  Cache getServerSideCursors() {
-    return serverSideCursors;
-  }
-
-  /**
-   * Cursor-aware method
-   */
-  public ResultAndCursorId query(String query, int previousCursorId, int maxResults, boolean throwExceptionIfHardLimit) throws SQLException {
-
     String t = Thread.currentThread().getName();
     Set<SQLiteConnection> pendingClose = CLEAN_UP_AFTER_YOURSELF.get(t);
     // Because SQLiteConnection can only be closed by owner Thread, here we need
@@ -196,21 +179,9 @@ public class SQLite4JavaClient {
       }
     }
 
-    if (!enableCursors) {
-      previousCursorId = ResultAndCursorId.NO_CURSOR;
-    }
-
     SQLiteStatement st = null;
-    int cursorId = ResultAndCursorId.NO_CURSOR;
 
     try {
-      if (previousCursorId != ResultAndCursorId.NO_CURSOR) {
-        Element el = serverSideCursors.get(previousCursorId);
-        if (el == null) {
-          throw new SQLException("Cursor " + previousCursorId + " expired.");
-        }
-        st = (SQLiteStatement) el.getObjectValue();
-      }
 
       if (st == null) {
         SQLiteConnection conn = db.get();
@@ -250,25 +221,16 @@ public class SQLite4JavaClient {
         }
       } while (resultList.size() < maxResults);
       if (resultList.size() == maxResults) {
-        if (!enableCursors || throwExceptionIfHardLimit) {
-          throw new SQLException("Hard limit on number of results reached (" + maxResults
-              + "), please enable server side cursors or use a LIMIT for this query.");
-        } else {
-          cursorId = previousCursorId != ResultAndCursorId.NO_CURSOR ? previousCursorId : cursorIdGenerator.incrementAndGet();
-          serverSideCursors.put(new Element(cursorId, st));
-        }
-      } else {
-        if (previousCursorId != ResultAndCursorId.NO_CURSOR) {
-          serverSideCursors.remove(previousCursorId);
-        }
+
+        throw new SQLException("Hard limit on number of results reached (" + maxResults
+            + "), please use a LIMIT for this query.");
+
       }
-      return new ResultAndCursorId(new QueryResult(columnNames, resultList), cursorId);
+      return new QueryResult(columnNames, resultList);
     } catch (SQLiteException e) {
       throw new SQLException(e);
     } finally {
-      if (st != null && cursorId == ResultAndCursorId.NO_CURSOR) {
-        st.dispose();
-      }
+      st.dispose();
     }
   }
 
@@ -286,6 +248,6 @@ public class SQLite4JavaClient {
         }
       }
     }
-//		timeoutThread.interrupt();
+    // timeoutThread.interrupt();
   }
 }

@@ -26,7 +26,7 @@ import java.util.List;
 
 import org.apache.commons.configuration.Configuration;
 
-import com.splout.db.common.CommonProperties;
+import com.almworks.sqlite4java.SQLiteException;
 import com.splout.db.common.QueryResult;
 import com.splout.db.common.TimeoutThread;
 
@@ -41,8 +41,8 @@ public class SQLite4JavaManager implements EngineManager {
 
   }
 
-  SQLite4JavaManager(String dbFile, List<String> initStatements, boolean enableCursors, int serverSideCursorsTimeout) {
-    this.client = new SQLite4JavaClient(dbFile, initStatements, enableCursors, serverSideCursorsTimeout);
+  SQLite4JavaManager(String dbFile, List<String> initStatements) {
+    this.client = new SQLite4JavaClient(dbFile, initStatements);
   }
 
   public void setTimeoutThread(TimeoutThread t) {
@@ -51,8 +51,7 @@ public class SQLite4JavaManager implements EngineManager {
 
   @Override
   public void init(File dbFile, Configuration config, List<String> initStatements) throws EngineException {
-    this.client = new SQLite4JavaClient(dbFile + "", initStatements, config.getBoolean(CommonProperties.ENABLE_CURSORS),
-        config.getInt(CommonProperties.CURSORS_TIMEOUT));
+    this.client = new SQLite4JavaClient(dbFile + "", initStatements);
   }
 
   @Override
@@ -67,16 +66,7 @@ public class SQLite4JavaManager implements EngineManager {
   @Override
   public QueryResult query(String query, int maxResults) throws EngineException {
     try {
-      return client.query(query, ResultAndCursorId.NO_CURSOR, maxResults, true).getResult();
-    } catch (SQLException e) {
-      throw new EngineException(e);
-    }
-  }
-
-  @Override
-  public ResultAndCursorId query(String query, int previousCursorId, int maxResults) throws EngineException {
-    try {
-      return client.query(query, previousCursorId, maxResults, false);
+      return client.query(query, maxResults);
     } catch (SQLException e) {
       throw new EngineException(e);
     }
@@ -92,5 +82,14 @@ public class SQLite4JavaManager implements EngineManager {
   @Override
   public void close() {
     client.close();
+  }
+
+  @Override
+  public void streamQuery(StreamingIterator visitor) throws EngineException {
+    try {
+      client.stream(visitor);
+    } catch (SQLiteException e) {
+      throw new EngineException(e);
+    }
   }
 }

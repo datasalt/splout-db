@@ -58,12 +58,7 @@ public interface EngineManager {
    */
   public QueryResult query(String query, int maxResults) throws EngineException;
 
-  /**
-   * Server-side cursors implementation of query method. Should behave like
-   * {@link #query(String, int)} optionally receive a cursorId, and return a
-   * cursorId to continue iterating through pending query results.
-   */
-  public ResultAndCursorId query(String query, int previousCursorId, int maxResults) throws EngineException;
-
+  public void streamQuery(StreamingIterator visitor) throws EngineException;
+  
   public void close();
 }

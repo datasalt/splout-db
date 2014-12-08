@@ -133,7 +133,7 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary implement
 		TablespaceGenerator viewGenerator = new TablespaceGenerator(tablespace, new Path(OUTPUT), this.getClass());
 		viewGenerator.generateView(conf, SamplingType.FULL_SCAN, new TupleSampler.RandomSamplingOptions());
 		
-		SQLite4JavaClient manager = new SQLite4JavaClient(OUTPUT + "/store/0.db", null, false, 0);
+		SQLite4JavaClient manager = new SQLite4JavaClient(OUTPUT + "/store/0.db", null);
     String results = manager.query("SELECT * FROM schema2;", 100).jsonize();
 		assertTrue(results.contains("null"));
 
@@ -221,7 +221,7 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary implement
     TablespaceGenerator viewGenerator = new TablespaceGenerator(builder.build(), new Path(OUTPUT), this.getClass());
     viewGenerator.generateView(conf, SamplingType.FULL_SCAN, new TupleSampler.RandomSamplingOptions());
 
-    SQLite4JavaClient manager = new SQLite4JavaClient(OUTPUT + "/store/0.db", null, false, 0);
+    SQLite4JavaClient manager = new SQLite4JavaClient(OUTPUT + "/store/0.db", null);
     String results = manager.query("SELECT * FROM schema1;", TUPLES_TO_GENERATE+1).jsonize();
 
     System.out.println(results);

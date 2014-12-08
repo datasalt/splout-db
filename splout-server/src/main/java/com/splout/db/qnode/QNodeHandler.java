@@ -21,35 +21,64 @@ package com.splout.db.qnode;
  * #L%
  */
 
-import com.google.common.base.Joiner;
-import com.hazelcast.core.*;
-import com.splout.db.common.JSONSerDe;
-import com.splout.db.common.JSONSerDe.JSONSerDeException;
-import com.splout.db.common.SploutConfiguration;
-import com.splout.db.common.Tablespace;
-import com.splout.db.dnode.beans.DNodeSystemStatus;
-import com.splout.db.engine.ResultAndCursorId;
-import com.splout.db.engine.ResultSerializer.SerializationException;
-import com.splout.db.hazelcast.*;
-import com.splout.db.qnode.Deployer.UnexistingVersion;
-import com.splout.db.qnode.QNodeHandlerContext.DNodeEvent;
-import com.splout.db.qnode.QNodeHandlerContext.TablespaceVersionInfoException;
-import com.splout.db.qnode.Querier.QuerierException;
-import com.splout.db.qnode.beans.*;
-import com.splout.db.thrift.DNodeService;
-import com.yammer.metrics.Metrics;
-import com.yammer.metrics.core.Counter;
-import com.yammer.metrics.core.Histogram;
-import com.yammer.metrics.core.Meter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.thrift.transport.TTransportException;
 import org.codehaus.jackson.type.TypeReference;
 
-import java.io.IOException;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
+import com.google.common.base.Joiner;
+import com.hazelcast.core.EntryEvent;
+import com.hazelcast.core.EntryListener;
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.IMap;
+import com.hazelcast.core.MapEvent;
+import com.splout.db.common.JSONSerDe;
+import com.splout.db.common.JSONSerDe.JSONSerDeException;
+import com.splout.db.common.SploutConfiguration;
+import com.splout.db.common.Tablespace;
+import com.splout.db.dnode.beans.DNodeSystemStatus;
+import com.splout.db.engine.ResultSerializer.SerializationException;
+import com.splout.db.hazelcast.CoordinationStructures;
+import com.splout.db.hazelcast.DNodeInfo;
+import com.splout.db.hazelcast.DistributedRegistry;
+import com.splout.db.hazelcast.HazelcastConfigBuilder;
+import com.splout.db.hazelcast.HazelcastProperties;
+import com.splout.db.hazelcast.TablespaceVersion;
+import com.splout.db.hazelcast.TablespaceVersionStore;
+import com.splout.db.qnode.Deployer.UnexistingVersion;
+import com.splout.db.qnode.QNodeHandlerContext.DNodeEvent;
+import com.splout.db.qnode.QNodeHandlerContext.TablespaceVersionInfoException;
+import com.splout.db.qnode.Querier.QuerierException;
+import com.splout.db.qnode.beans.DeployInfo;
+import com.splout.db.qnode.beans.DeployRequest;
+import com.splout.db.qnode.beans.DeployStatus;
+import com.splout.db.qnode.beans.DeploymentStatus;
+import com.splout.db.qnode.beans.DeploymentsStatus;
+import com.splout.db.qnode.beans.ErrorQueryStatus;
+import com.splout.db.qnode.beans.QNodeStatus;
+import com.splout.db.qnode.beans.QueryStatus;
+import com.splout.db.qnode.beans.StatusMessage;
+import com.splout.db.qnode.beans.SwitchVersionRequest;
+import com.splout.db.thrift.DNodeService;
+import com.yammer.metrics.Metrics;
+import com.yammer.metrics.core.Counter;
+import com.yammer.metrics.core.Histogram;
+import com.yammer.metrics.core.Meter;
 
 /**
  * Implements the business logic for the {@link QNode}.
@@ -373,7 +402,7 @@ public class QNodeHandler implements IQNodeHandler {
    * @throws QuerierException
    * @throws SerializationException 
    */
-  public QueryStatus query(String tablespace, String key, String sql, String partition, Integer cursorId)
+  public QueryStatus query(String tablespace, String key, String sql, String partition)
       throws JSONSerDeException, QuerierException, SerializationException {
     if (sql == null) {
       return new ErrorQueryStatus("Null sql provided, can't query.");
@@ -394,7 +423,7 @@ public class QNodeHandler implements IQNodeHandler {
     /*
      * The queries are handled by the specialized module {@link Querier}
 		 */
-    QueryStatus result = querier.query(tablespace, key, sql, partition, cursorId);
+    QueryStatus result = querier.query(tablespace, key, sql, partition);
     if (result.getResult() != null) {
       meterResultSize.update(result.getResult().size());
     }
@@ -446,7 +475,7 @@ public class QNodeHandler implements IQNodeHandler {
     }
     ArrayList<QueryStatus> toReturn = new ArrayList<QueryStatus>();
     for (Integer shardKey : impactedKeys) {
-      toReturn.add(querier.query(tablespaceName, sql, shardKey, ResultAndCursorId.NO_CURSOR));
+      toReturn.add(querier.query(tablespaceName, sql, shardKey));
     }
     meterQueriesServed.inc();
     meterRequestsPerSecond.mark();

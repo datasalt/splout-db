@@ -22,6 +22,7 @@ package com.splout.db.dnode;
  */
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
@@ -73,7 +74,6 @@ import com.splout.db.dnode.beans.DNodeStatusResponse;
 import com.splout.db.dnode.beans.DNodeSystemStatus;
 import com.splout.db.engine.EngineManager;
 import com.splout.db.engine.ManagerFactory;
-import com.splout.db.engine.ResultAndCursorId;
 import com.splout.db.engine.ResultSerializer;
 import com.splout.db.hazelcast.CoordinationStructures;
 import com.splout.db.hazelcast.DNodeInfo;
@@ -442,42 +442,50 @@ public class DNodeHandler implements IDNodeHandler {
 		}	
 	}
 	
+	public EngineManager getManager(String tablespace, long version, int partition) throws DNodeException, IOException {
+    // Look for the EHCache database pool cache
+    String dbKey = tablespace + "_" + version + "_" + partition;
+
+    Element dbPoolInCache = null;
+    synchronized(dbCache) {
+      dbPoolInCache = dbCache.get(dbKey);
+      if(dbPoolInCache == null) {
+        File dbFolder = getLocalStorageFolder(tablespace, partition, version);
+        if(!dbFolder.exists()) {
+          log.warn("Asked for " + dbFolder + " but it doesn't exist!");
+          throw new DNodeException(EXCEPTION_ORDINARY, "Requested tablespace (" + tablespace
+              + ") + version (" + version + ") is not available.");
+        }
+        File metadata = getLocalMetadataFile(tablespace, partition, version);
+        ThriftReader reader = new ThriftReader(metadata);
+        PartitionMetadata partitionMetadata = (PartitionMetadata) reader
+            .read(new PartitionMetadata());
+        reader.close();
+        dbPoolInCache = loadManagerInEHCache(tablespace, version, partition, dbFolder, partitionMetadata);
+      }
+    }
+    
+    return ((EngineManager) dbPoolInCache.getObjectValue());
+	}
+	
 	/**
 	 * Called by both binary and JSON version RPC methods.
 	 */
-	private Object sqlQueryHelperMethod(String tablespace, long version, int partition, int cursorId, boolean binary, String query)
+	private Object sqlQueryHelperMethod(String tablespace, long version, int partition, boolean binary, String query)
   throws DNodeException {
 
     try {
       try {
         performanceTool.startQuery();
-        // Look for the EHCache database pool cache
-        String dbKey = tablespace + "_" + version + "_" + partition;
-        Element dbPoolInCache = null;
-        synchronized(dbCache) {
-          dbPoolInCache = dbCache.get(dbKey);
-          if(dbPoolInCache == null) {
-            File dbFolder = getLocalStorageFolder(tablespace, partition, version);
-            if(!dbFolder.exists()) {
-              log.warn("Asked for " + dbFolder + " but it doesn't exist!");
-              throw new DNodeException(EXCEPTION_ORDINARY, "Requested tablespace (" + tablespace
-                  + ") + version (" + version + ") is not available.");
-            }
-            File metadata = getLocalMetadataFile(tablespace, partition, version);
-            ThriftReader reader = new ThriftReader(metadata);
-            PartitionMetadata partitionMetadata = (PartitionMetadata) reader
-                .read(new PartitionMetadata());
-            reader.close();
-            dbPoolInCache = loadManagerInEHCache(tablespace, version, partition, dbFolder, partitionMetadata);
-          }
-        }
+
+        EngineManager manager = getManager(tablespace, version, partition);
+        
         Object result = null;
         // Query the {@link SQLite4JavaManager} and return
         if(binary) {
-          ResultAndCursorId queryResult = ((EngineManager) dbPoolInCache.getObjectValue()).query(query, cursorId, maxResultsPerQuery);
-          result = ResultSerializer.serialize(queryResult);
+          result = ResultSerializer.serialize(manager.query(query, maxResultsPerQuery));
         } else {
-          result = ((EngineManager) dbPoolInCache.getObjectValue()).query(query, maxResultsPerQuery).jsonize();
+          result = manager.query(query, maxResultsPerQuery).jsonize();
         }
         long time = performanceTool.endQuery();
         log.info("serving query [" + tablespace + "]" + " [" + version + "] [" + partition + "] ["
@@ -513,7 +521,7 @@ public class DNodeHandler implements IDNodeHandler {
 	@Override
 	public String sqlQuery(String tablespace, long version, int partition, String query)
 	    throws DNodeException {
-	  return (String) sqlQueryHelperMethod(tablespace, version, partition, ResultAndCursorId.NO_CURSOR, false, query);
+	  return (String) sqlQueryHelperMethod(tablespace, version, partition, false, query);
 	}
 
 	/**
@@ -521,8 +529,8 @@ public class DNodeHandler implements IDNodeHandler {
    * Supports efficient serialization and paging through cursors.
    */
   @Override
-  public ByteBuffer binarySqlQuery(String tablespace, long version, int partition, String query, int cursorId) throws DNodeException {
-    return (ByteBuffer) sqlQueryHelperMethod(tablespace, version, partition, cursorId, true, query);
+  public ByteBuffer binarySqlQuery(String tablespace, long version, int partition, String query) throws DNodeException {
+    return (ByteBuffer) sqlQueryHelperMethod(tablespace, version, partition, true, query);
   }
 
 	private void abortDeploy(long version, String errorMessage) {

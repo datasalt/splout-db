@@ -83,4 +83,6 @@ public class DNodeProperties {
    * Queries that run for more than this time will be interrupted.
    */
   public final static String MAX_QUERY_TIME = "dnode.max.query.time";
+  
+  public final static String STREAMING_PORT = "dnode.streaming.port";
 }

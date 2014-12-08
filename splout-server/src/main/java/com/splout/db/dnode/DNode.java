@@ -117,6 +117,10 @@ public class DNode implements DNodeService.Iface {
     servingThread.start();
     handler.giveGreenLigth();
     log.info("Thrift server started on port: " + thriftPort);
+    
+    TCPStreamer streamer = new TCPStreamer();
+    streamer.start(config, (DNodeHandler)handler);
+    log.info("TCP streamer server started on port: " + streamer.getTcpPort());
   }
 
   // ---- The following methods are a facade for {@link IDNodeHandler} ---- //
@@ -189,8 +193,8 @@ public class DNode implements DNodeService.Iface {
   }
 
   @Override
-  public ByteBuffer binarySqlQuery(String tablespace, long version, int partition, String query, int cursorId) throws DNodeException,
+  public ByteBuffer binarySqlQuery(String tablespace, long version, int partition, String query) throws DNodeException,
       TException {
-    return handler.binarySqlQuery(tablespace, version, partition, query, cursorId);
+    return handler.binarySqlQuery(tablespace, version, partition, query);
   }
 }

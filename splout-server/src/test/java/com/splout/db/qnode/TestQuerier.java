@@ -74,7 +74,7 @@ public class TestQuerier {
 		
 		// All DNodes are tried since they are alive and because all including the last one fail, the error is returned
 		for(int i = 0; i < 3; i++) {
-			ErrorQueryStatus status = (ErrorQueryStatus) querier.query("t1", "", 0, null);
+			ErrorQueryStatus status = (ErrorQueryStatus) querier.query("t1", "", 0);
 			assertTrue(status.getError().contains("connecting to client localhost:6666"));
 		}
 	}
@@ -108,7 +108,7 @@ public class TestQuerier {
 		 * so we want to assert that the node whom we are querying at step "i" is exactly "i % 2".
 		 */
 		for(int i = 0; i < 5; i++) {
-			QueryStatus status = querier.query("t1", "", 0, null);
+			QueryStatus status = querier.query("t1", "", 0);
 			assertEquals((Integer)(i % 2), querier.getPartitionRoundRobin().get(0));
 			assertEquals((Integer)0, status.getShard());
 			assertEquals(null, status.getError());
@@ -146,7 +146,7 @@ public class TestQuerier {
 		 * This can be simplified to (i % 2) * 2
 		 */
 		for(int i = 0; i < 7; i++) {
-			QueryStatus status = querier.query("t1", "", 0, null);
+			QueryStatus status = querier.query("t1", "", 0);
 			assertEquals((Integer)((i % 2) * 2), querier.getPartitionRoundRobin().get(0));
 			assertEquals((Integer)0, status.getShard());
 			assertEquals(null, status.getError());
@@ -184,7 +184,7 @@ public class TestQuerier {
 		 * inside the querier is different and we might have a bug anyway.
 		 */
 		for(int i = 0; i < 7; i++) {
-			QueryStatus status = querier.query("t1", "", 0, null);
+			QueryStatus status = querier.query("t1", "", 0);
 			assertEquals((Integer)((i % 2) * 2), querier.getPartitionRoundRobin().get(0));
 			assertEquals((Integer)0, status.getShard());
 			assertEquals(null, status.getError());

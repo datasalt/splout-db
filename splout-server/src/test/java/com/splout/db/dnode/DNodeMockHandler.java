@@ -85,7 +85,7 @@ public class DNodeMockHandler implements IDNodeHandler {
   }
 
   @Override
-  public ByteBuffer binarySqlQuery(String tablespace, long version, int partition, String query, int cursorId) throws DNodeException {
+  public ByteBuffer binarySqlQuery(String tablespace, long version, int partition, String query) throws DNodeException {
     return null;
   }
 }

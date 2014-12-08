@@ -21,7 +21,6 @@ package com.splout.db.engine;
  */
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -84,41 +83,6 @@ public class SQLManagerTester {
 
     assertEquals(false, failed.get());
     manager.exec("DROP TABLE t;");
-  }
-
-  @SuppressWarnings("rawtypes")
-  public void queryPaging(final EngineManager manager) throws SQLException, ClassNotFoundException, JSONSerDeException, EngineException, SerializationException {
-    manager.query("DROP TABLE IF EXISTS t;", 100);
-    manager.query("CREATE TABLE t (a INT, b TEXT);", 100);
-
-    int nWrites = 100;
-
-    // Insert some foo data
-    manager.exec("BEGIN");
-    for (int i = 0; i < nWrites; i++) {
-      int randInt = (int) (Math.random() * 100000);
-      String fooStr = "foo";
-      manager.exec("INSERT INTO t (a, b) VALUES (" + randInt + ", \"" + fooStr + "\")");
-    }
-    manager.exec("COMMIT");
-
-    // Limit = 15
-    ResultAndCursorId r = null;
-    int cursorId = ResultAndCursorId.NO_CURSOR;
-
-    for (int i = 0; i < 7; i++) {
-      r = manager.query("SELECT * FROM t;", cursorId, 15);
-      List l = r.getResult().getResults();
-      cursorId = r.getCursorId();
-      if (i < 6) {
-        assertTrue(r.getCursorId() > 0);
-        assertEquals(15, l.size());
-      } else {
-        assertEquals(10, l.size());
-      }
-    }
-
-    assertEquals(ResultAndCursorId.NO_CURSOR, r.getCursorId());
   }
 
   public void querySizeLimitingTest(final EngineManager manager) throws SQLException,

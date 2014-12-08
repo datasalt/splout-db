@@ -46,7 +46,7 @@ public interface IDNodeHandler {
    */
   public void giveGreenLigth();
 
-  public ByteBuffer binarySqlQuery(String tablespace, long version, int partition, String query, int cursorId) throws DNodeException;
+  public ByteBuffer binarySqlQuery(String tablespace, long version, int partition, String query) throws DNodeException;
 
   public String sqlQuery(String tablespace, long version, int partition, String query)
       throws DNodeException;

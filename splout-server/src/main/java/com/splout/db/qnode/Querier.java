@@ -33,10 +33,10 @@ import org.apache.thrift.transport.TTransportException;
 import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
 import com.splout.db.common.PartitionMap;
+import com.splout.db.common.QueryResult;
 import com.splout.db.common.ReplicationEntry;
 import com.splout.db.common.ReplicationMap;
 import com.splout.db.common.Tablespace;
-import com.splout.db.engine.ResultAndCursorId;
 import com.splout.db.engine.ResultSerializer;
 import com.splout.db.engine.ResultSerializer.SerializationException;
 import com.splout.db.hazelcast.TablespaceVersion;
@@ -83,7 +83,7 @@ public class Querier extends QNodeHandlerModule {
    * @throws QuerierException
    * @throws SerializationException 
    */
-  public QueryStatus query(String tablespaceName, String key, String sql, String partition, Integer cursorId) throws JSONSerDeException, QuerierException, SerializationException {
+  public QueryStatus query(String tablespaceName, String key, String sql, String partition) throws JSONSerDeException, QuerierException, SerializationException {
     Long version = context.getCurrentVersionsMap().get(tablespaceName);
     if (version == null) {
       return new ErrorQueryStatus("Unknown tablespace or no version ready to be served! (" + tablespaceName + ")");
@@ -116,7 +116,7 @@ public class Querier extends QNodeHandlerModule {
         }
       }
     }
-    return query(tablespaceName, sql, partitionId, cursorId);
+    return query(tablespaceName, sql, partitionId);
   }
 
   private ThreadLocal<Map<Integer, Integer>> partitionRoundRobin = new ThreadLocal<Map<Integer, Integer>>() {
@@ -135,7 +135,7 @@ public class Querier extends QNodeHandlerModule {
   /**
    * API method for querying a tablespace when you already know the partition Id. Can be used for multi-querying.
    */
-  public QueryStatus query(String tablespaceName, String sql, int partitionId, Integer cursorId) throws JSONSerDeException, SerializationException {
+  public QueryStatus query(String tablespaceName, String sql, int partitionId) throws JSONSerDeException, SerializationException {
     String msg = "tablespace[" + tablespaceName + "] partition[" + partitionId + "] sql[" + sql + "]";
 
     Long version = context.getCurrentVersionsMap().get(tablespaceName);
@@ -189,9 +189,8 @@ public class Querier extends QNodeHandlerModule {
         client = context.getDNodeClientFromPool(electedNode);
 
         if(useBinaryProtocol) {
-          ResultAndCursorId r = ResultSerializer.deserialize(client.binarySqlQuery(tablespaceName, version, partitionId, sql, cursorId != null ? cursorId : ResultAndCursorId.NO_CURSOR));
-          qStatus.setResult((ArrayList) r.getResult().mapify());
-          qStatus.setCursorId(r.getCursorId());
+          QueryResult r = ResultSerializer.deserialize(client.binarySqlQuery(tablespaceName, version, partitionId, sql));
+          qStatus.setResult((ArrayList) r.mapify());
         } else {
           qStatus.setResult(JSONSerDe.deSer(client.sqlQuery(tablespaceName, version, partitionId, sql), ArrayList.class));
         }

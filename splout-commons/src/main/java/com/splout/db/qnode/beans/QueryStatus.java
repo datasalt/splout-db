@@ -34,7 +34,6 @@ public class QueryStatus extends BaseBean {
   protected Integer shard;
   protected Long millis;
   protected String error;
-	protected Integer cursorId;
 	
 	public String getError() {
   	return error;
@@ -67,10 +66,5 @@ public class QueryStatus extends BaseBean {
   public void setMillis(Long millis) {
     this.millis = millis;
   }
-	public Integer getCursorId() {
-    return cursorId;
-  }
-	public void setCursorId(Integer cursorId) {
-    this.cursorId = cursorId;
-  }
+
 }

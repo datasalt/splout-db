@@ -1,5 +1,7 @@
 package com.splout.db.benchmark;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -41,7 +43,7 @@ public class TCPTest {
     }
 
     Socket clientSocket = new Socket("localhost", 8888);
-    DataInputStream inFromServer = new DataInputStream(clientSocket.getInputStream());
+    DataInputStream inFromServer = new DataInputStream(new BufferedInputStream(clientSocket.getInputStream()));
 
     try {
       do {
@@ -136,7 +138,7 @@ public class TCPTest {
         conn.open(true);
         SQLiteStatement st = conn.prepare("SELECT * FROM " + tableName, false);
 
-        DataOutputStream dos = new DataOutputStream(output);
+        DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(output));
         
         do {
           st.step();

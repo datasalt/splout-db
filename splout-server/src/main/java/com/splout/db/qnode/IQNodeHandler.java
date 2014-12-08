@@ -42,7 +42,7 @@ public interface IQNodeHandler {
 
   public void close() throws Exception;
 
-  public QueryStatus query(String tablespace, String key, String sql, String partition, Integer cursorId) throws Exception;
+  public QueryStatus query(String tablespace, String key, String sql, String partition) throws Exception;
 
   public ArrayList<QueryStatus> multiQuery(String tablespace, List<String> keyMins, List<String> keyMaxs, String sql) throws Exception;
 

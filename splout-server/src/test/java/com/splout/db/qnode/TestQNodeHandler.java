@@ -215,7 +215,7 @@ public class TestQNodeHandler {
 			handler.getContext().getCurrentVersionsMap().put("tablespace1", 0l);
 
 			// Query key 2 (> 1 < 10)
-			QueryStatus qStatus = handler.query("tablespace1", "2", "SELECT 1;", null, null);
+			QueryStatus qStatus = handler.query("tablespace1", "2", "SELECT 1;", null);
 			Assert.assertEquals(new Integer(0), qStatus.getShard());
 			Assert.assertEquals("[1]", qStatus.getResult().toString());
 		} finally {
@@ -242,12 +242,12 @@ public class TestQNodeHandler {
 			handler.getContext().getCurrentVersionsMap().put("tablespace1", 0l);
 
 			// Query shard 0
-			QueryStatus qStatus = handler.query("tablespace1", null, "SELECT 1;", "0", null);
+			QueryStatus qStatus = handler.query("tablespace1", null, "SELECT 1;", "0");
 			Assert.assertEquals(new Integer(0), qStatus.getShard());
 			Assert.assertEquals("[1]", qStatus.getResult().toString());
 
 			// Query random partition
-			qStatus = handler.query("tablespace1", null, "SELECT 1;", Querier.PARTITION_RANDOM, null);
+			qStatus = handler.query("tablespace1", null, "SELECT 1;", Querier.PARTITION_RANDOM);
 			Assert.assertEquals(new Integer(0), qStatus.getShard());
 			Assert.assertEquals("[1]", qStatus.getResult().toString());
 

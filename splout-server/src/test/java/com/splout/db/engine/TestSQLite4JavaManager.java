@@ -22,8 +22,6 @@ package com.splout.db.engine;
  */
 
 
-import static org.junit.Assert.assertTrue;
-
 import java.io.File;
 import java.sql.SQLException;
 
@@ -46,7 +44,7 @@ public class TestSQLite4JavaManager extends SQLManagerTester {
 			dbFile.delete();
 		}
 
-		final SQLite4JavaManager sqlite4Java = new SQLite4JavaManager(TEST_DB_1, null, false, 0);
+		final SQLite4JavaManager sqlite4Java = new SQLite4JavaManager(TEST_DB_1, null);
 		basicTest(sqlite4Java);
 		sqlite4Java.close();
 		dbFile.delete();
@@ -59,24 +57,10 @@ public class TestSQLite4JavaManager extends SQLManagerTester {
 			dbFile.delete();
 		}
 
-		final SQLite4JavaManager sqlite4Java = new SQLite4JavaManager(TEST_DB_2, null, false, 0);
+		final SQLite4JavaManager sqlite4Java = new SQLite4JavaManager(TEST_DB_2, null);
 		querySizeLimitingTest(sqlite4Java);
 		sqlite4Java.close();
 		dbFile.delete();
-	}
-	
-	@Test
-	public void testResultPaging() throws ClassNotFoundException, SQLException, JSONSerDeException, EngineException, SerializationException {
-    File dbFile = new File(TEST_DB_3);
-    if(dbFile.exists()) {
-      dbFile.delete();
-    }
-
-    final SQLite4JavaManager sqlite4Java = new SQLite4JavaManager(TEST_DB_3, null, true, 60);
-    queryPaging(sqlite4Java);
-    sqlite4Java.close();
-    assertTrue(sqlite4Java.getClient().getServerSideCursors().get(1) == null);
-    dbFile.delete();
 	}
 	
 }

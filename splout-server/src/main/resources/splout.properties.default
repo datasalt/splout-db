@@ -128,6 +128,10 @@ dnode.slow.query.abs.limit	2500
 
 dnode.deploy.parallelism  3
 
+# The port for the TCP data streaming API
+
+dnode.streaming.port	8888
+
 #
 # DNode Data Fetcher Properties
 # (The DNode Data Fetcher is in charge of downloading the files under a new deploy request)
@@ -238,14 +242,3 @@ hz.oldest.members.leading.count=3
 # was not enough to ensure that no data is lost.
    
 hz.registry.max.time.to.check.registration=5
-
-#
-# Common properties
-#
-
-# If enabled, instead of throwing an exception when maxResults is reached, 
-# a cursorId is returned to continue iterating.
-common.cursors.enable	false
-
-# TTL for server-side cursors to expire, in seconds.
-common.cursors.timeout	60
