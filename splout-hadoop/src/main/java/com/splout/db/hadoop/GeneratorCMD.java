@@ -23,8 +23,7 @@ package com.splout.db.hadoop;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.datasalt.pangool.utils.HadoopUtils;
-import com.splout.db.common.JSONSerDe;
-import com.splout.db.common.SploutHadoopConfiguration;
+import com.splout.db.common.*;
 import com.splout.db.hadoop.TupleSampler.SamplingType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -61,6 +60,11 @@ public class GeneratorCMD implements Tool {
   @Parameter(required = false, names = {"-p", "--parallelism"}, description = "Parallelism to be used. Allows to execute the generation of several tablespaces in parallel.")
   private int parallelism = 1;
 
+  @Parameter(required = false, names = {"-q", "--qnode"}, description = "QNode URL to retrieve partition map to use. To be" +
+      " used in the case we want to skip sampling and reuse the existing partition map at Splout. When provided sampling phase is skipped. " +
+      "Accepts a CSV list of QNode URLs.")
+  private String qnodeURL = null;
+
   private Configuration conf;
 
   public int run(String[] args) throws Exception {
@@ -86,6 +90,9 @@ public class GeneratorCMD implements Tool {
     // We generate this first so we can detect errors in the configuration before even using Hadoop
     Map<String, TablespaceSpec> tablespacesToGenerate = new HashMap<String, TablespaceSpec>();
 
+    // Partition maps to reuse at indexation. Used when sampling is skipped.
+    final Map<String, PartitionMap> partitionMapsToReuse = new HashMap<String, PartitionMap>();
+
     for (String tablespaceFile : tablespaceFiles) {
       Path file = new Path(tablespaceFile);
       FileSystem fS = FileSystem.get(file.toUri(), getConf());
@@ -97,8 +104,14 @@ public class GeneratorCMD implements Tool {
       String strContents = HadoopUtils.fileToString(fS, file);
       JSONTablespaceDefinition def = JSONSerDe.deSer(strContents, JSONTablespaceDefinition.class);
       TablespaceSpec spec = def.build(conf);
+      String name = def.getName();
 
-      tablespacesToGenerate.put(def.getName(), spec);
+      tablespacesToGenerate.put(name, spec);
+
+      // Reusing partition maps?
+      if (qnodeURL != null) {
+        partitionMapsToReuse.put(name, retrievePartitionMapfromQNode(name));
+      }
     }
 
     if (!FileSystem.getLocal(conf).equals(FileSystem.get(conf))) {
@@ -117,7 +130,7 @@ public class GeneratorCMD implements Tool {
     ArrayList<Future<Boolean>> generatorFutures = new ArrayList<Future<Boolean>>();
 
     // Generate each tablespace
-    for (Map.Entry<String, TablespaceSpec> tablespace : tablespacesToGenerate.entrySet()) {
+    for (final Map.Entry<String, TablespaceSpec> tablespace : tablespacesToGenerate.entrySet()) {
       Path tablespaceOut = new Path(out, tablespace.getKey());
       TablespaceSpec spec = tablespace.getValue();
 
@@ -127,8 +140,13 @@ public class GeneratorCMD implements Tool {
       generatorFutures.add(ecs.submit(new Callable<Boolean>() {
         @Override
         public Boolean call() throws Exception {
-          viewGenerator.generateView(conf, samplingType, new TupleSampler.RandomSamplingOptions());
-          return true;
+          if (qnodeURL == null) {
+            viewGenerator.generateView(conf, samplingType, new TupleSampler.RandomSamplingOptions());
+            return true;
+          } else {
+            viewGenerator.generateView(conf, partitionMapsToReuse.get(tablespace.getKey()));
+            return true;
+          }
         }
       }));
     }
@@ -152,6 +170,18 @@ public class GeneratorCMD implements Tool {
 
     log.info("Done!");
     return 0;
+  }
+
+  protected PartitionMap retrievePartitionMapfromQNode(String tablespace) throws Exception {
+    log.info("Retrieving partition map for tablespace[" + tablespace + "] from QNode[" + qnodeURL +"] for being reused at indexation. ");
+    SploutClient client = new SploutClient(qnodeURL.split(","));
+    Tablespace tb = client.tablespace(tablespace);
+    if (tb == null) {
+      throw new Exception("Partition map for tablespace [" + tablespace + "] not found at QNode[" + qnodeURL +"].");
+    }
+    PartitionMap pmap = tb.getPartitionMap();
+    log.info("Successfully retrieved partition map for tablespace[" + tablespace + "] from QNode[" + qnodeURL +"].");
+    return pmap;
   }
 
   public Configuration getConf() {

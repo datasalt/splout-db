@@ -122,6 +122,8 @@ public class TablespaceGenerator implements Serializable {
   public final static String OUT_ENGINE = "engine";
 
   /**
+   * Launches the generation of the tablespaces. Automatic {@link com.splout.db.common.PartitionMap} calculation.
+   *
    * This is the public method which has to be called when using this class as an API. Business logic has been split in
    * various protected functions to ease understading of it and also to be able to subclass this easily to extend its
    * functionality.
@@ -140,6 +142,28 @@ public class TablespaceGenerator implements Serializable {
     }
 
     Log.info("Calculated partition map: " + partitionMap);
+
+    writeOutputMetadata(conf);
+
+    TupleMRBuilder builder = createMRBuilder(nPartitions, conf);
+    executeViewGeneration(builder);
+  }
+
+  /**
+   * Launches the generation of the tablespaces. Uses the custom partition map provided.
+   *
+   * This is the public method which has to be called when using this class as an API. Business logic has been split in
+   * various protected functions to ease understading of it and also to be able to subclass this easily to extend its
+   * functionality.
+   */
+  public void generateView(Configuration conf, PartitionMap partitionMap) throws Exception {
+
+    prepareOutput(conf);
+
+    this.partitionMap = partitionMap;
+    final int nPartitions = partitionMap.getPartitionEntries().size();
+
+    Log.info("Using provided partition map: " + partitionMap);
 
     writeOutputMetadata(conf);
 
