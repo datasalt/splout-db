@@ -20,6 +20,8 @@ package com.splout.db.common;
  * #L%
  */
 
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+
 import java.io.Serializable;
 
 /**
@@ -29,6 +31,7 @@ import java.io.Serializable;
  * @see PartitionMap
  */
 @SuppressWarnings("serial")
+@JsonIgnoreProperties(ignoreUnknown = true) // Backwards compatibility in JSON (new fields don't make things break)
 public class PartitionEntry extends BaseBean implements Serializable, Comparable<PartitionEntry> {
 
   public String toString() {

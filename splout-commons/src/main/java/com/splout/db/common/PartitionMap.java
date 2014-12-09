@@ -20,6 +20,7 @@ package com.splout.db.common;
  * #L%
  */
 
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.type.TypeReference;
 
 import java.io.Serializable;
@@ -34,6 +35,7 @@ import java.util.List;
  * partition number given a key of type <T> in {@link #findPartition(String)}.
  */
 @SuppressWarnings("serial")
+@JsonIgnoreProperties(ignoreUnknown = true) // Backwards compatibility in JSON (new fields don't make things break)
 public class PartitionMap implements Serializable {
 
   public String toString() {
