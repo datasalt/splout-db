@@ -230,7 +230,9 @@ public class SQLite4JavaClient {
     } catch (SQLiteException e) {
       throw new SQLException(e);
     } finally {
-      st.dispose();
+      if (st != null) {
+        st.dispose();
+      }
     }
   }
 

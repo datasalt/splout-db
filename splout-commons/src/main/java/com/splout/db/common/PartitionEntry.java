@@ -24,7 +24,7 @@ import java.io.Serializable;
 
 /**
  * An entry in a {@link PartitionMap}. It consists of a min value and a max value, as well as a shard id.
- * [min, max). Min included, max excluded.
+ * [min, max). Min excluded, max included.
  *
  * @see PartitionMap
  */
