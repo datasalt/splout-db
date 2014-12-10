@@ -71,7 +71,7 @@ public class TimeoutThread extends Thread {
           SQLiteConnection conn = it.next();
 
           if (conn == null) {
-            log.error("Connection is null. It should have never happend! It is a software BUG.");
+            log.error("Connection is null. It should have never happen! It is a software BUG.");
             continue;
           }
 
@@ -82,7 +82,8 @@ public class TimeoutThread extends Thread {
               continue;
             }
 
-            if ((now - time) > timeout) {
+            long runningTime = now - time;
+            if ((runningTime) > timeout) {
               // Timeout: we should interrupt this connection!
 
               try {
@@ -96,7 +97,7 @@ public class TimeoutThread extends Thread {
 								 * http://almworks.com/sqlite4java/javadoc/com/almworks/sqlite4java/SQLiteConnection.html#interrupt()
 								 * SQLite docs: http://www.sqlite.org/c3ref/interrupt.html
 								 */
-                log.info("Long running query [" + queryAndTime.query + "] ran for more than ["
+                log.info("Long running query [" + queryAndTime.query + "] ran for [" + runningTime +"] overtaking the timeout["
                     + timeout + "] ms. Interrupting it!");
                 conn.interrupt();
               } catch (SQLiteException e) {
