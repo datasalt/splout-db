@@ -58,6 +58,9 @@ public interface EngineManager {
    */
   public QueryResult query(String query, int maxResults) throws EngineException;
 
+  /**
+   * For supporting reading big datasets from the engine through a streaming API
+   */
   public void streamQuery(StreamingIterator visitor) throws EngineException;
   
   public void close();
