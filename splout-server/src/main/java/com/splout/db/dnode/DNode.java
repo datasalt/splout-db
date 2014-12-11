@@ -149,6 +149,26 @@ public class DNode implements DNodeService.Iface {
     return handler.status();
   }
 
+  @Override
+  public String abortDeploy(long version) throws DNodeException, TException {
+    return handler.abortDeploy(version);
+  }
+
+  @Override
+  public String deleteOldVersions(List<TablespaceVersion> versions) throws DNodeException, TException {
+    return handler.deleteOldVersions(versions);
+  }
+
+  @Override
+  public String testCommand(String command) throws DNodeException, TException {
+    return handler.testCommand(command);
+  }
+
+  @Override
+  public ByteBuffer binarySqlQuery(String tablespace, long version, int partition, String query) throws DNodeException, TException {
+    return handler.binarySqlQuery(tablespace, version, partition, query);
+  }
+  
   public void stop() throws Exception {
     if (streamer != null) {
       streamer.stop();
@@ -180,25 +200,5 @@ public class DNode implements DNodeService.Iface {
       }
     });
     dnode.init();
-  }
-
-  @Override
-  public String abortDeploy(long version) throws DNodeException, TException {
-    return handler.abortDeploy(version);
-  }
-
-  @Override
-  public String deleteOldVersions(List<TablespaceVersion> versions) throws DNodeException, TException {
-    return handler.deleteOldVersions(versions);
-  }
-
-  @Override
-  public String testCommand(String command) throws DNodeException, TException {
-    return handler.testCommand(command);
-  }
-
-  @Override
-  public ByteBuffer binarySqlQuery(String tablespace, long version, int partition, String query) throws DNodeException, TException {
-    return handler.binarySqlQuery(tablespace, version, partition, query);
   }
 }
