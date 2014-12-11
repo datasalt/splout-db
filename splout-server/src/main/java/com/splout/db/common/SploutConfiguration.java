@@ -81,6 +81,10 @@ public class SploutConfiguration extends CompositeConfiguration implements Seria
 		
 		// We maintain compatibility with legacy tests by using JSON serialization between QNode and DNode
 		properties.setProperty(QNodeProperties.DISABLE_BINARY_PROTOCOL, true);
+		
+		// We don't want the tests to mess around with more ports, in general
+		properties.setProperty(DNodeProperties.STREAMING_API_DISABLE, true);
+		
 		return properties;
 	}
 

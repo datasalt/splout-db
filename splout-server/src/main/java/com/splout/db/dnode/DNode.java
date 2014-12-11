@@ -41,11 +41,12 @@ import com.splout.db.thrift.RollbackAction;
 import com.splout.db.thrift.TablespaceVersion;
 
 /**
- * The Thrift skeleton for the DNode service. This class only implements the Thrift logic.
+ * The Thrift skeleton for the DNode service. This class only implements the
+ * Thrift logic.
  * <p/>
- * The DNode's own business logic is packed into {@link DNodeHandler} which is an implementation of
- * {@link IDNodeHandler}. In this way, we can use the DNode in unit tests by using Mock implementations of
- * {@link IDNodeHandler}.
+ * The DNode's own business logic is packed into {@link DNodeHandler} which is
+ * an implementation of {@link IDNodeHandler}. In this way, we can use the DNode
+ * in unit tests by using Mock implementations of {@link IDNodeHandler}.
  */
 public class DNode implements DNodeService.Iface {
 
@@ -55,6 +56,7 @@ public class DNode implements DNodeService.Iface {
   private TServer server;
   private Thread servingThread;
   private SploutConfiguration config;
+  private TCPStreamer streamer;
 
   public DNode(SploutConfiguration config, IDNodeHandler handler) {
     this.handler = handler;
@@ -69,10 +71,11 @@ public class DNode implements DNodeService.Iface {
   }
 
   /**
-   * Initialize the DNode service - the important thing here is to instantiate a multi-threaded Thrift server.
-   * Everything is based on the given {@link SploutConfiguration} by constructor.
+   * Initialize the DNode service - the important thing here is to instantiate a
+   * multi-threaded Thrift server. Everything is based on the given
+   * {@link SploutConfiguration} by constructor.
    */
-  @SuppressWarnings({"unchecked", "rawtypes"})
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   public void init() throws Exception {
     DNodeService.Processor processor = new DNodeService.Processor(this);
     TNonblockingServerTransport serverTransport = null;
@@ -102,7 +105,8 @@ public class DNode implements DNodeService.Iface {
     args.processor(processor);
 
     server = new THsHaServer(args);
-    // We instantiate a long-living serving thread that will use the Thrift server.
+    // We instantiate a long-living serving thread that will use the Thrift
+    // server.
     servingThread = new Thread("Serving Thread") {
       public void run() {
         try {
@@ -111,23 +115,22 @@ public class DNode implements DNodeService.Iface {
           t.printStackTrace();
         }
       }
-
-      ;
     };
     servingThread.start();
     handler.giveGreenLigth();
     log.info("Thrift server started on port: " + thriftPort);
-    
-    TCPStreamer streamer = new TCPStreamer();
-    streamer.start(config, (DNodeHandler)handler);
-    log.info("TCP streamer server started on port: " + streamer.getTcpPort());
+
+    if (handler instanceof DNodeHandler && !config.getBoolean(DNodeProperties.STREAMING_API_DISABLE)) {
+      streamer = new TCPStreamer();
+      streamer.start(config, (DNodeHandler) handler);
+      log.info("TCP streamer server started on port: " + streamer.getTcpPort());
+    }
   }
 
   // ---- The following methods are a facade for {@link IDNodeHandler} ---- //
 
   @Override
-  public String sqlQuery(String tablespace, long version, int partition, String query)
-      throws DNodeException, TException {
+  public String sqlQuery(String tablespace, long version, int partition, String query) throws DNodeException, TException {
     return handler.sqlQuery(tablespace, version, partition, query);
   }
 
@@ -137,8 +140,7 @@ public class DNode implements DNodeService.Iface {
   }
 
   @Override
-  public String rollback(List<RollbackAction> rollbackActions, String distributedBarrier)
-      throws DNodeException, TException {
+  public String rollback(List<RollbackAction> rollbackActions, String distributedBarrier) throws DNodeException, TException {
     return handler.rollback(rollbackActions, distributedBarrier);
   }
 
@@ -148,6 +150,9 @@ public class DNode implements DNodeService.Iface {
   }
 
   public void stop() throws Exception {
+    if (streamer != null) {
+      streamer.stop();
+    }
     server.stop();
     handler.stop();
     servingThread.join();
@@ -193,8 +198,7 @@ public class DNode implements DNodeService.Iface {
   }
 
   @Override
-  public ByteBuffer binarySqlQuery(String tablespace, long version, int partition, String query) throws DNodeException,
-      TException {
+  public ByteBuffer binarySqlQuery(String tablespace, long version, int partition, String query) throws DNodeException, TException {
     return handler.binarySqlQuery(tablespace, version, partition, query);
   }
 }

@@ -1,11 +1,34 @@
 package com.splout.db.dnode;
 
+/*
+ * #%L
+ * Splout SQL Server
+ * %%
+ * Copyright (C) 2012 - 2014 Datasalt Systems S.L.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -25,7 +48,7 @@ import com.splout.db.engine.StreamingIterator;
 import com.splout.db.thrift.DNodeException;
 
 /**
- * Work-in-progress
+ * An interface for the DNode to send streaming data through TCP.
  */
 public class TCPStreamer {
 
@@ -188,6 +211,10 @@ public class TCPStreamer {
     }
   }
 
+  /**
+   * This main method can be used for testing the TCP interface directly to a local DNode.
+   * Will ask for protocol input from Stdin and print output to Stdout
+   */
   public static void main(String[] args) throws UnknownHostException, IOException, SerializationException {
     SploutConfiguration config = SploutConfiguration.get();
     Socket clientSocket = new Socket("localhost", config.getInt(DNodeProperties.STREAMING_PORT));
@@ -195,23 +222,18 @@ public class TCPStreamer {
     DataInputStream inFromServer = new DataInputStream(new BufferedInputStream(clientSocket.getInputStream()));
     DataOutputStream outToServer = new DataOutputStream(new BufferedOutputStream(clientSocket.getOutputStream()));
 
-//    BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-//    System.out.println("Enter tablespace: ");
-//    String tablespace = reader.readLine();
-//
-//    System.out.println("Enter version number: ");
-//    long versionNumber = Long.parseLong(reader.readLine());
-//
-//    System.out.println("Enter partition: ");
-//    int partition = Integer.parseInt(reader.readLine());
-//
-//    System.out.println("Enter query: ");
-//    String query = reader.readLine();
+    BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+    System.out.println("Enter tablespace: ");
+    String tablespace = reader.readLine();
 
-    String tablespace = "theadex";
-    Long versionNumber = 1416485195l;
-    Integer partition = 0;
-    String query = "SELECT COUNT(*) FROM TopInterests;";
+    System.out.println("Enter version number: ");
+    long versionNumber = Long.parseLong(reader.readLine());
+
+    System.out.println("Enter partition: ");
+    int partition = Integer.parseInt(reader.readLine());
+
+    System.out.println("Enter query: ");
+    String query = reader.readLine();
     
     outToServer.writeUTF(tablespace);
     outToServer.writeLong(versionNumber);

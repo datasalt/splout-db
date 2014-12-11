@@ -124,8 +124,6 @@ public class Querier extends QNodeHandlerModule {
     protected Map<Integer, Integer> initialValue() {
       return new HashMap<Integer, Integer>();
     }
-
-    ;
   };
 
   public Map<Integer, Integer> getPartitionRoundRobin() {

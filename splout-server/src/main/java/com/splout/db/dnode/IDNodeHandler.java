@@ -46,8 +46,14 @@ public interface IDNodeHandler {
    */
   public void giveGreenLigth();
 
+  /*
+   * Returns a binary kryo-serialized object
+   */
   public ByteBuffer binarySqlQuery(String tablespace, long version, int partition, String query) throws DNodeException;
 
+  /*
+   * All string methods return JSON
+   */
   public String sqlQuery(String tablespace, long version, int partition, String query)
       throws DNodeException;
 

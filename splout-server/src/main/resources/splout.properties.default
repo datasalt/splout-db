@@ -132,6 +132,10 @@ dnode.deploy.parallelism  3
 
 dnode.streaming.port	8888
 
+# Enable to avoid opening a port for TCP streaming
+
+dnode.disable.streaming.api	false
+
 #
 # DNode Data Fetcher Properties
 # (The DNode Data Fetcher is in charge of downloading the files under a new deploy request)

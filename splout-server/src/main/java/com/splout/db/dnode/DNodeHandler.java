@@ -22,7 +22,6 @@ package com.splout.db.dnode;
  */
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
@@ -516,7 +515,8 @@ public class DNodeHandler implements IDNodeHandler {
 	}
 	
 	/**
-	 * Thrift RPC method -> Given a tablespace and a version, execute the SQL query
+	 * Thrift RPC method -> Given a tablespace and a version, execute the SQL query.
+	 * Returns a JSON.
 	 */
 	@Override
 	public String sqlQuery(String tablespace, long version, int partition, String query)
@@ -526,7 +526,7 @@ public class DNodeHandler implements IDNodeHandler {
 
 	/**
    * Thrift RPC method -> Given a tablespace and a version, execute the SQL query.
-   * Supports efficient serialization and paging through cursors.
+   * Supports more efficient serialization through Kryo.
    */
   @Override
   public ByteBuffer binarySqlQuery(String tablespace, long version, int partition, String query) throws DNodeException {

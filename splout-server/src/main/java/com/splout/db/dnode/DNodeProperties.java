@@ -83,6 +83,12 @@ public class DNodeProperties {
    * Queries that run for more than this time will be interrupted.
    */
   public final static String MAX_QUERY_TIME = "dnode.max.query.time";
-  
+  /**
+   * The port where the DNode will listen for TCP connections to serve streaming data.
+   */
   public final static String STREAMING_PORT = "dnode.streaming.port";
+  /**
+   * Enable to avoid opening a port for TCP streaming
+   */
+  public final static String STREAMING_API_DISABLE = "dnode.disable.streaming.api";
 }
