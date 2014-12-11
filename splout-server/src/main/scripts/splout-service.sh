@@ -189,7 +189,7 @@ case $startStop in
     rotate_log $log
     echo "Starting $command, logging to $log - PID file in $pid"
     cd $SPLOUT_HOME
-    nohup java -classpath "$CLASSPATH" -Djava.library.path=$JAVA_LIBRARY_PATH $className > "$log" 2>&1 < /dev/null &
+    nohup java -classpath "$CLASSPATH" -Djava.library.path=$JAVA_LIBRARY_PATH -Dhazelcast.logging.type=log4j $className > "$log" 2>&1 < /dev/null &
     echo $! > $pid
     sleep 1; head "$log"
     ;;

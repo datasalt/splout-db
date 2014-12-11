@@ -70,37 +70,38 @@ public class QueryServlet extends BaseServlet {
     } catch(JSONSerDeException e) {
 	    throw new IOException(e);
     }
-	}
+  }
 
-	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
-	    IOException {
-		
-		String[] keys = req.getParameterValues("key");
-		String tablespace = req.getParameter("tablespace");
-		String sql = req.getParameter("sql");
-		String callback = req.getParameter("callback");
-		String partition = req.getParameter("partition");
-    
-		handle(req, resp, keys, tablespace, sql, callback, partition);
-	}
+  @Override
+  protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
+      IOException {
 
-	private void handle(HttpServletRequest req, HttpServletResponse resp, String[] keys, String tablespace, String sql, String callback, String partition) throws ServletException,
-	    IOException {
+    String[] keys = req.getParameterValues("key");
+    String tablespace = req.getParameter("tablespace");
+    String sql = req.getParameter("sql");
+    String callback = req.getParameter("callback");
+    String partition = req.getParameter("partition");
 
-		resp.setHeader("content-type", "application/json;charset=UTF-8");
-		resp.setCharacterEncoding("UTF-8");
+    handle(req, resp, keys, tablespace, sql, callback, partition);
+  }
 
-		String key = null;
-		if(keys != null) {
-			key = "";
-			for(String strKey : keys) {
-				key += strKey;
-			}
-		}
+  private void handle(HttpServletRequest req, HttpServletResponse resp, String[] keys, String tablespace, String sql, String callback, String partition) throws ServletException,
+      IOException {
 
-		try {
-			QueryStatus st = qNodeHandler.query(tablespace, key, sql, partition);
+    resp.setHeader("content-type", "application/json;charset=UTF-8");
+    resp.setCharacterEncoding("UTF-8");
+
+    String key = null;
+    if (keys != null) {
+      key = "";
+      for (String strKey : keys) {
+        key += strKey;
+      }
+    }
+
+    try {
+      long startTime = System.currentTimeMillis();
+      QueryStatus st = qNodeHandler.query(tablespace, key, sql, partition);
       String status = "status[OK]";
       if (st instanceof ErrorQueryStatus) {
         String errMsg = st.getError();
@@ -108,7 +109,7 @@ public class QueryServlet extends BaseServlet {
         status = "status[ERROR] errMessage[" + errMsg + "]";
       }
       log.info("Query request received, tablespace[" + tablespace
-          + "], key[" + key + "], sql[" + sql + "] time[" + st.getMillis() + "] " + status);
+          + "], key[" + key + "], sql[" + sql + "] time[" + (System.currentTimeMillis() - startTime) + "] " + status);
       String response;
       response = JSONSerDe.ser(st);
       if (callback != null) {

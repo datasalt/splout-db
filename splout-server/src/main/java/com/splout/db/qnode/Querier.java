@@ -37,6 +37,7 @@ import com.splout.db.common.QueryResult;
 import com.splout.db.common.ReplicationEntry;
 import com.splout.db.common.ReplicationMap;
 import com.splout.db.common.Tablespace;
+import com.splout.db.dnode.DNodeHandler;
 import com.splout.db.engine.ResultSerializer;
 import com.splout.db.engine.ResultSerializer.SerializationException;
 import com.splout.db.hazelcast.TablespaceVersion;
@@ -46,18 +47,20 @@ import com.splout.db.thrift.DNodeException;
 import com.splout.db.thrift.DNodeService;
 
 /**
- * The Querier is a specialized module ({@link com.splout.db.qnode.QNodeHandlerModule}) of the
- * {@link com.splout.db.qnode.QNode} that performs the distributed query mechanism.
+ * The Querier is a specialized module (
+ * {@link com.splout.db.qnode.QNodeHandlerModule}) of the
+ * {@link com.splout.db.qnode.QNode} that performs the distributed query
+ * mechanism.
  */
-@SuppressWarnings({"rawtypes"})
+@SuppressWarnings({ "rawtypes" })
 public class Querier extends QNodeHandlerModule {
 
-	public final static String PARTITION_RANDOM = "random";
-	
-	private final static Log log = LogFactory.getLog(Querier.class);
-	private boolean useBinaryProtocol = true;
-	
-	@SuppressWarnings("serial")
+  public final static String PARTITION_RANDOM = "random";
+
+  private final static Log log = LogFactory.getLog(Querier.class);
+  private boolean useBinaryProtocol = true;
+
+  @SuppressWarnings("serial")
   public static final class QuerierException extends Exception {
 
     public QuerierException(String msg) {
@@ -71,25 +74,26 @@ public class Querier extends QNodeHandlerModule {
 
   public Querier(QNodeHandlerContext context) {
     super(context);
-    if(context.getConfig().getBoolean(QNodeProperties.DISABLE_BINARY_PROTOCOL)) {
+    if (context.getConfig().getBoolean(QNodeProperties.DISABLE_BINARY_PROTOCOL)) {
       this.useBinaryProtocol = false;
     }
   }
 
   /**
-   * Proxy method for QNodeHandler's query() method. Returns a {@link QueryStatus} with the status of the query.
-   *
+   * Proxy method for QNodeHandler's query() method. Returns a
+   * {@link QueryStatus} with the status of the query.
+   * 
    * @throws JSONSerDeException
    * @throws QuerierException
-   * @throws SerializationException 
+   * @throws SerializationException
    */
-  public QueryStatus query(String tablespaceName, String key, String sql, String partition) throws JSONSerDeException, QuerierException, SerializationException {
+  public QueryStatus query(String tablespaceName, String key, String sql, String partition) throws JSONSerDeException, QuerierException,
+      SerializationException {
     Long version = context.getCurrentVersionsMap().get(tablespaceName);
     if (version == null) {
       return new ErrorQueryStatus("Unknown tablespace or no version ready to be served! (" + tablespaceName + ")");
     }
-    Tablespace tablespace = context.getTablespaceVersionsMap().get(
-        new TablespaceVersion(tablespaceName, version));
+    Tablespace tablespace = context.getTablespaceVersionsMap().get(new TablespaceVersion(tablespaceName, version));
     if (tablespace == null) {
       return new ErrorQueryStatus("Unknown tablespace version:(" + version + ") tablespace:(" + tablespaceName + ")");
     }
@@ -101,8 +105,7 @@ public class Querier extends QNodeHandlerModule {
     if (key != null) {
       partitionId = partitionMap.findPartition(key);
       if (partitionId == PartitionMap.NO_PARTITION) {
-        return new ErrorQueryStatus("Key out of partition ranges: " + key + " for tablespace "
-            + tablespaceName);
+        return new ErrorQueryStatus("Key out of partition ranges: " + key + " for tablespace " + tablespaceName);
       }
     } else { // use provided partition
       // partition shouldn't be null here -> we check it before at QNodeHandler
@@ -131,7 +134,8 @@ public class Querier extends QNodeHandlerModule {
   }
 
   /**
-   * API method for querying a tablespace when you already know the partition Id. Can be used for multi-querying.
+   * API method for querying a tablespace when you already know the partition
+   * Id. Can be used for multi-querying.
    */
   public QueryStatus query(String tablespaceName, String sql, int partitionId) throws JSONSerDeException, SerializationException {
     String msg = "tablespace[" + tablespaceName + "] partition[" + partitionId + "] sql[" + sql + "]";
@@ -140,8 +144,7 @@ public class Querier extends QNodeHandlerModule {
     if (version == null) {
       return new ErrorQueryStatus("Unknown tablespace! [" + tablespaceName + "] for " + msg);
     }
-    Tablespace tablespace = context.getTablespaceVersionsMap().get(
-        new TablespaceVersion(tablespaceName, version));
+    Tablespace tablespace = context.getTablespaceVersionsMap().get(new TablespaceVersion(tablespaceName, version));
     if (tablespace == null) {
       return new ErrorQueryStatus("Unknown tablespace! [" + tablespaceName + "] for " + msg);
     }
@@ -158,13 +161,14 @@ public class Querier extends QNodeHandlerModule {
       return new ErrorQueryStatus("Incomplete Tablespace information for tablespace [" + tablespaceName
           + "] Maybe let the Splout warmup a little bit and try later?. For resolving " + msg);
     }
-    if (repEntry.getNodes().size() == 0) { // No one alive for serving the query!
+    if (repEntry.getNodes().size() == 0) { // No one alive for serving the
+                                           // query!
       return new ErrorQueryStatus("No alive DNodes for " + tablespace + " for " + msg);
     }
 
     String electedNode;
     int tried = 0;
-    for (; ; ) { // Fail-over loop
+    for (;;) { // Fail-over loop
       electedNode = null;
       Integer lastNode = partitionRoundRobin.get().get(partitionId);
       if (lastNode == null) {
@@ -186,7 +190,7 @@ public class Querier extends QNodeHandlerModule {
       try {
         client = context.getDNodeClientFromPool(electedNode);
 
-        if(useBinaryProtocol) {
+        if (useBinaryProtocol) {
           QueryResult r = ResultSerializer.deserialize(client.binarySqlQuery(tablespaceName, version, partitionId, sql));
           qStatus.setResult((ArrayList) r.mapify());
         } else {
@@ -205,35 +209,47 @@ public class Querier extends QNodeHandlerModule {
         if (tried == repEntry.getNodes().size()) {
           return new ErrorQueryStatus("Error connecting dnode[" + electedNode + "] for " + msg);
         } else {
-          log.warn("TTransportException problem when connecting dnode[" + electedNode + "] at trial[" + (tried + 1) + "] of[" + repEntry.getNodes().size() + "] DNodes. Will retry. Info: " + msg, e);
+          log.warn("TTransportException problem when connecting dnode[" + electedNode + "] at trial[" + tried + "] of["
+              + repEntry.getNodes().size() + "] DNodes. Will retry. Info: " + msg, e);
         }
       } catch (InterruptedException e) {
         log.info("Interrupt received when retrieving connection from pool for dnode[" + electedNode + "] " + msg, e);
         // In this case we don't retry.
       } catch (DNodeException e) {
-        if (tried == repEntry.getNodes().size()) {
-          return new ErrorQueryStatus("DNode exception [" + e.getMsg() + "] from dnode[" + electedNode + "] for " + msg);
+        if (e.getCode() == DNodeHandler.EXCEPTION_ORDINARY) {
+          // In this case we shoulndn't rety. Just return exception. Typically
+          // this error are syntax errors or this kind of things
+          return new ErrorQueryStatus(e.getMsg() + " from dnode[" + electedNode + "] for " + msg);
         } else {
-          log.warn("Error resolving query with dnode[" + electedNode + "] at trial[" + (tried + 1) + "] of[" + repEntry.getNodes().size() + "] DNodes. Will retry. Info: " + msg, e);
+          if (tried == repEntry.getNodes().size()) {
+            return new ErrorQueryStatus("DNode exception [" + e.getMsg() + "] from dnode[" + electedNode + "] for " + msg);
+          } else {
+            log.warn("Error resolving query with dnode[" + electedNode + "] at trial[" + tried + "] of[" + repEntry.getNodes().size()
+                + "] DNodes. Will retry. Info: " + msg, e);
+          }
         }
       } catch (TException e) {
         if (tried == repEntry.getNodes().size()) {
           return new ErrorQueryStatus("Error connecting dnode[" + electedNode + "] for " + msg);
         } else {
-          log.warn("TException problem when connecting dnode[" + electedNode + "] at trial[" + (tried + 1) + "] of[" + repEntry.getNodes().size() + "] DNodes. Will retry. Info: " + msg, e);
+          log.warn("TException problem when connecting dnode[" + electedNode + "] at trial[" + tried + "] of[" + repEntry.getNodes().size()
+              + "] DNodes. Will retry. Info: " + msg, e);
         }
       } catch (PoolCreationException e) {
         if (tried == repEntry.getNodes().size()) {
           return new ErrorQueryStatus("Error creating pool for dnode[" + electedNode + "] for " + msg);
         } else {
-          log.warn("Error creating pool for dnode[" + electedNode + "] at trial[" + (tried + 1) + "] of[" + repEntry.getNodes().size() + "] DNodes. Will retry. Info: " + msg, e);
+          log.warn("Error creating pool for dnode[" + electedNode + "] at trial[" + tried + "] of[" + repEntry.getNodes().size()
+              + "] DNodes. Will retry. Info: " + msg, e);
         }
       } catch (DNodePoolFullException e) {
         if (tried == repEntry.getNodes().size()) {
-          return new ErrorQueryStatus("Pool for dnode[" + electedNode + "] full after waiting for timeout. Consider increase  " + QNodeProperties.DNODE_POOL_SIZE +
-              " or increase " + QNodeProperties.QNODE_DNODE_POOL_TAKE_TIMEOUT + " timeout for waiting for connections. " + msg);
+          return new ErrorQueryStatus("Pool for dnode[" + electedNode + "] full after waiting for timeout. Consider increase  "
+              + QNodeProperties.DNODE_POOL_SIZE + " or increase " + QNodeProperties.QNODE_DNODE_POOL_TAKE_TIMEOUT
+              + " timeout for waiting for connections. " + msg);
         } else {
-          log.warn("Pool for dnode[" + electedNode + "] FULL! at trial[" + (tried + 1) + "] of[" + repEntry.getNodes().size() + "] DNodes. Will retry. Info: " + msg, e);
+          log.warn("Pool for dnode[" + electedNode + "] FULL! at trial[" + tried + "] of[" + repEntry.getNodes().size()
+              + "] DNodes. Will retry. Info: " + msg, e);
         }
       } finally {
         if (client != null) {
@@ -246,8 +262,7 @@ public class Querier extends QNodeHandlerModule {
   /**
    * Helper method for casting a String to the appropriate Tablespace key type.
    */
-  public Comparable<?> castKey(String key, String tablespace, Class<? extends Comparable> clazz)
-      throws Exception {
+  public Comparable<?> castKey(String key, String tablespace, Class<? extends Comparable> clazz) throws Exception {
     Comparable<?> keyObj;
     if (clazz.equals(Integer.class)) {
       keyObj = Integer.parseInt(key);
@@ -261,8 +276,8 @@ public class Querier extends QNodeHandlerModule {
       keyObj = key + "";
     } else {
       // ?
-      throw new RuntimeException("Can't handle tablespace [" + tablespace + "] with key of type "
-          + clazz + ". This is very likely a software bug");
+      throw new RuntimeException("Can't handle tablespace [" + tablespace + "] with key of type " + clazz
+          + ". This is very likely a software bug");
     }
     return keyObj;
   }

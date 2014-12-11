@@ -23,10 +23,7 @@ package com.splout.db.qnode;
 
 import com.hazelcast.core.Hazelcast;
 import com.splout.db.common.*;
-import com.splout.db.dnode.DNode;
-import com.splout.db.dnode.DNodeMockHandler;
-import com.splout.db.dnode.DNodeProperties;
-import com.splout.db.dnode.IDNodeHandler;
+import com.splout.db.dnode.*;
 import com.splout.db.hazelcast.TablespaceVersion;
 import com.splout.db.qnode.beans.QueryStatus;
 import com.splout.db.thrift.DNodeException;
@@ -54,22 +51,22 @@ public class TestFailOver {
 
     @Override
     public String sqlQuery(String tablespace, long version, int partition, String query) throws DNodeException {
-      throw new DNodeException(0, "I always fail");
+      throw new DNodeException(DNodeHandler.EXCEPTION_UNEXPECTED, "I always fail");
     }
 
     @Override
     public String deploy(List<DeployAction> deployActions, long version) throws DNodeException {
-      throw new DNodeException(0, "I always fail");
+      throw new DNodeException(DNodeHandler.EXCEPTION_UNEXPECTED, "I always fail");
     }
 
     @Override
     public String rollback(List<RollbackAction> rollbackActions, String ignoreMe) throws DNodeException {
-      throw new DNodeException(0, "I always fail");
+      throw new DNodeException(DNodeHandler.EXCEPTION_UNEXPECTED, "I always fail");
     }
 
     @Override
     public String status() throws DNodeException {
-      throw new DNodeException(0, "I always fail");
+      throw new DNodeException(DNodeHandler.EXCEPTION_UNEXPECTED, "I always fail");
     }
   };
 

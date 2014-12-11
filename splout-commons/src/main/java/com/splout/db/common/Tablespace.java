@@ -20,6 +20,8 @@ package com.splout.db.common;
  * #L%
  */
 
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+
 import java.io.Serializable;
 
 /**
@@ -31,9 +33,10 @@ import java.io.Serializable;
  * <li>A creation date</li>
  * </ul>
  * The Tablespace entity is necessary for safely storing each tablespace's information in memory and atomically updating
- * it, for instance in {@link com.splout.db.qnode.QNodeHandler}.
+ * it.
  */
 @SuppressWarnings({"serial"})
+@JsonIgnoreProperties(ignoreUnknown = true) // Backwards compatibility in JSON (new fields don't make things break)
 public class Tablespace implements Serializable {
 
   @Override

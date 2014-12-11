@@ -20,6 +20,8 @@ package com.splout.db.common;
  * #L%
  */
 
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,6 +35,7 @@ import java.util.List;
  * then they will all hold the same data.
  */
 @SuppressWarnings("serial")
+@JsonIgnoreProperties(ignoreUnknown = true) // Backwards compatibility in JSON (new fields don't make things break)
 public class ReplicationMap implements Serializable {
 
   public String toString() {

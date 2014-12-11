@@ -20,6 +20,8 @@ package com.splout.db.common;
  * #L%
  */
 
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,6 +33,7 @@ import java.util.List;
  * @see ReplicationMap
  */
 @SuppressWarnings("serial")
+@JsonIgnoreProperties(ignoreUnknown = true) // Backwards compatibility in JSON (new fields don't make things break)
 public class ReplicationEntry extends BaseBean implements Serializable, Comparable<ReplicationEntry> {
 
   public String toString() {

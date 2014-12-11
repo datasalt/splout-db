@@ -5,6 +5,8 @@ Splout SQL Change Log
 
 IMPROVEMENTS
 
+ - 2014-12-09 - Existing partition map at Splout Server can be reused. Useful for not being recalculating partition maps always.
+ - 2014-12-09 - API accepts user defined partition maps
  - 2014-11-28 - Timeout when pool of DNodes is full. Avoiding enqueue for always queries when Splout is full.
  - 2014-11-12 - QNode connections to DNode retrials are delayed in successive failures.
  - 2014-11-12 - All properties in Splout config starting by hazelcast. are passed through Hazelcast as is.
@@ -12,6 +14,7 @@ IMPROVEMENTS
 
  BUG FIXES
 
+ - 2014-12-05 - TimeoutThread not working properly due to only covering statement prepare.
  - 2014-12-01 - hz.tcp.cluster property only using the first given host
  - 2014-11-28 - Solved a race condition in the TimeoutThread
  - 2014-11-28 - Thrift pools are not in infinite loop to renewal anymore.

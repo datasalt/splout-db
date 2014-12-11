@@ -180,21 +180,25 @@ public class SQLite4JavaClient {
     }
 
     SQLiteStatement st = null;
-
+    SQLiteConnection conn = null;
+    
     try {
 
-      if (st == null) {
-        SQLiteConnection conn = db.get();
-        if (timeoutThread != null) {
-          timeoutThread.startQuery(conn, query);
-        }
-        // We don't want to cache the statements here so we use "false"
-        // Don't use the method without boolean because it will use cached =
-        // true!!!
-        st = conn.prepare(query, false);
-        if (timeoutThread != null) {
-          timeoutThread.endQuery(conn);
-        }
+      conn = db.get();
+
+      if (conn == null) {
+        throw new SQLException("Imposible to create SQLite connection to " + dbFile);
+      }
+
+      if (timeoutThread != null) {
+        timeoutThread.startQuery(conn, query);
+      }
+      // We don't want to cache the statements here so we use "false"
+      // Don't use the method without boolean because it will use cached =
+      // true!!!
+      st = conn.prepare(query, false);
+      if (timeoutThread != null) {
+        timeoutThread.endQuery(conn);
       }
 
       List<Object[]> resultList = new ArrayList<Object[]>();
@@ -222,14 +226,16 @@ public class SQLite4JavaClient {
       } while (resultList.size() < maxResults);
       if (resultList.size() == maxResults) {
 
-        throw new SQLException("Hard limit on number of results reached (" + maxResults
-            + "), please use a LIMIT for this query.");
+        throw new SQLException("Hard limit on number of results reached (" + maxResults + "), please use a LIMIT for this query.");
 
       }
       return new QueryResult(columnNames, resultList);
     } catch (SQLiteException e) {
       throw new SQLException(e);
     } finally {
+      if (timeoutThread != null) {
+        timeoutThread.endQuery(conn);
+      }
       if (st != null) {
         st.dispose();
       }
