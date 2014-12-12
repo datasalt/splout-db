@@ -192,9 +192,6 @@ public class SQLite4JavaClient {
       // Don't use the method without boolean because it will use cached =
       // true!!!
       st = conn.prepare(query, false);
-      if (timeoutThread != null) {
-        timeoutThread.endQuery(conn);
-      }
 
       List<Object[]> resultList = new ArrayList<Object[]>();
       String[] columnNames = new String[0];
@@ -219,8 +216,8 @@ public class SQLite4JavaClient {
           break;
         }
       } while (resultList.size() < maxResults);
-      if (resultList.size() == maxResults) {
-        throw new SQLiteException(ERROR_CODE_MAXIMUM_RESULTS_REACHED, "Hard limit on number of results reached (" + maxResults + "), please use a LIMIT for this query.");
+      if (resultList.size() > maxResults) {
+        throw new SQLiteException(ERROR_CODE_MAXIMUM_RESULTS_REACHED, "Hard limit on number of results reached [" + maxResults + "], please use a LIMIT for this query.");
       }
       return new QueryResult(columnNames, resultList);
     } finally {

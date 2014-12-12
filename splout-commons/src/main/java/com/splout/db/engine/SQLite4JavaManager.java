@@ -110,6 +110,8 @@ public class SQLite4JavaManager implements EngineManager {
         } else {
           return new ShouldNotRetryInReplicaException(e.getMessage());
         }
+      } if (e.getErrorCode() == SQLite4JavaClient.ERROR_CODE_MAXIMUM_RESULTS_REACHED) {
+        return new TooManyResultsException(e.getMessage());
       } else {
         // Unexpected exception. Should rety in replica.
         return new ShouldRetryInReplicaException(e.getMessage(), e);

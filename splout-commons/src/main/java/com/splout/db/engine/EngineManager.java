@@ -118,6 +118,24 @@ public interface EngineManager {
     }
   }
 
+  /**
+   * To be thrown when query query results size is greater than limits.
+   */
+  public static class TooManyResultsException extends ShouldNotRetryInReplicaException {
+
+    public TooManyResultsException(String message) {
+      super(message);
+    }
+
+    public TooManyResultsException(Throwable underlying) {
+      super(underlying);
+    }
+
+    public TooManyResultsException(String message, Throwable underlying) {
+      super(message, underlying);
+    }
+  }
+
   public void init(File dbFile, Configuration config, List<String> initStatements) throws EngineException;
 
   /**

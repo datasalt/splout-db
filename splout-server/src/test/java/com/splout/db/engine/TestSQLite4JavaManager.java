@@ -22,14 +22,16 @@ package com.splout.db.engine;
  */
 
 
-import java.io.File;
-import java.sql.SQLException;
-
-import org.junit.Test;
-
+import com.almworks.sqlite4java.SQLiteConnection;
+import com.almworks.sqlite4java.SQLiteException;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
+import com.splout.db.common.TimeoutThread;
 import com.splout.db.engine.EngineManager.EngineException;
 import com.splout.db.engine.ResultSerializer.SerializationException;
+import org.junit.Test;
+
+import java.io.File;
+import java.sql.SQLException;
 
 public class TestSQLite4JavaManager extends SQLManagerTester {
 
@@ -62,5 +64,55 @@ public class TestSQLite4JavaManager extends SQLManagerTester {
 		sqlite4Java.close();
 		dbFile.delete();
 	}
-	
+
+  @Test
+  public void testExceptions() throws SQLException, ClassNotFoundException, JSONSerDeException, EngineException, SerializationException {
+    File dbFile = new File(TEST_DB_3);
+    if(dbFile.exists()) {
+      dbFile.delete();
+    }
+
+    final SQLite4JavaManager sqlite4Java = new SQLite4JavaManager(TEST_DB_2, null);
+    try {
+      sqlite4Java.query("SELECT hex(randomblob(1000))", 0);
+      throw new AssertionError("TooManyResultsException expected but not thrown.");
+    } catch (EngineManager.TooManyResultsException e) {
+    }
+
+    TimeoutThread t = new TimeoutThread(1) {
+      SQLiteConnection con;
+      @Override
+      public void startQuery(SQLiteConnection connection, String query) {
+          this.con = connection;
+      }
+
+      @Override
+      public void endQuery(SQLiteConnection connection) {
+        con = null;
+      }
+
+      @Override
+      public void run() {
+        while (true) {
+          if (con != null) {
+            try {
+              con.interrupt();
+            } catch (SQLiteException e) {
+              throw new AssertionError();
+            }
+          }
+        }
+      }
+    };
+    t.start();
+    sqlite4Java.setTimeoutThread(t);
+    try {
+      sqlite4Java.query("SELECT hex(randomblob(100000))", 1);
+      throw new AssertionError("QueryInterruptedException expected but not thrown.");
+    } catch(EngineManager.QueryInterruptedException e){
+    }
+    sqlite4Java.close();
+    dbFile.delete();
+  }
+
 }
