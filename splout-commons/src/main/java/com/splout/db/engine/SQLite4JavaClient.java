@@ -215,7 +215,7 @@ public class SQLite4JavaClient {
         } else {
           break;
         }
-      } while (resultList.size() < maxResults);
+      } while (resultList.size() <= maxResults + 1);
       if (resultList.size() > maxResults) {
         throw new SQLiteException(ERROR_CODE_MAXIMUM_RESULTS_REACHED, "Hard limit on number of results reached [" + maxResults + "], please use a LIMIT for this query.");
       }

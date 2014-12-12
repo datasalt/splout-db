@@ -108,25 +108,25 @@ public class SQLManagerTester {
     }
     manager.exec("COMMIT");
 
-    // Query with hard limit = 100
+    // Query with hard limit = 99
     try {
-      manager.query("SELECT * FROM t;", 100);
+      manager.query("SELECT * FROM t;", 99);
       throw new AssertionError("Exception was not thrown but it was expected (query hard limit)");
-    } catch (EngineException e) {
+    } catch (EngineManager.TooManyResultsException e) {
     }
 
     // Query with hard limit = 10
     try {
       manager.query("SELECT * FROM t;", 10);
       throw new AssertionError("Exception was not thrown but it was expected (query hard limit)");
-    } catch (EngineException e) {
+    } catch (EngineManager.TooManyResultsException e) {
     }
 
     // Query with hard limit = 1
     try {
       manager.query("SELECT * FROM t;", 1);
       throw new AssertionError("Exception was not thrown but it was expected (query hard limit)");
-    } catch (EngineException e) {
+    } catch (EngineManager.TooManyResultsException e) {
     }
   }
 
