@@ -24,9 +24,11 @@ package com.splout.db.qnode;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.splout.db.common.SploutConfiguration;
+import com.splout.db.common.Tablespace;
 import com.splout.db.common.TestUtils;
 import com.splout.db.hazelcast.CoordinationStructures;
 import com.splout.db.hazelcast.HazelcastConfigBuilder;
+import com.splout.db.hazelcast.TablespaceVersion;
 import com.splout.db.qnode.beans.SwitchVersionRequest;
 import org.junit.After;
 import org.junit.Test;
@@ -58,19 +60,18 @@ public class TestRollback {
        * Create 5 successful versions. current-version will be set to last one.
 			 */
 
-      // TODO
+      handler.init(config);
 
-//			coord.getTablespaces().put(new TablespaceVersion("t1", 0l), new Tablespace(null, null, 0l, 0l));
-//			coord.getTablespaces().put(new TablespaceVersion("t1", 1l), new Tablespace(null, null, 1l, 0l));
-//			coord.getTablespaces().put(new TablespaceVersion("t1", 2l), new Tablespace(null, null, 2l, 0l));
-//			coord.getTablespaces().put(new TablespaceVersion("t1", 3l), new Tablespace(null, null, 3l, 0l));
-//			coord.getTablespaces().put(new TablespaceVersion("t1", 4l), new Tablespace(null, null, 4l, 0l));
+      Map<TablespaceVersion, Tablespace> tMap = handler.getContext().getTablespaceVersionsMap();
+      tMap.put(new TablespaceVersion("t1", 0l), new Tablespace(null, null, 0l, 0l));
+      tMap.put(new TablespaceVersion("t1", 1l), new Tablespace(null, null, 1l, 0l));
+      tMap.put(new TablespaceVersion("t1", 2l), new Tablespace(null, null, 2l, 0l));
+      tMap.put(new TablespaceVersion("t1", 3l), new Tablespace(null, null, 3l, 0l));
+      tMap.put(new TablespaceVersion("t1", 4l), new Tablespace(null, null, 4l, 0l));
 
       Map<String, Long> versionsBeingServed = new HashMap<String, Long>();
       versionsBeingServed.put("t1", 4l);
       coord.getVersionsBeingServed().put(CoordinationStructures.VERSIONS_BEING_SERVED, versionsBeingServed);
-
-      handler.init(config);
 
       List<SwitchVersionRequest> rRequest = new ArrayList<SwitchVersionRequest>();
       SwitchVersionRequest theRequest = new SwitchVersionRequest("t1", 3);
@@ -118,18 +119,19 @@ public class TestRollback {
     try {
       HazelcastInstance hz = Hazelcast.newHazelcastInstance(HazelcastConfigBuilder.build(config));
       CoordinationStructures coord = new CoordinationStructures(hz);
-			
+
+      handler.init(config);
+
 			/*
 			 * Create 5 successful versions. current-version will be set to last one.
 			 */
 
-      // TODO
-
-//			for(int i = 0; i < 5; i++) {
-//				coord.getTablespaces().put(new TablespaceVersion("t1", i), new Tablespace(null, null, i, 0l));
-//				coord.getTablespaces().put(new TablespaceVersion("t2", i), new Tablespace(null, null, i, 0l));
-//				coord.getTablespaces().put(new TablespaceVersion("t3", i), new Tablespace(null, null, i, 0l));
-//			}
+      Map<TablespaceVersion, Tablespace> tMap = handler.getContext().getTablespaceVersionsMap();
+			for(int i = 0; i < 5; i++) {
+				tMap.put(new TablespaceVersion("t1", i), new Tablespace(null, null, i, 0l));
+				tMap.put(new TablespaceVersion("t2", i), new Tablespace(null, null, i, 0l));
+				tMap.put(new TablespaceVersion("t3", i), new Tablespace(null, null, i, 0l));
+			}
 
       // T1 -> current version 4
       // T2 -> current version 3
@@ -139,8 +141,6 @@ public class TestRollback {
       versionsBeingServed.put("t2", 3l);
       versionsBeingServed.put("t3", 2l);
       coord.getVersionsBeingServed().put(CoordinationStructures.VERSIONS_BEING_SERVED, versionsBeingServed);
-
-      handler.init(config);
 
       List<SwitchVersionRequest> rRequest = new ArrayList<SwitchVersionRequest>();
 

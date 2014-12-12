@@ -650,7 +650,9 @@ public class QNodeHandler implements IQNodeHandler {
    */
   @Override
   public void close() throws Exception {
-    context.close();
+    if (context != null) {
+      context.close();
+    }
     if (warmingThread != null) {
       warmingThread.interrupt();
       warmingThread.join();
