@@ -21,64 +21,33 @@ package com.splout.db.qnode;
  * #L%
  */
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.thrift.transport.TTransportException;
-import org.codehaus.jackson.type.TypeReference;
-
 import com.google.common.base.Joiner;
-import com.hazelcast.core.EntryEvent;
-import com.hazelcast.core.EntryListener;
-import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.IMap;
-import com.hazelcast.core.MapEvent;
+import com.hazelcast.core.*;
 import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
 import com.splout.db.common.SploutConfiguration;
 import com.splout.db.common.Tablespace;
 import com.splout.db.dnode.beans.DNodeSystemStatus;
 import com.splout.db.engine.ResultSerializer.SerializationException;
-import com.splout.db.hazelcast.CoordinationStructures;
-import com.splout.db.hazelcast.DNodeInfo;
-import com.splout.db.hazelcast.DistributedRegistry;
-import com.splout.db.hazelcast.HazelcastConfigBuilder;
-import com.splout.db.hazelcast.HazelcastProperties;
-import com.splout.db.hazelcast.TablespaceVersion;
-import com.splout.db.hazelcast.TablespaceVersionStore;
+import com.splout.db.hazelcast.*;
 import com.splout.db.qnode.Deployer.UnexistingVersion;
-import com.splout.db.qnode.QNodeHandlerContext.DNodeEvent;
 import com.splout.db.qnode.QNodeHandlerContext.TablespaceVersionInfoException;
 import com.splout.db.qnode.Querier.QuerierException;
-import com.splout.db.qnode.beans.DeployInfo;
-import com.splout.db.qnode.beans.DeployRequest;
-import com.splout.db.qnode.beans.DeployStatus;
-import com.splout.db.qnode.beans.DeploymentStatus;
-import com.splout.db.qnode.beans.DeploymentsStatus;
-import com.splout.db.qnode.beans.ErrorQueryStatus;
-import com.splout.db.qnode.beans.QNodeStatus;
-import com.splout.db.qnode.beans.QueryStatus;
-import com.splout.db.qnode.beans.StatusMessage;
-import com.splout.db.qnode.beans.SwitchVersionRequest;
+import com.splout.db.qnode.beans.*;
 import com.splout.db.thrift.DNodeService;
 import com.yammer.metrics.Metrics;
 import com.yammer.metrics.core.Counter;
 import com.yammer.metrics.core.Histogram;
 import com.yammer.metrics.core.Meter;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.thrift.transport.TTransportException;
+import org.codehaus.jackson.type.TypeReference;
+
+import java.io.IOException;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Implements the business logic for the {@link QNode}.
@@ -134,17 +103,16 @@ public class QNodeHandler implements IQNodeHandler {
    */
   public class DNodesListener implements EntryListener<String, DNodeInfo> {
 
-    @Override
-    public void entryAdded(EntryEvent<String, DNodeInfo> event) {
-      log.info("DNode [" + event.getValue().getAddress() + "] joins the cluster as ready to server requests.");
-      mapToDNodeInfo.put(event.getKey(), event.getValue());
+    public void entryAdded(String dNodeRef, DNodeInfo dNodeInfo) {
+      log.info("DNode [" + dNodeInfo.getAddress() + "] joins the cluster as ready to server requests.");
+      mapToDNodeInfo.put(dNodeRef, dNodeInfo);
       // Update TablespaceVersions
       try {
-        String dnode = event.getValue().getAddress();
+        String dnode = dNodeInfo.getAddress();
         log.info(Thread.currentThread().getName() + " : populating client queue for [" + dnode
             + "] as it connected.");
         context.initializeThriftClientCacheFor(dnode);
-        context.updateTablespaceVersions(event.getValue(), QNodeHandlerContext.DNodeEvent.ENTRY);
+        context.updateTablespaceVersions(dNodeInfo, QNodeHandlerContext.DNodeEvent.ENTRY);
         context.maybeBalance();
       } catch (TablespaceVersionInfoException e) {
         throw new RuntimeException(e);
@@ -153,6 +121,11 @@ public class QNodeHandler implements IQNodeHandler {
       } catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
+    }
+
+    @Override
+    public void entryAdded(EntryEvent<String, DNodeInfo> event) {
+      entryAdded(event.getKey(), event.getValue());
     }
 
     @Override
@@ -314,20 +287,13 @@ public class QNodeHandler implements IQNodeHandler {
     IMap<String, DNodeInfo> dnodes = context.getCoordinationStructures().getDNodes();
     // CAUTION: We must register the listener BEFORE reading the list
     // of dnodes. Otherwise we could have a race condition.
+    DNodesListener listener = new DNodesListener();
     dnodes.addEntryListener(new DNodesListener(), true);
     Set<String> dNodes = new HashSet<String>();
-    for (DNodeInfo dnodeInfo : dnodes.values()) {
-      dNodes.add(dnodeInfo.getAddress());
-      try {
-        context.initializeThriftClientCacheFor(dnodeInfo.getAddress());
-        context.updateTablespaceVersions(dnodeInfo, DNodeEvent.ENTRY);
-      } catch (TablespaceVersionInfoException e) {
-        throw new RuntimeException(e);
-      } catch (TTransportException e) {
-        throw new RuntimeException(e);
-      } catch (InterruptedException e) {
-        throw new RuntimeException(e);
-      }
+    for (Entry<String, DNodeInfo> entry : dnodes.entrySet()) {
+      // Manually adding existing DNodes, as Hazelcast won't do for us.
+      listener.entryAdded(entry.getKey(), entry.getValue());
+      dNodes.add(entry.getValue().getAddress());
     }
     log.info("Alive DNodes at QNode startup [" + Joiner.on(", ").skipNulls().join(dNodes) + "]");
     log.info("TablespaceVersion map at QNode startup [" + context.getTablespaceVersionsMap() + "]");

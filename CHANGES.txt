@@ -5,6 +5,7 @@ Splout SQL Change Log
 
 IMPROVEMENTS
 
+ - 2014-12-12 - Concurrent deployments support. Individualized cancelling support.
  - 2014-12-12 - No retrying syntax error queries or timeout queries anymore.
  - 2014-12-09 - Existing partition map at Splout Server can be reused. Useful for not being recalculating partition maps always.
  - 2014-12-09 - API accepts user defined partition maps
@@ -15,6 +16,7 @@ IMPROVEMENTS
 
  BUG FIXES
 
+ - 2014-12-12 - Bug in registry when starting QNode with already existing DNodes.
  - 2014-12-05 - TimeoutThread not working properly due to only covering statement prepare.
  - 2014-12-01 - hz.tcp.cluster property only using the first given host
  - 2014-11-28 - Solved a race condition in the TimeoutThread

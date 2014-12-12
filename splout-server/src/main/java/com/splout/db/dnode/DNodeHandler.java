@@ -80,7 +80,7 @@ public class DNodeHandler implements IDNodeHandler {
   // The {@link Fetcher} is the responsible for downloading new deployment data.
   Cache dbCache;
 
-  protected ExecutorService deployThread;
+  protected ExecutorService deployExecutor;
   protected Object deployLock = new Object();
 
   // This flag is needed for unit testing.
@@ -125,6 +125,8 @@ public class DNodeHandler implements IDNodeHandler {
 
   // Deploy parallelism
   private int deployParallelism;
+
+  protected HashMap<Long, Future<?>> deploysBeingExecuted = new HashMap<Long, Future<?>>();
 
   // This map will hold all the current balance file transactions being done
   private ConcurrentHashMap<String, BalanceFileReceivingProgress> balanceActionsStateMap = new ConcurrentHashMap<String, BalanceFileReceivingProgress>();
@@ -318,7 +320,7 @@ public class DNodeHandler implements IDNodeHandler {
   /**
    * Initialization logic: initialize things, connect to ZooKeeper, create
    * Thrift server, etc.
-   * 
+   *
    * @see com.splout.db.dnode.IDNodeHandler#init(com.splout.db.common.SploutConfiguration)
    */
   public void init(SploutConfiguration config) throws Exception {
@@ -342,8 +344,8 @@ public class DNodeHandler implements IDNodeHandler {
     // When a tablespace version is expired, the connection pool is closed by an
     // expiration handler
     dbCache.getCacheEventNotificationService().registerListener(new CacheListener());
-    // The thread that will execute deployments asynchronously
-    deployThread = Executors.newFixedThreadPool(1);
+    // The executor that will execute deployments asynchronously
+    deployExecutor = Executors.newCachedThreadPool();
     // A thread that will listen to file exchanges through HTTP
     httpExchanger = new HttpFileExchanger(config, new FileReceiverCallback());
     httpExchanger.init();
@@ -539,170 +541,7 @@ public class DNodeHandler implements IDNodeHandler {
   public String deploy(final List<DeployAction> deployActions, final long version) throws DNodeException {
     try {
       synchronized (deployLock) {
-        /*
-         * Here we instantiate a Thread for waiting for the deploy so that we
-         * are able to implement deploy timeout... If the deploy takes too much
-         * then we cancel it. We achieve this by using Java asynchronous Future
-         * objects.
-         */
-        Thread deployWait = new Thread() {
-          public void run() {
-            Future<?> future = deployThread.submit(new Runnable() {
-              // This code is executed by the solely deploy thread, not the one
-              // who waits
-              @Override
-              public void run() {
-                try {
-                  deployInProgress.incrementAndGet();
-                  lastDeployTimedout.set(false);
-                  log.info("Starting [" + deployActions.size() + "] deploy actions.");
-                  long start = System.currentTimeMillis();
-                  long totalSize = 0;
-
-                  // Ask for the total size of the deployment first.
-                  for (DeployAction action : deployActions) {
-                    long plusSize = fetcher.sizeOf(action.getDataURI());
-                    if (plusSize == Fetcher.SIZE_UNKNOWN) {
-                      totalSize = Fetcher.SIZE_UNKNOWN;
-                      break;
-                    }
-                    totalSize += plusSize;
-                  }
-
-                  final double totalKnownSize = totalSize / (1024d * 1024d);
-                  final long startTime = System.currentTimeMillis();
-                  final AtomicLong bytesSoFar = new AtomicLong(0l);
-
-                  final Fetcher.Reporter reporter = new Fetcher.Reporter() {
-                    @Override
-                    public void progress(long consumed) {
-                      long now = System.currentTimeMillis();
-                      double totalSoFar = bytesSoFar.addAndGet(consumed) / (1024d * 1024d);
-                      double secondsSoFar = (now - startTime) / 1000d;
-                      double mBytesPerSec = totalSoFar / secondsSoFar;
-
-                      String msg = "[" + whoAmI() + " progress/speed report]: Fetched [";
-                      if (totalSoFar > 999) {
-                        msg += String.format("%.3f", (totalSoFar / 1024d)) + "] GBs so far ";
-                      } else {
-                        msg += String.format("%.3f", totalSoFar) + "] MBs so far ";
-                      }
-
-                      if (totalKnownSize != Fetcher.SIZE_UNKNOWN) {
-                        msg += "(out of [";
-                        if (totalKnownSize > 999) {
-                          msg += String.format("%.3f", (totalKnownSize / 1024d)) + "] GBs) ";
-                        } else {
-                          msg += String.format("%.3f", totalKnownSize) + "] MBs) ";
-                        }
-                      }
-                      msg += "- Current deployment speed is [" + String.format("%.3f", mBytesPerSec) + "] MB/s.";
-                      // Add a report of the estimated remaining time if we can
-                      if (totalKnownSize != Fetcher.SIZE_UNKNOWN) {
-                        double missingSize = (totalKnownSize - totalSoFar);
-                        long remainingSecs = (long) (missingSize / mBytesPerSec);
-                        String timeRemaining = "";
-                        if (remainingSecs > 3600) { // hours, minutes and secs
-                          int hours = (int) (remainingSecs / 3600);
-                          int restOfSeconds = (int) (remainingSecs % 3600);
-                          timeRemaining = hours + " hours and " + (int) (restOfSeconds / 60) + " minutes and " + (restOfSeconds % 60)
-                              + " seconds";
-                        } else if (remainingSecs > 60) { // minutes and secs
-                          timeRemaining = (int) (remainingSecs / 60) + " minutes and " + (remainingSecs % 60) + " seconds";
-                        } else { // secs
-                          timeRemaining = remainingSecs + " seconds";
-                        }
-                        msg += " Estimated remaining time is [" + timeRemaining + "].";
-                      }
-                      coord.logDeploySpeed(version, whoAmI(), msg);
-                    }
-                  };
-
-                  // Parallel execution of deploy actions
-                  ExecutorService executor = Executors.newFixedThreadPool(deployParallelism);
-                  ExecutorCompletionService<Boolean> ecs = new ExecutorCompletionService<Boolean>(executor);
-                  ArrayList<Future<Boolean>> deployFutures = new ArrayList<Future<Boolean>>();
-
-                  for (final DeployAction action : deployActions) {
-                    deployFutures.add(ecs.submit(new Callable<Boolean>() {
-                      @Override
-                      public Boolean call() throws Exception {
-                        // Downloads data and updates some structs
-                        runDeployAction(reporter, action, version);
-                        return true;
-                      }
-                    }));
-                  }
-
-                  // Waiting all tasks to finish.
-                  for (int i = 0; i < deployActions.size(); i++) {
-                    // Get will throw an exception if the callable returned it.
-                    try {
-                      ecs.take().get();
-                    } catch (ExecutionException e) {
-                      // One job was wrong. Stopping the rest.
-                      for (Future<Boolean> task : deployFutures) {
-                        task.cancel(true);
-                      }
-                      executor.shutdown();
-                      throw e.getCause();
-                    } catch (InterruptedException e) {
-                      // Somebody interrupted the deployment thread. Stopping
-                      // the
-                      // rest of tasks.
-                      for (Future<Boolean> task : deployFutures) {
-                        task.cancel(true);
-                      }
-                      executor.shutdown();
-                      throw e;
-                    }
-                  }
-
-                  executor.shutdown();
-
-                  // Publish new DNodeInfo in distributed registry.
-                  // This makes QNodes notice that a new version is available...
-                  // PartitionMap and ReplicationMap will be built incrementally
-                  // as DNodes finish.
-                  dnodesRegistry.changeInfo(new DNodeInfo(config));
-
-                  long end = System.currentTimeMillis();
-                  log.info("Local [" + deployActions.size() + "] deploy actions successfully finished in " + (end - start) + " ms.");
-                  deployInProgress.decrementAndGet();
-                } catch (Throwable t) {
-                  // In order to avoid stale deployments, we flag this deploy to
-                  // be aborted
-                  log.warn("Error deploying [" + deployActions + "] barrier + [" + version + "]", t);
-                  abortDeploy(version, ExceptionUtils.getStackTrace(t));
-                } finally {
-                  // Decrement the countdown latch. On 0, deployer knows that
-                  // the deploy
-                  // finished.
-                  ICountDownLatch countdown = coord.getCountDownLatchForDeploy(version);
-                  countdown.countDown();
-                }
-              }
-            });
-            try {
-              // This line makes the wait thread wait for the deploy as long as
-              // the configuration tells
-              // If the timeout passes a TimeoutException is thrown
-              future.get(config.getInt(DNodeProperties.DEPLOY_TIMEOUT_SECONDS), TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-              log.warn("Interrupted exception waiting for local deploy to finish - killing deployment", e);
-              abortDeploy(version, ExceptionUtils.getStackTrace(e));
-              future.cancel(true);
-            } catch (ExecutionException e) {
-              log.warn("Execution exception waiting for local deploy to finish - killing deployment.", e);
-              abortDeploy(version, ExceptionUtils.getStackTrace(e));
-            } catch (TimeoutException e) {
-              log.warn("Timeout waiting for local deploy to finish - killing deployment.", e);
-              abortDeploy(version, "Timeout reached - " + config.getInt(DNodeProperties.DEPLOY_TIMEOUT_SECONDS) + " seconds");
-              future.cancel(true);
-              lastDeployTimedout.set(true);
-            }
-          }
-        };
+        Thread deployWait = getDeployControllerThread(deployActions, version);
         deployWait.start();
       }
       // Everything is asynchronous so this is quickly reached - it just means
@@ -715,35 +554,42 @@ public class DNodeHandler implements IDNodeHandler {
   }
 
   /**
-   * Runs a deploy action. Downloads file and warm up the data.
+   * Here we instantiate a Thread for waiting for the deploy so that we
+   * are able to implement deploy timeout... If the deploy takes too much
+   * then we cancel it. We achieve this by using Java asynchronous Future
+   * objects.
    */
-  private void runDeployAction(Fetcher.Reporter reporter, DeployAction action, long version) throws IOException, URISyntaxException,
-      DNodeException {
-    log.info("Running deployAction[" + action + "] for version[" + version + "].");
-    // 1- Store metadata
-    File metadataFile = getLocalMetadataFile(action.getTablespace(), action.getPartition(), version);
-    if (!metadataFile.getParentFile().exists()) {
-      metadataFile.getParentFile().mkdirs();
-    }
-    ThriftWriter writer = new ThriftWriter(metadataFile);
-    writer.write(action.getMetadata());
-    writer.close();
-    // 2- Call the fetcher for fetching
-    File fetchedContent = fetcher.fetch(action.getDataURI(), reporter);
-    // If we reach this point then the fetch has been OK
-    File dbFolder = getLocalStorageFolder(action.getTablespace(), action.getPartition(), version);
-    if (dbFolder.exists()) { // If the new folder where we want to deploy
-                             // already exists means it is
-      // somehow
-      // stalled from a previous failed deploy - it is ok to delete it
-      FileUtils.deleteDirectory(dbFolder);
-    }
-    // 4- Perform a "mv" for finally making the data available
-    FileUtils.moveDirectory(fetchedContent, dbFolder);
-    // 5- Preemptively load the Manager in case initialization is slow
-    // Managers might warm up for a while (e.g. loading data into memory)
-    loadManagerInEHCache(action.getTablespace(), action.getVersion(), action.getPartition(), dbFolder, action.getMetadata());
-    log.info("Finished deployAction[" + action + "] for version[" + version + "].");
+  protected Thread getDeployControllerThread(final List<DeployAction> deployActions, final long version) {
+    return new Thread() {
+      public void run() {
+        Future<?> future = deployExecutor.submit(newDeployRunnable(deployActions, version));
+        deploysBeingExecuted.put(version, future);
+        try {
+          // This line makes the wait thread wait for the deploy as long as
+          // the configuration tells
+          // If the timeout passes a TimeoutException is thrown
+          future.get(config.getInt(DNodeProperties.DEPLOY_TIMEOUT_SECONDS), TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+          log.warn("Interrupted exception waiting for local deploy to finish - killing deployment", e);
+          abortDeploy(version, ExceptionUtils.getStackTrace(e));
+          future.cancel(true);
+        } catch (ExecutionException e) {
+          log.warn("Execution exception waiting for local deploy to finish - killing deployment.", e);
+          abortDeploy(version, ExceptionUtils.getStackTrace(e));
+        } catch (TimeoutException e) {
+          log.warn("Timeout waiting for local deploy to finish - killing deployment.", e);
+          abortDeploy(version, "Timeout reached - " + config.getInt(DNodeProperties.DEPLOY_TIMEOUT_SECONDS) + " seconds");
+          future.cancel(true);
+          lastDeployTimedout.set(true);
+        } finally {
+          deploysBeingExecuted.remove(version);
+        }
+      }
+    };
+  }
+
+  protected DeployRunnable newDeployRunnable(List<DeployAction> deployActions, long version) {
+    return new DeployRunnable(deployActions, version);
   }
 
   /**
@@ -864,7 +710,7 @@ public class DNodeHandler implements IDNodeHandler {
    */
   public void stop() throws Exception {
     dbCache.dispose();
-    deployThread.shutdownNow();
+    deployExecutor.shutdownNow();
     factory.close();
     httpExchanger.close();
     hz.getLifecycleService().shutdown();
@@ -872,28 +718,16 @@ public class DNodeHandler implements IDNodeHandler {
 
   @Override
   public String abortDeploy(long version) throws DNodeException {
-    // For simplicity, current implementation cancels all queued deploys.
-    // There can only be one deploy being handled at a time, but multiple may
-    // have been queued.
     try {
-      if (isDeployInProgress()) {
-        synchronized (deployLock) { // No new deploys to be handled until we
-                                    // cancel the current one
-          // Note that it is not always guaranteed that threads will be properly
-          // shutdown...
-          deployThread.shutdownNow();
-          while (!deployThread.isTerminated()) {
-            try {
-              Thread.sleep(100);
-            } catch (InterruptedException e) {
-              log.error("Deploy Thread interrupted - continuing anyway.", e);
-            }
-          }
-          deployThread = Executors.newFixedThreadPool(1);
+      synchronized (deployLock) {
+        // No new deploys to be handled until we
+        // cancel the current one
+        Future<?> future = deploysBeingExecuted.get(version);
+        if (future == null) {
+          return JSONSerDe.ser(new DNodeStatusResponse("Not deployment running with version["+version+"]"));
         }
-        return JSONSerDe.ser(new DNodeStatusResponse("Ok. Deploy cancelled."));
-      } else {
-        return JSONSerDe.ser(new DNodeStatusResponse("No deploy in progress."));
+        future.cancel(true);
+        return JSONSerDe.ser(new DNodeStatusResponse("status[OK]. Deploy with version["+version+"] cancelled."));
       }
     } catch (JSONSerDeException e) {
       unexpectedException(e);
@@ -983,4 +817,186 @@ public class DNodeHandler implements IDNodeHandler {
   public DistributedRegistry getDnodesRegistry() {
     return dnodesRegistry;
   }
+
+
+  protected class DeployRunnable implements Runnable {
+    private final List<DeployAction> deployActions;
+    private final long version;
+
+    public DeployRunnable(List<DeployAction> deployActions, long version) {
+      this.deployActions = deployActions;
+      this.version = version;
+    }
+
+    // This code is executed by the solely deploy thread, not the one
+    // who waits
+    @Override
+    public void run() {
+      try {
+        deployInProgress.incrementAndGet();
+        lastDeployTimedout.set(false);
+        log.info("Starting [" + deployActions.size() + "] deploy actions.");
+        long start = System.currentTimeMillis();
+        long totalSize = 0;
+
+        // Ask for the total size of the deployment first.
+        for (DeployAction action : deployActions) {
+          long plusSize = fetcher.sizeOf(action.getDataURI());
+          if (plusSize == Fetcher.SIZE_UNKNOWN) {
+            totalSize = Fetcher.SIZE_UNKNOWN;
+            break;
+          }
+          totalSize += plusSize;
+        }
+
+        final double totalKnownSize = totalSize / (1024d * 1024d);
+        final long startTime = System.currentTimeMillis();
+        final AtomicLong bytesSoFar = new AtomicLong(0l);
+
+        final Fetcher.Reporter reporter = new Fetcher.Reporter() {
+          @Override
+          public void progress(long consumed) {
+            long now = System.currentTimeMillis();
+            double totalSoFar = bytesSoFar.addAndGet(consumed) / (1024d * 1024d);
+            double secondsSoFar = (now - startTime) / 1000d;
+            double mBytesPerSec = totalSoFar / secondsSoFar;
+
+            String msg = "[" + whoAmI() + " progress/speed report]: Fetched [";
+            if (totalSoFar > 999) {
+              msg += String.format("%.3f", (totalSoFar / 1024d)) + "] GBs so far ";
+            } else {
+              msg += String.format("%.3f", totalSoFar) + "] MBs so far ";
+            }
+
+            if (totalKnownSize != Fetcher.SIZE_UNKNOWN) {
+              msg += "(out of [";
+              if (totalKnownSize > 999) {
+                msg += String.format("%.3f", (totalKnownSize / 1024d)) + "] GBs) ";
+              } else {
+                msg += String.format("%.3f", totalKnownSize) + "] MBs) ";
+              }
+            }
+            msg += "- Current deployment speed is [" + String.format("%.3f", mBytesPerSec) + "] MB/s.";
+            // Add a report of the estimated remaining time if we can
+            if (totalKnownSize != Fetcher.SIZE_UNKNOWN) {
+              double missingSize = (totalKnownSize - totalSoFar);
+              long remainingSecs = (long) (missingSize / mBytesPerSec);
+              String timeRemaining = "";
+              if (remainingSecs > 3600) { // hours, minutes and secs
+                int hours = (int) (remainingSecs / 3600);
+                int restOfSeconds = (int) (remainingSecs % 3600);
+                timeRemaining = hours + " hours and " + (int) (restOfSeconds / 60) + " minutes and " + (restOfSeconds % 60)
+                    + " seconds";
+              } else if (remainingSecs > 60) { // minutes and secs
+                timeRemaining = (int) (remainingSecs / 60) + " minutes and " + (remainingSecs % 60) + " seconds";
+              } else { // secs
+                timeRemaining = remainingSecs + " seconds";
+              }
+              msg += " Estimated remaining time is [" + timeRemaining + "].";
+            }
+            coord.logDeploySpeed(version, whoAmI(), msg);
+          }
+        };
+
+        // Parallel execution of deploy actions
+        ExecutorService executor = Executors.newFixedThreadPool(deployParallelism);
+        ExecutorCompletionService<Boolean> ecs = new ExecutorCompletionService<Boolean>(executor);
+        ArrayList<Future<Boolean>> deployFutures = new ArrayList<Future<Boolean>>();
+
+        for (final DeployAction action : deployActions) {
+          deployFutures.add(ecs.submit(new Callable<Boolean>() {
+            @Override
+            public Boolean call() throws Exception {
+              // Downloads data and updates some structs
+              runDeployAction(reporter, action, version);
+              return true;
+            }
+          }));
+        }
+
+        // Waiting all tasks to finish.
+        for (int i = 0; i < deployActions.size(); i++) {
+          // Get will throw an exception if the callable returned it.
+          try {
+            ecs.take().get();
+          } catch (ExecutionException e) {
+            // One job was wrong. Stopping the rest.
+            for (Future<Boolean> task : deployFutures) {
+              task.cancel(true);
+            }
+            executor.shutdown();
+            throw e.getCause();
+          } catch (InterruptedException e) {
+            // Somebody interrupted the deployment thread. Stopping
+            // the
+            // rest of tasks.
+            for (Future<Boolean> task : deployFutures) {
+              task.cancel(true);
+            }
+            executor.shutdown();
+            throw e;
+          }
+        }
+
+        executor.shutdown();
+
+        // Publish new DNodeInfo in distributed registry.
+        // This makes QNodes notice that a new version is available...
+        // PartitionMap and ReplicationMap will be built incrementally
+        // as DNodes finish.
+        dnodesRegistry.changeInfo(new DNodeInfo(config));
+
+        long end = System.currentTimeMillis();
+        log.info("Local [" + deployActions.size() + "] deploy actions successfully finished in " + (end - start) + " ms.");
+        deployInProgress.decrementAndGet();
+      } catch (InterruptedException e) {
+        // Somebody interrupted the thread. Probably somebody is aborting.
+        log.warn("Interrupted the deploying for version[" + version + "]");
+      } catch (Throwable t) {
+        // In order to avoid stale deployments, we flag this deploy to
+        // be aborted
+        log.warn("Error deploying[" + deployActions + "] barrier + version[" + version + "]", t);
+        abortDeploy(version, ExceptionUtils.getStackTrace(t));
+      } finally {
+        // Decrement the countdown latch. On 0, deployer knows that
+        // the deploy
+        // finished.
+        ICountDownLatch countdown = coord.getCountDownLatchForDeploy(version);
+        countdown.countDown();
+      }
+    }
+  }
+
+  /**
+   * Runs a deploy action. Downloads file and warm up the data.
+   */
+  private void runDeployAction(Fetcher.Reporter reporter, DeployAction action, long version) throws IOException, URISyntaxException,
+      DNodeException {
+    log.info("Running deployAction[" + action + "] for version[" + version + "].");
+    // 1- Store metadata
+    File metadataFile = getLocalMetadataFile(action.getTablespace(), action.getPartition(), version);
+    if (!metadataFile.getParentFile().exists()) {
+      metadataFile.getParentFile().mkdirs();
+    }
+    ThriftWriter writer = new ThriftWriter(metadataFile);
+    writer.write(action.getMetadata());
+    writer.close();
+    // 2- Call the fetcher for fetching
+    File fetchedContent = fetcher.fetch(action.getDataURI(), reporter);
+    // If we reach this point then the fetch has been OK
+    File dbFolder = getLocalStorageFolder(action.getTablespace(), action.getPartition(), version);
+    if (dbFolder.exists()) { // If the new folder where we want to deploy
+      // already exists means it is
+      // somehow
+      // stalled from a previous failed deploy - it is ok to delete it
+      FileUtils.deleteDirectory(dbFolder);
+    }
+    // 4- Perform a "mv" for finally making the data available
+    FileUtils.moveDirectory(fetchedContent, dbFolder);
+    // 5- Preemptively load the Manager in case initialization is slow
+    // Managers might warm up for a while (e.g. loading data into memory)
+    loadManagerInEHCache(action.getTablespace(), action.getVersion(), action.getPartition(), dbFolder, action.getMetadata());
+    log.info("Finished deployAction[" + action + "] for version[" + version + "].");
+  }
+
 }

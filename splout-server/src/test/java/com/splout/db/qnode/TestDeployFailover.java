@@ -60,7 +60,7 @@ public class TestDeployFailover {
     public String deploy(List<DeployAction> deployActions, final long version) throws DNodeException {
       synchronized (deployLock) {
         deployInProgress.incrementAndGet();
-        deployThread.submit(new Runnable() {
+        deployExecutor.submit(new Runnable() {
           @Override
           public void run() {
             // I always succeed.

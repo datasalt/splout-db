@@ -29,7 +29,6 @@ import com.splout.db.common.TestUtils;
 import com.splout.db.dnode.DNode;
 import com.splout.db.dnode.DNodeHandler;
 import com.splout.db.qnode.beans.DeployRequest;
-import com.splout.db.thrift.DNodeException;
 import com.splout.db.thrift.DeployAction;
 import org.junit.After;
 import org.junit.Test;
@@ -68,21 +67,17 @@ public class TestDeployAbort {
     public boolean interrupted = false;
 
     @Override
-    public String deploy(List<DeployAction> deployActions, long version) throws DNodeException {
-      synchronized (deployLock) {
-        deployInProgress.incrementAndGet();
-        deployThread.submit(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              Thread.sleep(FOREVER);
-            } catch (InterruptedException e) {
-              interrupted = true;
-            }
+    protected DeployRunnable newDeployRunnable(List<DeployAction> deployActions, long version) {
+      return new DeployRunnable(deployActions, version) {
+        @Override
+        public void run() {
+          try {
+            Thread.sleep(FOREVER);
+          } catch (InterruptedException e) {
+            interrupted = true;
           }
-        });
-      }
-      return "FOO";
+        }
+      };
     }
   }
 

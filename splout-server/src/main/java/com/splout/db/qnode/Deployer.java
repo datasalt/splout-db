@@ -54,7 +54,7 @@ import java.util.concurrent.TimeUnit;
 public class Deployer extends QNodeHandlerModule {
 
   private final static Log log = LogFactory.getLog(Deployer.class);
-  private ExecutorService deployThread;
+  private ExecutorService deployExecutor;
 
   @SuppressWarnings("serial")
   public static class UnexistingVersion extends Exception {
@@ -261,7 +261,7 @@ public class Deployer extends QNodeHandlerModule {
    */
   public Deployer(QNodeHandlerContext context) {
     super(context);
-    deployThread = Executors.newFixedThreadPool(1);
+    deployExecutor = Executors.newCachedThreadPool();
   }
 
   /**
@@ -271,28 +271,13 @@ public class Deployer extends QNodeHandlerModule {
    * @throws InterruptedException
    */
   public DeployInfo deploy(List<DeployRequest> deployRequests) throws InterruptedException {
-    DeployInfo deployInfo = new DeployInfo();
-
     // A new unique version number is generated.
     long version = context.getCoordinationStructures().uniqueVersionId();
-    deployInfo.setVersion(version);
 
-    List<String> tablespaces = new ArrayList<String>();
-    List<String> dataURIs = new ArrayList<String>();
-
-    for (DeployRequest request : deployRequests) {
-      tablespaces.add(request.getTablespace());
-      dataURIs.add(request.getData_uri());
-    }
-
-    deployInfo.setTablespacesDeployed(tablespaces);
-    deployInfo.setDataURIs(dataURIs);
-
-    Date startTime = new Date();
-    deployInfo.setStartedAt(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(startTime));
+    DeployInfo deployInfo = fillDeployInfo(deployRequests, version);
 
     context.getCoordinationStructures().logDeployMessage(version,
-        "Deploy [" + version + "] for tablespaces" + tablespaces + " started.");
+        "Deploy [" + version + "] for tablespaces" + deployInfo.getTablespacesDeployed() + " started.");
     context.getCoordinationStructures().getDeploymentsStatusPanel().put(version, DeployStatus.ONGOING);
 
     // Generate the list of actions per DNode
@@ -329,13 +314,34 @@ public class Deployer extends QNodeHandlerModule {
     }
 
     // Initiating an asynchronous process to manage the deployment
-    deployThread.execute(new ManageDeploy(new ArrayList(actionsPerDNode.keySet()), deployRequests,
+    deployExecutor.execute(new ManageDeploy(new ArrayList(actionsPerDNode.keySet()), deployRequests,
         version, context.getConfig().getLong(QNodeProperties.DEPLOY_TIMEOUT, -1), context.getConfig()
         .getLong(QNodeProperties.DEPLOY_SECONDS_TO_CHECK_ERROR),
         context.getConfig().getLong(QNodeProperties.DEPLOY_DNODES_SPREAD_METADATA_TIMEOUT, 180),
         context.getConfig().getBoolean(QNodeProperties.REPLICA_BALANCE_ENABLE)));
 
     context.getCoordinationStructures().getDeployInfoPanel().put(version, deployInfo);
+    return deployInfo;
+  }
+
+  protected DeployInfo fillDeployInfo(List<DeployRequest> deployRequests, long version) {
+    DeployInfo deployInfo = new DeployInfo();
+
+    deployInfo.setVersion(version);
+
+    List<String> tablespaces = new ArrayList<String>();
+    List<String> dataURIs = new ArrayList<String>();
+
+    for (DeployRequest request : deployRequests) {
+      tablespaces.add(request.getTablespace());
+      dataURIs.add(request.getData_uri());
+    }
+
+    deployInfo.setTablespacesDeployed(tablespaces);
+    deployInfo.setDataURIs(dataURIs);
+
+    Date startTime = new Date();
+    deployInfo.setStartedAt(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(startTime));
     return deployInfo;
   }
 
@@ -364,7 +370,6 @@ public class Deployer extends QNodeHandlerModule {
     context.getCoordinationStructures().logDeployMessage(version,
         "Deploy failed due to: " + deployerErrorMessage);
     context.getCoordinationStructures().getDeploymentsStatusPanel().put(version, DeployStatus.FAILED);
-    CoordinationStructures.DEPLOY_IN_PROGRESS.decrementAndGet();
   }
 
   /**
@@ -386,8 +391,12 @@ public class Deployer extends QNodeHandlerModule {
 
       for (SwitchVersionRequest req : switchRequest) {
         TablespaceVersion tsv = new TablespaceVersion(req.getTablespace(), req.getVersion());
+        if (context.getTablespaceVersionsMap().get(tsv) == null) {
+          throw new UnexistingVersion("Trying to switch to unexisting version[" + req.getVersion() + "] for tablespace[" + req.getTablespace() + "]");
+        }
         newVersionsTable.put(tsv.getTablespace(), tsv.getVersion());
       }
+
     } while (!context.getCoordinationStructures().updateVersionsBeingServed(versionsTable,
         newVersionsTable));
   }
