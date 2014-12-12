@@ -20,7 +20,9 @@ package com.splout.db.engine;
  * #L%
  */
 
-import static org.junit.Assert.assertEquals;
+import com.splout.db.common.JSONSerDe.JSONSerDeException;
+import com.splout.db.engine.EngineManager.EngineException;
+import com.splout.db.engine.ResultSerializer.SerializationException;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -29,9 +31,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.splout.db.common.JSONSerDe.JSONSerDeException;
-import com.splout.db.engine.EngineManager.EngineException;
-import com.splout.db.engine.ResultSerializer.SerializationException;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Generic tester logic for any EngineManager that implements SQL.
@@ -82,6 +82,13 @@ public class SQLManagerTester {
     }
 
     assertEquals(false, failed.get());
+
+    try {
+      manager.query("this will never be a SQL sentence!", 2000);
+      throw new AssertionError("Exception was not thrown but it was expected (syntax error)");
+    } catch (EngineManager.SyntaxErrorException e) {
+    }
+
     manager.exec("DROP TABLE t;");
   }
 
@@ -122,4 +129,6 @@ public class SQLManagerTester {
     } catch (EngineException e) {
     }
   }
+
+
 }

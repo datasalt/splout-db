@@ -21,47 +21,9 @@ package com.splout.db.dnode;
  * #L%
  */
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-
-import net.sf.ehcache.Cache;
-import net.sf.ehcache.Element;
-
-import org.apache.commons.io.FileSystemUtils;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.TrueFileFilter;
-import org.apache.commons.lang.exception.ExceptionUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
-import com.hazelcast.core.EntryEvent;
-import com.hazelcast.core.EntryListener;
-import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.ICountDownLatch;
-import com.hazelcast.core.MapEvent;
+import com.hazelcast.core.*;
 import com.splout.db.benchmark.PerformanceTool;
 import com.splout.db.common.JSONSerDe;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
@@ -74,18 +36,32 @@ import com.splout.db.dnode.beans.DNodeSystemStatus;
 import com.splout.db.engine.EngineManager;
 import com.splout.db.engine.ManagerFactory;
 import com.splout.db.engine.ResultSerializer;
-import com.splout.db.hazelcast.CoordinationStructures;
-import com.splout.db.hazelcast.DNodeInfo;
-import com.splout.db.hazelcast.DistributedRegistry;
-import com.splout.db.hazelcast.HazelcastConfigBuilder;
+import com.splout.db.hazelcast.*;
 import com.splout.db.hazelcast.HazelcastConfigBuilder.HazelcastConfigBuilderException;
-import com.splout.db.hazelcast.HazelcastProperties;
 import com.splout.db.qnode.ReplicaBalancer;
 import com.splout.db.qnode.ReplicaBalancer.BalanceAction;
 import com.splout.db.thrift.DNodeException;
 import com.splout.db.thrift.DeployAction;
 import com.splout.db.thrift.PartitionMetadata;
 import com.splout.db.thrift.RollbackAction;
+import net.sf.ehcache.Cache;
+import net.sf.ehcache.Element;
+import org.apache.commons.io.FileSystemUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.TrueFileFilter;
+import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * The business logic for the DNode: responding to queries, downloading new
@@ -518,9 +494,9 @@ public class DNodeHandler implements IDNodeHandler {
           slowQueries++;
         }
         return result;
+      } catch (EngineManager.ShouldRetryInReplicaException e) {
+        throw new DNodeException(EXCEPTION_ORDINARY, e.getMessage());
       } catch (Throwable e) {
-        // TODO: Look to the exception and determine if the exception is really
-        // UNEXPECTED or maybe is just a syntax error or something like that.
         unexpectedException(e);
         throw new DNodeException(EXCEPTION_UNEXPECTED, e.getMessage());
       }

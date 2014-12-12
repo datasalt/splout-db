@@ -5,6 +5,7 @@ Splout SQL Change Log
 
 IMPROVEMENTS
 
+ - 2014-12-12 - No retrying syntax error queries or timeout queries anymore.
  - 2014-12-09 - Existing partition map at Splout Server can be reused. Useful for not being recalculating partition maps always.
  - 2014-12-09 - API accepts user defined partition maps
  - 2014-11-28 - Timeout when pool of DNodes is full. Avoiding enqueue for always queries when Splout is full.

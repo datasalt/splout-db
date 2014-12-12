@@ -20,15 +20,15 @@ package com.splout.db.engine;
  * #L%
  */
 
-import java.io.File;
-import java.sql.SQLException;
-import java.util.List;
-
-import org.apache.commons.configuration.Configuration;
-
+import com.almworks.sqlite4java.SQLiteConstants;
 import com.almworks.sqlite4java.SQLiteException;
+import com.almworks.sqlite4java.SQLiteInterruptedException;
 import com.splout.db.common.QueryResult;
 import com.splout.db.common.TimeoutThread;
+import org.apache.commons.configuration.Configuration;
+
+import java.io.File;
+import java.util.List;
 
 /**
  *
@@ -58,8 +58,8 @@ public class SQLite4JavaManager implements EngineManager {
   public QueryResult exec(String query) throws EngineException {
     try {
       return client.exec(query);
-    } catch (SQLException e) {
-      throw new EngineException(e);
+    } catch (SQLiteException e) {
+      throw convertException(e);
     }
   }
 
@@ -67,8 +67,8 @@ public class SQLite4JavaManager implements EngineManager {
   public QueryResult query(String query, int maxResults) throws EngineException {
     try {
       return client.query(query, maxResults);
-    } catch (SQLException e) {
-      throw new EngineException(e);
+    } catch (SQLiteException e) {
+      throw convertException(e);
     }
   }
 
@@ -89,7 +89,31 @@ public class SQLite4JavaManager implements EngineManager {
     try {
       client.stream(visitor);
     } catch (SQLiteException e) {
-      throw new EngineException(e);
+      throw convertException(e);
+    }
+  }
+
+  /**
+   * Converts SQLiteExceptions into the corresponding
+   * EngineException.
+   */
+  protected static EngineException convertException(SQLiteException e) {
+    if (e instanceof SQLiteInterruptedException) {
+      return new QueryInterruptedException(e.getMessage());
+    } else {
+      // Normal db errors: syntax error, database not set errors, etc.
+      // This kind of errors should not retry in replicas.
+      if (e.getErrorCode() == SQLiteConstants.SQLITE_ERROR) {
+        String message = e.getMessage();
+        if (message != null && message.contains("syntax error]")) {
+          return new SyntaxErrorException(e.getMessage());
+        } else {
+          return new ShouldNotRetryInReplicaException(e.getMessage());
+        }
+      } else {
+        // Unexpected exception. Should rety in replica.
+        return new ShouldRetryInReplicaException(e.getMessage(), e);
+      }
     }
   }
 }

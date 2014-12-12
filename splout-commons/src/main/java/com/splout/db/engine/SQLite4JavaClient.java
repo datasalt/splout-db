@@ -20,24 +20,18 @@ package com.splout.db.engine;
  * #L%
  */
 
-import java.io.File;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import com.almworks.sqlite4java.SQLiteConnection;
 import com.almworks.sqlite4java.SQLiteException;
 import com.almworks.sqlite4java.SQLiteStatement;
 import com.splout.db.common.QueryResult;
 import com.splout.db.common.TimeoutThread;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import java.io.File;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class SQLite4JavaClient {
 
@@ -45,6 +39,11 @@ public class SQLite4JavaClient {
 
   private File dbFile;
   private List<String> initStatements;
+
+  // Error codes for our own SQLite exception.
+  // They must not colide with https://code.google.com/p/sqlite4java/source/browse/trunk/java/com/almworks/sqlite4java/SQLiteConstants.java
+  public static int ERROR_CODE_ERROR_CREATING_CONNECTION = -12000;
+  public static int ERROR_CODE_MAXIMUM_RESULTS_REACHED = -12001;
 
   // If present, will monitor long-running queries and kill them if needed
   private TimeoutThread timeoutThread = null;
@@ -116,16 +115,12 @@ public class SQLite4JavaClient {
     this.timeoutThread = timeoutThread;
   }
 
-  public QueryResult exec(String query) throws SQLException {
-    try {
-      db.get().exec(query);
-      List<Object[]> resultList = new ArrayList<Object[]>();
-      String[] columnNames = new String[] { "status" };
-      resultList.add(new Object[] { "OK" });
-      return new QueryResult(columnNames, resultList);
-    } catch (SQLiteException e) {
-      throw new SQLException(e);
-    }
+  public QueryResult exec(String query) throws SQLiteException {
+    db.get().exec(query);
+    List<Object[]> resultList = new ArrayList<Object[]>();
+    String[] columnNames = new String[]{"status"};
+    resultList.add(new Object[]{"OK"});
+    return new QueryResult(columnNames, resultList);
   }
 
   public void stream(StreamingIterator iterator) throws SQLiteException {
@@ -161,7 +156,7 @@ public class SQLite4JavaClient {
     }
   }
 
-  public QueryResult query(String query, int maxResults) throws SQLException {
+  public QueryResult query(String query, int maxResults) throws SQLiteException {
     String t = Thread.currentThread().getName();
     Set<SQLiteConnection> pendingClose = CLEAN_UP_AFTER_YOURSELF.get(t);
     // Because SQLiteConnection can only be closed by owner Thread, here we need
@@ -181,13 +176,13 @@ public class SQLite4JavaClient {
 
     SQLiteStatement st = null;
     SQLiteConnection conn = null;
-    
+
     try {
 
       conn = db.get();
 
       if (conn == null) {
-        throw new SQLException("Imposible to create SQLite connection to " + dbFile);
+        throw new SQLiteException(ERROR_CODE_ERROR_CREATING_CONNECTION, "Impossible to create SQLite connection to " + dbFile);
       }
 
       if (timeoutThread != null) {
@@ -225,13 +220,9 @@ public class SQLite4JavaClient {
         }
       } while (resultList.size() < maxResults);
       if (resultList.size() == maxResults) {
-
-        throw new SQLException("Hard limit on number of results reached (" + maxResults + "), please use a LIMIT for this query.");
-
+        throw new SQLiteException(ERROR_CODE_MAXIMUM_RESULTS_REACHED, "Hard limit on number of results reached (" + maxResults + "), please use a LIMIT for this query.");
       }
       return new QueryResult(columnNames, resultList);
-    } catch (SQLiteException e) {
-      throw new SQLException(e);
     } finally {
       if (timeoutThread != null) {
         timeoutThread.endQuery(conn);
@@ -251,7 +242,7 @@ public class SQLite4JavaClient {
       } else { // needs to be closed at some point by the owner
         Set<SQLiteConnection> set = CLEAN_UP_AFTER_YOURSELF.get(tConn.threadName);
         synchronized (set) { // just in case the owner of the set is iterating
-                             // over it
+          // over it
           CLEAN_UP_AFTER_YOURSELF.get(tConn.threadName).add(tConn.conn);
         }
       }

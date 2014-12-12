@@ -20,19 +20,18 @@ package com.splout.db.engine;
  * #L%
  */
 
-import java.io.File;
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.List;
-
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang.NotImplementedException;
-
 import com.splout.db.common.CompressorUtil;
 import com.splout.db.common.PortUtils;
 import com.splout.db.common.PortUtils.PortLock;
 import com.splout.db.common.QueryResult;
 import com.splout.db.engine.EmbeddedMySQL.EmbeddedMySQLConfig;
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.NotImplementedException;
+
+import java.io.File;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.List;
 
 public class MySQLManager implements EngineManager {
 

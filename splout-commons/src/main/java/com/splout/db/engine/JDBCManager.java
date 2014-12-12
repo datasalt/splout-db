@@ -20,21 +20,16 @@ package com.splout.db.engine;
  * #L%
  */
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import com.jolbox.bonecp.BoneCP;
 import com.jolbox.bonecp.BoneCPConfig;
 import com.splout.db.common.QueryResult;
 import com.splout.db.engine.EngineManager.EngineException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Generic JDBC Manager which can be reused by any engine which is
@@ -81,7 +76,7 @@ public class JDBCManager {
       log.info(Thread.currentThread().getName() + ": Query [" + query + "] handled in [" + (end - start) + "] ms.");
       return result;
     } catch (SQLException e) {
-      throw new EngineException(e);
+      throw convertException(e);
     } finally {
       try {
         if (rs != null) {
@@ -92,7 +87,7 @@ public class JDBCManager {
         }
         connection.close();
       } catch (SQLException e) {
-        throw new EngineException(e);
+        throw convertException(e);
       }
     }
   }
@@ -132,4 +127,15 @@ public class JDBCManager {
   public Connection getConnectionFromPool() throws SQLException {
     return connectionPool.getConnection();
   }
+
+  protected static EngineException convertException(SQLException e) {
+    if (e instanceof SQLSyntaxErrorException) {
+      return new EngineManager.SyntaxErrorException(e.getMessage());
+    } else if (e instanceof SQLTimeoutException) {
+      return new EngineManager.QueryInterruptedException(e.getMessage());
+    } else {
+      return new EngineManager.ShouldNotRetryInReplicaException(e.getMessage(), e);
+    }
+  }
+
 }
