@@ -1,5 +1,5 @@
 
-Lists of 55 third-party dependencies.
+Lists of 56 third-party dependencies.
      (The Apache Software License, Version 2.0) cascading-core (cascading:cascading-core:2.2.0-wip-15 - http://cascading.org/)
      (The Apache Software License, Version 2.0) cascading-hadoop (cascading:cascading-hadoop:2.2.0-wip-15 - http://cascading.org/)
      (The Apache Software License, Version 2.0) sqlite4java (com.almworks.sqlite4java:sqlite4java:0.282 - http://code.google.com/p/sqlite4java)
@@ -25,9 +25,10 @@ Lists of 55 third-party dependencies.
      (The Apache Software License, Version 2.0) Commons IO (commons-io:commons-io:2.2 - http://commons.apache.org/io/)
      (The Apache Software License, Version 2.0) Commons Lang (commons-lang:commons-lang:2.6 - http://commons.apache.org/lang/)
      (The Apache Software License, Version 2.0) Commons Logging (commons-logging:commons-logging:1.1.1 - http://commons.apache.org/logging)
+     (Common Development and Distribution License (CDDL) v1.0) JavaBeans Activation Framework (JAF) (javax.activation:activation:1.1 - http://java.sun.com/products/javabeans/jaf/index.jsp)
      (Unknown license) servlet-api (javax.servlet:servlet-api:2.5 - no url defined)
      (Apache 2) Joda time (joda-time:joda-time:2.1 - http://joda-time.sourceforge.net)
-     (Unknown license) log4j (log4j:log4j:1.2.15 - no url defined)
+     (The Apache Software License, Version 2.0) Apache Log4j (log4j:log4j:1.2.15 - http://logging.apache.org:80/log4j/1.2/)
      (Apache License, Version 2.0) An open source Java toolkit for Amazon S3 (net.java.dev.jets3t:jets3t:0.7.1 - http://jets3t.s3.amazonaws.com/index.html)
      (The Apache Software License, Version 2.0) Ehcache Core (net.sf.ehcache:ehcache-core:2.5.1 - http://ehcache.org)
      (Apache 2) opencsv (net.sf.opencsv:opencsv:2.3 - http://opencsv.sf.net)

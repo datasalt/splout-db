@@ -44,10 +44,8 @@ import com.splout.db.thrift.DNodeException;
 import com.splout.db.thrift.DeployAction;
 import com.splout.db.thrift.PartitionMetadata;
 import com.splout.db.thrift.RollbackAction;
-
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.Element;
-
 import org.apache.commons.io.FileSystemUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
@@ -470,10 +468,14 @@ public class DNodeHandler implements IDNodeHandler {
    * Called by both binary and JSON version RPC methods.
    */
   private Object sqlQueryHelperMethod(String tablespace, long version, int partition, boolean binary, String query) throws DNodeException {
+    String msg = "query served tablespace[" + tablespace + "]" + " version[" + version + "] partition[" + partition + "] sql[" + query
+        + "]";
+    String status = "ERROR";
+    String errMsg = "";
 
+    performanceTool.startQuery();
     try {
       try {
-        performanceTool.startQuery();
 
         EngineManager manager = getManager(tablespace, version, partition);
 
@@ -485,22 +487,8 @@ public class DNodeHandler implements IDNodeHandler {
         } else {
           result = manager.query(query, maxResultsPerQuery).jsonize();
         }
-        long time = performanceTool.endQuery();
-        log.info("serving query [" + tablespace + "]" + " [" + version + "] [" + partition + "] [" + query + "] time [" + time + "] OK.");
-        // double prob =
-        // performanceTool.getHistogram().getLeftAccumulatedProbability(time);
-        // if(prob > 0.95) {
-        // // slow query!
-        // log.warn("[SLOW QUERY] Query time over 95 percentil: [" + query +
-        // "] time [" + time + "]");
-        // slowQueries++;
-        // }
-        if (time > absoluteSlowQueryLimit) {
-          // slow query!
-          log.warn("[SLOW QUERY] Query time over absolute slow query time (" + absoluteSlowQueryLimit + ") : [" + query + "] time [" + time
-              + "]");
-          slowQueries++;
-        }
+
+        status = "OK";
         return result;
       } catch (EngineManager.ShouldRetryInReplicaException e) {
         throw new DNodeException(EXCEPTION_ORDINARY, e.getMessage());
@@ -509,9 +497,22 @@ public class DNodeHandler implements IDNodeHandler {
         throw new DNodeException(EXCEPTION_UNEXPECTED, e.getMessage());
       }
     } catch (DNodeException e) {
-      log.info("serving query [" + tablespace + "]" + " [" + version + "] [" + partition + "] [" + query + "] FAILED [" + e.getMsg() + "]");
+      errMsg = e.getMsg();
       failedQueries.incrementAndGet();
       throw e;
+    } finally {
+      long time = performanceTool.endQuery();
+      msg += " time[" + time + "] status[" + status + "]";
+      if ("ERROR".equals(status)) {
+        msg += " errorMessage[" + errMsg + "]";
+      }
+      log.info(msg);
+      if (time > absoluteSlowQueryLimit) {
+        // slow query!
+        log.warn("[SLOW QUERY] Query time over absolute slow query time (" + absoluteSlowQueryLimit
+            + ") : sql[" + query + "] time[" + time + "]");
+        slowQueries++;
+      }
     }
   }
 
