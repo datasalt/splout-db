@@ -38,6 +38,7 @@ import org.jets3t.service.security.AWSCredentials;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.FileChannel;
 import java.util.UUID;
 
@@ -107,47 +108,56 @@ public class Fetcher {
     FileSystem tofS = FileSystem.getLocal(hadoopConf);
 
     Throttler throttler = new Throttler((double) bytesPerSecThrottle);
+    try {
+      for (FileStatus fStatus : fS.globStatus(fromPath)) {
+        log.info("Copying " + fStatus.getPath() + " to " + toPath);
+        long bytesSoFar = 0;
 
-    for (FileStatus fStatus : fS.globStatus(fromPath)) {
-      log.info("Copying " + fStatus.getPath() + " to " + toPath);
-      long bytesSoFar = 0;
+        FSDataInputStream iS = fS.open(fStatus.getPath());
+        FSDataOutputStream oS = tofS.create(toPath);
 
-      FSDataInputStream iS = fS.open(fStatus.getPath());
-      FSDataOutputStream oS = tofS.create(toPath);
+        byte[] buffer = new byte[downloadBufferSize];
 
-      byte[] buffer = new byte[downloadBufferSize];
-
-      int nRead;
-      while ((nRead = iS.read(buffer, 0, buffer.length)) != -1) {
-        // Needed to being able to be interrupted at any moment.
-        if (Thread.interrupted()) {
-          iS.close();
-          oS.close();
-          try {
-            FileUtils.deleteDirectory(toDir);
-          } catch (IOException e) {
-            log.warn("Impossible to clean up folder " + toDir + "when cancelling a download", e);
+        int nRead;
+        while ((nRead = iS.read(buffer, 0, buffer.length)) != -1) {
+          // Needed to being able to be interrupted at any moment.
+          if (Thread.interrupted()) {
+            iS.close();
+            oS.close();
+            cleanDirNoExceptions(toDir);
+            throw new InterruptedException();
           }
-          throw new InterruptedException();
+          bytesSoFar += nRead;
+          oS.write(buffer, 0, nRead);
+          throttler.incrementAndThrottle(nRead);
+          if (bytesSoFar >= bytesToReportProgress) {
+            reporter.progress(bytesSoFar);
+            bytesSoFar = 0l;
+          }
         }
-        bytesSoFar += nRead;
-        oS.write(buffer, 0, nRead);
-        throttler.incrementAndThrottle(nRead);
-        if (bytesSoFar >= bytesToReportProgress) {
+
+        if (reporter != null) {
           reporter.progress(bytesSoFar);
-          bytesSoFar = 0l;
         }
+
+        oS.close();
+        iS.close();
       }
 
-      if (reporter != null) {
-        reporter.progress(bytesSoFar);
-      }
-
-      oS.close();
-      iS.close();
+      return toDir;
+    } catch (ClosedByInterruptException e) {
+      // This can be thrown by the method read.
+      cleanDirNoExceptions(toDir);
+      throw new InterruptedIOException();
     }
+  }
 
-    return toDir;
+  private void cleanDirNoExceptions(File toDir) {
+    try {
+      FileUtils.deleteDirectory(toDir);
+    } catch (IOException ee) {
+      log.warn("Impossible to clean up folder " + toDir + "when cancelling a download", ee);
+    }
   }
 
   /**
@@ -253,11 +263,7 @@ public class Fetcher {
           if (Thread.interrupted()) {
             iS.close();
             writer.close();
-            try {
-              FileUtils.deleteDirectory(destFolder);
-            } catch (IOException e) {
-              log.warn("Impossible to clean up folder " + destFolder + "when cancelling a download", e);
-            }
+            cleanDirNoExceptions(destFolder);
             throw new InterruptedException();
           }
 
@@ -303,11 +309,7 @@ public class Fetcher {
     try {
       copyFile(file, new File(toDir, file.getName()), reporter);
     } catch (InterruptedException e) {
-      try {
-        FileUtils.deleteDirectory(toDir);
-      } catch (IOException ef) {
-        log.warn("Impossible to clean up folder " + toDir + "when cancelling a download", ef);
-      }
+      cleanDirNoExceptions(toDir);
       throw e;
     }
     return toDir;
