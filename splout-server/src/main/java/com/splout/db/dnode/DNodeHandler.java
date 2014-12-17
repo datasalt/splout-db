@@ -44,8 +44,10 @@ import com.splout.db.thrift.DNodeException;
 import com.splout.db.thrift.DeployAction;
 import com.splout.db.thrift.PartitionMetadata;
 import com.splout.db.thrift.RollbackAction;
+
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.Element;
+
 import org.apache.commons.io.FileSystemUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
@@ -151,6 +153,10 @@ public class DNodeHandler implements IDNodeHandler {
 
   public String httpExchangerAddress() {
     return "http://" + config.getString(DNodeProperties.HOST) + ":" + config.getInt(HttpFileExchangerProperties.HTTP_PORT);
+  }
+  
+  public String getTCPAPIAddress() {
+    return config.getString(DNodeProperties.HOST) + ":" + config.getInt(DNodeProperties.STREAMING_PORT);
   }
 
   /**
@@ -642,6 +648,7 @@ public class DNodeHandler implements IDNodeHandler {
       status.setSlowQueries(slowQueries);
       status.setDeployInProgress(deployInProgress.get() > 0);
       status.setHttpExchangerAddress(httpExchangerAddress());
+      status.setTcpAddress(getTCPAPIAddress());
       status.setBalanceActionsStateMap(balanceActionsStateMap);
       File folder = new File(config.getString(DNodeProperties.DATA_FOLDER));
       if (folder.exists()) {

@@ -54,14 +54,16 @@ public class DNodeInfo implements Serializable {
 
   private String address;
   private String httpExchangerAddress;
+  private String tcpAddress;
   private Map<String, Map<Long, Map<Integer, PartitionMetadata>>> servingInfo;
 
   public DNodeInfo() {
   }
 
-  public DNodeInfo(String address, String httpExchangerAddress, Map<String, Map<Long, Map<Integer, PartitionMetadata>>> servingInfo) {
+  public DNodeInfo(String address, String httpExchangerAddress, String tcpAddress, Map<String, Map<Long, Map<Integer, PartitionMetadata>>> servingInfo) {
     this.address = address;
     this.httpExchangerAddress = httpExchangerAddress;
+    this.tcpAddress = tcpAddress;
     this.servingInfo = servingInfo;
   }
 
@@ -71,6 +73,7 @@ public class DNodeInfo implements Serializable {
   public DNodeInfo(SploutConfiguration config) {
     this.servingInfo = new HashMap<String, Map<Long, Map<Integer, PartitionMetadata>>>();
     this.address = config.getString(DNodeProperties.HOST) + ":" + config.getInt(DNodeProperties.PORT);
+    this.tcpAddress = config.getString(DNodeProperties.HOST) + ":" + config.getInt(DNodeProperties.STREAMING_PORT);        
     this.httpExchangerAddress = "http://" + config.getString(DNodeProperties.HOST) + ":" + config.getInt(HttpFileExchangerProperties.HTTP_PORT);
     File dataFolder = new File(config.getString(DNodeProperties.DATA_FOLDER));
     // inspect the file system
@@ -139,6 +142,14 @@ public class DNodeInfo implements Serializable {
 
   public String getHttpExchangerAddress() {
     return httpExchangerAddress;
+  }
+  
+  public String getTcpAddress() {
+    return tcpAddress;
+  }
+  
+  public void setTcpAddress(String tcpAddress) {
+    this.tcpAddress = tcpAddress;
   }
 
   public void setHttpExchangerAddress(String httpExchangerAddress) {

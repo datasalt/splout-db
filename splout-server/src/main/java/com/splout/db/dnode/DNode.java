@@ -21,6 +21,7 @@ package com.splout.db.dnode;
  * #L%
  */
 
+import java.net.BindException;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -121,16 +122,33 @@ public class DNode implements DNodeService.Iface {
     log.info("Thrift server started on port: " + thriftPort);
 
     if (handler instanceof DNodeHandler && !config.getBoolean(DNodeProperties.STREAMING_API_DISABLE)) {
-      streamer = new TCPStreamer();
-      streamer.start(config, (DNodeHandler) handler);
-      log.info("TCP streamer server started on port: " + streamer.getTcpPort());
+      // Instantiate a TCP server for serving streaming data if not disabled by config
+      // Follow also the same incrementing port approach if specified so by config
+      init = false;
+      retries = 0;
+      do {
+        streamer = new TCPStreamer();
+        int tcpPort = config.getInteger(DNodeProperties.STREAMING_PORT, 8888);
+        try {
+          streamer.start(config, (DNodeHandler) handler);
+          log.info("TCP streamer server started on port: " + streamer.getTcpPort());
+          init = true;
+        } catch (BindException e) {
+          if (!config.getBoolean(DNodeProperties.PORT_AUTOINCREMENT)) {
+            throw e;
+          }
+          config.setProperty(DNodeProperties.STREAMING_PORT, tcpPort + 1);
+          retries++;
+        }
+      } while (!init && retries < 100);
     }
   }
 
   // ---- The following methods are a facade for {@link IDNodeHandler} ---- //
 
   @Override
-  public String sqlQuery(String tablespace, long version, int partition, String query) throws DNodeException, TException {
+  public String sqlQuery(String tablespace, long version, int partition, String query) throws DNodeException,
+      TException {
     return handler.sqlQuery(tablespace, version, partition, query);
   }
 
@@ -140,7 +158,8 @@ public class DNode implements DNodeService.Iface {
   }
 
   @Override
-  public String rollback(List<RollbackAction> rollbackActions, String distributedBarrier) throws DNodeException, TException {
+  public String rollback(List<RollbackAction> rollbackActions, String distributedBarrier) throws DNodeException,
+      TException {
     return handler.rollback(rollbackActions, distributedBarrier);
   }
 
@@ -165,10 +184,11 @@ public class DNode implements DNodeService.Iface {
   }
 
   @Override
-  public ByteBuffer binarySqlQuery(String tablespace, long version, int partition, String query) throws DNodeException, TException {
+  public ByteBuffer binarySqlQuery(String tablespace, long version, int partition, String query) throws DNodeException,
+      TException {
     return handler.binarySqlQuery(tablespace, version, partition, query);
   }
-  
+
   public void stop() throws Exception {
     if (streamer != null) {
       streamer.stop();

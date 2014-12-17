@@ -40,6 +40,7 @@ public class DNodeSystemStatus {
   private long freeSpaceInDisk;
   private List<String> files;
   private String httpExchangerAddress;
+  private String tcpAddress;
   private Map<String, BalanceFileReceivingProgress> balanceActionsStateMap;
 
   public List<String> getFiles() {
@@ -144,5 +145,13 @@ public class DNodeSystemStatus {
 
   public void setHttpExchangerAddress(String httpExchangerAddress) {
     this.httpExchangerAddress = httpExchangerAddress;
+  }
+  
+  public void setTcpAddress(String tcpAddress) {
+    this.tcpAddress = tcpAddress;
+  }
+  
+  public String getTcpAddress() {
+    return tcpAddress;
   }
 }

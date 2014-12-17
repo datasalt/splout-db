@@ -59,12 +59,13 @@ public class TCPStreamer {
 
   private TCPServer server;
 
-  public void start(SploutConfiguration config, DNodeHandler dNode) throws InterruptedException {
+  public void start(SploutConfiguration config, DNodeHandler dNode) throws InterruptedException, IOException {
     this.dNode = dNode;
     this.tcpPort = config.getInt(DNodeProperties.STREAMING_PORT);
 
     server = new TCPServer();
-
+    server.bind();
+    
     Thread t = new Thread() {
       @Override
       public void run() {
@@ -108,12 +109,15 @@ public class TCPStreamer {
       return !isStopped() && this.serverSocket != null && this.serverSocket.isBound();
     }
 
-    public void serve() {
+    public void bind() throws IOException {
       try {
         this.serverSocket = new ServerSocket(tcpPort);
       } catch (IOException e) {
-        throw new RuntimeException("Cannot open port " + tcpPort, e);
+        throw e;
       }
+    }
+
+    public void serve() {
       while (!isStopped()) {
         Socket clientSocket = null;
         try {
@@ -212,8 +216,9 @@ public class TCPStreamer {
   }
 
   /**
-   * This main method can be used for testing the TCP interface directly to a local DNode.
-   * Will ask for protocol input from Stdin and print output to Stdout
+   * This main method can be used for testing the TCP interface directly to a
+   * local DNode. Will ask for protocol input from Stdin and print output to
+   * Stdout
    */
   public static void main(String[] args) throws UnknownHostException, IOException, SerializationException {
     SploutConfiguration config = SploutConfiguration.get();
@@ -234,14 +239,14 @@ public class TCPStreamer {
 
     System.out.println("Enter query: ");
     String query = reader.readLine();
-    
+
     outToServer.writeUTF(tablespace);
     outToServer.writeLong(versionNumber);
     outToServer.writeInt(partition);
     outToServer.writeUTF(query);
 
     outToServer.flush();
-    
+
     byte[] buffer = new byte[0];
     boolean read;
     do {
@@ -257,7 +262,7 @@ public class TCPStreamer {
         }
       }
     } while (read);
-    
+
     clientSocket.close();
   }
 }
