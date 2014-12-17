@@ -21,8 +21,10 @@ package com.splout.db.dnode;
  * #L%
  */
 
-import com.splout.db.common.SploutConfiguration;
-import com.splout.db.thrift.*;
+import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.concurrent.Executors;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.thrift.TException;
@@ -31,9 +33,12 @@ import org.apache.thrift.server.TServer;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TNonblockingServerTransport;
 
-import java.nio.ByteBuffer;
-import java.util.List;
-import java.util.concurrent.Executors;
+import com.splout.db.common.SploutConfiguration;
+import com.splout.db.thrift.DNodeException;
+import com.splout.db.thrift.DNodeService;
+import com.splout.db.thrift.DeployAction;
+import com.splout.db.thrift.RollbackAction;
+import com.splout.db.thrift.TablespaceVersion;
 
 /**
  * The Thrift skeleton for the DNode service. This class only implements the
@@ -115,9 +120,25 @@ public class DNode implements DNodeService.Iface {
     log.info("Thrift server started on port: " + thriftPort);
 
     if (handler instanceof DNodeHandler && !config.getBoolean(DNodeProperties.STREAMING_API_DISABLE)) {
-      streamer = new TCPStreamer();
-      streamer.start(config, (DNodeHandler) handler);
-      log.info("TCP streamer server started on port: " + streamer.getTcpPort());
+      // Instantiate a TCP server for serving streaming data if not disabled by config
+      // Follow also the same incrementing port approach if specified so by config
+      init = false;
+      retries = 0;
+      do {
+        streamer = new TCPStreamer();
+        int tcpPort = config.getInteger(DNodeProperties.STREAMING_PORT, 8888);
+        try {
+          streamer.start(config, (DNodeHandler) handler);
+          log.info("TCP streamer server started on port: " + streamer.getTcpPort());
+          init = true;
+        } catch (BindException e) {
+          if (!config.getBoolean(DNodeProperties.PORT_AUTOINCREMENT)) {
+            throw e;
+          }
+          config.setProperty(DNodeProperties.STREAMING_PORT, tcpPort + 1);
+          retries++;
+        }
+      } while (!init && retries < 100);
     }
     handler.giveGreenLigth();
   }
