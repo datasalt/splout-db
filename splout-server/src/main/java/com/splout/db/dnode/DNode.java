@@ -21,10 +21,8 @@ package com.splout.db.dnode;
  * #L%
  */
 
-import java.nio.ByteBuffer;
-import java.util.List;
-import java.util.concurrent.Executors;
-
+import com.splout.db.common.SploutConfiguration;
+import com.splout.db.thrift.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.thrift.TException;
@@ -33,12 +31,10 @@ import org.apache.thrift.server.TServer;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TNonblockingServerTransport;
 
-import com.splout.db.common.SploutConfiguration;
-import com.splout.db.thrift.DNodeException;
-import com.splout.db.thrift.DNodeService;
-import com.splout.db.thrift.DeployAction;
-import com.splout.db.thrift.RollbackAction;
-import com.splout.db.thrift.TablespaceVersion;
+import java.net.BindException;
+import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.concurrent.Executors;
 
 /**
  * The Thrift skeleton for the DNode service. This class only implements the
