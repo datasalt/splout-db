@@ -61,7 +61,6 @@ public class QNode {
     do {
       try {
         server = new Server(config.getInt(QNodeProperties.PORT));
-
         for (Connector connector : server.getConnectors()) {
           connector.setHeaderBufferSize(65535);
         }
@@ -101,6 +100,8 @@ public class QNode {
 
         address = "http://" + config.getString(QNodeProperties.HOST) + ":"
             + config.getInt(QNodeProperties.PORT);
+
+        handler.setQNodeAddress(address);
 
         init = true;
       } catch (java.net.BindException e) {

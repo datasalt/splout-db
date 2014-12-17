@@ -159,6 +159,12 @@ public class RewriteRuleHandler extends HandlerWrapper {
       super.handle("/api/deploy", req, response, dispatch);
     }
 
+    if (target.startsWith("/api/canceldeployment")) {
+      MutableHttpRequest req = new MutableHttpRequest(request);
+      req.addParameter("action", DeployRollbackServlet.ACTION_CANCEL_DEPLOYMENT);
+      super.handle("/api/deploy", req, response, dispatch);
+    }
+
     super.handle(target, request, response, dispatch);
   }
 }

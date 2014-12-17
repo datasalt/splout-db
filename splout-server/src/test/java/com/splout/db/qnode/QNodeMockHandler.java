@@ -97,6 +97,20 @@ public class QNodeMockHandler implements IQNodeHandler {
   }
 
   @Override
+  public StatusMessage cancelDeployment(String version) {
+    return null;
+  }
+
+  @Override
+  public void setQNodeAddress(String qNodeAddress) {
+  }
+
+  @Override
+  public String getQNodeAddress() {
+    return null;
+  }
+
+  @Override
   public DeploymentsStatus deploymentsStatus() throws Exception {
     return null;
   }

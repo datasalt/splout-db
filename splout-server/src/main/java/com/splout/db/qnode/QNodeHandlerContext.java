@@ -56,6 +56,7 @@ public class QNodeHandlerContext {
 
   // This map indicates which is the current version being served. It has to be updated atomically.
   private final Map<String, Long> currentVersionsMap = new ConcurrentHashMap<String, Long>();
+  private String qNodeAddress;
   // The SploutConfiguration
   private SploutConfiguration config;
   // The coordination structures that use Hazelcast underneath
@@ -683,5 +684,11 @@ public class QNodeHandlerContext {
 
   public AtomicBoolean getIsWarming() {
     return isWarming;
+  }
+
+  public String getQNodeAddress() { return qNodeAddress; }
+
+  public void setQNodeAddress(String QNodeAddress) {
+    this.qNodeAddress = QNodeAddress;
   }
 }

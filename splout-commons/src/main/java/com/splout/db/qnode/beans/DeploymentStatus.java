@@ -24,18 +24,19 @@ import java.util.List;
 
 public class DeploymentStatus {
 
-  private long deploymentId;
+  private long version;
   private List<String> tablespacesDeployed;
   private String date;
   private List<String> dataURIs;
   private List<String> logMessages;
+  private String qNode;
 
-  public long getDeploymentId() {
-    return deploymentId;
+  public long getVersion() {
+    return version;
   }
 
-  public void setDeploymentId(long deploymentId) {
-    this.deploymentId = deploymentId;
+  public void setVersion(long version) {
+    this.version = version;
   }
 
   public List<String> getTablespacesDeployed() {
@@ -68,5 +69,13 @@ public class DeploymentStatus {
 
   public void setLogMessages(List<String> logMessages) {
     this.logMessages = logMessages;
+  }
+
+  public void setqNode(String qNode) {
+    this.qNode = qNode;
+  }
+
+  public String getqNode() {
+    return qNode;
   }
 }

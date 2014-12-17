@@ -91,8 +91,9 @@ public class Fetcher {
 
   /*
    * Fetch a file that is in a Hadoop file system. Return a local File.
+   * Interruptible.
    */
-  private File hdfsFetch(Path fromPath, Reporter reporter) throws IOException {
+  private File hdfsFetch(Path fromPath, Reporter reporter) throws IOException, InterruptedException {
     UUID uniqueId = UUID.randomUUID();
     File toFile = new File(tempDir, uniqueId.toString() + "/" + fromPath.getName());
     File toDir = new File(toFile.getParent());
@@ -118,6 +119,17 @@ public class Fetcher {
 
       int nRead;
       while ((nRead = iS.read(buffer, 0, buffer.length)) != -1) {
+        // Needed to being able to be interrupted at any moment.
+        if (Thread.interrupted()) {
+          iS.close();
+          oS.close();
+          try {
+            FileUtils.deleteDirectory(toDir);
+          } catch (IOException e) {
+            log.warn("Impossible to clean up folder " + toDir + "when cancelling a download", e);
+          }
+          throw new InterruptedException();
+        }
         bytesSoFar += nRead;
         oS.write(buffer, 0, nRead);
         throttler.incrementAndThrottle(nRead);
@@ -191,8 +203,9 @@ public class Fetcher {
 
   /*
    * Fetch a file that is in a S3 file system. Return a local File. It accepts "s3://" and "s3n://" prefixes.
+   * Interruptible.
    */
-  private File s3Fetch(URI uri, Reporter reporter) throws IOException {
+  private File s3Fetch(URI uri, Reporter reporter) throws IOException, InterruptedException {
     String bucketName = uri.getHost();
     String path = uri.getPath();
     UUID uniqueId = UUID.randomUUID();
@@ -236,6 +249,18 @@ public class Fetcher {
 
         int nRead;
         while ((nRead = iS.read(buffer, 0, buffer.length)) != -1) {
+          // Needed to being able to be interrupted at any moment.
+          if (Thread.interrupted()) {
+            iS.close();
+            writer.close();
+            try {
+              FileUtils.deleteDirectory(destFolder);
+            } catch (IOException e) {
+              log.warn("Impossible to clean up folder " + destFolder + "when cancelling a download", e);
+            }
+            throw new InterruptedException();
+          }
+
           bytesSoFar += nRead;
           writer.write(buffer, 0, nRead);
           throttler.incrementAndThrottle(nRead);
@@ -267,7 +292,7 @@ public class Fetcher {
   /*
    * Fetch a file that is in a local file system. Return a local File.
    */
-  private File fileFetch(File file, Reporter reporter) throws IOException {
+  private File fileFetch(File file, Reporter reporter) throws IOException, InterruptedException {
     UUID uniqueId = UUID.randomUUID();
     File toDir = new File(tempDir, uniqueId.toString() + "/" + file.getName());
     if (toDir.exists()) {
@@ -275,11 +300,23 @@ public class Fetcher {
     }
     toDir.mkdirs();
     log.info("Copying " + file + " to " + toDir);
-    copyFile(file, new File(toDir, file.getName()), reporter);
+    try {
+      copyFile(file, new File(toDir, file.getName()), reporter);
+    } catch (InterruptedException e) {
+      try {
+        FileUtils.deleteDirectory(toDir);
+      } catch (IOException ef) {
+        log.warn("Impossible to clean up folder " + toDir + "when cancelling a download", ef);
+      }
+      throw e;
+    }
     return toDir;
   }
 
-  private void copyFile(File sourceFile, File destFile, Reporter reporter) throws IOException {
+  /**
+   * In case of interrupted, written file is not deleted.
+   */
+  private void copyFile(File sourceFile, File destFile, Reporter reporter) throws IOException, InterruptedException {
     if (!destFile.exists()) {
       destFile.createNewFile();
     }
@@ -303,6 +340,11 @@ public class Fetcher {
       int transferred = 0;
 
       while (bytesSoFar < size) {
+        // Needed to being able to be interrupted at any moment.
+        if (Thread.interrupted()) {
+          throw new InterruptedException();
+        }
+
         // Casting to int here is safe since we will transfer at most "downloadBufferSize" bytes.
         // This is done on purpose for being able to implement Throttling.
         transferred = (int) destination.transferFrom(source, bytesSoFar, downloadBufferSize);
@@ -319,6 +361,8 @@ public class Fetcher {
         reporter.progress(reportingBytesSoFar);
       }
 
+    } catch (InterruptedException e) {
+      e.printStackTrace();
     } finally {
       if (iS != null) {
         iS.close();
@@ -357,14 +401,15 @@ public class Fetcher {
   /**
    * This is the main method that accepts a URI string and delegates the fetching to the appropriate private method.
    */
-  public File fetch(String uriStr) throws IOException, URISyntaxException {
+  public File fetch(String uriStr) throws IOException, URISyntaxException, InterruptedException {
     return fetch(uriStr, null);
   }
 
   /**
    * This is the main method that accepts a URI string and delegates the fetching to the appropriate private method.
+   * Interruptible
    */
-  public File fetch(String uriStr, Reporter reporter) throws IOException, URISyntaxException {
+  public File fetch(String uriStr, Reporter reporter) throws IOException, URISyntaxException, InterruptedException {
     URI uri = new URI(uriStr);
     if (uriStr.startsWith("file:")) {
       return fileFetch(new File(uri), reporter);

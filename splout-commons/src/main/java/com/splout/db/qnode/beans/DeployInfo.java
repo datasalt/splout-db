@@ -21,6 +21,7 @@ package com.splout.db.qnode.beans;
  */
 
 import com.splout.db.common.BaseBean;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 
 import java.io.Serializable;
 import java.util.List;
@@ -30,6 +31,7 @@ import java.util.List;
  * returned.
  */
 @SuppressWarnings("serial")
+@JsonIgnoreProperties(ignoreUnknown = true) // Backwards compatibility in JSON (new fields don't make things break)
 public class DeployInfo extends BaseBean implements Serializable {
 
   private String error;
@@ -37,6 +39,7 @@ public class DeployInfo extends BaseBean implements Serializable {
   private Long version;
   private List<String> dataURIs;
   private List<String> tablespacesDeployed;
+  private String qNode;
 
   public DeployInfo() {
 
@@ -84,5 +87,13 @@ public class DeployInfo extends BaseBean implements Serializable {
 
   public void setTablespacesDeployed(List<String> tablespacesDeployed) {
     this.tablespacesDeployed = tablespacesDeployed;
+  }
+
+  public String getqNode() {
+    return qNode;
+  }
+
+  public void setqNode(String qNode) {
+    this.qNode = qNode;
   }
 }

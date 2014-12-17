@@ -20,34 +20,16 @@ package com.splout.db.common;
  * #L%
  */
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.commons.io.IOUtils;
-
-import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.HttpContent;
-import com.google.api.client.http.HttpRequest;
-import com.google.api.client.http.HttpRequestFactory;
-import com.google.api.client.http.HttpRequestInitializer;
-import com.google.api.client.http.HttpResponse;
-import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.*;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.splout.db.common.JSONSerDe.JSONSerDeException;
-import com.splout.db.qnode.beans.DeployInfo;
-import com.splout.db.qnode.beans.DeployRequest;
-import com.splout.db.qnode.beans.QNodeStatus;
-import com.splout.db.qnode.beans.QueryStatus;
+import com.splout.db.qnode.beans.*;
+import org.apache.commons.io.IOUtils;
+
+import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.*;
 
 /**
  * Java HTTP Interface to Splout that uses Google Http Client (https://code.google.com/p/google-http-java-client/). We
@@ -242,6 +224,17 @@ public class SploutClient {
           qNodes[(int) (Math.random() * qNodes.length)] + "/api/query/" + tablespace), content);
       HttpResponse resp = request.execute();
       return JSONSerDe.deSer(asString(resp.getContent()), QueryStatus.class);
+    } catch (JSONSerDeException e) {
+      throw new IOException(e);
+    }
+  }
+
+  public StatusMessage cancelDeploy(long version) throws IOException {
+    HttpRequest request = requestFactory.buildGetRequest(new GenericUrl(
+        qNodes[(int) (Math.random() * qNodes.length)] + "/api/canceldeployment?version=" + version));
+    HttpResponse resp = request.execute();
+    try {
+      return JSONSerDe.deSer(asString(resp.getContent()), StatusMessage.class);
     } catch (JSONSerDeException e) {
       throw new IOException(e);
     }

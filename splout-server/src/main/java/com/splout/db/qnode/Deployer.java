@@ -21,6 +21,7 @@ package com.splout.db.qnode;
  * #L%
  */
 
+import com.google.common.util.concurrent.*;
 import com.hazelcast.core.ICountDownLatch;
 import com.hazelcast.core.IMap;
 import com.splout.db.common.JSONSerDe;
@@ -41,8 +42,9 @@ import org.apache.thrift.transport.TTransportException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -54,7 +56,9 @@ import java.util.concurrent.TimeUnit;
 public class Deployer extends QNodeHandlerModule {
 
   private final static Log log = LogFactory.getLog(Deployer.class);
-  private ExecutorService deployExecutor;
+  private ListeningExecutorService deployExecutor;
+  // Registry of deployments being running. Usefull for cancelling them.
+  private ConcurrentHashMap<Long, Future<?>> runningDeployments = new ConcurrentHashMap<Long, Future<?>>();
 
   @SuppressWarnings("serial")
   public static class UnexistingVersion extends Exception {
@@ -77,7 +81,7 @@ public class Deployer extends QNodeHandlerModule {
     // Number of seconds to wait until another
     // check to see if timeout was reached or
     // if a DNode failed.
-    private long secondsToCheckFailureOrTimeout = 60l;
+    private long secondsToCheckFailureOrTimeout = 15l;
 
     private long version;
     private List<String> dnodes;
@@ -110,6 +114,13 @@ public class Deployer extends QNodeHandlerModule {
         boolean finished;
         do {
           finished = countDownLatchForDeploy.await(secondsToCheckFailureOrTimeout, TimeUnit.SECONDS);
+          // We have to do this check as the await method seems to ignore the interrupt signal. Grrrrr!!
+          // We use interrupted as we want the interrupt flag do be cleared. Otherwise cancelling code
+          // could throw another InterruptedException further.
+          if (Thread.interrupted()) {
+            throw new InterruptedException("Deployment for version ["
+                + version + "] received an interrupt. Probably somebody is cancelling this deployment.");
+          }
           waitSeconds += secondsToCheckFailureOrTimeout;
           if (!finished) {
             // If any of the DNodes failed, then we cancel the deployment.
@@ -194,7 +205,8 @@ public class Deployer extends QNodeHandlerModule {
         context.getCoordinationStructures().getDeploymentsStatusPanel()
             .put(version, DeployStatus.FINISHED);
       } catch (InterruptedException e) {
-        log.error("Error while deploying version [" + version + "]", e);
+        // Case when a deployment is cancelled.
+        log.info("Deployment of [" + version + "] interrupted.");
         abortDeploy(dnodes, e.getMessage(), version);
       } catch (Throwable t) {
         t.printStackTrace();
@@ -261,7 +273,7 @@ public class Deployer extends QNodeHandlerModule {
    */
   public Deployer(QNodeHandlerContext context) {
     super(context);
-    deployExecutor = Executors.newCachedThreadPool();
+    deployExecutor = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
   }
 
   /**
@@ -272,9 +284,9 @@ public class Deployer extends QNodeHandlerModule {
    */
   public DeployInfo deploy(List<DeployRequest> deployRequests) throws InterruptedException {
     // A new unique version number is generated.
-    long version = context.getCoordinationStructures().uniqueVersionId();
+    final long version = context.getCoordinationStructures().uniqueVersionId();
 
-    DeployInfo deployInfo = fillDeployInfo(deployRequests, version);
+    DeployInfo deployInfo = fillDeployInfo(deployRequests, version, context.getQNodeAddress());
 
     context.getCoordinationStructures().logDeployMessage(version,
         "Deploy [" + version + "] for tablespaces" + deployInfo.getTablespacesDeployed() + " started.");
@@ -314,17 +326,42 @@ public class Deployer extends QNodeHandlerModule {
     }
 
     // Initiating an asynchronous process to manage the deployment
-    deployExecutor.execute(new ManageDeploy(new ArrayList(actionsPerDNode.keySet()), deployRequests,
+    ListenableFuture<?> future = deployExecutor.submit(new ManageDeploy(new ArrayList(actionsPerDNode.keySet()), deployRequests,
         version, context.getConfig().getLong(QNodeProperties.DEPLOY_TIMEOUT, -1), context.getConfig()
         .getLong(QNodeProperties.DEPLOY_SECONDS_TO_CHECK_ERROR),
         context.getConfig().getLong(QNodeProperties.DEPLOY_DNODES_SPREAD_METADATA_TIMEOUT, 180),
         context.getConfig().getBoolean(QNodeProperties.REPLICA_BALANCE_ENABLE)));
 
+    registerAsRunning(version, future);
+
     context.getCoordinationStructures().getDeployInfoPanel().put(version, deployInfo);
     return deployInfo;
   }
 
-  protected DeployInfo fillDeployInfo(List<DeployRequest> deployRequests, long version) {
+  /**
+   * Registers a future as being running. Also registers an automatic callback
+   * that will unregister the future once finished.
+   */
+  protected void registerAsRunning(final long version, ListenableFuture<?> future) {
+    runningDeployments.put(version, future);
+    Futures.addCallback(future, new FutureCallback<Object>() {
+      @Override
+      public void onSuccess(Object result) {
+        unregister();
+      }
+
+      @Override
+      public void onFailure(Throwable t) {
+        unregister();
+      }
+
+      public void unregister() {
+        runningDeployments.remove(version);
+      }
+    });
+  }
+
+  protected DeployInfo fillDeployInfo(List<DeployRequest> deployRequests, long version, String qNodeAddress) {
     DeployInfo deployInfo = new DeployInfo();
 
     deployInfo.setVersion(version);
@@ -342,6 +379,8 @@ public class Deployer extends QNodeHandlerModule {
 
     Date startTime = new Date();
     deployInfo.setStartedAt(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(startTime));
+
+    deployInfo.setqNode(qNodeAddress);
     return deployInfo;
   }
 
@@ -466,5 +505,14 @@ public class Deployer extends QNodeHandlerModule {
       }
     }
     return actions;
+  }
+
+  public StatusMessage cancelDeployment(long version) {
+    Future<?> future = runningDeployments.get(version);
+    if (future == null) {
+      return new StatusMessage(StatusMessage.Status.ERROR, "No deployment running for " + version + " found.");
+    }
+    future.cancel(true);
+    return new StatusMessage(StatusMessage.Status.OK, "Deployment for version " + version + " being cancelled.");
   }
 }

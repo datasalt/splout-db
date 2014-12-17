@@ -64,7 +64,7 @@ public class TestDNode {
 
   protected void waitForDeployToFinish(DNodeService.Client client) throws Exception {
     DNodeSystemStatus status = JSONSerDe.deSer(client.status(), DNodeSystemStatus.class);
-    while (status.isDeployInProgress()) {
+    while (status.getDeploysInProgress()>0) {
       Thread.sleep(10);
       status = JSONSerDe.deSer(client.status(), DNodeSystemStatus.class);
     }

@@ -527,10 +527,9 @@ public class DNodeHandler implements IDNodeHandler {
     return (ByteBuffer) sqlQueryHelperMethod(tablespace, version, partition, true, query);
   }
 
-  private void abortDeploy(long version, String errorMessage) {
+  private void markDeployAsAborted(long version, String errorMessage) {
     ConcurrentMap<String, String> panel = coord.getDeployErrorPanel(version);
     panel.put(whoAmI(), errorMessage);
-    deployInProgress.decrementAndGet();
   }
 
   /**
@@ -569,19 +568,22 @@ public class DNodeHandler implements IDNodeHandler {
           // the configuration tells
           // If the timeout passes a TimeoutException is thrown
           future.get(config.getInt(DNodeProperties.DEPLOY_TIMEOUT_SECONDS), TimeUnit.SECONDS);
+        } catch (CancellationException e) {
+          log.info("Cancelation when waiting for local deploy to finish - killing deployment " + "version[" + version + "]");
+          markDeployAsAborted(version, ExceptionUtils.getStackTrace(e));
         } catch (InterruptedException e) {
-          log.warn("Interrupted exception waiting for local deploy to finish - killing deployment", e);
-          abortDeploy(version, ExceptionUtils.getStackTrace(e));
-          future.cancel(true);
+          log.info("Interrupted exception waiting for local deploy to finish - killing deployment" + "version[" + version + "]");
+          markDeployAsAborted(version, ExceptionUtils.getStackTrace(e));
         } catch (ExecutionException e) {
-          log.warn("Execution exception waiting for local deploy to finish - killing deployment.", e);
-          abortDeploy(version, ExceptionUtils.getStackTrace(e));
+          log.warn("Execution exception waiting for local deploy to finish - killing deployment." + "version[" + version + "]", e);
+          markDeployAsAborted(version, ExceptionUtils.getStackTrace(e));
         } catch (TimeoutException e) {
-          log.warn("Timeout waiting for local deploy to finish - killing deployment.", e);
-          abortDeploy(version, "Timeout reached - " + config.getInt(DNodeProperties.DEPLOY_TIMEOUT_SECONDS) + " seconds");
-          future.cancel(true);
+          log.info("Timeout waiting for local deploy to finish - killing deployment." + "version[" + version + "]", e);
+          markDeployAsAborted(version, "Timeout reached - " + config.getInt(DNodeProperties.DEPLOY_TIMEOUT_SECONDS) + " seconds");
           lastDeployTimedout.set(true);
         } finally {
+          // If the future didn't end, we just send an interrupt signal to it.
+          future.cancel(true);
           deploysBeingExecuted.remove(version);
         }
       }
@@ -640,7 +642,7 @@ public class DNodeHandler implements IDNodeHandler {
       status.setnQueries(performanceTool.getNQueries());
       status.setAverage(performanceTool.getAverage());
       status.setSlowQueries(slowQueries);
-      status.setDeployInProgress(deployInProgress.get() > 0);
+      status.setDeploysInProgress(deployInProgress.get());
       status.setHttpExchangerAddress(httpExchangerAddress());
       status.setBalanceActionsStateMap(balanceActionsStateMap);
       File folder = new File(config.getString(DNodeProperties.DATA_FOLDER));
@@ -921,20 +923,18 @@ public class DNodeHandler implements IDNodeHandler {
             ecs.take().get();
           } catch (ExecutionException e) {
             // One job was wrong. Stopping the rest.
-            for (Future<Boolean> task : deployFutures) {
-              task.cancel(true);
-            }
-            executor.shutdown();
+            cancelAndShutdown(executor, deployFutures);
             throw e.getCause();
           } catch (InterruptedException e) {
             // Somebody interrupted the deployment thread. Stopping
-            // the
-            // rest of tasks.
-            for (Future<Boolean> task : deployFutures) {
-              task.cancel(true);
-            }
-            executor.shutdown();
+            // the rest of tasks.
+            cancelAndShutdown(executor, deployFutures);
             throw e;
+          } catch (CancellationException e) {
+            // Somebody cancelled the deployment thread. Stopping
+            // the rest of tasks.
+            cancelAndShutdown(executor, deployFutures);
+            throw new InterruptedException();
           }
         }
 
@@ -945,19 +945,18 @@ public class DNodeHandler implements IDNodeHandler {
         // PartitionMap and ReplicationMap will be built incrementally
         // as DNodes finish.
         dnodesRegistry.changeInfo(new DNodeInfo(config));
-
         long end = System.currentTimeMillis();
         log.info("Local [" + deployActions.size() + "] deploy actions successfully finished in " + (end - start) + " ms.");
-        deployInProgress.decrementAndGet();
       } catch (InterruptedException e) {
         // Somebody interrupted the thread. Probably somebody is aborting.
-        log.warn("Interrupted the deploying for version[" + version + "]");
+        log.info("Version[" + version + "] deployment interrupted");
       } catch (Throwable t) {
         // In order to avoid stale deployments, we flag this deploy to
         // be aborted
         log.warn("Error deploying[" + deployActions + "] barrier + version[" + version + "]", t);
-        abortDeploy(version, ExceptionUtils.getStackTrace(t));
+        markDeployAsAborted(version, ExceptionUtils.getStackTrace(t));
       } finally {
+        deployInProgress.decrementAndGet();
         // Decrement the countdown latch. On 0, deployer knows that
         // the deploy
         // finished.
@@ -965,25 +964,27 @@ public class DNodeHandler implements IDNodeHandler {
         countdown.countDown();
       }
     }
+
+    protected void cancelAndShutdown(ExecutorService executor, ArrayList<Future<Boolean>> deployFutures) {
+      for (Future<Boolean> task : deployFutures) {
+        task.cancel(true);
+      }
+      executor.shutdown();
+    }
   }
 
   /**
    * Runs a deploy action. Downloads file and warm up the data.
+   * Interruptible.
    */
   private void runDeployAction(Fetcher.Reporter reporter, DeployAction action, long version) throws IOException, URISyntaxException,
-      DNodeException {
+      DNodeException, InterruptedException {
+
     log.info("Running deployAction[" + action + "] for version[" + version + "].");
-    // 1- Store metadata
-    File metadataFile = getLocalMetadataFile(action.getTablespace(), action.getPartition(), version);
-    if (!metadataFile.getParentFile().exists()) {
-      metadataFile.getParentFile().mkdirs();
-    }
-    ThriftWriter writer = new ThriftWriter(metadataFile);
-    writer.write(action.getMetadata());
-    writer.close();
-    // 2- Call the fetcher for fetching
+    // 1- Call the fetcher for fetching
     File fetchedContent = fetcher.fetch(action.getDataURI(), reporter);
     // If we reach this point then the fetch has been OK
+    // 2- Create the local folder were to move the fetched data
     File dbFolder = getLocalStorageFolder(action.getTablespace(), action.getPartition(), version);
     if (dbFolder.exists()) { // If the new folder where we want to deploy
       // already exists means it is
@@ -991,12 +992,36 @@ public class DNodeHandler implements IDNodeHandler {
       // stalled from a previous failed deploy - it is ok to delete it
       FileUtils.deleteDirectory(dbFolder);
     }
-    // 4- Perform a "mv" for finally making the data available
+    // 3- Perform a "mv" for finally making the data available
     FileUtils.moveDirectory(fetchedContent, dbFolder);
-    // 5- Preemptively load the Manager in case initialization is slow
+
+    // 4- Check if interrupted. In this case, we remove the folder before returning
+    if (Thread.interrupted()) {
+      try {
+        FileUtils.deleteDirectory(dbFolder);
+      } catch (IOException e) {
+        log.warn("Not possible to remove " + dbFolder + " when trying to cancel de deployment.");
+      }
+      throw new InterruptedException();
+    }
+
+    // 5- Store metadata about the partition
+    writePartitionMetadata(action, version);
+
+    // 6- Preemptively load the Manager in case initialization is slow
     // Managers might warm up for a while (e.g. loading data into memory)
     loadManagerInEHCache(action.getTablespace(), action.getVersion(), action.getPartition(), dbFolder, action.getMetadata());
     log.info("Finished deployAction[" + action + "] for version[" + version + "].");
+  }
+
+  private void writePartitionMetadata(DeployAction action, long version) throws IOException {
+    File metadataFile = getLocalMetadataFile(action.getTablespace(), action.getPartition(), version);
+    if (!metadataFile.getParentFile().exists()) {
+      metadataFile.getParentFile().mkdirs();
+    }
+    ThriftWriter writer = new ThriftWriter(metadataFile);
+    writer.write(action.getMetadata());
+    writer.close();
   }
 
 }

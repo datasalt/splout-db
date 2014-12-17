@@ -42,6 +42,32 @@
                     $('#failedDeployments').processTemplate(data.failedDeployments);
                 }
         );
+
+        function modalCancel(version, qnode) {
+            $('#cancelModalElement').setTemplateElement("cancelModalTemplate");
+            $('#cancelModalElement').setParam("version", version);
+            $('#cancelModalElement').setParam("qnode", qnode);
+            $('#cancelModalElement').processTemplate();
+
+            $('#cancelModal').modal('show')
+        }
+
+        function cancel(version, qnode) {
+            $('#cancelModal').modal('hide')
+            $.ajax({
+                url: qnode + '/api/canceldeployment?version=' + version + '&callback=JSONCallback',
+                dataType: 'jsonp',
+                jsonpCallback: 'JSONCallback',
+                success: function(data){
+                    $('#resultModalElement').setTemplateElement("resultModalTemplate");
+                    $('#resultModalElement').processTemplate(data);
+                    $('#resultModal').modal('show')
+                },
+                error: function(xhr, ajaxOptions, thrownError) {
+                    alert("error: " + xhr.status  + "\n" + thrownError);
+                }
+            })
+        }
     </script>
 </head>
 <body>
@@ -66,6 +92,18 @@
                         <dd>{$T.deployment.tablespacesDeployed}</dd>
                         <dt>Data URIs:</dt>
                         <dd>{$T.deployment.dataURIs}</dd>
+                        <dt>QNode coordinator:</dt>
+                        <dd>{$T.deployment.qNode}</dd>
+                        {#if $P.id == 'ongoing'}
+                            <dt></dt>
+                            <dd>&nbsp;</dd>
+                            <dt></dt>
+                            <dd>
+                                <button role="button" class="btn btn-primary" onclick="modalCancel({$T.deployment.version} , '{$T.deployment.qNode}')">
+                                    Cancel deployment
+                                </button>
+                            </dd>
+                        {#/if}
                     </dl>
 
                     <h4>Messages</h4>
@@ -84,6 +122,55 @@
         {#/for}
     </div>
 </textarea>
+
+<!-- Cancel Modal -->
+<textarea id="cancelModalTemplate" style="display:none">
+    <!-- Modal asking for cancelling a deployment -->
+    <div class="modal hide" id="cancelModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">Cancel deployment {$P.version}</h4>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Are you sure?</strong></p>
+                    <p><small>
+                        Note that deployment cancelation can take a while until being reflected in
+                        deployments panel.
+                    </small></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-danger" id="cancelButton" onclick="cancel({$P.version}, '{$P.qnode}')">Proceed</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</textarea>
+
+
+<!-- result Modal -->
+<textarea id="resultModalTemplate" style="display:none">
+    <!-- Modal asking for cancelling a deployment -->
+    <div class="modal hide" id="resultModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">{$T.status}</h4>
+                </div>
+                <div class="modal-body">
+                    <p>{$T.statusMessage}</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</textarea>
+
 
 <div class="navbar navbar-inverse navbar-fixed-top">
     <div class="navbar-inner">
@@ -138,7 +225,13 @@
 
     <div id="footer">
         <hr/>
-        Splout SQL 0.2
+        Splout SQL
+    </div>
+
+    <div id="cancelModalElement">
+    </div>
+
+    <div id="resultModalElement">
     </div>
 
 </div>

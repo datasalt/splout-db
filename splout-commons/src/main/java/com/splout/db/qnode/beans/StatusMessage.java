@@ -21,27 +21,39 @@ package com.splout.db.qnode.beans;
  */
 
 import com.splout.db.common.BaseBean;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 
 /**
- * Just a status message and nothing more, returned by rollback() method.
+ * Just a statusMessage message and nothing more, returned by rollback() method.
  */
+@JsonIgnoreProperties(ignoreUnknown = true) // Backwards compatibility in JSON (new fields don't make things break)
 public class StatusMessage extends BaseBean {
 
-  private String status;
+  public enum Status {OK, ERROR};
+  private String statusMessage;
+  private Status status;
 
   public StatusMessage() {
-
   }
 
-  public StatusMessage(String status) {
+  public StatusMessage(Status status, String statusMessage) {
     this.status = status;
+    this.statusMessage = statusMessage;
   }
 
-  public String getStatus() {
+  public String getStatusMessage() {
+    return statusMessage;
+  }
+
+  public void setStatusMessage(String statusMessage) {
+    this.statusMessage = statusMessage;
+  }
+
+  public Status getStatus() {
     return status;
   }
 
-  public void setStatus(String status) {
+  public void setStatus(Status status) {
     this.status = status;
   }
 }

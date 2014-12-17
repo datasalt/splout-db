@@ -30,7 +30,7 @@
 
         $("#title").html("Splout SQL Panel - DNode " + dnode);
 
-        $.getJSON('/api/dnode/' + dnodeEnc + '/status',
+        $.getJSON('/api/dnode/' + dnodeEnc + '/statusMessage',
                 function (data) {
                     $("#pageTitle").html("DNode " + dnode);
 

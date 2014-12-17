@@ -41,6 +41,7 @@ public class DeployRollbackServlet extends BaseServlet {
 
   public final static String ACTION_DEPLOY = "deploy";
   public final static String ACTION_ROLLBACK = "rollback";
+  public final static String ACTION_CANCEL_DEPLOYMENT = "canceldeployment";
 
   public DeployRollbackServlet(IQNodeHandler qNodeHandler) {
     super(qNodeHandler);
@@ -50,6 +51,32 @@ public class DeployRollbackServlet extends BaseServlet {
   };
   public final static TypeReference<ArrayList<DeployRequest>> DEPLOY_REQ_REF = new TypeReference<ArrayList<DeployRequest>>() {
   };
+
+  @Override
+  protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    resp.setHeader("content-type", "application/json;charset=UTF-8");
+    resp.setCharacterEncoding("UTF-8");
+
+    String action = req.getParameter("action");
+    String response = null;
+
+    try {
+      if (action.equals(ACTION_CANCEL_DEPLOYMENT)) {
+        response = JSONSerDe.ser(qNodeHandler.cancelDeployment(req.getParameter("version")));
+        // JSONP support
+        if (req.getParameter("callback") != null) {
+          response = req.getParameter("callback") + "(" + response + ")";
+        }
+      } else {
+        throw new ServletException("Unknown action: " + action);
+      }
+
+      resp.getWriter().append(response);
+    } catch (Exception e) {
+      log.error(e);
+      throw new ServletException(e);
+    }
+  }
 
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException,

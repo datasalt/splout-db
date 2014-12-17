@@ -97,6 +97,7 @@ public class QNodeHandler implements IQNodeHandler {
   private final Meter meterRequestsPerSecond = Metrics.newMeter(QNodeHandler.class, "queries-second",
       "queries-second", TimeUnit.SECONDS);
   private final Histogram meterResultSize = Metrics.newHistogram(QNodeHandler.class, "response-size");
+  private String qNodeAddress;
 
   /**
    * Keep track of die/alive DNodes events.
@@ -473,10 +474,10 @@ public class QNodeHandler implements IQNodeHandler {
       // when other is trying a rollback.
       deployer.switchVersions(rollbackRequest);
       // TODO: Change this status message to something more programmatic
-      return new StatusMessage("Done");
+      return new StatusMessage(StatusMessage.Status.OK, "Done");
 
     } catch (UnexistingVersion e) {
-      return new StatusMessage(e.getMessage() + ". Not possible to rollback to unexisting version.");
+      return new StatusMessage(StatusMessage.Status.ERROR, e.getMessage() + ". Not possible to rollback to unexisting version.");
     }
   }
 
@@ -574,7 +575,7 @@ public class QNodeHandler implements IQNodeHandler {
       long deployVersion = deployment.getKey();
 
       DeploymentStatus dStatus = new DeploymentStatus();
-      dStatus.setDeploymentId(deployVersion);
+      dStatus.setVersion(deployVersion);
 
       DeployInfo dInfo = coord.getDeployInfoPanel().get(deployVersion);
       dStatus.setDate("");
@@ -583,6 +584,7 @@ public class QNodeHandler implements IQNodeHandler {
         dStatus.setDate(dInfo.getStartedAt());
         dStatus.setDataURIs(dInfo.getDataURIs());
         dStatus.setTablespacesDeployed(dInfo.getTablespacesDeployed());
+        dStatus.setqNode(dInfo.getqNode());
       } else {
         log.warn("Null DeployInfo for deploy: " + deployVersion
             + " - it should be persisted in any case.");
@@ -637,6 +639,29 @@ public class QNodeHandler implements IQNodeHandler {
     return t;
   }
 
+  @Override
+  public StatusMessage cancelDeployment(String version) {
+    try {
+      long v = Long.valueOf(version);
+      return deployer.cancelDeployment(v);
+    } catch (NumberFormatException e) {
+      return new StatusMessage(StatusMessage.Status.ERROR, "Wrong version number: " + version);
+    }
+  }
+
+  @Override
+  public void setQNodeAddress(String qNodeAddress) {
+    this.qNodeAddress = qNodeAddress;
+    if (context !=null) {
+      context.setQNodeAddress(qNodeAddress);
+    }
+  }
+
+  @Override
+  public String getQNodeAddress() {
+    return qNodeAddress;
+  }
+
   /**
    * Get the list of DNodes
    */
@@ -689,9 +714,9 @@ public class QNodeHandler implements IQNodeHandler {
     }
     if (rmvdTxt.length() > 0) {
       rmvdTxt = rmvdTxt.substring(0, rmvdTxt.length() - 1);
-      return new StatusMessage("Removing tablespace versions: " + rmvdTxt);
+      return new StatusMessage(StatusMessage.Status.OK, "Removing tablespace versions: " + rmvdTxt);
     } else {
-      return new StatusMessage("No old tablespace versions to remove. Change "
+      return new StatusMessage(StatusMessage.Status.OK, "No old tablespace versions to remove. Change "
           + QNodeProperties.VERSIONS_PER_TABLESPACE
           + " configuration property and restart the QNodes if you intend to free some space.");
     }

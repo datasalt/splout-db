@@ -20,17 +20,20 @@ package com.splout.db.dnode.beans;
  * #L%
  */
 
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+
 import java.util.List;
 import java.util.Map;
 
 /**
  * JSON bean that is returned when requesting for the status of the DNode.
  */
+@JsonIgnoreProperties(ignoreUnknown = true) // Backwards compatibility in JSON (new fields don't make things break)
 public class DNodeSystemStatus {
 
   private String systemStatus;
   private long lastExceptionTime;
-  private boolean deployInProgress;
+  private int deploysInProgress;
   private long upSince;
   private int nQueries;
   private int failedQueries;
@@ -106,12 +109,12 @@ public class DNodeSystemStatus {
     this.systemStatus = systemStatus;
   }
 
-  public boolean isDeployInProgress() {
-    return deployInProgress;
+  public int getDeploysInProgress() {
+    return deploysInProgress;
   }
 
-  public void setDeployInProgress(boolean deployInProgress) {
-    this.deployInProgress = deployInProgress;
+  public void setDeploysInProgress(int deployInProgress) {
+    this.deploysInProgress = deployInProgress;
   }
 
   public long getOccupiedSpaceInDisk() {

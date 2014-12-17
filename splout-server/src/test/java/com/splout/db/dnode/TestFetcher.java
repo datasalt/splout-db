@@ -36,8 +36,7 @@ import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class TestFetcher {
 
@@ -63,7 +62,7 @@ public class TestFetcher {
   }
 
   @Test
-  public void testHdfsFetching() throws IOException, URISyntaxException {
+  public void testHdfsFetching() throws IOException, URISyntaxException, InterruptedException {
     Configuration conf = new Configuration();
     FileSystem fS = FileSystem.getLocal(conf);
 
@@ -91,7 +90,45 @@ public class TestFetcher {
   }
 
   @Test
-  public void testHdfsFetchingAndThrottling() throws IOException, URISyntaxException {
+  public void testHdfsFetchingInterrupted() throws IOException, URISyntaxException, InterruptedException {
+    Configuration conf = new Configuration();
+    final FileSystem fS = FileSystem.getLocal(conf);
+
+    SploutConfiguration testConfig = SploutConfiguration.getTestConfig();
+    testConfig.setProperty(FetcherProperties.TEMP_DIR, "tmp-dir-" + TestFetcher.class.getName());
+    final Fetcher fetcher = new Fetcher(testConfig);
+
+    final Path path = new Path("tmp-" + TestFetcher.class.getName());
+    OutputStream oS = fS.create(path);
+    oS.write("This is what happens when you don't know what to write".getBytes());
+    oS.close();
+
+    Thread t = new Thread() {
+      @Override
+      public void run() {
+        try {
+          try {
+            File f = fetcher.fetch(new Path(fS.getWorkingDirectory(), path.getName()).toUri().toString());
+          } catch (IOException e) {
+            e.printStackTrace();
+          } catch (URISyntaxException e) {
+            e.printStackTrace();
+          }
+          fail("An InterruptedException was expected.");
+        } catch(InterruptedException e) {
+          // Everything good.
+        }
+      }
+    };
+    // We interrupt the thread before starting so we are sure that the interruption check
+    // will be seen even if the file to copy is very small.
+    t.interrupt();
+    t.start();
+  }
+
+
+  @Test
+  public void testHdfsFetchingAndThrottling() throws IOException, URISyntaxException, InterruptedException {
     Configuration conf = new Configuration();
     FileSystem fS = FileSystem.getLocal(conf);
 
@@ -128,7 +165,7 @@ public class TestFetcher {
   }
 
   @Test
-  public void testFileFetching() throws IOException, URISyntaxException {
+  public void testFileFetching() throws IOException, URISyntaxException, InterruptedException {
     SploutConfiguration testConfig = SploutConfiguration.getTestConfig();
     testConfig.setProperty(FetcherProperties.TEMP_DIR, "tmp-dir-" + TestFetcher.class.getName());
     Fetcher fetcher = new Fetcher(testConfig);
@@ -151,7 +188,7 @@ public class TestFetcher {
   }
 
   @Test
-  public void testFileFetchingAndThrottling() throws IOException, URISyntaxException {
+  public void testFileFetchingAndThrottling() throws IOException, URISyntaxException, InterruptedException {
     SploutConfiguration testConfig = SploutConfiguration.getTestConfig();
     testConfig.setProperty(FetcherProperties.TEMP_DIR, "tmp-dir-" + TestFetcher.class.getName());
     testConfig.setProperty(FetcherProperties.DOWNLOAD_BUFFER, 4);

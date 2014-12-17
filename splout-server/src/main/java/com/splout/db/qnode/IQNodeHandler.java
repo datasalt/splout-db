@@ -65,4 +65,10 @@ public interface IQNodeHandler {
   public DNodeSystemStatus dnodeStatus(String dNode) throws Exception;
 
   public Tablespace tablespace(String tablespace) throws Exception;
+
+  public StatusMessage cancelDeployment(String version);
+
+  public void setQNodeAddress(String qNodeAddress);
+
+  public String getQNodeAddress();
 }

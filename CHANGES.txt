@@ -5,18 +5,19 @@ Splout SQL Change Log
 
 IMPROVEMENTS
 
- - 2014-12-12 - Concurrent deployments support. Individualized cancelling support.
+ - 2014-12-17 - Deployment cancellation now possible.
+ - 2014-12-12 - Concurrent deployments support.
  - 2014-12-12 - No retrying syntax error queries or timeout queries anymore.
  - 2014-12-09 - Existing partition map at Splout Server can be reused. Useful for not being recalculating partition maps always.
  - 2014-12-09 - API accepts user defined partition maps
  - 2014-11-28 - Timeout when pool of DNodes is full. Avoiding enqueue for always queries when Splout is full.
- - 2014-11-12 - QNode connections to DNode retrials are delayed in successive failures.
+ - 2014-11-12 - qNode connections to DNode retrials are delayed in successive failures.
  - 2014-11-12 - All properties in Splout config starting by hazelcast. are passed through Hazelcast as is.
  - 2014-09-29 - Accepting responses compression with Gzip and deflate
 
  BUG FIXES
 
- - 2014-12-12 - Bug in registry when starting QNode with already existing DNodes.
+ - 2014-12-12 - Bug in registry when starting qNode with already existing DNodes.
  - 2014-12-05 - TimeoutThread not working properly due to only covering statement prepare.
  - 2014-12-01 - hz.tcp.cluster property only using the first given host
  - 2014-11-28 - Solved a race condition in the TimeoutThread
