@@ -119,7 +119,7 @@ public class TestQNodeHandlerContext {
     facade1.addTablespaceVersionPartition("t1", 2l, 0);
 
     // DNode1 enters with partitions t1/1/0 and t1/2/0
-    ctx.updateTablespaceVersions(facade1.getDNodeInfo(), DNodeEvent.ENTRY);
+    ctx.getTablespaceState().updateTablespaceVersions(facade1.getDNodeInfo(), DNodeEvent.ENTRY);
 
     assertEquals(2, ctx.getTablespaceVersionsMap().keySet().size());
 
@@ -137,7 +137,7 @@ public class TestQNodeHandlerContext {
     facade2.addTablespaceVersionPartition("t1", 3l, 0);
     facade2.addTablespaceVersionPartition("t2", 1l, 0);
 
-    ctx.updateTablespaceVersions(facade2.getDNodeInfo(), DNodeEvent.ENTRY);
+    ctx.getTablespaceState().updateTablespaceVersions(facade2.getDNodeInfo(), DNodeEvent.ENTRY);
 
     Tablespace tablespace1V1 = ctx.getTablespaceVersionsMap().get(new TablespaceVersion("t1", 1l));
     Tablespace tablespace1V2 = ctx.getTablespaceVersionsMap().get(new TablespaceVersion("t1", 2l));
@@ -154,7 +154,7 @@ public class TestQNodeHandlerContext {
     facade3.addTablespaceVersionPartition("t1", 1l, 1);
     facade3.addTablespaceVersionPartition("t2", 1l, 1);
 
-    ctx.updateTablespaceVersions(facade3.getDNodeInfo(), DNodeEvent.ENTRY);
+    ctx.getTablespaceState().updateTablespaceVersions(facade3.getDNodeInfo(), DNodeEvent.ENTRY);
 
     tablespace1V1 = ctx.getTablespaceVersionsMap().get(new TablespaceVersion("t1", 1l));
     tablespace1V2 = ctx.getTablespaceVersionsMap().get(new TablespaceVersion("t1", 2l));
@@ -167,7 +167,7 @@ public class TestQNodeHandlerContext {
     assertTablespace(tablespace2V1, new Integer[]{0, 1}, "dnode2", "dnode3");
 
     // DNode 2 leaves. Tablespace 1 version 3 becomes empty!
-    ctx.updateTablespaceVersions(facade2.getDNodeInfo(), DNodeEvent.LEAVE);
+    ctx.getTablespaceState().updateTablespaceVersions(facade2.getDNodeInfo(), DNodeEvent.LEAVE);
 
     tablespace1V1 = ctx.getTablespaceVersionsMap().get(new TablespaceVersion("t1", 1l));
     tablespace1V2 = ctx.getTablespaceVersionsMap().get(new TablespaceVersion("t1", 2l));
@@ -180,7 +180,7 @@ public class TestQNodeHandlerContext {
     assertTablespace(tablespace2V1, new Integer[]{1}, "dnode3");
 
     // DNode 2 enters again. Assure that things remain the same as before.
-    ctx.updateTablespaceVersions(facade2.getDNodeInfo(), DNodeEvent.ENTRY);
+    ctx.getTablespaceState().updateTablespaceVersions(facade2.getDNodeInfo(), DNodeEvent.ENTRY);
 
     tablespace1V1 = ctx.getTablespaceVersionsMap().get(new TablespaceVersion("t1", 1l));
     tablespace1V2 = ctx.getTablespaceVersionsMap().get(new TablespaceVersion("t1", 2l));
@@ -193,8 +193,8 @@ public class TestQNodeHandlerContext {
     assertTablespace(tablespace2V1, new Integer[]{0, 1}, "dnode2", "dnode3");
 
     // DNode 2 leaves. DNode 1 leaves.
-    ctx.updateTablespaceVersions(facade2.getDNodeInfo(), DNodeEvent.LEAVE);
-    ctx.updateTablespaceVersions(facade1.getDNodeInfo(), DNodeEvent.LEAVE);
+    ctx.getTablespaceState().updateTablespaceVersions(facade2.getDNodeInfo(), DNodeEvent.LEAVE);
+    ctx.getTablespaceState().updateTablespaceVersions(facade1.getDNodeInfo(), DNodeEvent.LEAVE);
 
     tablespace1V1 = ctx.getTablespaceVersionsMap().get(new TablespaceVersion("t1", 1l));
     tablespace1V2 = ctx.getTablespaceVersionsMap().get(new TablespaceVersion("t1", 2l));
@@ -207,7 +207,7 @@ public class TestQNodeHandlerContext {
     assertTablespace(tablespace2V1, new Integer[]{1}, "dnode3");
 
     // DNode 3 leaves.
-    ctx.updateTablespaceVersions(facade3.getDNodeInfo(), DNodeEvent.LEAVE);
+    ctx.getTablespaceState().updateTablespaceVersions(facade3.getDNodeInfo(), DNodeEvent.LEAVE);
 
     tablespace1V1 = ctx.getTablespaceVersionsMap().get(new TablespaceVersion("t1", 1l));
     tablespace1V2 = ctx.getTablespaceVersionsMap().get(new TablespaceVersion("t1", 2l));
@@ -233,9 +233,9 @@ public class TestQNodeHandlerContext {
     facade2.addTablespaceVersionPartition("t1", 2l, 1);
 
     // DNode1 enters with partitions t1/1/0 and t1/2/0
-    ctx.updateTablespaceVersions(facade1.getDNodeInfo(), DNodeEvent.ENTRY);
+    ctx.getTablespaceState().updateTablespaceVersions(facade1.getDNodeInfo(), DNodeEvent.ENTRY);
     // DNode2 enters with partitions t1/1/1 and t1/2/1
-    ctx.updateTablespaceVersions(facade2.getDNodeInfo(), DNodeEvent.ENTRY);
+    ctx.getTablespaceState().updateTablespaceVersions(facade2.getDNodeInfo(), DNodeEvent.ENTRY);
 
     Tablespace tablespace1V1 = ctx.getTablespaceVersionsMap().get(new TablespaceVersion("t1", 1l));
     Tablespace tablespace1V2 = ctx.getTablespaceVersionsMap().get(new TablespaceVersion("t1", 2l));
@@ -250,7 +250,7 @@ public class TestQNodeHandlerContext {
     facade1.addTablespaceVersionPartition("t1", 1l, 0);
 
     // DNode1 : implicit leaving t1/2/0
-    ctx.updateTablespaceVersions(facade1.getDNodeInfo(), DNodeEvent.UPDATE);
+    ctx.getTablespaceState().updateTablespaceVersions(facade1.getDNodeInfo(), DNodeEvent.UPDATE);
 
     tablespace1V1 = ctx.getTablespaceVersionsMap().get(new TablespaceVersion("t1", 1l));
     tablespace1V2 = ctx.getTablespaceVersionsMap().get(new TablespaceVersion("t1", 2l));
@@ -259,7 +259,7 @@ public class TestQNodeHandlerContext {
 
     // DNode1 has the leaved version back again
     facade1.addTablespaceVersionPartition("t1", 2l, 0);
-    ctx.updateTablespaceVersions(facade1.getDNodeInfo(), DNodeEvent.UPDATE);
+    ctx.getTablespaceState().updateTablespaceVersions(facade1.getDNodeInfo(), DNodeEvent.UPDATE);
 
     tablespace1V1 = ctx.getTablespaceVersionsMap().get(new TablespaceVersion("t1", 1l));
     tablespace1V2 = ctx.getTablespaceVersionsMap().get(new TablespaceVersion("t1", 2l));
@@ -270,8 +270,8 @@ public class TestQNodeHandlerContext {
     facade1 = new DNodeInfoFacade("dnode1");
     facade2 = new DNodeInfoFacade("dnode2");
 
-    ctx.updateTablespaceVersions(facade1.getDNodeInfo(), DNodeEvent.UPDATE);
-    ctx.updateTablespaceVersions(facade2.getDNodeInfo(), DNodeEvent.UPDATE);
+    ctx.getTablespaceState().updateTablespaceVersions(facade1.getDNodeInfo(), DNodeEvent.UPDATE);
+    ctx.getTablespaceState().updateTablespaceVersions(facade2.getDNodeInfo(), DNodeEvent.UPDATE);
 
     tablespace1V1 = ctx.getTablespaceVersionsMap().get(new TablespaceVersion("t1", 1l));
     tablespace1V2 = ctx.getTablespaceVersionsMap().get(new TablespaceVersion("t1", 2l));

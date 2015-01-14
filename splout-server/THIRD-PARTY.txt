@@ -1,5 +1,5 @@
 
-Lists of 49 third-party dependencies.
+Lists of 48 third-party dependencies.
      (The Apache Software License, Version 2.0) sqlite4java (com.almworks.sqlite4java:sqlite4java:0.282 - http://code.google.com/p/sqlite4java)
      (The Apache Software License, Version 2.0) JCommander (com.beust:jcommander:1.27 - http://beust.com/jcommander)
      (Eclipse Public License - v 1.0) minimal-json (com.eclipsesource.minimal-json:minimal-json:0.9.1 - https://github.com/ralfstx/minimal-json)
@@ -29,7 +29,6 @@ Lists of 49 third-party dependencies.
      (The Apache Software License, Version 2.0) Commons IO (commons-io:commons-io:2.2 - http://commons.apache.org/io/)
      (The Apache Software License, Version 2.0) Commons Lang (commons-lang:commons-lang:2.6 - http://commons.apache.org/lang/)
      (The Apache Software License, Version 2.0) Commons Logging (commons-logging:commons-logging:1.1.1 - http://commons.apache.org/logging)
-     (Unknown license) servlet-api (javax.servlet:servlet-api:2.5 - no url defined)
      (Unknown license) log4j (log4j:log4j:1.2.15 - no url defined)
      (Apache License, Version 2.0) An open source Java toolkit for Amazon S3 (net.java.dev.jets3t:jets3t:0.7.1 - http://jets3t.s3.amazonaws.com/index.html)
      (The Apache Software License, Version 2.0) Ehcache Core (net.sf.ehcache:ehcache-core:2.5.1 - http://ehcache.org)

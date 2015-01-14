@@ -113,7 +113,7 @@ public class QNodeHandler implements IQNodeHandler {
         log.info(Thread.currentThread().getName() + " : populating client queue for [" + dnode
             + "] as it connected.");
         context.initializeThriftClientCacheFor(dnode);
-        context.updateTablespaceVersions(dNodeInfo, QNodeHandlerContext.DNodeEvent.ENTRY);
+        context.getTablespaceState().updateTablespaceVersions(dNodeInfo, QNodeHandlerContext.DNodeEvent.ENTRY);
         context.maybeBalance();
       } catch (TablespaceVersionInfoException e) {
         throw new RuntimeException(e);
@@ -140,7 +140,7 @@ public class QNodeHandler implements IQNodeHandler {
       // Update TablespaceVersions
       try {
         context.discardThriftClientCacheFor(dNodeInfo.getAddress());
-        context.updateTablespaceVersions(dNodeInfo, QNodeHandlerContext.DNodeEvent.LEAVE);
+        context.getTablespaceState().updateTablespaceVersions(dNodeInfo, QNodeHandlerContext.DNodeEvent.LEAVE);
         context.maybeBalance();
       } catch (TablespaceVersionInfoException e) {
         throw new RuntimeException(e);
@@ -154,7 +154,7 @@ public class QNodeHandler implements IQNodeHandler {
       // Update TablespaceVersions
       try {
         mapToDNodeInfo.put(event.getKey(), event.getValue());
-        context.updateTablespaceVersions(event.getValue(), QNodeHandlerContext.DNodeEvent.UPDATE);
+        context.getTablespaceState().updateTablespaceVersions(event.getValue(), QNodeHandlerContext.DNodeEvent.UPDATE);
       } catch (TablespaceVersionInfoException e) {
         throw new RuntimeException(e);
       }
