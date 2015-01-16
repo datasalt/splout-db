@@ -25,6 +25,8 @@ import com.almworks.sqlite4java.SQLiteException;
 import com.almworks.sqlite4java.SQLiteStatement;
 import com.splout.db.common.QueryResult;
 import com.splout.db.common.TimeoutThread;
+import com.splout.db.engine.StreamingIterator.StreamingTerminationException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -158,7 +160,11 @@ public class SQLite4JavaClient {
         for (int i = 0; i < st.columnCount(); i++) {
           objectToRead[i] = st.columnValue(i);
         }
-        iterator.collect(objectToRead);
+        try {
+          iterator.collect(objectToRead);
+        } catch (StreamingTerminationException e) {
+          break;
+        }
       }
 
       iterator.endStreaming();
