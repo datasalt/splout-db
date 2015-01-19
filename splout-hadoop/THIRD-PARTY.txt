@@ -4,7 +4,7 @@ Lists of 54 third-party dependencies.
      (The Apache Software License, Version 2.0) cascading-hadoop (cascading:cascading-hadoop:2.2.0-wip-15 - http://cascading.org/)
      (The Apache Software License, Version 2.0) sqlite4java (com.almworks.sqlite4java:sqlite4java:0.282 - http://code.google.com/p/sqlite4java)
      (The Apache Software License, Version 2.0) JCommander (com.beust:jcommander:1.30 - http://beust.com/jcommander)
-     (The Apache Software License, Version 2.0) Pangool Core (com.datasalt.pangool:pangool-core:0.70 - http://pangool.net/pangool-core)
+     (The Apache Software License, Version 2.0) Pangool Core (com.datasalt.pangool:pangool-core:0.71-SNAPSHOT - http://pangool.net/pangool-core)
      (New BSD License) Kryo (com.esotericsoftware:kryo:3.0.0 - https://github.com/EsotericSoftware/kryo/kryo)
      (New BSD License) MinLog (com.esotericsoftware:minlog:1.3.0 - https://github.com/EsotericSoftware/minlog)
      (New BSD License) ReflectASM (com.esotericsoftware:reflectasm:1.10.0 - https://github.com/EsotericSoftware/reflectasm)

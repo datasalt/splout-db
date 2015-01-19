@@ -449,7 +449,7 @@ public class TablespaceGenerator implements Serializable {
               // Tuple
               ITuple processedTuple = null;
               try {
-                processedTuple = recordProcessor.process(fileTuple, counterInterface);
+                processedTuple = recordProcessor.process(fileTuple, tableSchema.getName(), counterInterface);
               } catch (Throwable e1) {
                 throw new RuntimeException(e1);
               }
@@ -468,7 +468,7 @@ public class TablespaceGenerator implements Serializable {
 
               // The record processor may have a special way of determining the
               // partition for this tuple
-              int shardId = recordProcessor.getPartition(strKey, processedTuple, counterInterface);
+              int shardId = recordProcessor.getPartition(strKey, processedTuple, tableSchema.getName(), counterInterface);
               if (shardId == PartitionMap.NO_PARTITION) {
                 shardId = partitionMap.findPartition(strKey);
                 if (shardId == PartitionMap.NO_PARTITION) {
@@ -524,7 +524,7 @@ public class TablespaceGenerator implements Serializable {
               // Tuple
               ITuple processedTuple = null;
               try {
-                processedTuple = recordProcessor.process(key, counterInterface);
+                processedTuple = recordProcessor.process(key, tableSchema.getName(), counterInterface);
               } catch (Throwable e1) {
                 throw new RuntimeException(e1);
               }

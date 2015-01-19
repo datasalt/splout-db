@@ -44,13 +44,13 @@ public abstract class RecordProcessor implements Serializable {
    * The input Tuple will have the Schema of the file being processed. The returned Tuple must have the same Schema than
    * the Table being created.
    */
-  public abstract ITuple process(ITuple record, CounterInterface context) throws Throwable;
+  public abstract ITuple process(ITuple record, String tableName, CounterInterface context) throws Throwable;
   
   /**
    * Optionally, determine the partition key in a custom way.
    * Return NO_PARTITION if decision can be handled to Splout API.
    */
-  public int getPartition(String partitionKey, ITuple record, CounterInterface context) {
+  public int getPartition(String partitionKey, ITuple record, String tableName, CounterInterface context) {
     return PartitionMap.NO_PARTITION;
   }
 }

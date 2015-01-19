@@ -195,7 +195,7 @@ public class TestTablespaceGenerator extends AbstractHadoopTestLibrary implement
     TableBuilder tBuilder = new TableBuilder(theSchema1);
     tBuilder.addTupleFile(new Path(INPUT), new RecordProcessor() {
       @Override
-      public ITuple process(ITuple record, CounterInterface context) throws Throwable {
+      public ITuple process(ITuple record, String tableName, CounterInterface context) throws Throwable {
         context.getCounter("counter", "counter").increment(1);
         ((Utf8) record.get("id")).set(record.get("id") + "mod");
         ((Utf8) record.get("value")).set(record.get("value") + "mod");

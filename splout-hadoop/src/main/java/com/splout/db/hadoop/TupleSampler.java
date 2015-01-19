@@ -273,7 +273,7 @@ public class TupleSampler implements Serializable {
                     InterruptedException {
                   ITuple uTuple;
                   try {
-                    uTuple = processor.process(key, counterInterface);
+                    uTuple = processor.process(key, key.getSchema().getName(), counterInterface);
                   } catch (Throwable e) {
                     throw new RuntimeException(e);
                   }
@@ -455,7 +455,7 @@ public class TupleSampler implements Serializable {
 
           ITuple uTuple;
           try {
-            uTuple = processor.process(tuple, counterInterface);
+            uTuple = processor.process(tuple, tuple.getSchema().getName(), counterInterface);
           } catch (Throwable e) {
             throw new RuntimeException(e);
           }

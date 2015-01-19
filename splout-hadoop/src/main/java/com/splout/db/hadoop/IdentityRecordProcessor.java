@@ -30,7 +30,7 @@ import com.datasalt.pangool.io.ITuple;
 public class IdentityRecordProcessor extends RecordProcessor {
 
   @Override
-  public ITuple process(ITuple record, CounterInterface context) throws Throwable {
+  public ITuple process(ITuple record, String tableName, CounterInterface context) throws Throwable {
     return record;
   }
 }
