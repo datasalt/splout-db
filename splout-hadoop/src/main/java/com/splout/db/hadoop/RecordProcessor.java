@@ -20,9 +20,10 @@ package com.splout.db.hadoop;
  * #L%
  */
 
-import com.datasalt.pangool.io.ITuple;
-
 import java.io.Serializable;
+
+import com.datasalt.pangool.io.ITuple;
+import com.splout.db.common.PartitionMap;
 
 /**
  * A custom Java business logic piece that can be implemented by the user and passed to a {@link TableInput}.
@@ -31,7 +32,8 @@ import java.io.Serializable;
  * The input Tuple will have the Schema of the file being processed. The returned Tuple must have the same Schema than
  * the Table being created.
  */
-public interface RecordProcessor extends Serializable {
+@SuppressWarnings("serial")
+public abstract class RecordProcessor implements Serializable {
 
   /**
    * Custom Java business logic can be implemented here.
@@ -42,5 +44,13 @@ public interface RecordProcessor extends Serializable {
    * The input Tuple will have the Schema of the file being processed. The returned Tuple must have the same Schema than
    * the Table being created.
    */
-  public ITuple process(ITuple record, CounterInterface context) throws Throwable;
+  public abstract ITuple process(ITuple record, CounterInterface context) throws Throwable;
+  
+  /**
+   * Optionally, determine the partition key in a custom way.
+   * Return NO_PARTITION if decision can be handled to Splout API.
+   */
+  public int getPartition(String partitionKey, ITuple record, CounterInterface context) {
+    return PartitionMap.NO_PARTITION;
+  }
 }

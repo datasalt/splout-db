@@ -34,7 +34,7 @@ import java.net.URLDecoder;
  * dataset example.
  */
 @SuppressWarnings("serial")
-public class PageCountsRecordProcessor implements RecordProcessor {
+public class PageCountsRecordProcessor extends RecordProcessor {
 
   // The resulting Table Tuple
   private ITuple tuple;

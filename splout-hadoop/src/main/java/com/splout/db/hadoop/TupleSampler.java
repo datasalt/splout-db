@@ -154,6 +154,7 @@ public class TupleSampler implements Serializable {
         }
 
         for (TableInput tableFile : table.getFiles()) {
+          @SuppressWarnings("deprecation")
           Job job = new Job(hadoopConf);
           FileInputFormat.setInputPaths(job, tableFile.getPaths());
           if (options.getMaxInputSplitSize() != null) {
@@ -227,6 +228,7 @@ public class TupleSampler implements Serializable {
    *
    * @return The number of samples retrieved
    */
+  @SuppressWarnings("deprecation")
   private long fullScanSampling(TablespaceSpec tablespace, final long sampleSize, Configuration hadoopConf,
                                 Path outputPath, final int nSplits) throws TupleSamplerException {
 
@@ -401,6 +403,7 @@ public class TupleSampler implements Serializable {
       throw new IllegalArgumentException("There are no splits to sample from!");
     }
 
+    @SuppressWarnings("deprecation")
     SequenceFile.Writer writer = new SequenceFile.Writer(fs, hadoopConf, outFile, Text.class, NullWritable.class);
 
     logger.info("Sequential sampling options, max splits to visit: " + maxSplitsToVisit

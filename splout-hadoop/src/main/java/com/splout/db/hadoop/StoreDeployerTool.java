@@ -83,6 +83,7 @@ public class StoreDeployerTool {
       if (!sourceFs.exists(tablespaceOut)) {
         throw new IllegalArgumentException("Folder doesn't exist: " + tablespaceOut);
       }
+      @SuppressWarnings("deprecation")
       Path absoluteOutPath = tablespaceOut.makeQualified(sourceFs);
 
       Path partitionMapPath = new Path(tablespaceOut, TablespaceGenerator.OUT_PARTITION_MAP);

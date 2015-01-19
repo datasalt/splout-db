@@ -27,7 +27,7 @@ import com.datasalt.pangool.io.ITuple;
  * that the Schema in the {@link TableInput} files matches the Schema of the Table that will be produced by the {@link TablespaceGenerator}.
  */
 @SuppressWarnings("serial")
-public class IdentityRecordProcessor implements RecordProcessor {
+public class IdentityRecordProcessor extends RecordProcessor {
 
   @Override
   public ITuple process(ITuple record, CounterInterface context) throws Throwable {

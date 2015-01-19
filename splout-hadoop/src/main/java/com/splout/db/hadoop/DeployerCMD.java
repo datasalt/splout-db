@@ -20,11 +20,11 @@ package com.splout.db.hadoop;
  * #L%
  */
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.ParameterException;
-import com.google.common.io.Files;
-import com.splout.db.common.JSONSerDe;
+import java.io.File;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -32,10 +32,11 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.codehaus.jackson.type.TypeReference;
 
-import java.io.File;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParameterException;
+import com.google.common.io.Files;
+import com.splout.db.common.JSONSerDe;
 
 /**
  * This tool can be used to deploy tablespaces once they are generated.
@@ -77,6 +78,7 @@ public class DeployerCMD implements Tool {
     this.conf = conf;
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public int run(String[] args) throws Exception {
     JCommander jComm = new JCommander(this);
