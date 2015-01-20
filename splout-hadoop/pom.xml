@@ -207,7 +207,6 @@
                     <groupId>com.datasalt.pangool</groupId>
                     <artifactId>pangool-core</artifactId>
                     <version>${pangool.version}</version>
-                    <classifier>mr2</classifier>
                     <exclusions>
                         <exclusion>
                             <!-- Excluded because license incompatibility -->
