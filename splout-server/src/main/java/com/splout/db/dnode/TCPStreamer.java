@@ -119,9 +119,8 @@ public class TCPStreamer {
 
     public void serve() {
       while (!isStopped()) {
-        Socket clientSocket = null;
         try {
-          clientSocket = this.serverSocket.accept();
+          new Thread(new WorkerRunnable(this.serverSocket.accept(), dNode)).start();
         } catch (IOException e) {
           if (isStopped()) {
             System.out.println("Server Stopped.");
@@ -129,8 +128,6 @@ public class TCPStreamer {
           }
           throw new RuntimeException("Error accepting client connection", e);
         }
-
-        new Thread(new WorkerRunnable(clientSocket, dNode)).start();
       }
     }
   }
@@ -177,16 +174,18 @@ public class TCPStreamer {
           }
 
           @Override
-          public void collect(Object[] result) {
+          public void collect(Object[] result) throws StreamingTerminationException {
             byte[] bytes;
             try {
               bytes = ResultSerializer.serializeToByteArray(result);
               dos.writeInt(bytes.length);
               dos.write(bytes);
             } catch (SerializationException e) {
-              e.printStackTrace();
+              throw new StreamingTerminationException("", e);
             } catch (IOException e) {
+              log.error(e);
               e.printStackTrace();
+              throw new StreamingTerminationException("", e);
             }
           }
 
@@ -197,14 +196,15 @@ public class TCPStreamer {
               dos.flush();
               log.info("Finished stream");
             } catch (IOException e) {
+              log.error(e);
               e.printStackTrace();
             }
           }
-
         });
 
-        output.close();
         input.close();
+        output.close();
+        clientSocket.close();
       } catch (IOException e) {
         e.printStackTrace();
       } catch (EngineException e) {

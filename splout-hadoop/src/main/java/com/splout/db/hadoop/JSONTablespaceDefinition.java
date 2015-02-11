@@ -48,15 +48,15 @@ public class JSONTablespaceDefinition {
 
   private String engine;
   private String name;
-  private int nPartitions;
-  private List<JSONTableDefinition> partitionedTables;
-  private List<JSONTableDefinition> replicateAllTables = new ArrayList<JSONTableDefinition>();
+  protected int nPartitions;
+  protected List<JSONTableDefinition> partitionedTables;
+  protected List<JSONTableDefinition> replicateAllTables = new ArrayList<JSONTableDefinition>();
 
   /*
    * Inner static method for converting a {@link JSONTableDefinition} into a {@link Table} bean through {@link
    * TableBuilder}.
    */
-  private static Table buildTable(JSONTableDefinition table, boolean isReplicateAll,
+  protected static Table buildTable(JSONTableDefinition table, boolean isReplicateAll,
                                   Configuration hadoopConf) throws TableBuilderException, IOException {
     if (table.getName() == null) {
       throw new IllegalArgumentException("Must provide a name for all tables.");

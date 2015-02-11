@@ -28,7 +28,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jackson.version>1.7.9</jackson.version>
         <hadoop.1.version>0.20.2</hadoop.1.version>
-        <hadoop.2.version>2.0.0-alpha</hadoop.2.version>
+        <hadoop.2.version>2.2.0</hadoop.2.version>
         <hadoop.cdh5.version>2.3.0-cdh5.0.0</hadoop.cdh5.version>
     </properties>
 

@@ -34,7 +34,7 @@ import java.net.URLDecoder;
  * dataset example.
  */
 @SuppressWarnings("serial")
-public class PageCountsRecordProcessor implements RecordProcessor {
+public class PageCountsRecordProcessor extends RecordProcessor {
 
   // The resulting Table Tuple
   private ITuple tuple;
@@ -46,7 +46,7 @@ public class PageCountsRecordProcessor implements RecordProcessor {
   }
 
   @Override
-  public ITuple process(ITuple record, CounterInterface context) throws Throwable {
+  public ITuple process(ITuple record, String tableName, CounterInterface context) throws Throwable {
     // Filter out records that are not from English Wikipedia
     if (!record.get("projectcode").toString().equals("en")) {
       // count for stats

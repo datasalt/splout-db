@@ -151,4 +151,20 @@ public class TestTablespaceBuilder {
 
     builder.build();
   }
+
+  @Test
+  public void testSameFileMoreThanOneTable() throws TablespaceBuilderException, TableBuilderException {
+    Table table1 = new TableBuilder(SCHEMA_1).addCSVTextFile("foo1.txt").addCSVTextFile("foo3.txt").partitionBy(
+        "value1", "id1").build();
+    Table table2 = new TableBuilder(SCHEMA_2).addCSVTextFile("foo1.txt").addCSVTextFile("foo2.txt").partitionBy(
+        "value2", "id2").build();
+
+    TablespaceBuilder builder = new TablespaceBuilder();
+    builder.add(table1);
+    builder.add(table2);
+
+    builder.setNPartitions(2);
+
+    builder.build();
+  }
 }

@@ -25,6 +25,8 @@ import com.almworks.sqlite4java.SQLiteException;
 import com.almworks.sqlite4java.SQLiteStatement;
 import com.splout.db.common.QueryResult;
 import com.splout.db.common.TimeoutThread;
+import com.splout.db.engine.StreamingIterator.StreamingTerminationException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -41,7 +43,8 @@ public class SQLite4JavaClient {
   private List<String> initStatements;
 
   // Error codes for our own SQLite exception.
-  // They must not colide with https://code.google.com/p/sqlite4java/source/browse/trunk/java/com/almworks/sqlite4java/SQLiteConstants.java
+  // They must not colide with
+  // https://code.google.com/p/sqlite4java/source/browse/trunk/java/com/almworks/sqlite4java/SQLiteConstants.java
   public static int ERROR_CODE_ERROR_CREATING_CONNECTION = -12000;
   public static int ERROR_CODE_MAXIMUM_RESULTS_REACHED = -12001;
 
@@ -118,14 +121,24 @@ public class SQLite4JavaClient {
   public QueryResult exec(String query) throws SQLiteException {
     db.get().exec(query);
     List<Object[]> resultList = new ArrayList<Object[]>();
-    String[] columnNames = new String[]{"status"};
-    resultList.add(new Object[]{"OK"});
+    String[] columnNames = new String[] { "status" };
+    resultList.add(new Object[] { "OK" });
     return new QueryResult(columnNames, resultList);
   }
 
   public void stream(StreamingIterator iterator) throws SQLiteException {
     SQLiteStatement st = null;
     SQLiteConnection conn = db.get();
+
+    if (conn == null) {
+      throw new SQLiteException(ERROR_CODE_ERROR_CREATING_CONNECTION, "Impossible to create SQLite connection to "
+          + dbFile);
+    }
+
+    if (timeoutThread != null) {
+      timeoutThread.startQuery(conn, iterator.getQuery());
+    }
+
     st = conn.prepare(iterator.getQuery(), false);
 
     String[] columnNames = null;
@@ -147,11 +160,18 @@ public class SQLite4JavaClient {
         for (int i = 0; i < st.columnCount(); i++) {
           objectToRead[i] = st.columnValue(i);
         }
-        iterator.collect(objectToRead);
+        try {
+          iterator.collect(objectToRead);
+        } catch (StreamingTerminationException e) {
+          break;
+        }
       }
 
       iterator.endStreaming();
     } finally {
+      if (timeoutThread != null) {
+        timeoutThread.endQuery(conn);
+      }
       st.dispose();
     }
   }
@@ -182,7 +202,8 @@ public class SQLite4JavaClient {
       conn = db.get();
 
       if (conn == null) {
-        throw new SQLiteException(ERROR_CODE_ERROR_CREATING_CONNECTION, "Impossible to create SQLite connection to " + dbFile);
+        throw new SQLiteException(ERROR_CODE_ERROR_CREATING_CONNECTION, "Impossible to create SQLite connection to "
+            + dbFile);
       }
 
       if (timeoutThread != null) {
@@ -217,7 +238,8 @@ public class SQLite4JavaClient {
         }
       } while (resultList.size() <= maxResults + 1);
       if (resultList.size() > maxResults) {
-        throw new SQLiteException(ERROR_CODE_MAXIMUM_RESULTS_REACHED, "Hard limit on number of results reached [" + maxResults + "], please use a LIMIT for this query.");
+        throw new SQLiteException(ERROR_CODE_MAXIMUM_RESULTS_REACHED, "Hard limit on number of results reached ["
+            + maxResults + "], please use a LIMIT for this query.");
       }
       return new QueryResult(columnNames, resultList);
     } finally {

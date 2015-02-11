@@ -7,19 +7,12 @@
     <parent>
         <groupId>com.splout.db</groupId>
         <artifactId>splout-top-level</artifactId>
-        <version>0.2.6-SNAPSHOT</version>
+        <version>0.3.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <groupId>com.splout.db</groupId>
     <artifactId>splout-redis</artifactId>
-
-    <repositories>
-        <repository>
-            <id>clojars.org</id>
-            <url>http://clojars.org/repo</url>
-        </repository>
-    </repositories>
 
     <licenses>
         <license>
@@ -28,6 +21,13 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
+
+    <repositories>
+        <repository>
+            <id>clojars.org</id>
+            <url>http://clojars.org/repo</url>
+        </repository>
+    </repositories>
 
     <name>Splout Redis</name>
     <description>Specific Redis-based engine for Splout.</description>

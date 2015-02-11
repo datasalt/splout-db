@@ -47,6 +47,7 @@ public class SchemaSampler {
     Schema schema = null;
 
     // sample schema from input path given the provided InputFormat
+    @SuppressWarnings("deprecation")
     Job job = new Job(conf);
     FileInputFormat.setInputPaths(job, input);
     // get first inputSplit

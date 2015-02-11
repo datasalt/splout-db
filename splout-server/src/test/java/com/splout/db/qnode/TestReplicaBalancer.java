@@ -81,9 +81,9 @@ public class TestReplicaBalancer {
 
     QNodeHandlerContext ctx = new QNodeHandlerContext(config, new CoordinationStructuresMock(dnodes,
         dNodeInfo));
-    ctx.updateTablespaceVersions(dNodeInfo.get(0), DNodeEvent.ENTRY);
-    ctx.updateTablespaceVersions(dNodeInfo.get(1), DNodeEvent.ENTRY);
-    ctx.updateTablespaceVersions(dNodeInfo.get(2), DNodeEvent.ENTRY);
+    ctx.getTablespaceState().updateTablespaceVersions(dNodeInfo.get(0), DNodeEvent.ENTRY);
+    ctx.getTablespaceState().updateTablespaceVersions(dNodeInfo.get(1), DNodeEvent.ENTRY);
+    ctx.getTablespaceState().updateTablespaceVersions(dNodeInfo.get(2), DNodeEvent.ENTRY);
 
     ReplicaBalancer balancer = new ReplicaBalancer(ctx);
     List<ReplicaBalancer.BalanceAction> balanceActions = balancer.scanPartitions();

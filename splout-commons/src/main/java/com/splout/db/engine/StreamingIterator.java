@@ -23,6 +23,21 @@ package com.splout.db.engine;
 public interface StreamingIterator {
 
   /**
+   * An exception that is thrown when something bad happens and the stream needs to be prematurely finished.
+   */
+  @SuppressWarnings("serial")
+  public static class StreamingTerminationException extends Exception {
+ 
+    public StreamingTerminationException(String msg) {
+      super(msg);
+    }
+    
+    public StreamingTerminationException(String msg, Throwable t) {
+      super(msg, t);
+    }
+  }
+  
+  /**
    * Will contain the query to be executed by the engine
    */
   public String getQuery();  
@@ -33,7 +48,7 @@ public interface StreamingIterator {
   /**
    * Can be used by the engine to report every fetched record
    */
-  public void collect(Object[] result);
+  public void collect(Object[] result) throws StreamingTerminationException;
   /**
    * Used to notify the end of the streaming
    */
