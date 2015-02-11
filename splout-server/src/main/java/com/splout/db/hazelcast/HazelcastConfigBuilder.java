@@ -104,11 +104,13 @@ public class HazelcastConfigBuilder {
   }
 
   protected static void configureJoinMethod(SploutConfiguration buConf, Config hzConfig) throws HazelcastConfigBuilderException {
-    String joinMethod = buConf.getString(HazelcastProperties.JOIN_METHOD).toUpperCase();
+    String joinMethod = buConf.getString(HazelcastProperties.JOIN_METHOD);
     if (joinMethod == null) {
       throw new HazelcastConfigBuilderException("No join method specified in configuration, must be one of: "
           + Arrays.toString(HazelcastProperties.JOIN_METHODS.values()));
     }
+    
+    joinMethod = joinMethod.toUpperCase();
 
     HazelcastProperties.JOIN_METHODS method;
     try {
