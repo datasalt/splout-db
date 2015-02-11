@@ -273,7 +273,9 @@ public class Deployer extends QNodeHandlerModule {
    */
   public Deployer(QNodeHandlerContext context) {
     super(context);
-    deployExecutor = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
+    deployExecutor = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool(
+        new ThreadFactoryBuilder().setNameFormat("deploy-%d").build()
+    ));
   }
 
   /**

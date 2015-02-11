@@ -23,6 +23,7 @@ package com.splout.db.dnode;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.hazelcast.core.*;
 import com.splout.db.benchmark.PerformanceTool;
 import com.splout.db.common.JSONSerDe;
@@ -349,7 +350,7 @@ public class DNodeHandler implements IDNodeHandler {
     // expiration handler
     dbCache.getCacheEventNotificationService().registerListener(new CacheListener());
     // The executor that will execute deployments asynchronously
-    deployExecutor = Executors.newCachedThreadPool();
+    deployExecutor = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("deploy-%d").build());
     // A thread that will listen to file exchanges through HTTP
     httpExchanger = new HttpFileExchanger(config, new FileReceiverCallback());
     httpExchanger.init();

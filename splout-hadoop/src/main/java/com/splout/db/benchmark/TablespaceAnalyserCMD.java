@@ -43,10 +43,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 public class TablespaceAnalyserCMD extends Configured implements Tool {
 
@@ -58,6 +55,10 @@ public class TablespaceAnalyserCMD extends Configured implements Tool {
 
   @Parameter(required = false, names = {"-t", "--top-size"}, description = "Size of calculated tops")
   private int topSize = 10;
+
+  @Parameter(required = false, names = {"-p", "--partition"},
+      description = "Restrict the analysis to particular partitions.")
+  private List<Integer> partitions = new ArrayList<Integer>();
 
   protected JSONTablespaceDefinition loadTablespaceFile(String tablespaceFile) throws IOException, JSONSerDe.JSONSerDeException {
     Path file = new Path(tablespaceFile);
@@ -101,6 +102,10 @@ public class TablespaceAnalyserCMD extends Configured implements Tool {
     HashBasedTable<Integer, String, Long> counts = HashBasedTable.create();
     HashBasedTable<Integer, String, LinkedHashMap<String, Long>> tops = HashBasedTable.create();
     for (int part = 0; part < nPartitions; part++) {
+      if (partitions.size() > 0 && !partitions.contains(part)) {
+        continue;
+      }
+
       for (int i = 0; i < def.getPartitionedTables().size(); i++) {
         JSONTablespaceDefinition.JSONTableDefinition table = def.getPartitionedTables().get(i);
 
