@@ -152,7 +152,7 @@ if [ "$startStop" == "start" ]; then
 		fi
 		if [ "$SPLOUT_HADOOP_HDFS_HOME" ]; then
 			echo "Loading appropriate jars from SPLOUT_HADOOP_HDFS_HOME: $SPLOUT_HADOOP_HDFS_HOME"
-			HADOOP_JARS="$SPLOUT_HADOOP_HDFS_HOME/hadoop-*.jar"
+			HADOOP_JARS="$SPLOUT_HADOOP_HDFS_HOME/hadoop-*.jar $SPLOUT_HADOOP_HDFS_HOME/lib/htrace-*.jar"
 			for f in $HADOOP_JARS
 			do
 			        HADOOP_JAR_CS="$HADOOP_JAR_CS:$f"

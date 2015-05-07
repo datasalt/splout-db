@@ -83,6 +83,30 @@
         </profile>
 
         <profile>
+            <id>cdh5.4</id>
+            <properties>
+                <postfix.mapreduce.version>cdh5.4</postfix.mapreduce.version>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>com.splout.db</groupId>
+                    <artifactId>splout-hadoop</artifactId>
+                    <version>${project.parent.version}</version>
+                    <type>tar.gz</type>
+                    <classifier>pre-full-distro-cdh5.4</classifier>
+                </dependency>
+
+                <dependency>
+                    <groupId>com.splout.db</groupId>
+                    <artifactId>splout-server</artifactId>
+                    <version>${project.parent.version}</version>
+                    <type>tar.gz</type>
+                    <classifier>pre-full-distro-cdh5.4</classifier>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
             <id>mr1</id>
             <properties>
                 <postfix.mapreduce.version>mr1</postfix.mapreduce.version>

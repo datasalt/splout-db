@@ -278,6 +278,92 @@
         </profile>
 
         <profile>
+            <id>cdh5.4</id>
+            <dependencies>
+
+                <!-- Pangool: Hadoop made easy -->
+                <dependency>
+                    <groupId>com.datasalt.pangool</groupId>
+                    <artifactId>pangool-core</artifactId>
+                    <version>0.71-hcat-HIVE-4869-SNAPSHOT</version>
+                    <exclusions>
+                        <exclusion>
+                            <!-- Excluded because license incompatibility -->
+                            <artifactId>servlet-api</artifactId>
+                            <groupId>org.mortbay.jetty</groupId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.apache.commons</groupId>
+                            <artifactId>commons-io</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>javax.servlet</groupId>
+                            <artifactId>servlet-api</artifactId>
+                        </exclusion>
+                        <!-- Excluded because it gives problems with some Hadoop versions -->
+                        <exclusion>
+                            <groupId>org.slf4j</groupId>
+                            <artifactId>slf4j-log4j12</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.slf4j</groupId>
+                            <artifactId>jcl-over-slf4j</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.slf4j</groupId>
+                            <artifactId>slf4j-jdk14</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-mapreduce-client-core</artifactId>
+                    <version>${hadoop.cdh5.4.version}</version>
+                    <scope>provided</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-mapreduce-client-jobclient</artifactId>
+                    <version>${hadoop.cdh5.4.version}</version>
+                    <scope>provided</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-common</artifactId>
+                    <version>${hadoop.cdh5.4.version}</version>
+                    <scope>provided</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-hdfs</artifactId>
+                    <version>${hadoop.cdh5.4.version}</version>
+                    <scope>provided</scope>
+                </dependency>
+                <!-- Copied from Pig dependencies, unit test fails otherwise -->
+                <dependency>
+                    <groupId>com.google.protobuf</groupId>
+                    <artifactId>protobuf-java</artifactId>
+                    <version>2.4.0a</version>
+                    <scope>provided</scope>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.apache.hive.hcatalog</groupId>
+                    <artifactId>hive-hcatalog-core</artifactId>
+                    <version>1.1.0-cdh5.4.0</version>
+                </dependency>
+                <!-- Jetty for PageCountsWebApp example -->
+                <dependency>
+                    <groupId>org.mortbay.jetty</groupId>
+                    <artifactId>jetty</artifactId>
+                    <version>6.1.26</version>
+                </dependency>
+
+            </dependencies>
+        </profile>
+
+        <profile>
             <id>mr1</id>
             <dependencies>
                 <dependency>

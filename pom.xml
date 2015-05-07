@@ -30,6 +30,7 @@
         <hadoop.1.version>0.20.2</hadoop.1.version>
         <hadoop.2.version>2.2.0</hadoop.2.version>
         <hadoop.cdh5.version>2.3.0-cdh5.0.0</hadoop.cdh5.version>
+        <hadoop.cdh5.4.version>2.6.0-cdh5.4.0</hadoop.cdh5.4.version>
     </properties>
 
     <dependencies/>
@@ -56,6 +57,13 @@
             <id>cdh5</id>
             <properties>
                 <postfix.mapreduce.version>-cdh5</postfix.mapreduce.version>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>cdh5.4</id>
+            <properties>
+                <postfix.mapreduce.version>-cdh5.4</postfix.mapreduce.version>
             </properties>
         </profile>
 
