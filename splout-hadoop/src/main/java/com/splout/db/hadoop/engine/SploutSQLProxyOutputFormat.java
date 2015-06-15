@@ -22,6 +22,8 @@ package com.splout.db.hadoop.engine;
 
 import com.datasalt.pangool.io.ITuple;
 import com.splout.db.common.HeartBeater;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -44,6 +46,8 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 @SuppressWarnings("serial")
 public class SploutSQLProxyOutputFormat extends FileOutputFormat<ITuple, NullWritable> implements Serializable {
+
+  public static Log LOG = LogFactory.getLog(SploutSQLProxyOutputFormat.class);
 
   private SploutSQLOutputFormat outputFormat;
 
@@ -69,6 +73,7 @@ public class SploutSQLProxyOutputFormat extends FileOutputFormat<ITuple, NullWri
     outputFormat.setConf(context.getConfiguration());
 
     return new RecordWriter<ITuple, NullWritable>() {
+      long rows = 0;
 
       // Temporary and permanent Paths for properly writing Hadoop output files
       private Map<Integer, Path> permPool = new HashMap<Integer, Path>();
@@ -89,6 +94,8 @@ public class SploutSQLProxyOutputFormat extends FileOutputFormat<ITuple, NullWri
         Path temp = conf.getLocalPath("mapred.local.dir", "splout_task_" + SploutSQLProxyOutputFormat.this.context.getTaskAttemptID()
             + '.' + FILE_SEQUENCE.incrementAndGet());
 
+        LOG.info("Initializing local file " + temp + " for writing rows from partition " + partition);
+
         FileSystem localFileSystem = FileSystem.getLocal(conf);
         if (localFileSystem.exists(temp)) {
           localFileSystem.delete(temp, true);
@@ -106,6 +113,7 @@ public class SploutSQLProxyOutputFormat extends FileOutputFormat<ITuple, NullWri
 
       @Override
       public void close(TaskAttemptContext ctx) throws IOException, InterruptedException {
+        LOG.info("Written " + rows + " total rows into " + permPool.entrySet().size() + " partitions.");
         FileSystem fs = FileSystem.get(ctx.getConfiguration());
         try {
           if (ctx != null) {
@@ -113,6 +121,7 @@ public class SploutSQLProxyOutputFormat extends FileOutputFormat<ITuple, NullWri
           }
           outputFormat.close();
           for (Map.Entry<Integer, Path> entry : permPool.entrySet()) {
+            LOG.info("Commiting local file " + tempPool.get(entry.getKey()) + " to final destination " + entry.getValue());
             // Hadoop - completeLocalOutput()
             fs.completeLocalOutput(entry.getValue(), tempPool.get(entry.getKey()));
           }
@@ -128,6 +137,7 @@ public class SploutSQLProxyOutputFormat extends FileOutputFormat<ITuple, NullWri
           initSql(partition);
         }
         outputFormat.write(tuple);
+        rows++;
       }
 
     };
