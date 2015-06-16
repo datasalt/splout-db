@@ -122,7 +122,7 @@ public class SploutSQLProxyOutputFormat extends FileOutputFormat<ITuple, NullWri
           outputFormat.close();
           for (Map.Entry<Integer, Path> entry : permPool.entrySet()) {
             Path localFile = tempPool.get(entry.getKey());
-            if (fs.exists(localFile)) {
+            if (FileSystem.getLocal(ctx.getConfiguration()).exists(localFile)) {
               LOG.info("Commiting local file " + localFile + " to final destination " + entry.getValue());
               // Hadoop - completeLocalOutput()
               fs.completeLocalOutput(entry.getValue(), tempPool.get(entry.getKey()));
