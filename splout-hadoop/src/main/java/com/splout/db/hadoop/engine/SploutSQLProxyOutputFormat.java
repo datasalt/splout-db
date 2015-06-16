@@ -121,9 +121,14 @@ public class SploutSQLProxyOutputFormat extends FileOutputFormat<ITuple, NullWri
           }
           outputFormat.close();
           for (Map.Entry<Integer, Path> entry : permPool.entrySet()) {
-            LOG.info("Commiting local file " + tempPool.get(entry.getKey()) + " to final destination " + entry.getValue());
-            // Hadoop - completeLocalOutput()
-            fs.completeLocalOutput(entry.getValue(), tempPool.get(entry.getKey()));
+            Path localFile = tempPool.get(entry.getKey());
+            if (fs.exists(localFile)) {
+              LOG.info("Commiting local file " + localFile + " to final destination " + entry.getValue());
+              // Hadoop - completeLocalOutput()
+              fs.completeLocalOutput(entry.getValue(), tempPool.get(entry.getKey()));
+            } else {
+              LOG.info("Strange. Local file " + localFile + " is empty. No data to upload to " + entry.getValue());
+            }
           }
         } finally { // in any case, destroy the HeartBeater
           heartBeater.cancelHeartBeat();
