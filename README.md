@@ -1,5 +1,3 @@
-[![Build Status][1]][2]
-
 Splout SQL: A web-latency SQL spout for Hadoop.
 ===============================================
 
@@ -28,6 +26,3 @@ acordingly. You can use the cdh5 profile as reference.
 
 2) Once compiled you'll find the distribution binaries are at file assembly/target/splout-distribution-*.tar.gz 
 ready for being installed.
-
-[1]: http://clinker.datasalt.com/desktop/plugin/public/status/splout-build
-[2]: http://clinker.datasalt.com/jenkins/view/SploutSQL
