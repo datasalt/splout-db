@@ -178,13 +178,17 @@ public class TableBuilder {
     return addHiveTable(dbName, tableName, hadoopConf);
   }
 
-  public TableBuilder addHiveTable(String dbName, String tableName, Configuration conf)
+  public TableBuilder addHiveTable(String dbName, String tableName, Configuration conf) {
+      return addHiveTable(dbName, tableName, conf);
+  }
+
+  public TableBuilder addHiveTable(String dbName, String tableName, Configuration conf, String filter)
       throws IOException {
     if (hadoopConf == null) {
       throw new IllegalArgumentException(
           "Hadoop configuration can't be null - please provide a valid one.");
     }
-    HCatTupleInputFormat inputFormat = new HCatTupleInputFormat(dbName, tableName, conf);
+    HCatTupleInputFormat inputFormat = new HCatTupleInputFormat(dbName, tableName, conf, filter);
     Map<String, String> specificContext = new HashMap<String, String>();
     specificContext.put("mapreduce.lib.hcat.job.info", conf.get("mapreduce.lib.hcat.job.info"));
     specificContext.put("mapreduce.lib.hcatoutput.hive.conf",

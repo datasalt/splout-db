@@ -169,7 +169,7 @@ public class JSONTablespaceDefinition {
           throw new IllegalArgumentException(
               "hiveDbName and hiveTableName properties must be specified when using InputType = HIVE.");
         }
-        tableBuilder.addHiveTable(tableInput.getHiveDbName(), tableInput.getHiveTableName());
+        tableBuilder.addHiveTable(tableInput.getHiveDbName(), tableInput.getHiveTableName(), hadoopConf, tableInput.getHiveFilter());
       }
     }
 
@@ -319,6 +319,7 @@ public class JSONTablespaceDefinition {
     private String cascadingColumns;
     private String hiveTableName;
     private String hiveDbName;
+    private String hiveFilter;
     private List<String> paths;
 
     public TextInputSpecs getInputSpecs() {
@@ -368,6 +369,10 @@ public class JSONTablespaceDefinition {
     public void setHiveDbName(String hiveDbName) {
       this.hiveDbName = hiveDbName;
     }
+
+    public String getHiveFilter() { return hiveFilter; }
+
+    public void setHiveFilter(String hiveFilter) { this.hiveFilter = hiveFilter; }
   }
 
   public static class TextInputSpecs {

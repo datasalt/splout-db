@@ -77,6 +77,9 @@ public class SimpleGeneratorCMD implements Tool {
   @Parameter(names = {"-htn", "--hiveTableName"}, description = "When using input type HIVE, both db name and table name must be provided using appropriated arguments.")
   private String hiveTableName;
 
+  @Parameter(names = {"-hfl", "--hiveFilter"}, description = "When using input type HIVE, partition filter to use. Examples: `ds <= \"20110925\" and ds >= \"20110924\"` being ds the name of the partitioning column.")
+  private String hiveFilter;
+
   @Parameter(required = true, names = {"-pby", "--partitionby"}, description = "The field or fields to partition the table by. Comma-sepparated if there is more than one.")
   private String partitionByFields;
 
@@ -244,7 +247,7 @@ public class SimpleGeneratorCMD implements Tool {
       tableBuilder.addCascadingTable(inputPath, cascadingColumns.split(","));
     } else if (inputType.equals(InputType.HIVE)) {
       // Hive table
-      tableBuilder.addHiveTable(hiveDbName, hiveTableName);
+      tableBuilder.addHiveTable(hiveDbName, hiveTableName, conf, hiveFilter);
     }
 
     String[] strPartitionByFields = this.partitionByFields.split(",");
