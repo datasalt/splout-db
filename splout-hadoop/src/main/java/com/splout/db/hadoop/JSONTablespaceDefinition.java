@@ -219,7 +219,7 @@ public class JSONTablespaceDefinition {
       try {
         builder.add(buildTable(table, false, hadoopConf));
       } catch (SchemaSampler.NoInputSplits noInputSplits) {
-        log.warn("Table " + TablespaceSpec.class.getName() + " without data for deducing " +
+        log.warn("Table " + table.getName() + " without data for deducing " +
             "schema so skipping it. That is usually the case with Hive tables without data.");
       }
     }
