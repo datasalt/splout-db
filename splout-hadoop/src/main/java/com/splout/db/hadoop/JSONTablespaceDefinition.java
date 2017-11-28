@@ -153,7 +153,11 @@ public class JSONTablespaceDefinition {
       } else if (tableInput.getInputType().equals(InputType.TUPLE)) {
         for (String file : tableInput.getPaths()) {
           // Pangool Tuple file
-          tableBuilder.addTupleFile(new Path(file));
+          try {
+            tableBuilder.addTupleFile(new Path(file));
+          } catch (SchemaSampler.NoInputSplits noInputSplits) {
+            throw new TableBuilderException(noInputSplits);
+          }
         }
       } else if (tableInput.getInputType().equals(InputType.CASCADING)) {
         for (String file : tableInput.getPaths()) {
@@ -162,7 +166,11 @@ public class JSONTablespaceDefinition {
             throw new IllegalArgumentException(
                 "Comma-separated column names (property cascadingColumns) must be specified when using InputType = CASCADING.");
           }
-          tableBuilder.addCascadingTable(new Path(file), tableInput.getCascadingColumns().split(","));
+          try {
+            tableBuilder.addCascadingTable(new Path(file), tableInput.getCascadingColumns().split(","));
+          } catch (SchemaSampler.NoInputSplits noInputSplits) {
+            throw new TableBuilderException(noInputSplits);
+          }
         }
       } else if (tableInput.getInputType().equals(InputType.HIVE)) {
         if (tableInput.getHiveDbName() == null || tableInput.getHiveTableName() == null) {

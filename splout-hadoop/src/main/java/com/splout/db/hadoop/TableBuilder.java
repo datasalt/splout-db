@@ -58,6 +58,10 @@ public class TableBuilder {
     public TableBuilderException(String msg) {
       super(msg);
     }
+
+    public TableBuilderException(Throwable cause) {
+      super(cause);
+    }
   }
 
   private Schema schema;
@@ -193,12 +197,17 @@ public class TableBuilder {
     specificContext.put("mapreduce.lib.hcat.job.info", conf.get("mapreduce.lib.hcat.job.info"));
     specificContext.put("mapreduce.lib.hcatoutput.hive.conf",
         conf.get("mapreduce.lib.hcatoutput.hive.conf"));
-    addCustomInputFormatFile(new Path("hive/" + dbName + "/" + this.tableName), inputFormat,
-        specificContext, new IdentityRecordProcessor());
+    try {
+        addCustomInputFormatFile(new Path("hive/" + dbName + "/" + this.tableName), inputFormat,
+            specificContext, new IdentityRecordProcessor());
+    } catch (SchemaSampler.NoInputSplits noInputSplits) {
+        log.warn("Hive table " + dbName + "." + tableName + " with filter " +
+            ((filter == null) ? "null" : filter) + " without data for indexing. Skipping it.");
+    }
     return this;
   }
 
-  public TableBuilder addCascadingTable(Path path, String[] columnNames) throws IOException {
+  public TableBuilder addCascadingTable(Path path, String[] columnNames) throws IOException, SchemaSampler.NoInputSplits {
     if (hadoopConf == null) {
       throw new IllegalArgumentException(
           "Can't use this method if the builder hasn't been instantiated with a Hadoop conf. object!");
@@ -207,7 +216,7 @@ public class TableBuilder {
   }
 
   public TableBuilder addCascadingTable(Path inputPath, String[] columnNames, Configuration conf)
-      throws IOException {
+      throws IOException, SchemaSampler.NoInputSplits {
     CascadingTupleInputFormat.setSerializations(conf);
     if (tableName == null) {
       throw new IllegalArgumentException(
@@ -217,17 +226,17 @@ public class TableBuilder {
   }
 
   public TableBuilder addCustomInputFormatFile(Path path, InputFormat<ITuple, NullWritable> inputFormat)
-      throws IOException {
+      throws IOException, SchemaSampler.NoInputSplits {
     return addCustomInputFormatFile(path, inputFormat, null);
   }
 
   public TableBuilder addCustomInputFormatFile(Path path, InputFormat<ITuple, NullWritable> inputFormat,
-                                               RecordProcessor recordProcessor) throws IOException {
+                                               RecordProcessor recordProcessor) throws IOException, SchemaSampler.NoInputSplits {
     return addCustomInputFormatFile(path, inputFormat, new HashMap<String, String>(), recordProcessor);
   }
 
   public TableBuilder addCustomInputFormatFile(Path path, InputFormat<ITuple, NullWritable> inputFormat,
-                                               Map<String, String> specificContext, RecordProcessor recordProcessor) throws IOException {
+                                               Map<String, String> specificContext, RecordProcessor recordProcessor) throws IOException, SchemaSampler.NoInputSplits {
     if (schema == null) {
       // sample it
       try {
@@ -240,19 +249,19 @@ public class TableBuilder {
         (recordProcessor == null) ? new IdentityRecordProcessor() : recordProcessor, path));
   }
 
-  public TableBuilder addTupleFile(Path path) throws IOException {
+  public TableBuilder addTupleFile(Path path) throws IOException, SchemaSampler.NoInputSplits {
     return addTupleFile(path, (RecordProcessor) null);
   }
 
-  public TableBuilder addTupleFile(Path path, Schema explicitSchema) throws IOException {
+  public TableBuilder addTupleFile(Path path, Schema explicitSchema) throws IOException, SchemaSampler.NoInputSplits {
     return addTupleFile(path, explicitSchema, null);
   }
 
-  public TableBuilder addTupleFile(Path path, RecordProcessor recordProcessor) throws IOException {
+  public TableBuilder addTupleFile(Path path, RecordProcessor recordProcessor) throws IOException, SchemaSampler.NoInputSplits {
     return addCustomInputFormatFile(path, new TupleInputFormat(), recordProcessor);
   }
 
-  public TableBuilder addTupleFile(Path path, Schema explicitSchema, RecordProcessor recordProcessor) throws IOException {
+  public TableBuilder addTupleFile(Path path, Schema explicitSchema, RecordProcessor recordProcessor) throws IOException, SchemaSampler.NoInputSplits {
     return addCustomInputFormatFile(path, new TupleInputFormat(explicitSchema), recordProcessor);
   }
 

@@ -42,8 +42,26 @@ public class SchemaSampler {
 
   private final static Log log = LogFactory.getLog(SchemaSampler.class);
 
+  public static final class NoInputSplits extends Exception{
+      public NoInputSplits() {
+          super();
+      }
+
+      public NoInputSplits(String message) {
+          super(message);
+      }
+
+      public NoInputSplits(String message, Throwable cause) {
+          super(message, cause);
+      }
+
+      public NoInputSplits(Throwable cause) {
+          super(cause);
+      }
+  }
+
   public static Schema sample(Configuration conf, Path input,
-                              InputFormat<ITuple, NullWritable> inputFormat) throws IOException, InterruptedException {
+                              InputFormat<ITuple, NullWritable> inputFormat) throws IOException, InterruptedException, NoInputSplits {
     Schema schema = null;
 
     // sample schema from input path given the provided InputFormat
@@ -53,7 +71,7 @@ public class SchemaSampler {
     // get first inputSplit
     List<InputSplit> inputSplits = inputFormat.getSplits(job);
     if (inputSplits == null || inputSplits.size() == 0) {
-      throw new IOException(
+      throw new NoInputSplits(
           "Given input format doesn't produce any input split. Can't sample first record. PATH: " + input);
     }
     InputSplit inputSplit = inputSplits.get(0);

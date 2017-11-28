@@ -68,7 +68,7 @@ public class TablespaceSpec {
    * Schema-less quick tablespace builder that samples the first record of the first InputSplit in order to obtain the Table Schema.
    * Note that this will only work for InputFormats that can obtain the Schema implicitly (e.g. TupleInputFormat).
    */
-  public static TablespaceSpec of(Configuration conf, String[] partitionFields, Path input, InputFormat<ITuple, NullWritable> inputFormat, int nPartitions) throws IOException, InterruptedException {
+  public static TablespaceSpec of(Configuration conf, String[] partitionFields, Path input, InputFormat<ITuple, NullWritable> inputFormat, int nPartitions) throws IOException, InterruptedException, SchemaSampler.NoInputSplits {
     if (inputFormat instanceof TupleTextInputFormat) {
       throw new IllegalArgumentException("Can't derive an implicit schema from a text file.");
     }
