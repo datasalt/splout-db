@@ -187,7 +187,7 @@ public class TableBuilder {
   }
 
   public TableBuilder addHiveTable(String dbName, String tableName, Configuration conf, String filter)
-      throws IOException {
+      throws IOException, SchemaSampler.NoInputSplits {
     if (hadoopConf == null) {
       throw new IllegalArgumentException(
           "Hadoop configuration can't be null - please provide a valid one.");
@@ -197,13 +197,8 @@ public class TableBuilder {
     specificContext.put("mapreduce.lib.hcat.job.info", conf.get("mapreduce.lib.hcat.job.info"));
     specificContext.put("mapreduce.lib.hcatoutput.hive.conf",
         conf.get("mapreduce.lib.hcatoutput.hive.conf"));
-    try {
-        addCustomInputFormatFile(new Path("hive/" + dbName + "/" + this.tableName), inputFormat,
-            specificContext, new IdentityRecordProcessor());
-    } catch (SchemaSampler.NoInputSplits noInputSplits) {
-        log.warn("Hive table " + dbName + "." + tableName + " with filter " +
-            ((filter == null) ? "null" : filter) + " without data for indexing. Skipping it.");
-    }
+    addCustomInputFormatFile(new Path("hive/" + dbName + "/" + this.tableName), inputFormat,
+        specificContext, new IdentityRecordProcessor());
     return this;
   }
 

@@ -57,7 +57,7 @@ public class JSONTablespaceDefinition {
    * TableBuilder}.
    */
   protected static Table buildTable(JSONTableDefinition table, boolean isReplicateAll,
-                                  Configuration hadoopConf) throws TableBuilderException, IOException {
+                                  Configuration hadoopConf) throws TableBuilderException, IOException, SchemaSampler.NoInputSplits {
     if (table.getName() == null) {
       throw new IllegalArgumentException("Must provide a name for all tables.");
     }
@@ -216,11 +216,21 @@ public class JSONTablespaceDefinition {
     builder.setEngineClassName(engine);
 
     for (JSONTableDefinition table : partitionedTables) {
-      builder.add(buildTable(table, false, hadoopConf));
+      try {
+        builder.add(buildTable(table, false, hadoopConf));
+      } catch (SchemaSampler.NoInputSplits noInputSplits) {
+        log.warn("Table " + TablespaceSpec.class.getName() + " without data for deducing " +
+            "schema so skipping it. That is usually the case with Hive tables without data.");
+      }
     }
 
     for (JSONTableDefinition table : replicateAllTables) {
-      builder.add(buildTable(table, true, hadoopConf));
+      try {
+        builder.add(buildTable(table, true, hadoopConf));
+      } catch (SchemaSampler.NoInputSplits noInputSplits) {
+        log.warn("Table " + TablespaceSpec.class.getName() + " without data for deducing " +
+            "schema so skipping it. That is usually the case with Hive tables without data.");
+      }
     }
 
     return builder.build();
